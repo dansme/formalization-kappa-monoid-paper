@@ -59,6 +59,14 @@ theorem LMonoid.lsumOf_extend {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] 
   rw [← hraw]
   rfl
 
+/-- A `λ⁻`-sum of zeros vanishes. -/
+theorem LMonoid.lsumOf_eq_zero {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
+    {T : Set ι} (hT : #T < lam) (f : ι → X) (hzero : ∀ i ∈ T, f i = 0) :
+    lsumOf (lam := lam) hT (fun i : T => f i) = 0 := by
+  have heq : (fun i : T => f i) = fun _ : T => (0 : X) := funext fun i => hzero i i.2
+  rw [heq]
+  exact lsumOf_zero hT
+
 /-- Enlarging the index set of a `λ⁻`-sum by indices where the summand vanishes does not
 change the sum. -/
 theorem LMonoid.lsumOf_of_subset {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
@@ -165,6 +173,128 @@ theorem KMonoid.toLMonoid_lsumOf {κ lam : Cardinal.{u}} {H : Type v} [KMonoid �
   rw [dif_pos hsupp]
   exact KMonoid.sumOf_extend (h.le.trans hlk) hidx (emb h.le) x
 
+/-- `λ⁻`-sums are additive: the `LMonoid` analogue of `KMonoid.sumOf_add`. -/
+theorem LMonoid.lsumOf_add {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
+    (h : #ι < lam) (f g : ι → X) :
+    lsumOf (lam := lam) h (fun i => f i + g i)
+      = lsumOf (lam := lam) h f + lsumOf (lam := lam) h g := by
+  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
+  have hUB : #(ULift.{u} Bool) < lam := lt_of_lt_of_le (by simp) hlam0
+  set F : ULift.{u} Bool → ι → X := fun b i => if b.down then f i else g i with hFdef
+  have hprod1 : #((ULift.{u} Bool) × ι) < lam := by
+    have hmp : #((ULift.{u} Bool) × ι) = #(ULift.{u} Bool) * #ι := by simp [Cardinal.mk_prod]
+    rw [hmp]
+    exact Cardinal.mul_lt_of_lt hlam0 hUB h
+  have hprod2 : #(ι × (ULift.{u} Bool)) < lam := by
+    have hmp : #(ι × (ULift.{u} Bool)) = #ι * #(ULift.{u} Bool) := by simp [Cardinal.mk_prod]
+    rw [hmp]
+    exact Cardinal.mul_lt_of_lt hlam0 h hUB
+  have hσ1 : #(Σ _ : ι, ULift.{u} Bool) < lam :=
+    (Cardinal.mk_congr (Equiv.sigmaEquivProd ι (ULift.{u} Bool))).trans_lt hprod2
+  have hσ2 : #(Σ _ : ULift.{u} Bool, ι) < lam :=
+    (Cardinal.mk_congr (Equiv.sigmaEquivProd (ULift.{u} Bool) ι)).trans_lt hprod1
+  set Θ : (Σ _ : ι, ULift.{u} Bool) ≃ (Σ _ : ULift.{u} Bool, ι) :=
+    (Equiv.sigmaEquivProd ι (ULift.{u} Bool)).trans
+      ((Equiv.prodComm ι (ULift.{u} Bool)).trans
+        (Equiv.sigmaEquivProd (ULift.{u} Bool) ι).symm) with hΘdef
+  have hΘapp : ∀ (i : ι) (b : ULift.{u} Bool), Θ ⟨i, b⟩ = ⟨b, i⟩ := by
+    intro i b
+    simp [hΘdef]
+  have stepA : lsumOf (lam := lam) h (fun i => f i + g i)
+      = lsumOf (lam := lam) hσ1 (fun p : Σ _ : ι, ULift.{u} Bool => F p.2 p.1) := by
+    have hinner : (fun i => f i + g i)
+        = fun i => lsumOf (lam := lam) hUB (fun b : ULift.{u} Bool => F b i) := by
+      funext i
+      exact (LMonoid.lsumOf_two (f i) (g i) hUB).symm
+    rw [hinner]
+    exact LMonoid.lsumOf_sigma h (fun _ => hUB) (fun (i : ι) (b : ULift.{u} Bool) => F b i) hσ1
+  have stepB : lsumOf (lam := lam) hσ2 (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)
+      = lsumOf (lam := lam) hσ1 (fun p : Σ _ : ι, ULift.{u} Bool => F p.2 p.1) := by
+    rw [LMonoid.lsumOf_equiv hσ2 hσ1 Θ (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)]
+    congr 1
+  have stepC : lsumOf (lam := lam) hσ2 (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)
+      = lsumOf (lam := lam) hUB (fun b => lsumOf (lam := lam) h (fun i => F b i)) :=
+    (LMonoid.lsumOf_sigma hUB (fun _ => h) (fun (b : ULift.{u} Bool) (i : ι) => F b i) hσ2).symm
+  have stepD : (fun b : ULift.{u} Bool => lsumOf (lam := lam) h (fun i => F b i))
+      = fun b : ULift.{u} Bool =>
+        if b.down then lsumOf (lam := lam) h f else lsumOf (lam := lam) h g := by
+    funext b
+    match b with
+    | ⟨true⟩ => simp [hFdef]
+    | ⟨false⟩ => simp [hFdef]
+  rw [stepA, ← stepB, stepC, stepD,
+    LMonoid.lsumOf_two (lsumOf (lam := lam) h f) (lsumOf (lam := lam) h g) hUB]
+
+/-- Regrouping a `λ⁻`-sum over a set `S` along a disjoint indexed cover of `S` by
+`< λ`-sized pieces: the "sum over a subset" form of `LMonoid.lsumOf_sigma`, needed since
+braiding partitions only cover an ambient index type, not necessarily a designated small
+subset. -/
+theorem LMonoid.lsumOf_biUnion_subset {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
+    {ι J : Type u} (S : Set ι) (I : J → Set ι) (hIS : ∀ p, I p ⊆ S)
+    (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
+    (hcover : (⋃ p, I p) = S) (hJ : #J < lam) (hS : #S < lam) (hI : ∀ p, #(I p) < lam)
+    (x : ι → X) :
+    lsumOf (lam := lam) hJ (fun p => lsumOf (lam := lam) (hI p) (fun i : I p => x i))
+      = lsumOf (lam := lam) hS (fun i : S => x i) := by
+  set Φ : (Σ p : J, I p) ≃ S := Equiv.ofBijective
+    (fun q : Σ p : J, I p => (⟨(q.2 : ι), hIS q.1 q.2.2⟩ : S))
+    ⟨by
+      rintro ⟨p1, i1, hi1⟩ ⟨p2, i2, hi2⟩ heq
+      have heqι : i1 = i2 := congrArg Subtype.val heq
+      by_cases hpp : p1 = p2
+      · subst hpp
+        subst heqι
+        rfl
+      · exact absurd hi2 (heqι ▸ (Set.disjoint_left.mp (hdisj p1 p2 hpp) hi1)),
+      by
+      rintro ⟨i, hiS⟩
+      have hi : i ∈ (⋃ p, I p) := hcover ▸ hiS
+      obtain ⟨p, hp⟩ := Set.mem_iUnion.mp hi
+      exact ⟨⟨p, ⟨i, hp⟩⟩, rfl⟩⟩ with hΦdef
+  have hσ : #(Σ p : J, I p) < lam := by rw [Cardinal.mk_congr Φ]; exact hS
+  have hmain := LMonoid.lsumOf_sigma hJ hI (fun p (i : I p) => x (i : ι)) hσ
+  have hequiv := LMonoid.lsumOf_equiv hS hσ Φ (fun s : S => x (s : ι))
+  exact hmain.trans hequiv.symm
+
+/-! ## Finsum bridge for `λ = ℵ₀`
+
+For `lam = ℵ₀` every index set occurring in a braiding is finite, so all the sums involved are
+ordinary finite sums.  Working with `∑ᶠ i ∈ S, f i` (Mathlib's `finsum`) instead of
+`lsumOf hS (fun i : S => f i)` removes the finiteness side conditions from the *terms* and gives
+access to Mathlib's `finsum_mem_*` API. -/
+
+/-- For `λ = ℵ₀`, an `lsumOf` over a small subset is the `finsum` over that subset. -/
+theorem LMonoid.lsumOf_eq_finsum {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {S : Set ι}
+    (h : #S < ℵ₀) (f : ι → X) :
+    lsumOf (lam := ℵ₀) h (fun i : S => f i) = ∑ᶠ i ∈ S, f i := by
+  have hfin : S.Finite := lt_aleph0_iff_set_finite.mp h
+  letI : Fintype S := hfin.fintype
+  rw [LMonoid.lsumOf_aleph0_eq_finsum h (fun i : S => f i), ← finsum_eq_sum_of_fintype,
+    finsum_set_coe_eq_finsum_mem]
+
+/-- Splitting a `finsum` over a finite set along a subset. -/
+theorem finsum_mem_split {α : Type u} {M : Type v} [AddCommMonoid M] (f : α → M) {S T : Set α}
+    (hST : S ⊆ T) (hT : T.Finite) :
+    ∑ᶠ i ∈ T, f i = (∑ᶠ i ∈ S, f i) + ∑ᶠ i ∈ T \ S, f i := by
+  have hdisj : Disjoint S (T \ S) := by
+    rw [Set.disjoint_left]; intro i hi hi'; exact hi'.2 hi
+  rw [← finsum_mem_union hdisj (hT.subset hST) (hT.sdiff (t := S)), Set.union_sdiff_cancel hST]
+
+/-- Indices outside a subset where the summand vanishes may be dropped from a `finsum`. -/
+theorem finsum_mem_eq_of_diff_eq_zero {α : Type u} {M : Type v} [AddCommMonoid M] {f : α → M}
+    {S T : Set α} (hST : S ⊆ T) (hT : T.Finite) (h0 : ∀ i ∈ T \ S, f i = 0) :
+    ∑ᶠ i ∈ T, f i = ∑ᶠ i ∈ S, f i := by
+  rw [finsum_mem_split f hST hT, finsum_mem_eq_zero_of_forall_eq_zero h0, add_zero]
+
+/-- A `finsum` over a three-element set. -/
+theorem finsum_mem_triple {α : Type u} {M : Type v} [AddCommMonoid M] {a b c : α} (f : α → M)
+    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) :
+    ∑ᶠ i ∈ ({a, b, c} : Set α), f i = f a + f b + f c := by
+  rw [show ({a, b, c} : Set α) = insert a {b, c} from rfl,
+    finsum_mem_insert f (by simp [hab, hac]) ((Set.finite_singleton c).insert b),
+    finsum_mem_pair hbc, add_assoc]
+
+
 end Aux
 
 /-- The successor map of the limit well-order modelled by `ι × ℕ`. -/
@@ -189,7 +319,7 @@ theorem lsumOf_union {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Typ
   classical
   have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
   have hUB : #(ULift.{u} Bool) < lam :=
-    lt_of_lt_of_le (by simpa using nat_lt_aleph0 2) hlam0
+    lt_of_lt_of_le (by simp) hlam0
   set ρ : ULift.{u} Bool → Type u := fun p => if p.down then (S : Type u) else (T : Type u)
     with hρdef
   set e : (S ∪ T : Set ι) ≃ Σ p : ULift.{u} Bool, ρ p :=
@@ -268,6 +398,79 @@ def IsBraided (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι : Type u} (x
 *braided*. -/
 abbrev IsBraided₀ {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} (x y : ι → X) : Prop :=
   IsBraided ℵ₀ x y
+
+/-- Building `BraidingData ℵ₀` from finite partitions and `finsum` equations. -/
+def BraidingData.mk_finsum {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {x y : ι → X}
+    (I J : ι × ℕ → Set ι)
+    (hIfin : ∀ p, (I p).Finite) (hJfin : ∀ p, (J p).Finite)
+    (hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
+    (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q))
+    (hIcov : (⋃ p, I p) = Set.univ) (hJcov : (⋃ p, J p) = Set.univ)
+    (u v : ι × ℕ → X) (hv : ∀ a : ι, v (a, 0) = 0)
+    (hI : ∀ p, ∑ᶠ i ∈ I p, x i = v p + u p)
+    (hJ : ∀ p, ∑ᶠ j ∈ J p, y j = v (bsucc p) + u p) :
+    BraidingData ℵ₀ x y where
+  I := I
+  J := J
+  I_disjoint := hIdisj
+  J_disjoint := hJdisj
+  I_cover := hIcov
+  J_cover := hJcov
+  I_small := fun p => lt_aleph0_iff_set_finite.mpr (hIfin p)
+  J_small := fun p => lt_aleph0_iff_set_finite.mpr (hJfin p)
+  u := u
+  v := v
+  v_limit := hv
+  hI := fun p => (LMonoid.lsumOf_eq_finsum _ x).trans (hI p)
+  hJ := fun p => (LMonoid.lsumOf_eq_finsum _ y).trans (hJ p)
+
+/-! ## Regrouping a partition along a partition of the index set -/
+
+section Regroup
+
+variable {ι : Type u}
+
+/-- Regroup the partition `P` of `ι` along the family `G` of sets of positions: the piece at `p`
+is the union of the `P`-pieces at all positions in `G p`. -/
+def regroup (P : ι × ℕ → Set ι) (G : ι × ℕ → Set (ι × ℕ)) (p : ι × ℕ) : Set ι :=
+  ⋃ ν ∈ G p, P ν
+
+theorem regroup_finite {P : ι × ℕ → Set ι} {G : ι × ℕ → Set (ι × ℕ)} {p : ι × ℕ}
+    (hP : ∀ ν, (P ν).Finite) (hG : (G p).Finite) : (regroup P G p).Finite :=
+  hG.biUnion fun ν _ => hP ν
+
+theorem regroup_disjoint {P : ι × ℕ → Set ι} {G : ι × ℕ → Set (ι × ℕ)}
+    (hP : ∀ ν ρ, ν ≠ ρ → Disjoint (P ν) (P ρ))
+    (hG : ∀ p q, p ≠ q → Disjoint (G p) (G q)) {p q : ι × ℕ} (hpq : p ≠ q) :
+    Disjoint (regroup P G p) (regroup P G q) := by
+  rw [Set.disjoint_left]
+  intro i hi hj
+  simp only [regroup, Set.mem_iUnion, exists_prop] at hi hj
+  obtain ⟨ν, hν, hiν⟩ := hi
+  obtain ⟨ρ, hρ, hiρ⟩ := hj
+  have hνρ : ν = ρ := by
+    by_contra hne
+    exact Set.disjoint_left.mp (hP ν ρ hne) hiν hiρ
+  subst hνρ
+  exact Set.disjoint_left.mp (hG p q hpq) hν hρ
+
+theorem regroup_cover {P : ι × ℕ → Set ι} {G : ι × ℕ → Set (ι × ℕ)}
+    (hP : (⋃ ν, P ν) = Set.univ) (hG : (⋃ p, G p) = Set.univ) :
+    (⋃ p, regroup P G p) = Set.univ := by
+  apply Set.eq_univ_of_forall
+  intro i
+  obtain ⟨ν, hν⟩ := Set.mem_iUnion.mp (hP ▸ Set.mem_univ i)
+  obtain ⟨p, hp⟩ := Set.mem_iUnion.mp (hG ▸ Set.mem_univ ν)
+  exact Set.mem_iUnion.mpr ⟨p, Set.mem_biUnion hp hν⟩
+
+theorem regroup_finsum {X : Type v} [AddCommMonoid X] {P : ι × ℕ → Set ι}
+    {G : ι × ℕ → Set (ι × ℕ)} (hP : ∀ ν ρ, ν ≠ ρ → Disjoint (P ν) (P ρ))
+    (hPfin : ∀ ν, (P ν).Finite) {p : ι × ℕ} (hG : (G p).Finite) (f : ι → X) :
+    ∑ᶠ i ∈ regroup P G p, f i = ∑ᶠ ν ∈ G p, ∑ᶠ i ∈ P ν, f i :=
+  finsum_mem_biUnion (fun ν _ ρ _ hne => hP ν ρ hne) hG fun ν _ => hPfin ν
+
+end Regroup
+
 
 /-! ## Basic properties of the braiding relation -/
 
@@ -364,30 +567,1207 @@ theorem of_perm (x : ι → X) (π : ι ≃ ι) : IsBraided lam x (x ∘ π) := 
 @[refl] theorem refl (x : ι → X) : IsBraided lam x x := by
   simpa using of_perm x (Equiv.refl ι)
 
+/-- The basic way of producing a braiding: if the two families admit indexed partitions of
+the index set into pieces of size `< λ` whose partial sums *agree piece by piece*, then they
+are `λ⁻`-braided — take `v ≡ 0` and let `u` be the common partial sums.
+
+This is the easy half of Lemma 3.4(4), and it needs no hypothesis on `λ`. -/
+theorem of_partition {x y : ι → X} (I J : ι × ℕ → Set ι)
+    (hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
+    (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q))
+    (hIcov : (⋃ p, I p) = Set.univ) (hJcov : (⋃ p, J p) = Set.univ)
+    (hIsmall : ∀ p, #(I p) < lam) (hJsmall : ∀ p, #(J p) < lam)
+    (heq : ∀ p, lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
+        = lsumOf (lam := lam) (hJsmall p) (fun j : J p => y j)) :
+    IsBraided lam x y :=
+  ⟨{ I := I
+     J := J
+     I_disjoint := hIdisj
+     J_disjoint := hJdisj
+     I_cover := hIcov
+     J_cover := hJcov
+     I_small := hIsmall
+     J_small := hJsmall
+     u := fun p => lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
+     v := fun _ => 0
+     v_limit := fun _ => rfl
+     hI := fun _ => (zero_add _).symm
+     hJ := fun p => (heq p).symm.trans (zero_add _).symm }⟩
+
 /-- Lemma 3.6(2), symmetry.  Paper proof: shift the indices, replacing `(u, v)` by
 `u' μ = u μ + v (μ+1)`, `v' μ = 0` at limit elements and `u' μ = v (μ+1)`, `v' μ = u μ`
 otherwise. -/
 @[symm] theorem symm {x y : ι → X} (h : IsBraided lam x y) : IsBraided lam y x := by
-  sorry
+  classical
+  obtain ⟨d⟩ := h
+  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
+  set J' : ι × ℕ → Set ι :=
+    fun p => if p.2 = 0 then d.I p ∪ d.I (bsucc p) else d.I (bsucc p) with hJ'def
+  set u' : ι × ℕ → X :=
+    fun p => if p.2 = 0 then d.u p + d.v (bsucc p) else d.v (bsucc p) with hu'def
+  set v' : ι × ℕ → X := fun p => if p.2 = 0 then (0 : X) else d.u p with hv'def
+  -- `bsucc` never fixes an index, and distinct pieces of `I` are disjoint, so each element
+  -- of `ι` lies in exactly one piece.
+  have hne_succ : ∀ p : ι × ℕ, p ≠ bsucc p := fun p hp =>
+    Nat.succ_ne_self p.2 (congrArg Prod.snd hp).symm
+  have huniq : ∀ (r s : ι × ℕ) (i : ι), i ∈ d.I r → i ∈ d.I s → r = s := by
+    intro r s i hir his
+    by_contra hrs
+    exact Set.disjoint_left.mp (d.I_disjoint r s hrs) hir his
+  have hJ'zero : ∀ a : ι, J' (a, 0) = d.I (a, 0) ∪ d.I (bsucc (a, 0)) := fun _ => rfl
+  have hJ'succ : ∀ (a : ι) (m : ℕ), J' (a, m + 1) = d.I (bsucc (a, m + 1)) := fun _ _ => rfl
+  have hJ'small : ∀ p, #(J' p) < lam := by
+    rintro ⟨a, n⟩
+    rcases n with _ | m
+    · rw [hJ'zero a]
+      exact lt_of_le_of_lt (Cardinal.mk_union_le _ _)
+        (Cardinal.add_lt_of_lt hlam0 (d.I_small (a, 0)) (d.I_small (bsucc (a, 0))))
+    · rw [hJ'succ a m]
+      exact d.I_small _
+  have hJ'mem : ∀ (p : ι × ℕ) (i : ι), i ∈ J' p →
+      ∃ r : ι × ℕ, i ∈ d.I r ∧ (r = bsucc p ∨ (p.2 = 0 ∧ r = p)) := by
+    rintro ⟨a, n⟩ i hi
+    rcases n with _ | m
+    · rw [hJ'zero a] at hi
+      rcases hi with hi | hi
+      · exact ⟨(a, 0), hi, Or.inr ⟨rfl, rfl⟩⟩
+      · exact ⟨bsucc (a, 0), hi, Or.inl rfl⟩
+    · rw [hJ'succ a m] at hi
+      exact ⟨bsucc (a, m + 1), hi, Or.inl rfl⟩
+  have hJ'disjoint : ∀ p q, p ≠ q → Disjoint (J' p) (J' q) := by
+    intro p q hpq
+    rw [Set.disjoint_left]
+    intro i hip hiq
+    obtain ⟨r, hir, hr⟩ := hJ'mem p i hip
+    obtain ⟨s, his, hs⟩ := hJ'mem q i hiq
+    have hrs : r = s := huniq r s i hir his
+    refine hpq ?_
+    rcases hr with hr | ⟨hp0, hrp⟩ <;> rcases hs with hs | ⟨hq0, hsq⟩
+    · exact bsucc_injective (hr.symm.trans (hrs.trans hs))
+    · exact absurd ((congrArg Prod.snd (hr.symm.trans (hrs.trans hsq))).trans hq0)
+        (Nat.succ_ne_zero p.2)
+    · exact absurd ((congrArg Prod.snd (hrp.symm.trans (hrs.trans hs))).symm.trans hp0)
+        (Nat.succ_ne_zero q.2)
+    · exact hrp.symm.trans (hrs.trans hsq)
+  have hJ'cover : (⋃ p, J' p) = Set.univ := by
+    apply Set.eq_univ_of_forall
+    intro i
+    have hi : i ∈ (⋃ r, d.I r) := d.I_cover ▸ Set.mem_univ i
+    obtain ⟨r, hr⟩ := Set.mem_iUnion.mp hi
+    obtain ⟨a, m⟩ := r
+    rcases m with _ | m
+    · exact Set.mem_iUnion.mpr ⟨(a, 0), by rw [hJ'zero a]; exact Or.inl hr⟩
+    · refine Set.mem_iUnion.mpr ⟨(a, m), ?_⟩
+      rcases m with _ | m'
+      · rw [hJ'zero a]; exact Or.inr hr
+      · rw [hJ'succ a m']; exact hr
+  -- the shifted braiding families
+  have hv'zero : ∀ a : ι, v' (a, 0) = 0 := fun _ => rfl
+  have hv'succ : ∀ p : ι × ℕ, v' (bsucc p) = d.u (bsucc p) := fun _ => rfl
+  have hu'zero : ∀ a : ι, u' (a, 0) = d.u (a, 0) + d.v (bsucc (a, 0)) := fun _ => rfl
+  have hu'succ : ∀ (a : ι) (m : ℕ), u' (a, m + 1) = d.v (bsucc (a, m + 1)) := fun _ _ => rfl
+  have hvu' : ∀ p : ι × ℕ, v' p + u' p = d.u p + d.v (bsucc p) := by
+    rintro ⟨a, n⟩
+    rcases n with _ | m
+    · rw [hv'zero a, hu'zero a, zero_add]
+    · rw [hu'succ a m]
+      exact congrArg₂ (· + ·) rfl rfl
+  -- the two defining equations
+  have hI'eq : ∀ p, lsumOf (lam := lam) (d.J_small p) (fun i : d.J p => y i) = v' p + u' p := by
+    intro p
+    rw [d.hJ p, hvu' p]
+    exact add_comm _ _
+  have hJ'eq : ∀ p, lsumOf (lam := lam) (hJ'small p) (fun j : J' p => x j)
+      = v' (bsucc p) + u' p := by
+    rintro ⟨a, n⟩
+    rcases n with _ | m
+    · have hdisj : Disjoint (d.I (a, 0)) (d.I (bsucc (a, 0))) :=
+        d.I_disjoint _ _ (hne_succ (a, 0))
+      refine (lsumOf_union (d.I (a, 0)) (d.I (bsucc (a, 0))) hdisj (d.I_small (a, 0))
+        (d.I_small (bsucc (a, 0))) (hJ'small (a, 0)) x).trans ?_
+      rw [d.hI (a, 0), d.hI (bsucc (a, 0)), d.v_limit a, hv'succ (a, 0), hu'zero a, zero_add]
+      abel
+    · have hU : lsumOf (lam := lam) (hJ'small (a, m + 1)) (fun j : J' (a, m + 1) => x j)
+          = d.v (bsucc (a, m + 1)) + d.u (bsucc (a, m + 1)) := d.hI (bsucc (a, m + 1))
+      rw [hU, hv'succ (a, m + 1), hu'succ a m]
+      exact add_comm _ _
+  exact ⟨{ I := d.J
+           J := J'
+           I_disjoint := d.J_disjoint
+           J_disjoint := hJ'disjoint
+           I_cover := d.J_cover
+           J_cover := hJ'cover
+           I_small := d.J_small
+           J_small := hJ'small
+           u := u'
+           v := v'
+           v_limit := hv'zero
+           hI := hI'eq
+           hJ := hJ'eq }⟩
 
-/-- Lemma 3.7: two braidings sharing the middle family can be chosen so that their
-partitions of the middle family interleave, i.e.
+/-! ### Well-order scaffolding for `λ = ℵ₀` transitivity
 
-  `⋃_{ν ≤ μ} Jν ⊆ ⋃_{ν ≤ μ} J'ν ⊆ ⋃_{ν ≤ μ+1} Jν`.
+The paper's proof of Lemma 3.7 runs a transfinite recursion along the "limit well-order on
+`κ`" (the well-order whose successor structure matches `bsucc`, i.e. whose limit elements are
+exactly the pairs `(a, 0)`). We model this well-order concretely as the lexicographic order on
+`ι × ℕ`: an arbitrary (choice-provided) well-order on the "block" type `ι`, refined within each
+block by the usual order on the "offset" `ℕ`. -/
 
-This is the technical heart of transitivity; the paper proves it by a transfinite recursion
-constructing left-saturated `λ⁻`-intervals. -/
-theorem exists_aligned {x y z : ι → X} (hxy : IsBraided lam x y) (hyz : IsBraided lam y z) :
-    ∃ (d₁ : BraidingData lam x y) (d₂ : BraidingData lam y z),
-      ∀ p : ι × ℕ, True := by
-  -- The precise alignment condition requires the linear order on `ι × ℕ`; we record the
-  -- existence statement here and refer to the paper for the (purely combinatorial) proof.
-  sorry
+section TransAleph0
+
+variable {X : Type v} [LMonoid ℵ₀ X] {ι : Type u}
+
+/-- The lexicographic well-order on `ι × ℕ` modeling the paper's limit well-order on `κ`:
+blocks are ordered by an arbitrary well-order on `ι`, and offsets within a block by the usual
+order on `ℕ`. Each block `a` contributes a run `(a, 0) < (a, 1) < (a, 2) < ⋯`. -/
+def kOrd (ι : Type u) : (ι × ℕ) → (ι × ℕ) → Prop :=
+  Prod.Lex (WellOrderingRel : ι → ι → Prop) (· < · : ℕ → ℕ → Prop)
+
+instance kOrd.isWellOrder : IsWellOrder (ι × ℕ) (kOrd ι) :=
+  inferInstanceAs (IsWellOrder _ (Prod.Lex _ _))
+
+theorem kOrd_iff {p q : ι × ℕ} :
+    kOrd ι p q ↔ WellOrderingRel p.1 q.1 ∨ (p.1 = q.1 ∧ p.2 < q.2) :=
+  Prod.lex_def
+
+/-- The order type of `(ι × ℕ, kOrd)`, i.e. the paper's limit well-order on `κ`. -/
+noncomputable def kType (ι : Type u) : Ordinal.{u} := Ordinal.type (kOrd ι)
+
+theorem kOrd_bsucc (p : ι × ℕ) : kOrd ι p (bsucc p) :=
+  Prod.Lex.right p.1 (Nat.lt_succ_self p.2)
+
+/-- `bsucc p` is the immediate `kOrd`-successor of `p`: nothing lies strictly between them. -/
+theorem kOrd_not_between {p q : ι × ℕ} (h1 : kOrd ι p q) (h2 : kOrd ι q (bsucc p)) : False := by
+  have hirr : ∀ c d : ι, WellOrderingRel c d → ¬ WellOrderingRel d c :=
+    (IsWellFounded.wf (r := (WellOrderingRel : ι → ι → Prop))).asymmetric
+  rw [kOrd_iff] at h1 h2
+  simp only [bsucc] at h2
+  rcases h1 with h1 | ⟨h1a, h1n⟩ <;> rcases h2 with h2 | ⟨h2a, h2n⟩
+  · exact hirr _ _ h1 h2
+  · rw [h2a] at h1; exact hirr _ _ h1 h1
+  · rw [← h1a] at h2; exact hirr _ _ h2 h2
+  · omega
+
+/-- The ordinal position of `bsucc p` is exactly one more than that of `p`: `bsucc` matches the
+successor structure of the limit well-order `kOrd`. -/
+theorem typein_kOrd_bsucc (p : ι × ℕ) :
+    Ordinal.typein (kOrd ι) (bsucc p) = Ordinal.typein (kOrd ι) p + 1 := by
+  apply le_antisymm
+  · by_contra hcon
+    rw [not_le] at hcon
+    have hlt2 : Ordinal.typein (kOrd ι) p + 1 < Ordinal.type (kOrd ι) :=
+      hcon.trans (Ordinal.typein_lt_type (kOrd ι) (bsucc p))
+    obtain ⟨q, hq⟩ := Ordinal.typein_surj (kOrd ι) hlt2
+    have hpq : kOrd ι p q := by
+      rw [← Ordinal.typein_lt_typein (kOrd ι), hq]
+      exact Order.add_one_le_iff.mp le_rfl
+    have hqb : kOrd ι q (bsucc p) := by
+      rw [← Ordinal.typein_lt_typein (kOrd ι), hq]
+      exact hcon
+    exact kOrd_not_between hpq hqb
+  · exact Order.add_one_le_iff.mpr
+      ((Ordinal.typein_lt_typein (kOrd ι)).mpr (kOrd_bsucc p))
+
+/-! ### The `blockOf` choice function
+
+Given an indexed partition `I : ι × ℕ → Set ι` of `ι` (disjoint pieces covering `ι`), each
+`i : ι` lies in exactly one piece; `blockOf` picks it out. -/
+
+/-- The (unique) position whose piece contains `i`, for a partition `I` of `ι`. -/
+noncomputable def blockOf (I : ι × ℕ → Set ι) (hcov : (⋃ p, I p) = Set.univ) (i : ι) : ι × ℕ :=
+  (Set.mem_iUnion.mp (by rw [hcov]; exact Set.mem_univ i)).choose
+
+theorem mem_blockOf (I : ι × ℕ → Set ι) (hcov : (⋃ p, I p) = Set.univ) (i : ι) :
+    i ∈ I (blockOf I hcov i) :=
+  (Set.mem_iUnion.mp (by rw [hcov]; exact Set.mem_univ i)).choose_spec
+
+theorem blockOf_eq {I : ι × ℕ → Set ι} (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
+    (hcov : (⋃ p, I p) = Set.univ) {i : ι} {p : ι × ℕ} (hp : i ∈ I p) :
+    blockOf I hcov i = p := by
+  by_contra hne
+  exact Set.disjoint_left.mp (hdisj _ _ hne) (mem_blockOf I hcov i) hp
+
+/-! ### Left-saturation closure
+
+Terminology from the paper's proof of Lemma 3.7 (`lep`, `rep`, left saturation), and the
+`satClosure` construction used to build each step `𝒜_α`/`ℬ_α` of the transfinite recursion:
+starting from a finite "seed" of positions, grow it backwards along `bsucc`-predecessors until
+either a block-start or an already-used (`Ua`) position is reached. -/
+
+/-- The "left endpoints" of `S`: positions in `S` with no `bsucc`-predecessor in `S`. -/
+def lep (S : Set (ι × ℕ)) : Set (ι × ℕ) := {p ∈ S | ∀ q, bsucc q = p → q ∉ S}
+
+/-- The "right endpoints" of `S`: positions in `S` whose `bsucc`-successor is not in `S`. -/
+def rep (S : Set (ι × ℕ)) : Set (ι × ℕ) := {p ∈ S | bsucc p ∉ S}
+
+/-- The successors of the right endpoints of `S`. -/
+def repSucc (S : Set (ι × ℕ)) : Set (ι × ℕ) := bsucc '' rep S
+
+/-- `S` is left saturated relative to `T`: if `p ∈ S` is `bsucc q`, and `q` is not already
+accounted for by `T`, then `q` must also lie in `S`. -/
+def LeftSaturated (S T : Set (ι × ℕ)) : Prop :=
+  ∀ p q, bsucc q = p → p ∈ S → q ∉ T → q ∈ S
+
+/-- One step of left-saturation growth: add every `bsucc`-predecessor not already in `Ua`. -/
+def satStep (Ua S : Set (ι × ℕ)) : Set (ι × ℕ) :=
+  S ∪ {q | q ∉ Ua ∧ bsucc q ∈ S}
+
+/-- The left-saturation closure of a seed `C`, relative to the already-used set `Ua`: iterate
+`satStep` countably often. Each block's descent terminates after finitely many steps (bounded
+by the seed's maximal offset in that block), so this stabilizes; see `satClosure_finite`. -/
+def satClosure (Ua C : Set (ι × ℕ)) : Set (ι × ℕ) :=
+  ⋃ k : ℕ, (satStep Ua)^[k] C
+
+theorem subset_satClosure (Ua C : Set (ι × ℕ)) : C ⊆ satClosure Ua C := by
+  unfold satClosure
+  simpa using Set.subset_iUnion (fun k => (satStep Ua)^[k] C) 0
+
+theorem satClosure_disjoint {Ua C : Set (ι × ℕ)} (hC : Disjoint C Ua) :
+    Disjoint (satClosure Ua C) Ua := by
+  rw [Set.disjoint_left]
+  intro p hp hpUa
+  simp only [satClosure, Set.mem_iUnion] at hp
+  obtain ⟨k, hp⟩ := hp
+  induction k with
+  | zero => exact Set.disjoint_left.mp hC hp hpUa
+  | succ n ih =>
+    rw [Function.iterate_succ_apply'] at hp
+    rcases hp with hp | ⟨hp, -⟩
+    · exact ih hp
+    · exact hp hpUa
+
+theorem leftSaturated_satClosure (Ua C : Set (ι × ℕ)) :
+    LeftSaturated (satClosure Ua C) Ua := by
+  intro p q hpq hp hq
+  simp only [satClosure, Set.mem_iUnion] at hp ⊢
+  obtain ⟨k, hp⟩ := hp
+  refine ⟨k + 1, ?_⟩
+  rw [Function.iterate_succ_apply']
+  exact Or.inr ⟨hq, by rw [hpq]; exact hp⟩
+
+theorem satStep_bound (Ua : Set (ι × ℕ)) {F : Set ι} {N : ℕ} {S : Set (ι × ℕ)}
+    (hS : S ⊆ {p : ι × ℕ | p.1 ∈ F ∧ p.2 ≤ N}) :
+    satStep Ua S ⊆ {p : ι × ℕ | p.1 ∈ F ∧ p.2 ≤ N} := by
+  rintro p (hp | ⟨-, hp⟩)
+  · exact hS hp
+  · obtain ⟨hF, hN⟩ := hS hp
+    simp only [bsucc] at hF hN
+    exact ⟨hF, by omega⟩
+
+theorem satClosure_subset_bound (Ua : Set (ι × ℕ)) {F : Set ι} {N : ℕ} {C : Set (ι × ℕ)}
+    (hC : C ⊆ {p : ι × ℕ | p.1 ∈ F ∧ p.2 ≤ N}) :
+    satClosure Ua C ⊆ {p : ι × ℕ | p.1 ∈ F ∧ p.2 ≤ N} := by
+  apply Set.iUnion_subset
+  intro k
+  induction k with
+  | zero => simpa using hC
+  | succ n ih => rw [Function.iterate_succ_apply']; exact satStep_bound Ua ih
+
+theorem satClosure_finite {Ua C : Set (ι × ℕ)} (hC : C.Finite) : (satClosure Ua C).Finite := by
+  obtain ⟨N, hN⟩ := (hC.image Prod.snd).bddAbove
+  have hCF : C ⊆ {p : ι × ℕ | p.1 ∈ Prod.fst '' C ∧ p.2 ≤ N} := fun p hp =>
+    ⟨Set.mem_image_of_mem _ hp, hN (Set.mem_image_of_mem _ hp)⟩
+  have hbound : {p : ι × ℕ | p.1 ∈ Prod.fst '' C ∧ p.2 ≤ N}.Finite := by
+    have heq : {p : ι × ℕ | p.1 ∈ Prod.fst '' C ∧ p.2 ≤ N} = (Prod.fst '' C) ×ˢ Set.Iic N := by
+      ext p; simp [Set.mem_prod, Set.mem_Iic]
+    rw [heq]
+    exact (hC.image Prod.fst).prod (Set.finite_Iic N)
+  exact hbound.subset (satClosure_subset_bound Ua hCF)
+
+/-- The key covering-existence step of Lemma 3.7's recursion: given already-used positions `Ua`
+and a finite residual `R ⊆ ι` still to be covered by pieces of a partition `d.J`, there is a
+finite set of positions `𝒜`, disjoint from `Ua` and left saturated in `Ua`, whose `d.J`-pieces
+cover `R`. -/
+theorem exists_cover_step {x y : ι → X} (d : BraidingData ℵ₀ x y) {Ua : Set (ι × ℕ)} {R : Set ι}
+    (hR : R.Finite) (hRUa : ∀ i ∈ R, blockOf d.J d.J_cover i ∉ Ua) :
+    ∃ 𝒜 : Set (ι × ℕ), 𝒜.Finite ∧ Disjoint 𝒜 Ua ∧ LeftSaturated 𝒜 Ua ∧
+      R ⊆ ⋃ ν ∈ 𝒜, d.J ν := by
+  refine ⟨satClosure Ua (blockOf d.J d.J_cover '' R), satClosure_finite (hR.image _),
+    satClosure_disjoint ?_, leftSaturated_satClosure _ _, ?_⟩
+  · rw [Set.disjoint_left]
+    rintro p ⟨i, hi, rfl⟩ hpUa
+    exact hRUa i hi hpUa
+  · intro i hi
+    simp only [Set.mem_iUnion]
+    exact ⟨blockOf d.J d.J_cover i, subset_satClosure _ _ (Set.mem_image_of_mem _ hi),
+      mem_blockOf d.J d.J_cover i⟩
+
+/-- If `i` is not covered by the `d.J`-pieces already in use (`Ua`), its own piece cannot be
+in `Ua` either. This discharges the side condition of `exists_cover_step` for the residual
+`R := {i | i ∉ ⋃ ν ∈ Ua, d.J ν}` that actually arises in the recursion. -/
+theorem not_mem_Ua_of_not_covered {x y : ι → X} (d : BraidingData ℵ₀ x y) {Ua : Set (ι × ℕ)}
+    {i : ι} (hi : i ∉ ⋃ ν ∈ Ua, d.J ν) : blockOf d.J d.J_cover i ∉ Ua :=
+  fun hmem => hi (Set.mem_biUnion hmem (mem_blockOf d.J d.J_cover i))
+
+/-- A general version of `exists_cover_step` starting from an arbitrary finite seed (rather than
+one built from a residual via `blockOf`): used to additionally seed the recursion step with
+successor-linking (`repSucc`) and exhaustion (`minCompl`) requirements. -/
+theorem exists_cover_of_seed {Ua C : Set (ι × ℕ)} (hC : C.Finite) (hCUa : Disjoint C Ua) :
+    ∃ 𝒜 : Set (ι × ℕ), 𝒜.Finite ∧ Disjoint 𝒜 Ua ∧ LeftSaturated 𝒜 Ua ∧ C ⊆ 𝒜 :=
+  ⟨satClosure Ua C, satClosure_finite hC, satClosure_disjoint hCUa, leftSaturated_satClosure _ _,
+    subset_satClosure _ _⟩
+
+theorem kOrd_wf : WellFounded (kOrd ι) := IsWellFounded.wf
+
+/-- The `kOrd`-least position not yet used, when some position remains unused: this is seeded
+into every recursion step to guarantee the constructed partition eventually exhausts `ι × ℕ`. -/
+noncomputable def minCompl (Ua : Set (ι × ℕ)) (h : Uaᶜ.Nonempty) : ι × ℕ :=
+  kOrd_wf.min Uaᶜ h
+
+theorem minCompl_mem (Ua : Set (ι × ℕ)) (h : Uaᶜ.Nonempty) : minCompl Ua h ∈ Uaᶜ :=
+  WellFounded.min_mem _ Uaᶜ h
+
+/-! ## Lemma 3.8: transitivity from an aligned pair of braidings
+
+The grouping of the index set used in the paper's proof: blocks are merged in groups of three,
+with the limit position of each block left alone. -/
+
+variable {x y z : ι → X}
+
+/-- The "three-block grouping": `(a, 0)` keeps its own position, and `(a, l+1)` collects the
+three positions `(a, 3l+1)`, `(a, 3l+2)`, `(a, 3l+3)`. -/
+def grp3 (p : ι × ℕ) : Set (ι × ℕ) :=
+  match p.2 with
+  | 0 => {(p.1, 0)}
+  | l + 1 => {(p.1, 3 * l + 1), (p.1, 3 * l + 2), (p.1, 3 * l + 3)}
+
+theorem grp3_zero (a : ι) : grp3 (a, 0) = {(a, 0)} := rfl
+
+theorem grp3_succ (a : ι) (l : ℕ) :
+    grp3 (a, l + 1) = {(a, 3 * l + 1), (a, 3 * l + 2), (a, 3 * l + 3)} := rfl
+
+theorem pair_ne {a : ι} {i j : ℕ} (hij : i ≠ j) : ((a, i) : ι × ℕ) ≠ (a, j) :=
+  fun h => hij (congrArg Prod.snd h)
+
+theorem grp3_finite (p : ι × ℕ) : (grp3 p).Finite := by
+  obtain ⟨a, n⟩ := p
+  cases n with
+  | zero => rw [grp3_zero]; exact Set.finite_singleton _
+  | succ l => rw [grp3_succ]; exact ((Set.finite_singleton _).insert _).insert _
+
+theorem grp3_mem_fst {p ν : ι × ℕ} (h : ν ∈ grp3 p) : ν.1 = p.1 := by
+  obtain ⟨a, n⟩ := p
+  cases n with
+  | zero => rw [grp3_zero] at h; rw [h]
+  | succ l =>
+    rw [grp3_succ] at h
+    rcases h with h | h | h <;> rw [h]
+
+theorem grp3_disjoint (p q : ι × ℕ) (hpq : p ≠ q) : Disjoint (grp3 p) (grp3 q) := by
+  obtain ⟨a, n⟩ := p
+  obtain ⟨b, m⟩ := q
+  rw [Set.disjoint_left]
+  intro ν hν hν'
+  have hab : a = b := by
+    have h1 := grp3_mem_fst hν
+    have h2 := grp3_mem_fst hν'
+    simp only at h1 h2
+    rw [← h1, h2]
+  subst hab
+  have hnm : n ≠ m := fun h => hpq (by rw [h])
+  cases n with
+  | zero =>
+    cases m with
+    | zero => exact hnm rfl
+    | succ l =>
+      rw [grp3_zero] at hν
+      rw [grp3_succ] at hν'
+      rw [hν] at hν'
+      rcases hν' with h | h | h <;> exact absurd (congrArg Prod.snd h) (by omega)
+  | succ l =>
+    cases m with
+    | zero =>
+      rw [grp3_zero] at hν'
+      rw [grp3_succ] at hν
+      rw [hν'] at hν
+      rcases hν with h | h | h <;> exact absurd (congrArg Prod.snd h) (by omega)
+    | succ k =>
+      rw [grp3_succ] at hν hν'
+      have hl : l ≠ k := fun h => hnm (by rw [h])
+      rcases hν with h | h | h <;> rcases hν' with h' | h' <;>
+        first
+          | (rw [h] at h'; exact absurd (congrArg Prod.snd h') (by omega))
+          | (rcases h' with h' | h' <;> rw [h] at h' <;>
+              exact absurd (congrArg Prod.snd h') (by omega))
+
+theorem grp3_cover : (⋃ p : ι × ℕ, grp3 p) = Set.univ := by
+  apply Set.eq_univ_of_forall
+  rintro ⟨a, n⟩
+  rcases Nat.eq_zero_or_pos n with h | h
+  · exact Set.mem_iUnion.mpr ⟨(a, 0), by rw [h, grp3_zero]; rfl⟩
+  · obtain ⟨l, hl⟩ : ∃ l, n = 3 * l + 1 ∨ n = 3 * l + 2 ∨ n = 3 * l + 3 := ⟨(n - 1) / 3, by omega⟩
+    refine Set.mem_iUnion.mpr ⟨(a, l + 1), ?_⟩
+    rw [grp3_succ]
+    rcases hl with h1 | h1 | h1 <;> rw [h1] <;> simp
+
+/-- Lemma 3.8's combinatorial core: if two braidings sharing the middle family `y` have
+partitions of `y` that interleave block by block, they can be merged (in groups of three) into
+a braiding of `x` and `z`. -/
+theorem of_aligned (d : BraidingData ℵ₀ x y) (e : BraidingData ℵ₀ y z)
+    (h1 : ∀ p, e.I p ⊆ d.J p ∪ d.J (bsucc p))
+    (h2 : ∀ p, d.J (bsucc p) ⊆ e.I p ∪ e.I (bsucc p))
+    (h3 : ∀ a : ι, d.J (a, 0) ⊆ e.I (a, 0)) :
+    IsBraided ℵ₀ x z := by
+  classical
+  have dIfin : ∀ p, (d.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.I_small p)
+  have dJfin : ∀ p, (d.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.J_small p)
+  have eIfin : ∀ p, (e.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (e.I_small p)
+  have eJfin : ∀ p, (e.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (e.J_small p)
+  have dIsum : ∀ p, ∑ᶠ i ∈ d.I p, x i = d.v p + d.u p := fun p => by
+    rw [← LMonoid.lsumOf_eq_finsum (d.I_small p)]; exact d.hI p
+  have dJsum : ∀ p, ∑ᶠ j ∈ d.J p, y j = d.v (bsucc p) + d.u p := fun p => by
+    rw [← LMonoid.lsumOf_eq_finsum (d.J_small p)]; exact d.hJ p
+  have eIsum : ∀ p, ∑ᶠ j ∈ e.I p, y j = e.v p + e.u p := fun p => by
+    rw [← LMonoid.lsumOf_eq_finsum (e.I_small p)]; exact e.hI p
+  have eJsum : ∀ p, ∑ᶠ k ∈ e.J p, z k = e.v (bsucc p) + e.u p := fun p => by
+    rw [← LMonoid.lsumOf_eq_finsum (e.J_small p)]; exact e.hJ p
+  have hnesucc : ∀ p : ι × ℕ, p ≠ bsucc p := fun p hp =>
+    Nat.succ_ne_self p.2 (congrArg Prod.snd hp).symm
+  -- the "overlap" sums `s` and `t`
+  obtain ⟨s, hs⟩ : ∃ s : ι × ℕ → X, ∀ p, s p = ∑ᶠ j ∈ e.I p ∩ d.J (bsucc p), y j :=
+    ⟨_, fun _ => rfl⟩
+  obtain ⟨t, ht⟩ : ∃ t : ι × ℕ → X, ∀ p, t p = ∑ᶠ j ∈ d.J (bsucc p) ∩ e.I (bsucc p), y j :=
+    ⟨_, fun _ => rfl⟩
+  -- (F1)
+  have F1 : ∀ p : ι × ℕ, ∑ᶠ j ∈ d.J (bsucc p), y j = s p + t p := by
+    intro p
+    have hset : d.J (bsucc p)
+        = (e.I p ∩ d.J (bsucc p)) ∪ (d.J (bsucc p) ∩ e.I (bsucc p)) := by
+      apply Set.Subset.antisymm
+      · intro j hj
+        rcases h2 p hj with hj' | hj'
+        · exact Or.inl ⟨hj', hj⟩
+        · exact Or.inr ⟨hj, hj'⟩
+      · rintro j (⟨-, hj⟩ | ⟨hj, -⟩) <;> exact hj
+    have hdisj : Disjoint (e.I p ∩ d.J (bsucc p)) (d.J (bsucc p) ∩ e.I (bsucc p)) :=
+      (e.I_disjoint p (bsucc p) (hnesucc p)).mono Set.inter_subset_left Set.inter_subset_right
+    rw [hs p, ht p, ← finsum_mem_union hdisj ((eIfin p).inter_of_left _)
+      ((dJfin (bsucc p)).inter_of_left _), ← hset]
+  -- (F2)
+  have F2 : ∀ p : ι × ℕ, ∑ᶠ j ∈ e.I (bsucc p), y j = t p + s (bsucc p) := by
+    intro p
+    have hset : e.I (bsucc p)
+        = (d.J (bsucc p) ∩ e.I (bsucc p)) ∪ (e.I (bsucc p) ∩ d.J (bsucc (bsucc p))) := by
+      apply Set.Subset.antisymm
+      · intro j hj
+        rcases h1 (bsucc p) hj with hj' | hj'
+        · exact Or.inl ⟨hj', hj⟩
+        · exact Or.inr ⟨hj, hj'⟩
+      · rintro j (⟨-, hj⟩ | ⟨hj, -⟩) <;> exact hj
+    have hdisj : Disjoint (d.J (bsucc p) ∩ e.I (bsucc p))
+        (e.I (bsucc p) ∩ d.J (bsucc (bsucc p))) :=
+      (d.J_disjoint (bsucc p) (bsucc (bsucc p)) (hnesucc (bsucc p))).mono
+        Set.inter_subset_left Set.inter_subset_right
+    rw [hs (bsucc p), ht p, ← finsum_mem_union hdisj ((dJfin (bsucc p)).inter_of_left _)
+      ((eIfin (bsucc p)).inter_of_left _), ← hset]
+  -- (F3)
+  have F3 : ∀ a : ι, ∑ᶠ j ∈ e.I (a, 0), y j = (∑ᶠ j ∈ d.J (a, 0), y j) + s (a, 0) := by
+    intro a
+    have hset : e.I (a, 0) = d.J (a, 0) ∪ (e.I (a, 0) ∩ d.J (bsucc (a, 0))) := by
+      apply Set.Subset.antisymm
+      · intro j hj
+        rcases h1 (a, 0) hj with hj' | hj'
+        · exact Or.inl hj'
+        · exact Or.inr ⟨hj, hj'⟩
+      · rintro j (hj | ⟨hj, -⟩)
+        · exact h3 a hj
+        · exact hj
+    have hdisj : Disjoint (d.J (a, 0)) (e.I (a, 0) ∩ d.J (bsucc (a, 0))) :=
+      (d.J_disjoint (a, 0) (bsucc (a, 0)) (hnesucc (a, 0))).mono le_rfl Set.inter_subset_right
+    rw [hs (a, 0), ← finsum_mem_union hdisj (dJfin (a, 0))
+      ((eIfin (a, 0)).inter_of_left _), ← hset]
+  -- the three basic identities
+  have G1 : ∀ (a : ι) (n : ℕ), d.v (a, n + 2) + d.u (a, n + 1) = s (a, n) + t (a, n) := by
+    intro a n
+    exact (dJsum (bsucc (a, n))).symm.trans (F1 (a, n))
+  have G2 : ∀ (a : ι) (n : ℕ), e.v (a, n + 1) + e.u (a, n + 1) = t (a, n) + s (a, n + 1) := by
+    intro a n
+    exact (eIsum (bsucc (a, n))).symm.trans (F2 (a, n))
+  have G3 : ∀ a : ι, e.u (a, 0) = d.v (a, 1) + d.u (a, 0) + s (a, 0) := by
+    intro a
+    have h := (eIsum (a, 0)).symm.trans (F3 a)
+    rw [e.v_limit a, zero_add, dJsum (a, 0)] at h
+    exact h
+  -- the merged braiding families
+  obtain ⟨c, hc0, hc1⟩ : ∃ c : ι × ℕ → X, (∀ a : ι, c (a, 0) = d.u (a, 0)) ∧
+      (∀ (a : ι) (l : ℕ), c (a, l + 1)
+        = e.u (a, 3 * l + 1) + t (a, 3 * l + 1) + d.u (a, 3 * l + 3)) :=
+    ⟨fun p => match p.2 with
+      | 0 => d.u (p.1, 0)
+      | l + 1 => e.u (p.1, 3 * l + 1) + t (p.1, 3 * l + 1) + d.u (p.1, 3 * l + 3),
+      fun _ => rfl, fun _ _ => rfl⟩
+  obtain ⟨w, hw0, hw1⟩ : ∃ w : ι × ℕ → X, (∀ a : ι, w (a, 0) = 0) ∧
+      (∀ (a : ι) (l : ℕ), w (a, l + 1)
+        = s (a, 3 * l) + e.v (a, 3 * l + 1) + d.v (a, 3 * l + 1)) :=
+    ⟨fun p => match p.2 with
+      | 0 => 0
+      | l + 1 => s (p.1, 3 * l) + e.v (p.1, 3 * l + 1) + d.v (p.1, 3 * l + 1),
+      fun _ => rfl, fun _ _ => rfl⟩
+  refine ⟨BraidingData.mk_finsum (regroup d.I grp3) (regroup e.J grp3)
+    (fun p => regroup_finite dIfin (grp3_finite p)) (fun p => regroup_finite eJfin (grp3_finite p))
+    (fun p q hpq => regroup_disjoint d.I_disjoint grp3_disjoint hpq)
+    (fun p q hpq => regroup_disjoint e.J_disjoint grp3_disjoint hpq)
+    (regroup_cover d.I_cover grp3_cover) (regroup_cover e.J_cover grp3_cover) c w hw0 ?_ ?_⟩
+  · -- `Σ_{M p} x = w p + c p`
+    rintro ⟨a, n⟩
+    rw [regroup_finsum d.I_disjoint dIfin (grp3_finite _) x]
+    cases n with
+    | zero =>
+      rw [grp3_zero, finsum_mem_singleton, dIsum (a, 0), d.v_limit a, hw0 a, hc0 a, zero_add]
+    | succ l =>
+      rw [grp3_succ]
+      simp only [dIsum]
+      rw [finsum_mem_triple _ (pair_ne (by omega)) (pair_ne (by omega)) (pair_ne (by omega)),
+        hw1 a l, hc1 a l]
+      calc d.v (a, 3 * l + 1) + d.u (a, 3 * l + 1) + (d.v (a, 3 * l + 2) + d.u (a, 3 * l + 2))
+              + (d.v (a, 3 * l + 3) + d.u (a, 3 * l + 3))
+          = d.v (a, 3 * l + 1) + (d.v (a, 3 * l + 2) + d.u (a, 3 * l + 1))
+              + (d.v (a, 3 * l + 3) + d.u (a, 3 * l + 2)) + d.u (a, 3 * l + 3) := by abel
+        _ = d.v (a, 3 * l + 1) + (s (a, 3 * l) + t (a, 3 * l))
+              + (s (a, 3 * l + 1) + t (a, 3 * l + 1)) + d.u (a, 3 * l + 3) := by
+              rw [G1 a (3 * l), G1 a (3 * l + 1)]
+        _ = s (a, 3 * l) + (e.v (a, 3 * l + 1) + e.u (a, 3 * l + 1)) + d.v (a, 3 * l + 1)
+              + t (a, 3 * l + 1) + d.u (a, 3 * l + 3) := by rw [G2 a (3 * l)]; abel
+        _ = s (a, 3 * l) + e.v (a, 3 * l + 1) + d.v (a, 3 * l + 1)
+              + (e.u (a, 3 * l + 1) + t (a, 3 * l + 1) + d.u (a, 3 * l + 3)) := by abel
+  · -- `Σ_{N p} z = w (p+1) + c p`
+    rintro ⟨a, n⟩
+    rw [regroup_finsum e.J_disjoint eJfin (grp3_finite _) z]
+    show _ = w (a, n + 1) + c (a, n)
+    cases n with
+    | zero =>
+      rw [grp3_zero, finsum_mem_singleton, eJsum (a, 0), hw1 a 0, hc0 a, G3 a]
+      show e.v (a, 1) + (d.v (a, 1) + d.u (a, 0) + s (a, 0))
+        = s (a, 0) + e.v (a, 0 + 1) + d.v (a, 0 + 1) + d.u (a, 0)
+      abel
+    | succ l =>
+      rw [grp3_succ]
+      simp only [eJsum]
+      rw [finsum_mem_triple _ (pair_ne (by omega)) (pair_ne (by omega)) (pair_ne (by omega)),
+        hw1 a (l + 1), hc1 a l]
+      show e.v (a, 3 * l + 2) + e.u (a, 3 * l + 1) + (e.v (a, 3 * l + 3) + e.u (a, 3 * l + 2))
+            + (e.v (a, 3 * l + 4) + e.u (a, 3 * l + 3))
+          = s (a, 3 * l + 3) + e.v (a, 3 * l + 4) + d.v (a, 3 * l + 4)
+            + (e.u (a, 3 * l + 1) + t (a, 3 * l + 1) + d.u (a, 3 * l + 3))
+      calc e.v (a, 3 * l + 2) + e.u (a, 3 * l + 1) + (e.v (a, 3 * l + 3) + e.u (a, 3 * l + 2))
+              + (e.v (a, 3 * l + 4) + e.u (a, 3 * l + 3))
+          = e.u (a, 3 * l + 1) + (e.v (a, 3 * l + 2) + e.u (a, 3 * l + 2))
+              + (e.v (a, 3 * l + 3) + e.u (a, 3 * l + 3)) + e.v (a, 3 * l + 4) := by abel
+        _ = e.u (a, 3 * l + 1) + (t (a, 3 * l + 1) + s (a, 3 * l + 2))
+              + (t (a, 3 * l + 2) + s (a, 3 * l + 3)) + e.v (a, 3 * l + 4) := by
+              rw [G2 a (3 * l + 1), G2 a (3 * l + 2)]
+        _ = s (a, 3 * l + 3) + e.v (a, 3 * l + 4) + (d.v (a, 3 * l + 4) + d.u (a, 3 * l + 3))
+              + (e.u (a, 3 * l + 1) + t (a, 3 * l + 1)) := by rw [G1 a (3 * l + 2)]; abel
+        _ = s (a, 3 * l + 3) + e.v (a, 3 * l + 4) + d.v (a, 3 * l + 4)
+              + (e.u (a, 3 * l + 1) + t (a, 3 * l + 1) + d.u (a, 3 * l + 3)) := by abel
+
+/-! ### Stage 1d of Lemma 3.7: regrouping a braiding along a family of position blocks -/
+
+theorem mem_lep {S : Set (ι × ℕ)} {p : ι × ℕ} :
+    p ∈ lep S ↔ p ∈ S ∧ ∀ q, bsucc q = p → q ∉ S := Iff.rfl
+
+theorem mem_rep {S : Set (ι × ℕ)} {p : ι × ℕ} : p ∈ rep S ↔ p ∈ S ∧ bsucc p ∉ S := Iff.rfl
+
+theorem lep_subset {S : Set (ι × ℕ)} : lep S ⊆ S := fun _ h => h.1
+
+theorem rep_subset {S : Set (ι × ℕ)} : rep S ⊆ S := fun _ h => h.1
+
+theorem bsucc_ne_self (p : ι × ℕ) : p ≠ bsucc p := fun hp =>
+  Nat.succ_ne_self p.2 (congrArg Prod.snd hp).symm
+
+/-- The image of `A ∖ rep A` under the successor map is `A ∖ lep A`. -/
+theorem image_bsucc_diff_rep (A : Set (ι × ℕ)) : bsucc '' (A \ rep A) = A \ lep A := by
+  apply Set.Subset.antisymm
+  · rintro ρ ⟨ν, ⟨hν, hνrep⟩, rfl⟩
+    have hbs : bsucc ν ∈ A := by
+      by_contra hcon
+      exact hνrep (mem_rep.mpr ⟨hν, hcon⟩)
+    exact ⟨hbs, fun hlep => hlep.2 ν rfl hν⟩
+  · rintro ρ ⟨hρ, hρlep⟩
+    have hex : ∃ q, bsucc q = ρ ∧ q ∈ A := by
+      by_contra hno
+      exact hρlep (mem_lep.mpr ⟨hρ, fun q hq hqA => hno ⟨q, hq, hqA⟩⟩)
+    obtain ⟨q, hq, hqA⟩ := hex
+    refine ⟨q, ⟨hqA, fun hqrep => hqrep.2 ?_⟩, hq⟩
+    rw [hq]; exact hρ
+
+/-- Stage 1d of Lemma 3.7.  Given a braiding of `x` and `y` and a family `A` of finite sets of
+positions that partitions the position set, is closed under the successor-linking condition
+(`hsucc`) and left-saturated in the local sense (`hloc`), the `A`-regrouped partitions again
+carry a braiding of `x` and `y`, with the braiding families given by the paper's formulas
+`u_μ = Σ_{ν ∈ 𝒜_μ} a_ν + Σ_{ν ∈ 𝒜_μ ∖ lep 𝒜_μ} b_ν` and `v_μ = Σ_{ν ∈ lep 𝒜_μ} b_ν`. -/
+theorem exists_repartition (d : BraidingData ℵ₀ x y) (A : ι × ℕ → Set (ι × ℕ))
+    (hfin : ∀ μ, (A μ).Finite)
+    (hdisj : ∀ μ ρ, μ ≠ ρ → Disjoint (A μ) (A ρ))
+    (hcov : (⋃ μ, A μ) = Set.univ)
+    (hsucc : ∀ μ, repSucc (A μ) ⊆ A (bsucc μ))
+    (hloc : ∀ μ ν, bsucc ν ∈ A μ → ν ∉ A μ → ∃ ρ, μ = bsucc ρ ∧ ν ∈ rep (A ρ)) :
+    ∃ e : BraidingData ℵ₀ x y,
+      (∀ μ, e.I μ = regroup d.I A μ) ∧ (∀ μ, e.J μ = regroup d.J A μ) := by
+  classical
+  have dIfin : ∀ p, (d.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.I_small p)
+  have dJfin : ∀ p, (d.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.J_small p)
+  have dIsum : ∀ p, ∑ᶠ i ∈ d.I p, x i = d.v p + d.u p := fun p => by
+    rw [← LMonoid.lsumOf_eq_finsum (d.I_small p)]; exact d.hI p
+  have dJsum : ∀ p, ∑ᶠ j ∈ d.J p, y j = d.v (bsucc p) + d.u p := fun p => by
+    rw [← LMonoid.lsumOf_eq_finsum (d.J_small p)]; exact d.hJ p
+  -- `d.v` vanishes at every position with zero offset
+  have hvzero : ∀ ν : ι × ℕ, ν.2 = 0 → d.v ν = 0 := by
+    intro ν h2
+    rw [show ν = (ν.1, 0) from Prod.ext_iff.mpr ⟨rfl, h2⟩]
+    exact d.v_limit _
+  -- the successors of right endpoints of `A μ` are exactly the non-limit left endpoints of
+  -- `A (bsucc μ)`
+  have K5a : ∀ μ, repSucc (A μ) ⊆ lep (A (bsucc μ)) := by
+    rintro μ ρ ⟨ν, hν, rfl⟩
+    refine mem_lep.mpr ⟨hsucc μ ⟨ν, hν, rfl⟩, ?_⟩
+    intro q hq hqA
+    rw [bsucc_injective hq] at hqA
+    exact Set.disjoint_left.mp (hdisj μ (bsucc μ) (bsucc_ne_self μ)) hν.1 hqA
+  have K5b : ∀ (μ : ι × ℕ) (ρ : ι × ℕ), ρ ∈ lep (A (bsucc μ)) → ρ.2 ≠ 0 →
+      ρ ∈ repSucc (A μ) := by
+    intro μ ρ hρ hρ2
+    obtain ⟨b, n⟩ := ρ
+    cases n with
+    | zero => exact absurd rfl hρ2
+    | succ m =>
+      have hnot : (b, m) ∉ A (bsucc μ) := hρ.2 (b, m) rfl
+      obtain ⟨σ, hσ, hνσ⟩ := hloc (bsucc μ) (b, m) hρ.1 hnot
+      rw [← bsucc_injective hσ] at hνσ
+      exact ⟨(b, m), hνσ, rfl⟩
+  -- at limit positions all left endpoints are limit positions
+  have K6 : ∀ (a : ι) (ν : ι × ℕ), ν ∈ lep (A (a, 0)) → ν.2 = 0 := by
+    intro a ν hν
+    by_contra hcon
+    obtain ⟨b, n⟩ := ν
+    cases n with
+    | zero => exact hcon rfl
+    | succ m =>
+      obtain ⟨σ, hσ, -⟩ := hloc (a, 0) (b, m) hν.1 (hν.2 (b, m) rfl)
+      exact absurd (congrArg Prod.snd hσ) (by simp [bsucc])
+  -- the braiding families
+  obtain ⟨v, hv⟩ : ∃ v : ι × ℕ → X, ∀ μ, v μ = ∑ᶠ ν ∈ lep (A μ), d.v ν := ⟨_, fun _ => rfl⟩
+  obtain ⟨u, hu⟩ : ∃ u : ι × ℕ → X,
+      ∀ μ, u μ = (∑ᶠ ν ∈ A μ, d.u ν) + ∑ᶠ ν ∈ A μ \ lep (A μ), d.v ν := ⟨_, fun _ => rfl⟩
+  have hsplitv : ∀ μ, ∑ᶠ ν ∈ A μ, d.v ν = v μ + ∑ᶠ ν ∈ A μ \ lep (A μ), d.v ν := by
+    intro μ
+    rw [hv μ]
+    exact finsum_mem_split d.v lep_subset (hfin μ)
+  refine ⟨BraidingData.mk_finsum (regroup d.I A) (regroup d.J A)
+    (fun p => regroup_finite dIfin (hfin p)) (fun p => regroup_finite dJfin (hfin p))
+    (fun p q hpq => regroup_disjoint d.I_disjoint hdisj hpq)
+    (fun p q hpq => regroup_disjoint d.J_disjoint hdisj hpq)
+    (regroup_cover d.I_cover hcov) (regroup_cover d.J_cover hcov) u v ?_ ?_ ?_,
+    fun _ => rfl, fun _ => rfl⟩
+  · -- `v` vanishes at limit positions
+    intro a
+    rw [hv]
+    exact finsum_mem_eq_zero_of_forall_eq_zero fun ν hν => hvzero ν (K6 a ν hν)
+  · -- `Σ_{I μ} x = v μ + u μ`
+    intro μ
+    rw [regroup_finsum d.I_disjoint dIfin (hfin μ) x]
+    simp only [dIsum]
+    rw [finsum_mem_add_distrib (hfin μ), hsplitv μ, hu μ]
+    abel
+  · -- `Σ_{J μ} y = v (bsucc μ) + u μ`
+    intro μ
+    rw [regroup_finsum d.J_disjoint dJfin (hfin μ) y]
+    simp only [dJsum]
+    rw [finsum_mem_add_distrib (hfin μ)]
+    have himg : ∑ᶠ ν ∈ A μ, d.v (bsucc ν) = ∑ᶠ ρ ∈ bsucc '' A μ, d.v ρ :=
+      (finsum_mem_image bsucc_injective.injOn).symm
+    have himgsplit : bsucc '' A μ = repSucc (A μ) ∪ (A μ \ lep (A μ)) := by
+      rw [← image_bsucc_diff_rep (A μ), repSucc, ← Set.image_union,
+        Set.union_sdiff_cancel rep_subset]
+    have hdisjimg : Disjoint (repSucc (A μ)) (A μ \ lep (A μ)) := by
+      rw [← image_bsucc_diff_rep (A μ), repSucc]
+      refine Set.disjoint_image_of_injective bsucc_injective ?_
+      rw [Set.disjoint_left]
+      intro ν hν hν'
+      exact hν'.2 hν
+    have hrepfin : (repSucc (A μ)).Finite := (hfin μ).subset rep_subset |>.image _
+    have hrep : ∑ᶠ ρ ∈ repSucc (A μ), d.v ρ = v (bsucc μ) := by
+      rw [hv (bsucc μ)]
+      refine (finsum_mem_eq_of_diff_eq_zero (K5a μ)
+        ((hfin (bsucc μ)).subset lep_subset) ?_).symm
+      intro ρ hρ
+      refine hvzero ρ ?_
+      by_contra hcon
+      exact hρ.2 (K5b μ ρ hρ.1 hcon)
+    rw [himg, himgsplit, finsum_mem_union hdisjimg hrepfin
+      (((hfin μ).sdiff (t := lep (A μ)))), hrep, hu μ]
+    abel
+
+/-! ### Stage 1c of Lemma 3.7: the transfinite recursion
+
+The recursion of Lemma 3.7 constructs, at each position `μ` of the limit well-order, a finite
+set `𝒜_μ` of positions of the first braiding and a finite set `ℬ_μ` of positions of the second.
+Both are built by the same mechanism: take the left-saturation closure (relative to the
+positions already used) of a seed consisting of
+
+* the positions needed to cover the residual indices (`C μ`),
+* the successors of the right endpoints of the previous step (successor linking), and
+* the position `μ` itself, if it has not been used yet (this forces exhaustion). -/
+
+/-- The positions used strictly before `μ`. -/
+def usedBefore (A : ι × ℕ → Set (ι × ℕ)) (μ : ι × ℕ) : Set (ι × ℕ) :=
+  {ν | ∃ ρ, ∃ _ : kOrd ι ρ μ, ν ∈ A ρ}
+
+/-- The positions added at the immediately preceding step (empty at limit positions). -/
+def prevOf (A : ι × ℕ → Set (ι × ℕ)) (μ : ι × ℕ) : Set (ι × ℕ) :=
+  if μ.2 = 0 then ∅ else A (μ.1, μ.2 - 1)
+
+theorem mem_usedBefore {A : ι × ℕ → Set (ι × ℕ)} {μ ν : ι × ℕ} :
+    ν ∈ usedBefore A μ ↔ ∃ ρ, kOrd ι ρ μ ∧ ν ∈ A ρ :=
+  exists_congr fun _ => exists_prop
+
+theorem mem_biUnion_iff {P : ι × ℕ → Set ι} {S : Set (ι × ℕ)} {i : ι} :
+    i ∈ (⋃ ν ∈ S, P ν) ↔ ∃ ν ∈ S, i ∈ P ν := by
+  simp only [Set.mem_iUnion, exists_prop]
+
+theorem kOrd_irrefl {p : ι × ℕ} (h : kOrd ι p p) : False := kOrd_wf.asymmetric p p h h
+
+theorem kOrd_trans {p q r : ι × ℕ} (h1 : kOrd ι p q) (h2 : kOrd ι q r) : kOrd ι p r :=
+  _root_.trans h1 h2
+
+theorem kOrd_pred {μ : ι × ℕ} (h : μ.2 ≠ 0) : kOrd ι (μ.1, μ.2 - 1) μ := by
+  rw [kOrd_iff]
+  exact Or.inr ⟨rfl, by omega⟩
+
+theorem bsucc_prev {μ : ι × ℕ} (h : μ.2 ≠ 0) : bsucc (μ.1, μ.2 - 1) = μ := by
+  obtain ⟨a, n⟩ := μ
+  cases n with
+  | zero => exact absurd rfl h
+  | succ m => rfl
+
+/-- Anything strictly below `bsucc μ` is either below `μ` or equal to `μ`. -/
+theorem kOrd_lt_bsucc_iff {ρ μ : ι × ℕ} : kOrd ι ρ (bsucc μ) ↔ kOrd ι ρ μ ∨ ρ = μ := by
+  constructor
+  · intro h
+    rcases trichotomous_of (kOrd ι) ρ μ with h' | h' | h'
+    · exact Or.inl h'
+    · exact Or.inr h'
+    · exact absurd (kOrd_not_between h' h) not_false
+  · rintro (h | rfl)
+    · exact kOrd_trans h (kOrd_bsucc μ)
+    · exact kOrd_bsucc ρ
+
+theorem usedBefore_bsucc (A : ι × ℕ → Set (ι × ℕ)) (μ : ι × ℕ) :
+    usedBefore A (bsucc μ) = usedBefore A μ ∪ A μ := by
+  apply Set.Subset.antisymm
+  · intro ν hν
+    obtain ⟨ρ, hρ, hρA⟩ := mem_usedBefore.mp hν
+    rcases kOrd_lt_bsucc_iff.mp hρ with h | rfl
+    · exact Or.inl (mem_usedBefore.mpr ⟨ρ, h, hρA⟩)
+    · exact Or.inr hρA
+  · rintro ν (hν | hν)
+    · obtain ⟨ρ, hρ, hρA⟩ := mem_usedBefore.mp hν
+      exact mem_usedBefore.mpr ⟨ρ, kOrd_trans hρ (kOrd_bsucc μ), hρA⟩
+    · exact mem_usedBefore.mpr ⟨μ, kOrd_bsucc μ, hν⟩
+
+theorem usedBefore_mono {A : ι × ℕ → Set (ι × ℕ)} {ρ μ : ι × ℕ} (h : kOrd ι ρ μ) :
+    usedBefore A ρ ⊆ usedBefore A μ := by
+  intro ν hν
+  obtain ⟨σ, hσ, hσA⟩ := mem_usedBefore.mp hν
+  exact mem_usedBefore.mpr ⟨σ, kOrd_trans hσ h, hσA⟩
+
+theorem subset_usedBefore {A : ι × ℕ → Set (ι × ℕ)} {ρ μ : ι × ℕ} (h : kOrd ι ρ μ) :
+    A ρ ⊆ usedBefore A μ := fun _ hν => mem_usedBefore.mpr ⟨ρ, h, hν⟩
+
+theorem prevOf_of_zero (A : ι × ℕ → Set (ι × ℕ)) {μ : ι × ℕ} (h : μ.2 = 0) :
+    prevOf A μ = ∅ := by
+  unfold prevOf; rw [if_pos h]
+
+theorem prevOf_of_ne_zero (A : ι × ℕ → Set (ι × ℕ)) {μ : ι × ℕ} (h : μ.2 ≠ 0) :
+    prevOf A μ = A (μ.1, μ.2 - 1) := by
+  unfold prevOf; rw [if_neg h]
+
+theorem prevOf_bsucc (A : ι × ℕ → Set (ι × ℕ)) (μ : ι × ℕ) : prevOf A (bsucc μ) = A μ := by
+  rw [prevOf_of_ne_zero A (bsucc_snd_ne_zero μ)]
+  congr 1
+
+theorem prevOf_finite {A : ι × ℕ → Set (ι × ℕ)} {μ : ι × ℕ}
+    (h : ∀ ρ, kOrd ι ρ μ → (A ρ).Finite) : (prevOf A μ).Finite := by
+  by_cases hμ : μ.2 = 0
+  · rw [prevOf_of_zero A hμ]; exact Set.finite_empty
+  · rw [prevOf_of_ne_zero A hμ]; exact h _ (kOrd_pred hμ)
+
+theorem biUnion_disjoint {P : ι × ℕ → Set ι} (hP : ∀ ν ρ, ν ≠ ρ → Disjoint (P ν) (P ρ))
+    {S T : Set (ι × ℕ)} (hST : Disjoint S T) : Disjoint (⋃ ν ∈ S, P ν) (⋃ ν ∈ T, P ν) := by
+  rw [Set.disjoint_left]
+  intro i hi hj
+  obtain ⟨ν, hν, hiν⟩ := mem_biUnion_iff.mp hi
+  obtain ⟨ρ, hρ, hiρ⟩ := mem_biUnion_iff.mp hj
+  have hνρ : ν = ρ := by
+    by_contra hne
+    exact Set.disjoint_left.mp (hP ν ρ hne) hiν hiρ
+  subst hνρ
+  exact Set.disjoint_left.mp hST hν hρ
+
+/-- The shape of the families constructed by the recursion of Lemma 3.7. -/
+structure IsSatRec (A C : ι × ℕ → Set (ι × ℕ)) : Prop where
+  finite : ∀ μ, (A μ).Finite
+  seed_disj : ∀ μ, Disjoint (C μ) (usedBefore A μ)
+  eq : ∀ μ, A μ = satClosure (usedBefore A μ)
+    (C μ ∪ repSucc (prevOf A μ) ∪ ({μ} \ usedBefore A μ))
+
+namespace IsSatRec
+
+variable {A C : ι × ℕ → Set (ι × ℕ)}
+
+theorem seed_subset (h : IsSatRec A C) (μ : ι × ℕ) :
+    C μ ∪ repSucc (prevOf A μ) ∪ ({μ} \ usedBefore A μ) ⊆ A μ := by
+  rw [h.eq μ]; exact subset_satClosure _ _
+
+theorem leftSat (h : IsSatRec A C) (μ : ι × ℕ) : LeftSaturated (A μ) (usedBefore A μ) := by
+  rw [h.eq μ]; exact leftSaturated_satClosure _ _
+
+theorem succ_subset (h : IsSatRec A C) (μ : ι × ℕ) : repSucc (A μ) ⊆ A (bsucc μ) := by
+  refine subset_trans ?_ (h.seed_subset (bsucc μ))
+  rw [prevOf_bsucc]
+  exact fun p hp => Or.inl (Or.inr hp)
+
+theorem cover (h : IsSatRec A C) : (⋃ μ, A μ) = Set.univ := by
+  apply Set.eq_univ_of_forall
+  intro ν
+  by_cases hν : ν ∈ usedBefore A ν
+  · obtain ⟨ρ, -, hρ⟩ := mem_usedBefore.mp hν
+    exact Set.mem_iUnion.mpr ⟨ρ, hρ⟩
+  · exact Set.mem_iUnion.mpr ⟨ν, h.seed_subset ν (Or.inr ⟨rfl, hν⟩)⟩
+
+/-- Each step is disjoint from all earlier steps.  This is where the left-saturation invariant
+is used: a successor `ν + 1` seeded into step `μ` because `ν` is a right endpoint of step `μ - 1`
+cannot already have been used earlier, since an earlier step containing `ν + 1` would, by left
+saturation, have had to contain `ν` as well. -/
+theorem disj (h : IsSatRec A C) (μ : ι × ℕ) : Disjoint (A μ) (usedBefore A μ) := by
+  refine kOrd_wf.induction (C := fun μ => Disjoint (A μ) (usedBefore A μ)) μ ?_
+  clear μ
+  intro μ IH
+  have hpair : ∀ ρ σ, kOrd ι ρ μ → kOrd ι σ μ → ρ ≠ σ → Disjoint (A ρ) (A σ) := by
+    intro ρ σ hρ hσ hne
+    rcases trichotomous_of (kOrd ι) ρ σ with hlt | heq | hgt
+    · exact ((IH σ hσ).mono_right (subset_usedBefore hlt)).symm
+    · exact absurd heq hne
+    · exact (IH ρ hρ).mono_right (subset_usedBefore hgt)
+  rw [h.eq μ]
+  refine satClosure_disjoint ?_
+  rw [Set.disjoint_left]
+  intro p hp hpU
+  rcases hp with (hp | hp) | hp
+  · exact Set.disjoint_left.mp (h.seed_disj μ) hp hpU
+  · obtain ⟨ν, hν, rfl⟩ := hp
+    have hμ2 : μ.2 ≠ 0 := by
+      intro h0
+      rw [prevOf_of_zero A h0] at hν
+      exact Set.notMem_empty ν hν.1
+    rw [prevOf_of_ne_zero A hμ2] at hν
+    have hμ'μ : kOrd ι (μ.1, μ.2 - 1) μ := kOrd_pred hμ2
+    obtain ⟨ρ, hρ, hρA⟩ := mem_usedBefore.mp hpU
+    by_cases hcase : ρ = (μ.1, μ.2 - 1)
+    · rw [hcase] at hρA; exact hν.2 hρA
+    · have hνρ : ν ∈ usedBefore A ρ := by
+        by_contra hcon
+        exact Set.disjoint_left.mp (hpair ρ (μ.1, μ.2 - 1) hρ hμ'μ hcase)
+          (h.leftSat ρ (bsucc ν) ν rfl hρA hcon) hν.1
+      obtain ⟨σ, hσ, hσA⟩ := mem_usedBefore.mp hνρ
+      have hσμ' : σ = (μ.1, μ.2 - 1) := by
+        by_contra hcon
+        exact Set.disjoint_left.mp (hpair σ (μ.1, μ.2 - 1) (kOrd_trans hσ hρ) hμ'μ hcon)
+          hσA hν.1
+      rw [hσμ'] at hσ
+      exact kOrd_not_between hσ (by rw [bsucc_prev hμ2]; exact hρ)
+  · exact hp.2 hpU
+
+theorem pairwise (h : IsSatRec A C) (μ ρ : ι × ℕ) (hne : μ ≠ ρ) : Disjoint (A μ) (A ρ) := by
+  rcases trichotomous_of (kOrd ι) μ ρ with hlt | heq | hgt
+  · exact ((h.disj ρ).mono_right (subset_usedBefore hlt)).symm
+  · exact absurd heq hne
+  · exact (h.disj μ).mono_right (subset_usedBefore hgt)
+
+/-- The local form of left saturation used in Stage 1d: if a successor position lies in step `μ`
+but its predecessor does not, then `μ` is a successor step and the predecessor is a right
+endpoint of the preceding step. -/
+theorem loc (h : IsSatRec A C) (μ ν : ι × ℕ) (h1 : bsucc ν ∈ A μ) (h2 : ν ∉ A μ) :
+    ∃ ρ, μ = bsucc ρ ∧ ν ∈ rep (A ρ) := by
+  have hνU : ν ∈ usedBefore A μ := by
+    by_contra hcon
+    exact h2 (h.leftSat μ (bsucc ν) ν rfl h1 hcon)
+  obtain ⟨ρ, hρ, hρA⟩ := mem_usedBefore.mp hνU
+  have hμρ : μ ≠ ρ := fun heq => kOrd_irrefl (heq ▸ hρ)
+  have hbne : bsucc ν ∉ A ρ := fun hmem =>
+    Set.disjoint_left.mp (h.pairwise μ ρ hμρ) h1 hmem
+  have hmemrep : ν ∈ rep (A ρ) := mem_rep.mpr ⟨hρA, hbne⟩
+  refine ⟨ρ, ?_, hmemrep⟩
+  by_contra hne
+  exact Set.disjoint_left.mp (h.pairwise μ (bsucc ρ) hne) h1
+    (h.succ_subset ρ ⟨ν, hmemrep, rfl⟩)
+
+end IsSatRec
+
+theorem biUnion_mono {P : ι × ℕ → Set ι} {S T : Set (ι × ℕ)} (h : S ⊆ T) :
+    (⋃ ν ∈ S, P ν) ⊆ ⋃ ν ∈ T, P ν := by
+  intro i hi
+  obtain ⟨ν, hν, hiν⟩ := mem_biUnion_iff.mp hi
+  exact Set.mem_biUnion (h hν) hiν
+
+/-! #### The recursion itself -/
+
+/-- One step of Lemma 3.7's recursion: given the values at all earlier positions, the sets of
+positions added at `μ` on the two sides.  On the first side the seed covers the indices of the
+previous step's `d₂.I`-piece that are not yet covered; on the second side it covers the indices
+of the `d₁.J`-piece just constructed that are not yet covered.  Both seeds also contain the
+successors of the previous step's right endpoints and the position `μ` itself, if unused. -/
+noncomputable def transStep (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z)
+    (μ : ι × ℕ) (F : ∀ ρ, kOrd ι ρ μ → Set (ι × ℕ) × Set (ι × ℕ)) :
+    Set (ι × ℕ) × Set (ι × ℕ) :=
+  let Ua : Set (ι × ℕ) := {ν | ∃ ρ, ∃ h : kOrd ι ρ μ, ν ∈ (F ρ h).1}
+  let Ub : Set (ι × ℕ) := {ν | ∃ ρ, ∃ h : kOrd ι ρ μ, ν ∈ (F ρ h).2}
+  let pA : Set (ι × ℕ) := if h : μ.2 = 0 then ∅ else (F (μ.1, μ.2 - 1) (kOrd_pred h)).1
+  let pB : Set (ι × ℕ) := if h : μ.2 = 0 then ∅ else (F (μ.1, μ.2 - 1) (kOrd_pred h)).2
+  let 𝒜 : Set (ι × ℕ) := satClosure Ua
+    (blockOf d₁.J d₁.J_cover '' ((⋃ ν ∈ pB, d₂.I ν) \ (⋃ ν ∈ Ua, d₁.J ν))
+      ∪ repSucc pA ∪ ({μ} \ Ua))
+  (𝒜, satClosure Ub
+    (blockOf d₂.I d₂.I_cover '' ((⋃ ν ∈ 𝒜, d₁.J ν) \ (⋃ ν ∈ Ub, d₂.I ν))
+      ∪ repSucc pB ∪ ({μ} \ Ub)))
+
+/-- The transfinite recursion of Lemma 3.7, run along the limit well-order `kOrd`. -/
+noncomputable def transFam (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) :
+    ι × ℕ → Set (ι × ℕ) × Set (ι × ℕ) :=
+  (kOrd_wf (ι := ι)).fix (transStep d₁ d₂)
+
+/-- The positions of the first braiding used at step `μ` (the paper's `𝒜_μ`). -/
+noncomputable def Afam (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) (μ : ι × ℕ) :
+    Set (ι × ℕ) := (transFam d₁ d₂ μ).1
+
+/-- The positions of the second braiding used at step `μ` (the paper's `ℬ_μ`). -/
+noncomputable def Bfam (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) (μ : ι × ℕ) :
+    Set (ι × ℕ) := (transFam d₁ d₂ μ).2
+
+theorem transFam_eq (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) (μ : ι × ℕ) :
+    transFam d₁ d₂ μ = transStep d₁ d₂ μ (fun ρ _ => transFam d₁ d₂ ρ) :=
+  WellFounded.fix_eq _ _ _
+
+theorem Afam_eq (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) (μ : ι × ℕ) :
+    Afam d₁ d₂ μ = satClosure (usedBefore (Afam d₁ d₂) μ)
+      (blockOf d₁.J d₁.J_cover '' ((⋃ ν ∈ prevOf (Bfam d₁ d₂) μ, d₂.I ν)
+          \ (⋃ ν ∈ usedBefore (Afam d₁ d₂) μ, d₁.J ν))
+        ∪ repSucc (prevOf (Afam d₁ d₂) μ) ∪ ({μ} \ usedBefore (Afam d₁ d₂) μ)) := by
+  show (transFam d₁ d₂ μ).1 = _
+  rw [transFam_eq]
+  rfl
+
+theorem Bfam_eq (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) (μ : ι × ℕ) :
+    Bfam d₁ d₂ μ = satClosure (usedBefore (Bfam d₁ d₂) μ)
+      (blockOf d₂.I d₂.I_cover '' ((⋃ ν ∈ Afam d₁ d₂ μ, d₁.J ν)
+          \ (⋃ ν ∈ usedBefore (Bfam d₁ d₂) μ, d₂.I ν))
+        ∪ repSucc (prevOf (Bfam d₁ d₂) μ) ∪ ({μ} \ usedBefore (Bfam d₁ d₂) μ)) := by
+  show (transFam d₁ d₂ μ).2 = _
+  rw [transFam_eq, Afam_eq d₁ d₂ μ]
+  rfl
+
+/-- Both families are finite at every step; this is a simultaneous induction, since the seed on
+the first side involves the previous step of the second family and vice versa. -/
+theorem transFam_finite (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) (μ : ι × ℕ) :
+    (Afam d₁ d₂ μ).Finite ∧ (Bfam d₁ d₂ μ).Finite := by
+  refine kOrd_wf.induction
+    (C := fun μ => (Afam d₁ d₂ μ).Finite ∧ (Bfam d₁ d₂ μ).Finite) μ ?_
+  clear μ
+  intro μ IH
+  have hd₁J : ∀ ν, (d₁.J ν).Finite := fun ν => lt_aleph0_iff_set_finite.mp (d₁.J_small ν)
+  have hd₂I : ∀ ν, (d₂.I ν).Finite := fun ν => lt_aleph0_iff_set_finite.mp (d₂.I_small ν)
+  have hpAfin : (prevOf (Afam d₁ d₂) μ).Finite := prevOf_finite fun ρ hρ => (IH ρ hρ).1
+  have hpBfin : (prevOf (Bfam d₁ d₂) μ).Finite := prevOf_finite fun ρ hρ => (IH ρ hρ).2
+  have hAfin : (Afam d₁ d₂ μ).Finite := by
+    rw [Afam_eq]
+    refine satClosure_finite (Set.Finite.union (Set.Finite.union ?_ ?_) ?_)
+    · exact ((hpBfin.biUnion fun ν _ => hd₂I ν).subset Set.sdiff_subset).image _
+    · exact (hpAfin.subset rep_subset).image _
+    · exact (Set.finite_singleton μ).subset Set.sdiff_subset
+  refine ⟨hAfin, ?_⟩
+  rw [Bfam_eq]
+  refine satClosure_finite (Set.Finite.union (Set.Finite.union ?_ ?_) ?_)
+  · exact ((hAfin.biUnion fun ν _ => hd₁J ν).subset Set.sdiff_subset).image _
+  · exact (hpBfin.subset rep_subset).image _
+  · exact (Set.finite_singleton μ).subset Set.sdiff_subset
+
+theorem isSatRec_A (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) :
+    IsSatRec (Afam d₁ d₂) (fun μ => blockOf d₁.J d₁.J_cover ''
+      ((⋃ ν ∈ prevOf (Bfam d₁ d₂) μ, d₂.I ν)
+        \ (⋃ ν ∈ usedBefore (Afam d₁ d₂) μ, d₁.J ν))) where
+  finite := fun μ => (transFam_finite d₁ d₂ μ).1
+  eq := Afam_eq d₁ d₂
+  seed_disj := by
+    intro μ
+    rw [Set.disjoint_left]
+    rintro p ⟨i, hi, rfl⟩ hpU
+    exact hi.2 (Set.mem_biUnion hpU (mem_blockOf d₁.J d₁.J_cover i))
+
+theorem isSatRec_B (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) :
+    IsSatRec (Bfam d₁ d₂) (fun μ => blockOf d₂.I d₂.I_cover ''
+      ((⋃ ν ∈ Afam d₁ d₂ μ, d₁.J ν)
+        \ (⋃ ν ∈ usedBefore (Bfam d₁ d₂) μ, d₂.I ν))) where
+  finite := fun μ => (transFam_finite d₁ d₂ μ).2
+  eq := Bfam_eq d₁ d₂
+  seed_disj := by
+    intro μ
+    rw [Set.disjoint_left]
+    rintro p ⟨i, hi, rfl⟩ hpU
+    exact hi.2 (Set.mem_biUnion hpU (mem_blockOf d₂.I d₂.I_cover i))
+
+/-! #### From the recursion to Lemma 3.7 -/
+
+/-- The conclusion of Lemma 3.7, in the local form needed for Lemma 3.8, from the abstract
+properties of the two families constructed by the recursion. -/
+theorem aligned_of_isSatRec (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z)
+    (A B CA CB : ι × ℕ → Set (ι × ℕ)) (hRA : IsSatRec A CA) (hRB : IsSatRec B CB)
+    (hCA : ∀ μ, CA μ = blockOf d₁.J d₁.J_cover ''
+      ((⋃ ν ∈ prevOf B μ, d₂.I ν) \ (⋃ ν ∈ usedBefore A μ, d₁.J ν)))
+    (hCB : ∀ μ, CB μ = blockOf d₂.I d₂.I_cover ''
+      ((⋃ ν ∈ A μ, d₁.J ν) \ (⋃ ν ∈ usedBefore B μ, d₂.I ν))) :
+    ∃ (e₁ : BraidingData ℵ₀ x y) (e₂ : BraidingData ℵ₀ y z),
+      (∀ p, e₂.I p ⊆ e₁.J p ∪ e₁.J (bsucc p)) ∧
+      (∀ p, e₁.J (bsucc p) ⊆ e₂.I p ∪ e₂.I (bsucc p)) ∧
+      (∀ a : ι, e₁.J (a, 0) ⊆ e₂.I (a, 0)) := by
+  classical
+  obtain ⟨e₁, he₁I, he₁J⟩ := exists_repartition d₁ A hRA.finite hRA.pairwise hRA.cover
+    hRA.succ_subset hRA.loc
+  obtain ⟨e₂, he₂I, he₂J⟩ := exists_repartition d₂ B hRB.finite hRB.pairwise hRB.cover
+    hRB.succ_subset hRB.loc
+  -- the covering properties built into the seeds
+  have hcovA : ∀ μ, ((⋃ ν ∈ prevOf B μ, d₂.I ν) \ (⋃ ν ∈ usedBefore A μ, d₁.J ν))
+      ⊆ ⋃ ν ∈ A μ, d₁.J ν := by
+    intro μ i hi
+    have hmem : blockOf d₁.J d₁.J_cover i ∈ A μ := by
+      refine hRA.seed_subset μ (Or.inl (Or.inl ?_))
+      rw [hCA μ]
+      exact Set.mem_image_of_mem _ hi
+    exact Set.mem_biUnion hmem (mem_blockOf d₁.J d₁.J_cover i)
+  have hcovB : ∀ μ, ((⋃ ν ∈ A μ, d₁.J ν) \ (⋃ ν ∈ usedBefore B μ, d₂.I ν))
+      ⊆ ⋃ ν ∈ B μ, d₂.I ν := by
+    intro μ i hi
+    have hmem : blockOf d₂.I d₂.I_cover i ∈ B μ := by
+      refine hRB.seed_subset μ (Or.inl (Or.inl ?_))
+      rw [hCB μ]
+      exact Set.mem_image_of_mem _ hi
+    exact Set.mem_biUnion hmem (mem_blockOf d₂.I d₂.I_cover i)
+  -- each step's indices are disjoint from those of all earlier steps
+  have hdA : ∀ μ, Disjoint (⋃ ν ∈ A μ, d₁.J ν) (⋃ ν ∈ usedBefore A μ, d₁.J ν) :=
+    fun μ => biUnion_disjoint d₁.J_disjoint (hRA.disj μ)
+  have hdB : ∀ μ, Disjoint (⋃ ν ∈ B μ, d₂.I ν) (⋃ ν ∈ usedBefore B μ, d₂.I ν) :=
+    fun μ => biUnion_disjoint d₂.I_disjoint (hRB.disj μ)
+  have hVA : ∀ μ, (⋃ ν ∈ usedBefore A (bsucc μ), d₁.J ν)
+      = (⋃ ν ∈ usedBefore A μ, d₁.J ν) ∪ (⋃ ν ∈ A μ, d₁.J ν) := by
+    intro μ; rw [usedBefore_bsucc]; exact Set.biUnion_union _ _ _
+  have hVB : ∀ μ, (⋃ ν ∈ usedBefore B (bsucc μ), d₂.I ν)
+      = (⋃ ν ∈ usedBefore B μ, d₂.I ν) ∪ (⋃ ν ∈ B μ, d₂.I ν) := by
+    intro μ; rw [usedBefore_bsucc]; exact Set.biUnion_union _ _ _
+  -- the two interleaving invariants
+  have I1 : ∀ μ, (⋃ ν ∈ usedBefore A μ, d₁.J ν) ⊆ ⋃ ν ∈ usedBefore B μ, d₂.I ν := by
+    intro μ i hi
+    obtain ⟨ν, hν, hiν⟩ := mem_biUnion_iff.mp hi
+    obtain ⟨ρ, hρ, hρA⟩ := mem_usedBefore.mp hν
+    have hiJJ : i ∈ ⋃ σ ∈ A ρ, d₁.J σ := Set.mem_biUnion hρA hiν
+    by_cases hc : i ∈ ⋃ σ ∈ usedBefore B ρ, d₂.I σ
+    · exact biUnion_mono (usedBefore_mono hρ) hc
+    · exact biUnion_mono (subset_usedBefore hρ) (hcovB ρ ⟨hiJJ, hc⟩)
+  have I2 : ∀ μ, (⋃ ν ∈ usedBefore B μ, d₂.I ν)
+      ⊆ (⋃ ν ∈ usedBefore A μ, d₁.J ν) ∪ (⋃ ν ∈ prevOf B μ, d₂.I ν) := by
+    intro μ i hi
+    obtain ⟨ν, hν, hiν⟩ := mem_biUnion_iff.mp hi
+    obtain ⟨ρ, hρ, hρB⟩ := mem_usedBefore.mp hν
+    by_cases hbs : kOrd ι (bsucc ρ) μ
+    · have hiP : i ∈ ⋃ σ ∈ prevOf B (bsucc ρ), d₂.I σ := by
+        rw [prevOf_bsucc]; exact Set.mem_biUnion hρB hiν
+      by_cases hc : i ∈ ⋃ σ ∈ usedBefore A (bsucc ρ), d₁.J σ
+      · exact Or.inl (biUnion_mono (usedBefore_mono hbs) hc)
+      · exact Or.inl (biUnion_mono (subset_usedBefore hbs) (hcovA (bsucc ρ) ⟨hiP, hc⟩))
+    · have hμ : μ = bsucc ρ := by
+        rcases trichotomous_of (kOrd ι) (bsucc ρ) μ with h | h | h
+        · exact absurd h hbs
+        · exact h.symm
+        · exact absurd (kOrd_not_between hρ h) not_false
+      refine Or.inr ?_
+      rw [hμ, prevOf_bsucc]
+      exact Set.mem_biUnion hρB hiν
+  refine ⟨e₁, e₂, ?_, ?_, ?_⟩
+  · -- `J'_p ⊆ J_p ∪ J_{p+1}`
+    intro p
+    rw [he₂I p, he₁J p, he₁J (bsucc p)]
+    intro i hi
+    have hiP : i ∈ ⋃ σ ∈ prevOf B (bsucc p), d₂.I σ := by rw [prevOf_bsucc]; exact hi
+    by_cases hc : i ∈ ⋃ σ ∈ usedBefore A (bsucc p), d₁.J σ
+    · rw [hVA p] at hc
+      rcases hc with hc | hc
+      · exact absurd (I1 p hc) (Set.disjoint_left.mp (hdB p) hi)
+      · exact Or.inl hc
+    · exact Or.inr (hcovA (bsucc p) ⟨hiP, hc⟩)
+  · -- `J_{p+1} ⊆ J'_p ∪ J'_{p+1}`
+    intro p
+    rw [he₁J (bsucc p), he₂I p, he₂I (bsucc p)]
+    intro i hi
+    by_cases hc : i ∈ ⋃ σ ∈ usedBefore B (bsucc p), d₂.I σ
+    · rw [hVB p] at hc
+      rcases hc with hc | hc
+      · have hcontra : i ∈ ⋃ σ ∈ usedBefore A (bsucc p), d₁.J σ := by
+          rw [hVA p]
+          rcases I2 p hc with h | h
+          · exact Or.inl h
+          · by_cases hd : i ∈ ⋃ σ ∈ usedBefore A p, d₁.J σ
+            · exact Or.inl hd
+            · exact Or.inr (hcovA p ⟨h, hd⟩)
+        exact absurd hcontra (Set.disjoint_left.mp (hdA (bsucc p)) hi)
+      · exact Or.inl hc
+    · exact Or.inr (hcovB (bsucc p) ⟨hi, hc⟩)
+  · -- `J_μ ⊆ J'_μ` at limit positions
+    intro a
+    rw [he₁J (a, 0), he₂I (a, 0)]
+    intro i hi
+    by_cases hc : i ∈ ⋃ σ ∈ usedBefore B (a, 0), d₂.I σ
+    · rcases I2 (a, 0) hc with h | h
+      · exact absurd h (Set.disjoint_left.mp (hdA (a, 0)) hi)
+      · rw [prevOf_of_zero B rfl] at h
+        simp only [Set.mem_empty_iff_false, Set.iUnion_of_empty, Set.iUnion_empty] at h
+    · exact hcovB (a, 0) ⟨hi, hc⟩
+
+/-- Lemma 3.7 (`λ = ℵ₀`): two braidings sharing the middle family `y` can be replaced by
+braidings whose partitions of `y` interleave block by block. -/
+theorem exists_aligned (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData ℵ₀ y z) :
+    ∃ (e₁ : BraidingData ℵ₀ x y) (e₂ : BraidingData ℵ₀ y z),
+      (∀ p, e₂.I p ⊆ e₁.J p ∪ e₁.J (bsucc p)) ∧
+      (∀ p, e₁.J (bsucc p) ⊆ e₂.I p ∪ e₂.I (bsucc p)) ∧
+      (∀ a : ι, e₁.J (a, 0) ⊆ e₂.I (a, 0)) :=
+  aligned_of_isSatRec d₁ d₂ _ _ _ _ (isSatRec_A d₁ d₂) (isSatRec_B d₁ d₂)
+    (fun _ => rfl) (fun _ => rfl)
+
+/-- Transitivity of the braiding relation for `λ = ℵ₀` (Lemma 3.8). -/
+theorem trans_aleph0 {x y z : ι → X} (hxy : IsBraided ℵ₀ x y) (hyz : IsBraided ℵ₀ y z) :
+    IsBraided ℵ₀ x z := by
+  obtain ⟨d₁⟩ := hxy
+  obtain ⟨d₂⟩ := hyz
+  obtain ⟨e₁, e₂, h1, h2, h3⟩ := exists_aligned d₁ d₂
+  exact of_aligned e₁ e₂ h1 h2 h3
+
+
+end TransAleph0
+
+/-- Combinatorial core of Lemma 3.8 (transitivity), to be proved from the alignment
+construction (Lemma 3.7). -/
+theorem trans_core {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
+    {x y z : ι → X} : IsBraided lam x y → IsBraided lam y z → IsBraided lam x z := by
+  intro hxy hyz
+  by_cases hlam : lam = ℵ₀
+  · subst hlam
+    exact trans_aleph0 hxy hyz
+  · -- The case `λ > ℵ₀` is still open; see `HANDOFF.md`.  The obstruction is that the paper's
+    -- `λ⁻`-intervals require *finite* per-block ranges, while for `λ > ℵ₀` a single step may
+    -- have to touch one block at an infinite (but `< λ`) set of offsets.
+    sorry
 
 /-- Lemma 3.8, transitivity. -/
 @[trans] theorem trans {x y z : ι → X} (hxy : IsBraided lam x y) (hyz : IsBraided lam y z) :
     IsBraided lam x z := by
-  sorry
+  exact trans_core hxy hyz
 
 end IsBraided
 
@@ -411,6 +1791,7 @@ as a `κ`-monoid (`KMonoid.toLMonoid`). -/
 theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
     (h : letI := KMonoid.toLMonoid H hlam hlk; IsBraided lam x y) :
     sumOf (κ := κ) hι x = sumOf (κ := κ) hι y := by
+  letI := KMonoid.toLMonoid H hlam hlk
   obtain ⟨d⟩ := h
   have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
   have hP : #(ι × ℕ) ≤ κ := mk_prod_nat_le hκ hι
@@ -429,9 +1810,6 @@ theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
     funext p
     exact (KMonoid.toLMonoid_lsumOf hlam hlk (d.J_small p)
       (fun j : d.J p => y j)).symm.trans (d.hJ p)
-  rw [hxsum, hysum, KMonoid.sumOf_add hP d.v d.u,
-    KMonoid.sumOf_add hP (fun p => d.v (bsucc p)) d.u]
-  congr 1
   -- The telescoping step: `v` vanishes at the limit elements `(a, 0)`, and `bsucc` is a
   -- bijection onto the non-limit elements, so `Σ v = Σ (v ∘ bsucc)`.
   have hbs : d.v = Function.extend (bsucc (ι := ι)) (fun p => d.v (bsucc p)) 0 := by
@@ -447,11 +1825,18 @@ theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
     | succ m =>
       have hmem : bsucc (a, m) = (a, m + 1) := rfl
       rw [← hmem, bsucc_injective.extend_apply]
-  calc sumOf (κ := κ) hP d.v
-      = sumOf (κ := κ) hP (Function.extend (bsucc (ι := ι)) (fun p => d.v (bsucc p)) 0) := by
-        rw [← hbs]
-    _ = sumOf (κ := κ) hP (fun p => d.v (bsucc p)) :=
-        KMonoid.sumOf_extend hP hP ⟨bsucc, bsucc_injective⟩ _
+  have hvtel : sumOf (κ := κ) hP d.v = sumOf (κ := κ) hP (fun p => d.v (bsucc p)) :=
+    calc sumOf (κ := κ) hP d.v
+        = sumOf (κ := κ) hP (Function.extend (bsucc (ι := ι)) (fun p => d.v (bsucc p)) 0) := by
+          rw [← hbs]
+      _ = sumOf (κ := κ) hP (fun p => d.v (bsucc p)) :=
+          KMonoid.sumOf_extend hP hP ⟨bsucc, bsucc_injective⟩ _
+  refine hxsum.trans (Eq.trans ?_ hysum.symm)
+  calc sumOf (κ := κ) hP (fun p => d.v p + d.u p)
+      = sumOf (κ := κ) hP d.v + sumOf (κ := κ) hP d.u := KMonoid.sumOf_add hP d.v d.u
+    _ = sumOf (κ := κ) hP (fun p => d.v (bsucc p)) + sumOf (κ := κ) hP d.u := by rw [hvtel]
+    _ = sumOf (κ := κ) hP (fun p => d.v (bsucc p) + d.u p) :=
+        (KMonoid.sumOf_add hP (fun p => d.v (bsucc p)) d.u).symm
 
 end Ambient
 
@@ -459,13 +1844,270 @@ section Lemma34
 
 variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
 
-/-- Lemma 3.4(1): families with support of size `< λ` and equal `λ⁻`-sums are braided. -/
+/-- Lemma 3.4(1): families with support of size `< λ` and equal `λ⁻`-sums are braided.
+
+Paper proof: let `I₀ = J₀` be a set of size `< λ` containing both supports, put the whole
+sum there, and distribute the remaining indices arbitrarily among the other pieces.  In the
+`ι × ℕ` normal form we can do the distributing explicitly: the leftover index `i` gets its
+own piece at the slot `(i, 1)`. -/
 theorem isBraided_of_small_support (x y : ι → X)
     (hx : #(Function.support x) < lam) (hy : #(Function.support y) < lam)
     (h : lsumOf (lam := lam) hx (fun i : Function.support x => x i)
         = lsumOf (lam := lam) hy (fun i : Function.support y => y i)) :
     IsBraided lam x y := by
-  sorry
+  classical
+  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
+  rcases isEmpty_or_nonempty ι with hemp | hne
+  · have hxy : x = y := funext fun i => (hemp.false i).elim
+    subst hxy
+    exact IsBraided.refl x
+  obtain ⟨a₀⟩ := hne
+  set S : Set ι := Function.support x ∪ Function.support y with hSdef
+  have hS : #(S : Set ι) < lam := by
+    rw [hSdef]
+    exact lt_of_le_of_lt (Cardinal.mk_union_le _ _) (Cardinal.add_lt_of_lt hlam0 hx hy)
+  have hxS : Function.support x ⊆ S := by rw [hSdef]; exact Set.subset_union_left
+  have hyS : Function.support y ⊆ S := by rw [hSdef]; exact Set.subset_union_right
+  have hx0 : ∀ i, i ∉ S → x i = 0 := fun i hi => by by_contra hc; exact hi (hxS hc)
+  have hy0 : ∀ i, i ∉ S → y i = 0 := fun i hi => by by_contra hc; exact hi (hyS hc)
+  -- One big piece carrying `S`, sitting at the limit slot `(a₀, 0)`; every leftover index
+  -- `i ∉ S` gets the singleton piece `{i}` at the slot `(i, 1)`; all other slots are empty.
+  set I : ι × ℕ → Set ι :=
+    fun p => if p.2 = 0 then (if p.1 = a₀ then S else ∅)
+      else if p.2 = 1 then {p.1} \ S else ∅ with hIdef
+  have hIzero : ∀ a : ι, I (a, 0) = (if a = a₀ then S else ∅) := fun _ => rfl
+  have hIone : ∀ a : ι, I (a, 1) = {a} \ S := fun _ => rfl
+  have hItwo : ∀ (a : ι) (m : ℕ), I (a, m + 2) = ∅ := fun _ _ => rfl
+  have hIa₀ : I (a₀, 0) = S := by rw [hIzero a₀, if_pos rfl]
+  have hIne : ∀ a : ι, a ≠ a₀ → I (a, 0) = ∅ := fun a ha => by rw [hIzero a, if_neg ha]
+  have hIsmall : ∀ p, #(I p) < lam := by
+    rintro ⟨a, n⟩
+    rcases n with _ | _ | m
+    · by_cases ha : a = a₀
+      · subst ha; rw [hIa₀]; exact hS
+      · rw [hIne a ha, Cardinal.mk_eq_zero]; exact Cardinal.aleph0_pos.trans_le hlam0
+    · rw [hIone a]
+      refine lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset Set.sdiff_subset) ?_
+      rw [Cardinal.mk_singleton]
+      exact lt_of_lt_of_le one_lt_aleph0 hlam0
+    · rw [hItwo a m, Cardinal.mk_eq_zero]; exact Cardinal.aleph0_pos.trans_le hlam0
+  -- Membership analysis: a piece is either the big one, or the singleton belonging to its
+  -- own index.
+  have hmem : ∀ (p : ι × ℕ) (i : ι), i ∈ I p →
+      (p = (a₀, 0) ∧ i ∈ S) ∨ (p = (i, 1) ∧ i ∉ S) := by
+    rintro ⟨a, n⟩ i hi
+    rcases n with _ | _ | m
+    · by_cases ha : a = a₀
+      · subst ha; rw [hIa₀] at hi; exact Or.inl ⟨rfl, hi⟩
+      · rw [hIne a ha] at hi; exact absurd hi (by simp)
+    · rw [hIone a] at hi
+      obtain ⟨hia, hiS⟩ := hi
+      have hai : i = a := hia
+      subst hai
+      exact Or.inr ⟨rfl, hiS⟩
+    · rw [hItwo a m] at hi; exact absurd hi (by simp)
+  have hout : ∀ (p : ι × ℕ), p ≠ (a₀, 0) → ∀ i ∈ I p, i ∉ S := by
+    intro p hp i hi
+    rcases hmem p i hi with ⟨hp', _⟩ | ⟨_, hiS⟩
+    · exact absurd hp' hp
+    · exact hiS
+  have hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q) := by
+    intro p q hpq
+    rw [Set.disjoint_left]
+    intro i hip hiq
+    refine hpq ?_
+    rcases hmem p i hip with ⟨hp, hpS⟩ | ⟨hp, hpS⟩ <;>
+      rcases hmem q i hiq with ⟨hq, hqS⟩ | ⟨hq, hqS⟩
+    · rw [hp, hq]
+    · exact absurd hpS hqS
+    · exact absurd hqS hpS
+    · rw [hp, hq]
+  have hIcover : (⋃ p, I p) = Set.univ := by
+    apply Set.eq_univ_of_forall
+    intro i
+    by_cases hi : i ∈ S
+    · exact Set.mem_iUnion.mpr ⟨(a₀, 0), by rw [hIa₀]; exact hi⟩
+    · exact Set.mem_iUnion.mpr ⟨(i, 1), by rw [hIone i]; exact ⟨rfl, hi⟩⟩
+  refine IsBraided.of_partition I I hIdisj hIdisj hIcover hIcover hIsmall hIsmall ?_
+  intro p
+  by_cases hp : p = (a₀, 0)
+  · subst hp
+    rw [LMonoid.lsumOf_of_subset (hIsmall (a₀, 0)) hx (by rw [hIa₀]; exact hxS) x
+        (fun i _ hi => by by_contra hc; exact hi hc),
+      LMonoid.lsumOf_of_subset (hIsmall (a₀, 0)) hy (by rw [hIa₀]; exact hyS) y
+        (fun i _ hi => by by_contra hc; exact hi hc)]
+    exact h
+  · rw [LMonoid.lsumOf_eq_zero (hIsmall p) x (fun i hi => hx0 i (hout p hp i hi)),
+      LMonoid.lsumOf_eq_zero (hIsmall p) y (fun i hi => hy0 i (hout p hp i hi))]
+
+/-- Within a single `ω`-block `a` of a braiding, the parts telescope so that the two
+`λ⁻`-sums over the whole block already agree.  This is the content of Lemma 3.4(4) that
+survives without needing the general alignment machinery of Lemma 3.7, once `λ` is
+uncountable: restricting to one block never needs to compare positions coming from two
+different blocks. -/
+theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
+    {ι : Type u} {x y : ι → X} (d : BraidingData lam x y) (hlam0 : ℵ₀ < lam) (a : ι)
+    (hI : #(⋃ n : ULift.{u} ℕ, d.I (a, n.down) : Set ι) < lam)
+    (hJ : #(⋃ n : ULift.{u} ℕ, d.J (a, n.down) : Set ι) < lam) :
+    lsumOf (lam := lam) hI (fun i : (⋃ n : ULift.{u} ℕ, d.I (a, n.down) : Set ι) => x i)
+      = lsumOf (lam := lam) hJ (fun j : (⋃ n : ULift.{u} ℕ, d.J (a, n.down) : Set ι) => y j) := by
+  set N := ULift.{u} ℕ with hNdef
+  have hNlt : #N < lam := by
+    rw [hNdef, Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0]
+    exact hlam0
+  set bsuccU : N → N := fun n => ULift.up (n.down + 1) with hbsuccUdef
+  have bsuccU_inj : Function.Injective bsuccU := by
+    intro n m h
+    have hnm : n.down + 1 = m.down + 1 := congrArg ULift.down h
+    have hnm' : n.down = m.down := Nat.succ_injective hnm
+    calc n = ULift.up n.down := rfl
+      _ = ULift.up m.down := by rw [hnm']
+      _ = m := rfl
+  have hIdisj' : ∀ p q : N, p ≠ q → Disjoint (d.I (a, p.down)) (d.I (a, q.down)) := by
+    intro p q hpq
+    refine d.I_disjoint (a, p.down) (a, q.down) ?_
+    intro h
+    apply hpq
+    have hd : p.down = q.down := congrArg Prod.snd h
+    calc p = ULift.up p.down := rfl
+      _ = ULift.up q.down := by rw [hd]
+      _ = q := rfl
+  have hJdisj' : ∀ p q : N, p ≠ q → Disjoint (d.J (a, p.down)) (d.J (a, q.down)) := by
+    intro p q hpq
+    refine d.J_disjoint (a, p.down) (a, q.down) ?_
+    intro h
+    apply hpq
+    have hd : p.down = q.down := congrArg Prod.snd h
+    calc p = ULift.up p.down := rfl
+      _ = ULift.up q.down := by rw [hd]
+      _ = q := rfl
+  have step1 := (LMonoid.lsumOf_biUnion_subset (⋃ n : N, d.I (a, n.down))
+    (fun n : N => d.I (a, n.down)) (fun n => Set.subset_iUnion (fun n : N => d.I (a, n.down)) n)
+    hIdisj' rfl hNlt hI (fun n => d.I_small (a, n.down)) x).symm
+  have step2 := (LMonoid.lsumOf_biUnion_subset (⋃ n : N, d.J (a, n.down))
+    (fun n : N => d.J (a, n.down)) (fun n => Set.subset_iUnion (fun n : N => d.J (a, n.down)) n)
+    hJdisj' rfl hNlt hJ (fun n => d.J_small (a, n.down)) y).symm
+  rw [step1, step2]
+  have hIeq : (fun n : N =>
+      lsumOf (lam := lam) (d.I_small (a, n.down)) (fun i : d.I (a, n.down) => x i))
+      = fun n : N => d.v (a, n.down) + d.u (a, n.down) := funext fun n => d.hI (a, n.down)
+  have hJeq : (fun n : N =>
+      lsumOf (lam := lam) (d.J_small (a, n.down)) (fun j : d.J (a, n.down) => y j))
+      = fun n : N => d.v (a, n.down + 1) + d.u (a, n.down) := funext fun n => d.hJ (a, n.down)
+  rw [hIeq, hJeq, LMonoid.lsumOf_add hNlt (fun n => d.v (a, n.down)) (fun n => d.u (a, n.down)),
+    LMonoid.lsumOf_add hNlt (fun n => d.v (a, n.down + 1)) (fun n => d.u (a, n.down))]
+  have hbs : (fun n : N => d.v (a, n.down))
+      = Function.extend bsuccU (fun n : N => d.v (a, n.down + 1)) 0 := by
+    funext n
+    cases hcase : n.down with
+    | zero =>
+      have hnr : ¬ ∃ k : N, bsuccU k = n := by
+        rintro ⟨k, hk⟩
+        have hkd : k.down + 1 = n.down := congrArg ULift.down hk
+        rw [hcase] at hkd
+        exact Nat.succ_ne_zero k.down hkd
+      rw [Function.extend_apply' (fun k : N => d.v (a, k.down + 1)) (0 : N → X) n hnr]
+      exact d.v_limit a
+    | succ m =>
+      have hmem : bsuccU (ULift.up m) = n := by
+        have hd : (bsuccU (ULift.up m)).down = n.down := by
+          show m + 1 = n.down
+          rw [hcase]
+        calc bsuccU (ULift.up m) = ULift.up (bsuccU (ULift.up m)).down := rfl
+          _ = ULift.up n.down := by rw [hd]
+          _ = n := rfl
+      rw [← hmem, bsuccU_inj.extend_apply]
+  have hvtel : lsumOf (lam := lam) hNlt (fun n : N => d.v (a, n.down))
+      = lsumOf (lam := lam) hNlt (fun n : N => d.v (a, n.down + 1)) := by
+    rw [hbs]
+    exact LMonoid.lsumOf_extend hNlt hNlt ⟨bsuccU, bsuccU_inj⟩ (fun n => d.v (a, n.down + 1))
+  rw [hvtel]
+
+/-- Forward implication of Lemma 3.4(4) (uncountable-`λ` collapse of braiding data), used in
+`isBraided_iff_of_ne_aleph0`. -/
+theorem exists_partition_of_isBraided_of_ne_aleph0 {lam : Cardinal.{u}} {X : Type v}
+    [LMonoid lam X] {ι : Type u} (hlam : lam ≠ ℵ₀) (x y : ι → X) :
+    IsBraided lam x y →
+      ∃ (I J : ι × ℕ → Set ι) (hI : ∀ p, #(I p) < lam) (hJ : ∀ p, #(J p) < lam),
+        (∀ p q, p ≠ q → Disjoint (I p) (I q)) ∧ (∀ p q, p ≠ q → Disjoint (J p) (J q)) ∧
+        (⋃ p, I p) = Set.univ ∧ (⋃ p, J p) = Set.univ ∧
+        ∀ p, lsumOf (lam := lam) (hI p) (fun i : I p => x i)
+            = lsumOf (lam := lam) (hJ p) (fun j : J p => y j) := by
+  rintro ⟨d⟩
+  have hlam0 : ℵ₀ < lam := lt_of_le_of_ne (LMonoid.aleph0_le (lam := lam) (X := X)) (Ne.symm hlam)
+  classical
+  set N := ULift.{u} ℕ with hNdef
+  have hNlt : #N < lam := by
+    rw [hNdef, Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0]
+    exact hlam0
+  -- The new partition: at limit slots `(a, 0)` put the whole `ω`-block of `a`; all
+  -- non-limit slots `(a, m+1)` are empty.
+  set I : ι × ℕ → Set ι := fun p => if p.2 = 0 then ⋃ n : N, d.I (p.1, n.down) else ∅ with hIdef
+  set J : ι × ℕ → Set ι := fun p => if p.2 = 0 then ⋃ n : N, d.J (p.1, n.down) else ∅ with hJdef
+  have hIzero : ∀ a : ι, I (a, 0) = ⋃ n : N, d.I (a, n.down) := fun _ => rfl
+  have hJzero : ∀ a : ι, J (a, 0) = ⋃ n : N, d.J (a, n.down) := fun _ => rfl
+  have hInz : ∀ (a : ι) (m : ℕ), I (a, m + 1) = ∅ := fun _ _ => rfl
+  have hJnz : ∀ (a : ι) (m : ℕ), J (a, m + 1) = ∅ := fun _ _ => rfl
+  have hIsmall : ∀ p, #(I p) < lam := by
+    rintro ⟨a, n⟩
+    rcases n with _ | m
+    · rw [hIzero a]
+      exact (Cardinal.card_iUnion_lt_iff_forall_of_isRegular
+        (‹LMonoid lam X›.isRegular) hNlt).mpr (fun n => d.I_small (a, n.down))
+    · rw [hInz a m, Cardinal.mk_eq_zero]
+      exact Cardinal.aleph0_pos.trans_le hlam0.le
+  have hJsmall : ∀ p, #(J p) < lam := by
+    rintro ⟨a, n⟩
+    rcases n with _ | m
+    · rw [hJzero a]
+      exact (Cardinal.card_iUnion_lt_iff_forall_of_isRegular
+        (‹LMonoid lam X›.isRegular) hNlt).mpr (fun n => d.J_small (a, n.down))
+    · rw [hJnz a m, Cardinal.mk_eq_zero]
+      exact Cardinal.aleph0_pos.trans_le hlam0.le
+  have hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q) := by
+    rintro ⟨a, n⟩ ⟨b, m⟩ hpq
+    rcases n with _ | n <;> rcases m with _ | m
+    · rw [hIzero a, hIzero b]
+      have hab : a ≠ b := fun h => hpq (by rw [h])
+      refine Set.disjoint_iUnion_left.mpr (fun n' => Set.disjoint_iUnion_right.mpr (fun m' => ?_))
+      exact d.I_disjoint (a, n'.down) (b, m'.down) (fun h => hab (congrArg Prod.fst h))
+    · rw [hIzero a, hInz b m]; simp
+    · rw [hInz a n, hIzero b]; simp
+    · rw [hInz a n, hInz b m]; simp
+  have hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q) := by
+    rintro ⟨a, n⟩ ⟨b, m⟩ hpq
+    rcases n with _ | n <;> rcases m with _ | m
+    · rw [hJzero a, hJzero b]
+      have hab : a ≠ b := fun h => hpq (by rw [h])
+      refine Set.disjoint_iUnion_left.mpr (fun n' => Set.disjoint_iUnion_right.mpr (fun m' => ?_))
+      exact d.J_disjoint (a, n'.down) (b, m'.down) (fun h => hab (congrArg Prod.fst h))
+    · rw [hJzero a, hJnz b m]; simp
+    · rw [hJnz a n, hJzero b]; simp
+    · rw [hJnz a n, hJnz b m]; simp
+  have hIcover : (⋃ p, I p) = Set.univ := by
+    apply Set.eq_univ_of_forall
+    intro i
+    have hi : i ∈ (⋃ r, d.I r) := d.I_cover ▸ Set.mem_univ i
+    obtain ⟨⟨a, n⟩, hia⟩ := Set.mem_iUnion.mp hi
+    refine Set.mem_iUnion.mpr ⟨(a, 0), ?_⟩
+    rw [hIzero a]
+    exact Set.mem_iUnion.mpr ⟨ULift.up n, hia⟩
+  have hJcover : (⋃ p, J p) = Set.univ := by
+    apply Set.eq_univ_of_forall
+    intro i
+    have hi : i ∈ (⋃ r, d.J r) := d.J_cover ▸ Set.mem_univ i
+    obtain ⟨⟨a, n⟩, hia⟩ := Set.mem_iUnion.mp hi
+    refine Set.mem_iUnion.mpr ⟨(a, 0), ?_⟩
+    rw [hJzero a]
+    exact Set.mem_iUnion.mpr ⟨ULift.up n, hia⟩
+  refine ⟨I, J, hIsmall, hJsmall, hIdisj, hJdisj, hIcover, hJcover, ?_⟩
+  rintro ⟨a, n⟩
+  rcases n with _ | m
+  · exact d.block_lsumOf_eq hlam0 a (hIsmall (a, 0)) (hJsmall (a, 0))
+  · rw [LMonoid.lsumOf_eq_zero (hIsmall (a, m + 1)) x
+        (fun i hi => by rw [hInz a m] at hi; exact hi.elim),
+      LMonoid.lsumOf_eq_zero (hJsmall (a, m + 1)) y
+        (fun j hj => by rw [hJnz a m] at hj; exact hj.elim)]
 
 /-- Lemma 3.4(4): for uncountable `λ` the braiding relation collapses to the much simpler
 condition that the two families admit partitions into pieces of size `< λ` with equal
@@ -477,7 +2119,12 @@ theorem isBraided_iff_of_ne_aleph0 (hlam : lam ≠ ℵ₀) (x y : ι → X) :
         (⋃ p, I p) = Set.univ ∧ (⋃ p, J p) = Set.univ ∧
         ∀ p, lsumOf (lam := lam) (hI p) (fun i : I p => x i)
             = lsumOf (lam := lam) (hJ p) (fun j : J p => y j) := by
-  sorry
+  constructor
+  · intro hxy
+    -- This is Lemma 3.4(4), whose proof in the paper uses transitivity and alignment.
+    exact exists_partition_of_isBraided_of_ne_aleph0 hlam x y hxy
+  · rintro ⟨I, J, hI, hJ, hIdisj, hJdisj, hIcov, hJcov, heq⟩
+    exact IsBraided.of_partition I J hIdisj hJdisj hIcov hJcov hI hJ heq
 
 end Lemma34
 
