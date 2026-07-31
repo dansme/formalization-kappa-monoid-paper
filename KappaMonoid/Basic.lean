@@ -953,6 +953,357 @@ def KGenerates (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Pro
 
 end KMonoid
 
+/-! ### Reconstructing a `κ`-monoid from bare data (Lemma 2.5) -/
+
+/-- "Bare" `κ`-monoid data: a pointed type with a `κ`-indexed summation subject to (A1) and
+(A2) of Definition 2.1, and *no* binary operation.  By Lemma 2.5 the commutative monoid
+structure is determined by this data; `KMonoid.ofBare` reconstructs it. -/
+structure BareKMonoid (κ : Cardinal.{u}) (H : Type v) [Zero H] where
+  /-- `κ` is infinite. -/
+  aleph0_le : ℵ₀ ≤ κ
+  /-- The `κ`-indexed summation. -/
+  ksum : (Idx κ → H) → H
+  /-- (A1). -/
+  ksum_single : ∀ (i₀ : Idx κ) (x : Idx κ → H), (∀ i, i ≠ i₀ → x i = 0) → ksum x = x i₀
+  /-- (A2). -/
+  ksum_sigma : ∀ (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx κ),
+    ksum (fun i => ksum (x i)) = ksum fun k => x (π.symm k).1 (π.symm k).2
+
+/-- The family with value `a` at `p`, value `b` at `q`, and `0` elsewhere. -/
+noncomputable def twoFam {κ : Cardinal.{u}} {H : Type v} [Zero H] (p q : Idx κ) (a b : H) : Idx κ → H :=
+  fun i => if i = p then a else if i = q then b else 0
+
+theorem twoFam_left {κ : Cardinal.{u}} {H : Type v} [Zero H] (p q : Idx κ) (a b : H) :
+    twoFam p q a b p = a := if_pos rfl
+
+theorem twoFam_right {κ : Cardinal.{u}} {H : Type v} [Zero H] {p q : Idx κ} (h : p ≠ q)
+    (a b : H) : twoFam p q a b q = b := by
+  rw [twoFam, if_neg (Ne.symm h), if_pos rfl]
+
+theorem twoFam_other {κ : Cardinal.{u}} {H : Type v} [Zero H] {p q i : Idx κ} (hp : i ≠ p)
+    (hq : i ≠ q) (a b : H) : twoFam p q a b i = 0 := by
+  rw [twoFam, if_neg hp, if_neg hq]
+
+/-- A permutation matching two prescribed pairs of distinct points. -/
+theorem exists_equiv_two {α : Type*} {p₁ p₂ q₁ q₂ : α} (hp : p₁ ≠ p₂) (hq : q₁ ≠ q₂) :
+    ∃ π : α ≃ α, π p₁ = q₁ ∧ π p₂ = q₂ := by
+  classical
+  set σ₁ : α ≃ α := Equiv.swap p₁ q₁ with hσ₁
+  have h1 : σ₁ p₁ = q₁ := Equiv.swap_apply_left p₁ q₁
+  have h2 : σ₁ p₂ ≠ q₁ := fun hc => hp (σ₁.injective (h1.trans hc.symm))
+  refine ⟨σ₁.trans (Equiv.swap (σ₁ p₂) q₂), ?_, ?_⟩
+  · show Equiv.swap (σ₁ p₂) q₂ (σ₁ p₁) = q₁
+    rw [h1, Equiv.swap_apply_of_ne_of_ne (Ne.symm h2) hq]
+  · show Equiv.swap (σ₁ p₂) q₂ (σ₁ p₂) = q₂
+    exact Equiv.swap_apply_left _ _
+
+namespace BareKMonoid
+
+variable {κ : Cardinal.{u}} {H : Type v} [Zero H] (B : BareKMonoid κ H)
+
+theorem ksum_zero : B.ksum (fun _ => 0) = 0 := by
+  obtain ⟨i₀⟩ := nonempty_Idx B.aleph0_le
+  exact B.ksum_single i₀ _ fun _ _ => rfl
+
+/-- (A3), Lemma 2.5, for bare data: `Σ` is invariant under permutations of the index set. -/
+theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) : B.ksum x = B.ksum (x ∘ π) := by
+  obtain ⟨j₀⟩ := nonempty_Idx B.aleph0_le
+  set y : Idx κ → Idx κ → H := fun i j => if j = j₀ then x i else 0 with hy
+  set w : Idx κ → Idx κ → H := fun i j => y (π i) j with hw
+  have hxy : ∀ i, B.ksum (y i) = x i := fun i =>
+    (B.ksum_single j₀ (y i) (fun j hj => if_neg hj)).trans (if_pos rfl)
+  have hwx : ∀ i, B.ksum (w i) = x (π i) := fun i => hxy (π i)
+  set f := pairEquiv B.aleph0_le with hf
+  set g : Idx κ × Idx κ ≃ Idx κ := (π.symm.prodCongr (Equiv.refl (Idx κ))).trans f with hg
+  have hgsymm : ∀ l : Idx κ, g.symm l = (π (f.symm l).1, (f.symm l).2) := by
+    intro l
+    apply Prod.ext <;>
+      simp [hg, Equiv.prodCongr_symm, Equiv.prodCongr_apply, Prod.map_fst, Prod.map_snd]
+  have hstep : (fun l => y (g.symm l).1 (g.symm l).2) = fun l => w (f.symm l).1 (f.symm l).2 := by
+    funext l
+    rw [hgsymm l]
+  calc B.ksum x
+      = B.ksum (fun i => B.ksum (y i)) := by congr 1; funext i; exact (hxy i).symm
+    _ = B.ksum (fun l => y (g.symm l).1 (g.symm l).2) := B.ksum_sigma y g
+    _ = B.ksum (fun l => w (f.symm l).1 (f.symm l).2) := congrArg _ hstep
+    _ = B.ksum (fun i => B.ksum (w i)) := (B.ksum_sigma w f).symm
+    _ = B.ksum (fun i => x (π i)) := by congr 1; funext i; exact hwx i
+    _ = B.ksum (x ∘ π) := rfl
+
+/-- The sum of a two-point family does not depend on the two points. -/
+theorem ksum_twoFam_eq {p q p' q' : Idx κ} (h : p ≠ q) (h' : p' ≠ q') (a b : H) :
+    B.ksum (twoFam p q a b) = B.ksum (twoFam p' q' a b) := by
+  classical
+  obtain ⟨π, hπ1, hπ2⟩ := exists_equiv_two h h'
+  have hfun : twoFam p q a b = (twoFam p' q' a b) ∘ π := by
+    funext i
+    have e1 : (π i = p') ↔ (i = p) := by
+      rw [← hπ1]
+      exact ⟨fun hc => π.injective hc, fun hc => by rw [hc]⟩
+    have e2 : (π i = q') ↔ (i = q) := by
+      rw [← hπ2]
+      exact ⟨fun hc => π.injective hc, fun hc => by rw [hc]⟩
+    show (if i = p then a else if i = q then b else 0)
+      = (if π i = p' then a else if π i = q' then b else 0)
+    by_cases c1 : i = p
+    · rw [if_pos c1, if_pos (e1.mpr c1)]
+    · rw [if_neg c1, if_neg (fun hc => c1 (e1.mp hc))]
+      by_cases c2 : i = q
+      · rw [if_pos c2, if_pos (e2.mpr c2)]
+      · rw [if_neg c2, if_neg (fun hc => c2 (e2.mp hc))]
+  rw [hfun]
+  exact (B.ksum_perm (twoFam p' q' a b) π).symm
+
+end BareKMonoid
+
+/-! #### The commutative monoid determined by the bare data -/
+
+/-- `Idx κ` has at least two elements. -/
+theorem nontrivial_Idx {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) : Nontrivial (Idx κ) := by
+  rw [← Cardinal.one_lt_iff_nontrivial, mk_Idx]
+  exact lt_of_lt_of_le one_lt_aleph0 hκ
+
+namespace BareKMonoid
+
+variable {κ : Cardinal.{u}} {H : Type v} [Zero H]
+
+/-- The first of two chosen distinct indices. -/
+noncomputable def i₀ (B : BareKMonoid κ H) : Idx κ :=
+  (nontrivial_Idx B.aleph0_le).exists_pair_ne.choose
+
+/-- The second of two chosen distinct indices. -/
+noncomputable def i₁ (B : BareKMonoid κ H) : Idx κ :=
+  (nontrivial_Idx B.aleph0_le).exists_pair_ne.choose_spec.choose
+
+theorem i₀_ne_i₁ (B : BareKMonoid κ H) : B.i₀ ≠ B.i₁ :=
+  (nontrivial_Idx B.aleph0_le).exists_pair_ne.choose_spec.choose_spec
+
+/-- The binary operation `Σ²` determined by the bare data. -/
+noncomputable def add (B : BareKMonoid κ H) (a b : H) : H := B.ksum (twoFam B.i₀ B.i₁ a b)
+
+/-- `Σ²` may be computed at any pair of distinct indices. -/
+theorem add_any (B : BareKMonoid κ H) (p q : Idx κ) (hpq : p ≠ q) (a b : H) :
+    B.ksum (twoFam p q a b) = B.add a b :=
+  B.ksum_twoFam_eq hpq B.i₀_ne_i₁ a b
+
+theorem zero_add' (B : BareKMonoid κ H) (a : H) : B.add 0 a = a := by
+  show B.ksum (twoFam B.i₀ B.i₁ 0 a) = a
+  rw [B.ksum_single B.i₁ _ (fun i hi => ?_), twoFam_right B.i₀_ne_i₁]
+  by_cases h0 : i = B.i₀
+  · rw [h0, twoFam_left]
+  · exact twoFam_other h0 hi 0 a
+
+theorem add_comm' (B : BareKMonoid κ H) (a b : H) : B.add a b = B.add b a := by
+  have hne := B.i₀_ne_i₁
+  have hfun : twoFam B.i₀ B.i₁ a b = twoFam B.i₁ B.i₀ b a := by
+    funext i
+    by_cases h0 : i = B.i₀
+    · rw [h0, twoFam_left, twoFam_right (Ne.symm hne)]
+    · by_cases h1 : i = B.i₁
+      · rw [h1, twoFam_right hne, twoFam_left]
+      · rw [twoFam_other h0 h1, twoFam_other h1 h0]
+  show B.ksum (twoFam B.i₀ B.i₁ a b) = B.add b a
+  rw [hfun]
+  exact B.add_any B.i₁ B.i₀ (Ne.symm hne) b a
+
+theorem add_zero' (B : BareKMonoid κ H) (a : H) : B.add a 0 = a := (B.add_comm' a 0).trans (B.zero_add' a)
+
+/-- Associativity of `Σ²`, obtained by flattening two double families along suitably
+matched bijections `κ × κ ≃ κ`. -/
+theorem add_assoc' (B : BareKMonoid κ H) (a b c : H) : B.add (B.add a b) c = B.add a (B.add b c) := by
+  classical
+  have hne := B.i₀_ne_i₁
+  set i₀ := B.i₀ with hi₀def
+  set i₁ := B.i₁ with hi₁def
+  set P := pairEquiv B.aleph0_le with hPdef
+  set Y : Idx κ → Idx κ → H := fun u =>
+    if u = i₀ then twoFam i₀ i₁ a b else if u = i₁ then twoFam i₀ i₁ c 0 else fun _ => 0
+    with hYdef
+  set Z : Idx κ → Idx κ → H := fun u =>
+    if u = i₀ then twoFam i₀ i₁ a 0 else if u = i₁ then twoFam i₀ i₁ b c else fun _ => 0
+    with hZdef
+  have hY0 : Y i₀ = twoFam i₀ i₁ a b := if_pos rfl
+  have hY1 : Y i₁ = twoFam i₀ i₁ c 0 := by
+    show (if i₁ = i₀ then twoFam i₀ i₁ a b else
+      if i₁ = i₁ then twoFam i₀ i₁ c 0 else fun _ => (0 : H)) = _
+    rw [if_neg (Ne.symm hne), if_pos rfl]
+  have hYo : ∀ u, u ≠ i₀ → u ≠ i₁ → Y u = fun _ => (0 : H) := by
+    intro u h0 h1
+    show (if u = i₀ then twoFam i₀ i₁ a b else
+      if u = i₁ then twoFam i₀ i₁ c 0 else fun _ => (0 : H)) = _
+    rw [if_neg h0, if_neg h1]
+  have hZ0 : Z i₀ = twoFam i₀ i₁ a 0 := if_pos rfl
+  have hZ1 : Z i₁ = twoFam i₀ i₁ b c := by
+    show (if i₁ = i₀ then twoFam i₀ i₁ a 0 else
+      if i₁ = i₁ then twoFam i₀ i₁ b c else fun _ => (0 : H)) = _
+    rw [if_neg (Ne.symm hne), if_pos rfl]
+  have hZo : ∀ u, u ≠ i₀ → u ≠ i₁ → Z u = fun _ => (0 : H) := by
+    intro u h0 h1
+    show (if u = i₀ then twoFam i₀ i₁ a 0 else
+      if u = i₁ then twoFam i₀ i₁ b c else fun _ => (0 : H)) = _
+    rw [if_neg h0, if_neg h1]
+  -- the row sums
+  have hYrow : (fun u => B.ksum (Y u)) = twoFam i₀ i₁ (B.add a b) c := by
+    funext u
+    by_cases h0 : u = i₀
+    · rw [h0, hY0, twoFam_left]
+      exact B.add_any i₀ i₁ hne a b
+    · by_cases h1 : u = i₁
+      · rw [h1, hY1, twoFam_right hne, B.ksum_single i₀ _ (fun i hi => ?_), twoFam_left]
+        by_cases hj : i = i₁
+        · rw [hj, twoFam_right hne]
+        · exact twoFam_other hi hj c 0
+      · rw [hYo u h0 h1, twoFam_other h0 h1]
+        exact B.ksum_zero
+  have hZrow : (fun u => B.ksum (Z u)) = twoFam i₀ i₁ a (B.add b c) := by
+    funext u
+    by_cases h0 : u = i₀
+    · rw [h0, hZ0, twoFam_left, B.ksum_single i₀ _ (fun i hi => ?_), twoFam_left]
+      by_cases hj : i = i₁
+      · rw [hj, twoFam_right hne]
+      · exact twoFam_other hi hj a 0
+    · by_cases h1 : u = i₁
+      · rw [h1, hZ1, twoFam_right hne]
+        exact B.add_any i₀ i₁ hne b c
+      · rw [hZo u h0 h1, twoFam_other h0 h1]
+        exact B.ksum_zero
+  -- the 3-cycle on `κ × κ` matching the supports of `Y` and `Z`
+  set A : Idx κ × Idx κ := (i₀, i₀) with hAdef
+  set Bp : Idx κ × Idx κ := (i₀, i₁) with hBdef
+  set Cp : Idx κ × Idx κ := (i₁, i₀) with hCdef
+  set D : Idx κ × Idx κ := (i₁, i₁) with hDdef
+  set σ : (Idx κ × Idx κ) ≃ (Idx κ × Idx κ) :=
+    (Equiv.swap Cp D).trans (Equiv.swap Bp Cp) with hσdef
+  have hBC : Bp ≠ Cp := fun hc => hne (congrArg Prod.fst hc)
+  have hCD : Cp ≠ D := fun hc => hne (congrArg Prod.snd hc)
+  have hBD : Bp ≠ D := fun hc => hne (congrArg Prod.fst hc)
+  have hAB : A ≠ Bp := fun hc => hne (congrArg Prod.snd hc)
+  have hAC : A ≠ Cp := fun hc => hne (congrArg Prod.fst hc)
+  have hAD : A ≠ D := fun hc => hne (congrArg Prod.fst hc)
+  have hσA : σ A = A := by
+    show Equiv.swap Bp Cp (Equiv.swap Cp D A) = A
+    rw [Equiv.swap_apply_of_ne_of_ne hAC hAD, Equiv.swap_apply_of_ne_of_ne hAB hAC]
+  have hσB : σ Bp = Cp := by
+    show Equiv.swap Bp Cp (Equiv.swap Cp D Bp) = Cp
+    rw [Equiv.swap_apply_of_ne_of_ne hBC hBD, Equiv.swap_apply_left]
+  have hσC : σ Cp = D := by
+    show Equiv.swap Bp Cp (Equiv.swap Cp D Cp) = D
+    rw [Equiv.swap_apply_left, Equiv.swap_apply_of_ne_of_ne (Ne.symm hBD) (Ne.symm hCD)]
+  have hσD : σ D = Bp := by
+    show Equiv.swap Bp Cp (Equiv.swap Cp D D) = Bp
+    rw [Equiv.swap_apply_right, Equiv.swap_apply_right]
+  have hσother : ∀ z : Idx κ × Idx κ, z ≠ Bp → z ≠ Cp → z ≠ D → σ z = z := by
+    intro z h1 h2 h3
+    show Equiv.swap Bp Cp (Equiv.swap Cp D z) = z
+    rw [Equiv.swap_apply_of_ne_of_ne h2 h3, Equiv.swap_apply_of_ne_of_ne h1 h2]
+  have hσZY : ∀ z : Idx κ × Idx κ, Z (σ z).1 (σ z).2 = Y z.1 z.2 := by
+    rintro ⟨u, v⟩
+    by_cases hu0 : u = i₀
+    · by_cases hv0 : v = i₀
+      · have hz : ((u, v) : Idx κ × Idx κ) = A := by rw [hu0, hv0]
+        rw [hz, hσA]
+        show Z i₀ i₀ = Y i₀ i₀
+        rw [hZ0, hY0, twoFam_left, twoFam_left]
+      · by_cases hv1 : v = i₁
+        · have hz : ((u, v) : Idx κ × Idx κ) = Bp := by rw [hu0, hv1]
+          rw [hz, hσB]
+          show Z i₁ i₀ = Y i₀ i₁
+          rw [hZ1, hY0, twoFam_left, twoFam_right hne]
+        · have h1 : ((u, v) : Idx κ × Idx κ) ≠ Bp := fun hc => hv1 (congrArg Prod.snd hc)
+          have h2 : ((u, v) : Idx κ × Idx κ) ≠ Cp :=
+            fun hc => hne (hu0.symm.trans (congrArg Prod.fst hc))
+          have h3 : ((u, v) : Idx κ × Idx κ) ≠ D :=
+            fun hc => hne (hu0.symm.trans (congrArg Prod.fst hc))
+          rw [hσother _ h1 h2 h3]
+          show Z u v = Y u v
+          rw [hu0, hZ0, hY0, twoFam_other hv0 hv1, twoFam_other hv0 hv1]
+    · by_cases hu1 : u = i₁
+      · by_cases hv0 : v = i₀
+        · have hz : ((u, v) : Idx κ × Idx κ) = Cp := by rw [hu1, hv0]
+          rw [hz, hσC]
+          show Z i₁ i₁ = Y i₁ i₀
+          rw [hZ1, hY1, twoFam_right hne, twoFam_left]
+        · by_cases hv1 : v = i₁
+          · have hz : ((u, v) : Idx κ × Idx κ) = D := by rw [hu1, hv1]
+            rw [hz, hσD]
+            show Z i₀ i₁ = Y i₁ i₁
+            rw [hZ0, hY1, twoFam_right hne, twoFam_right hne]
+          · have h1 : ((u, v) : Idx κ × Idx κ) ≠ Bp :=
+              fun hc => hne ((congrArg Prod.fst hc).symm.trans hu1)
+            have h2 : ((u, v) : Idx κ × Idx κ) ≠ Cp := fun hc => hv0 (congrArg Prod.snd hc)
+            have h3 : ((u, v) : Idx κ × Idx κ) ≠ D := fun hc => hv1 (congrArg Prod.snd hc)
+            rw [hσother _ h1 h2 h3]
+            show Z u v = Y u v
+            rw [hu1, hZ1, hY1, twoFam_other hv0 hv1, twoFam_other hv0 hv1]
+      · have h1 : ((u, v) : Idx κ × Idx κ) ≠ Bp := fun hc => hu0 (congrArg Prod.fst hc)
+        have h2 : ((u, v) : Idx κ × Idx κ) ≠ Cp := fun hc => hu1 (congrArg Prod.fst hc)
+        have h3 : ((u, v) : Idx κ × Idx κ) ≠ D := fun hc => hu1 (congrArg Prod.fst hc)
+        rw [hσother _ h1 h2 h3]
+        show Z u v = Y u v
+        rw [hZo u hu0 hu1, hYo u hu0 hu1]
+  -- now compare the two flattenings
+  have hflat : (fun k => Z ((σ.symm.trans P).symm k).1 ((σ.symm.trans P).symm k).2)
+      = fun k => Y (P.symm k).1 (P.symm k).2 := by
+    funext k
+    have hsymm : (σ.symm.trans P).symm k = σ (P.symm k) := rfl
+    rw [hsymm]
+    exact hσZY (P.symm k)
+  calc B.add (B.add a b) c
+      = B.ksum (fun u => B.ksum (Y u)) := by
+        rw [hYrow]
+        exact (B.add_any i₀ i₁ hne (B.add a b) c).symm
+    _ = B.ksum (fun k => Y (P.symm k).1 (P.symm k).2) := B.ksum_sigma Y P
+    _ = B.ksum (fun k => Z ((σ.symm.trans P).symm k).1 ((σ.symm.trans P).symm k).2) := by
+        rw [hflat]
+    _ = B.ksum (fun u => B.ksum (Z u)) := (B.ksum_sigma Z (σ.symm.trans P)).symm
+    _ = B.add a (B.add b c) := by
+        rw [hZrow]
+        exact B.add_any i₀ i₁ hne a (B.add b c)
+
+/-- **Lemma 2.5**: the commutative monoid structure determined by bare `κ`-monoid data. -/
+@[instance_reducible]
+noncomputable def addCommMonoid (B : BareKMonoid κ H) : AddCommMonoid H :=
+  letI : Add H := ⟨B.add⟩
+  { zero := 0
+    add := B.add
+    nsmul := nsmulRec
+    nsmul_zero := fun _ => rfl
+    nsmul_succ := fun _ _ => rfl
+    add_assoc := B.add_assoc'
+    zero_add := B.zero_add'
+    add_zero := B.add_zero'
+    add_comm := B.add_comm' }
+
+end BareKMonoid
+
+/-- **Lemma 2.5**: a `κ`-monoid is determined by its summation operation; nothing is lost by
+letting `KMonoid` extend `AddCommMonoid`, since the addition is recovered as `a + b = Σ²(a, b)`
+(`KMonoid.ofBare_add`). -/
+@[instance_reducible]
+noncomputable def KMonoid.ofBare {κ : Cardinal.{u}} {H : Type v} [Zero H]
+    (B : BareKMonoid κ H) : KMonoid κ H :=
+  { toAddCommMonoid := B.addCommMonoid
+    aleph0_le := B.aleph0_le
+    ksum := B.ksum
+    ksum_single := B.ksum_single
+    ksum_sigma := B.ksum_sigma
+    ksum_two := fun a b p q hpq => B.add_any p q hpq a b }
+
+@[simp] theorem KMonoid.ofBare_ksum {κ : Cardinal.{u}} {H : Type v} [Zero H]
+    (B : BareKMonoid κ H) (x : Idx κ → H) :
+    letI := KMonoid.ofBare B
+    ksum (κ := κ) x = B.ksum x := rfl
+
+@[simp] theorem KMonoid.ofBare_add {κ : Cardinal.{u}} {H : Type v} [Zero H]
+    (B : BareKMonoid κ H) (a b : H) :
+    letI := KMonoid.ofBare B
+    a + b = B.add a b := rfl
+
+@[simp] theorem KMonoid.ofBare_zero {κ : Cardinal.{u}} {H : Type v} [Zero H]
+    (B : BareKMonoid κ H) :
+    letI := KMonoid.ofBare B
+    (0 : H) = (0 : H) := rfl
+
 /-! ## `λ⁻`-monoids (Definition 2.18) -/
 
 open KMonoid
