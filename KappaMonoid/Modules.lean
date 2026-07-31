@@ -20,6 +20,7 @@ import KappaMonoid.Universal
 universe u v w
 
 open Cardinal Function Set DirectSum
+open scoped Classical
 
 namespace NS
 
@@ -117,6 +118,158 @@ end Sub
 
 variable (R : Type u) [Ring R]
 
+section DsPart
+
+variable {ι : Type u} (N : ι → Type u) [∀ i, AddCommGroup (N i)] [∀ i, Module R (N i)]
+
+/-- The submodule of `⨁ i, N i` consisting of the elements supported in `s`; this is the
+internal direct sum `⨁_{i ∈ s} N i`. -/
+def dsPart (s : Set ι) : Submodule R (⨁ i, N i) where
+  carrier := {m | ∀ i ∉ s, m i = 0}
+  add_mem' := by
+    intro a b ha hb i hi
+    show a i + b i = 0
+    rw [ha i hi, hb i hi, add_zero]
+  zero_mem' := by intro i _; rfl
+  smul_mem' := by
+    intro c a ha i hi
+    show c • a i = 0
+    rw [ha i hi, smul_zero]
+
+theorem mem_dsPart {s : Set ι} {m : ⨁ i, N i} : m ∈ dsPart R N s ↔ ∀ i ∉ s, m i = 0 := Iff.rfl
+
+theorem dsPart_mono {s t : Set ι} (h : s ⊆ t) : dsPart R N s ≤ dsPart R N t :=
+  fun _ hm i hi => hm i fun hs => hi (h hs)
+
+@[simp] theorem dsPart_univ : dsPart R N Set.univ = ⊤ :=
+  eq_top_iff.mpr fun _ _ i hi => absurd (Set.mem_univ i) hi
+
+theorem dsPart_eq_top_of_subsingleton {s : Set ι} (h : ∀ i ∉ s, Subsingleton (N i)) :
+    dsPart R N s = ⊤ :=
+  eq_top_iff.mpr fun _ _ i hi => @Subsingleton.elim _ (h i hi) _ _
+
+theorem lof_mem_dsPart {s : Set ι} {i : ι} (hi : i ∈ s) (v : N i) :
+    lof R ι N i v ∈ dsPart R N s := by
+  intro j hj
+  have hne : j ≠ i := fun h => hj (h ▸ hi)
+  rw [lof_eq_of R]
+  exact DirectSum.of_eq_of_ne i j v hne
+
+theorem dsPart_disjoint {s t : Set ι} (h : Disjoint s t) :
+    Disjoint (dsPart R N s) (dsPart R N t) := by
+  rw [Submodule.disjoint_def]
+  intro m hms hmt
+  refine DirectSum.ext (β := N) fun i => ?_
+  show m i = 0
+  by_cases hi : i ∈ s
+  · exact hmt i fun hit => Set.disjoint_left.mp h hi hit
+  · exact hms i hi
+
+theorem dsPart_iUnion {J : Type w} (s : J → Set ι) :
+    dsPart R N (⋃ j, s j) = ⨆ j, dsPart R N (s j) := by
+  refine le_antisymm (fun m hm => ?_) (iSup_le fun j => dsPart_mono R N (Set.subset_iUnion s j))
+  rw [← DirectSum.sum_support_of m]
+  refine Submodule.sum_mem _ fun i hi => ?_
+  have hmi : m i ≠ 0 := DFinsupp.mem_support_iff.mp hi
+  obtain ⟨j, hj⟩ := Set.mem_iUnion.mp (show i ∈ ⋃ j, s j by
+    by_contra h
+    exact hmi (hm i h))
+  rw [← lof_eq_of R]
+  exact Submodule.mem_iSup_of_mem j (lof_mem_dsPart R N hj (m i))
+
+theorem dsPart_union (s t : Set ι) :
+    dsPart R N (s ∪ t) = dsPart R N s ⊔ dsPart R N t := by
+  refine le_antisymm (fun m hm => ?_)
+    (sup_le (dsPart_mono R N Set.subset_union_left) (dsPart_mono R N Set.subset_union_right))
+  rw [← DirectSum.sum_support_of m]
+  refine Submodule.sum_mem _ fun i hi => ?_
+  have hmi : m i ≠ 0 := DFinsupp.mem_support_iff.mp hi
+  have hmem : i ∈ s ∪ t := by by_contra h; exact hmi (hm i h)
+  rw [← lof_eq_of R]
+  rcases hmem with h | h
+  · exact Submodule.mem_sup_left (lof_mem_dsPart R N h (m i))
+  · exact Submodule.mem_sup_right (lof_mem_dsPart R N h (m i))
+
+theorem dsPart_isCompl (s : Set ι) : IsCompl (dsPart R N s) (dsPart R N sᶜ) := by
+  refine ⟨dsPart_disjoint R N disjoint_compl_right, ?_⟩
+  rw [codisjoint_iff, ← dsPart_union, Set.union_compl_self, dsPart_univ]
+
+/-- A single summand of a direct sum. -/
+noncomputable def dsPartSingletonIso (i₀ : ι) : ↥(dsPart R N {i₀}) ≃ₗ[R] N i₀ := by
+  refine LinearEquiv.ofLinear ((DirectSum.component R ι N i₀).comp (dsPart R N {i₀}).subtype)
+    (LinearMap.codRestrict _ (lof R ι N i₀)
+      (fun v => lof_mem_dsPart R N (Set.mem_singleton_iff.mpr rfl) v)) ?_ ?_
+  · refine LinearMap.ext fun v => ?_
+    show DirectSum.component R ι N i₀ (lof R ι N i₀ v) = v
+    exact DirectSum.component.lof_self R i₀ v
+  · refine LinearMap.ext fun m => ?_
+    refine Subtype.ext ?_
+    show lof R ι N i₀ ((m : ⨁ i, N i) i₀) = (m : ⨁ i, N i)
+    refine DirectSum.ext (β := N) fun j => ?_
+    by_cases hj : j = i₀
+    · subst hj
+      rw [lof_eq_of R, DirectSum.of_eq_same]
+    · rw [lof_eq_of R, DirectSum.of_eq_of_ne i₀ j _ hj]
+      exact (m.2 j hj).symm
+
+/-! ### `dsPart s` is the direct sum over `s` -/
+
+/-- The canonical map `⨁_{i ∈ s} N i → ⨁_{i} N i`. -/
+noncomputable def dsIncl (s : Set ι) : (⨁ i : s, N i.1) →ₗ[R] ⨁ i, N i :=
+  DirectSum.toModule R s _ fun i => lof R ι N i.1
+
+theorem dsIncl_lof (s : Set ι) (i : s) (v : N i.1) :
+    dsIncl R N s (lof R (↥s) (fun i : s => N i.1) i v) = lof R ι N i.1 v := by
+  unfold dsIncl
+  exact DirectSum.toModule_lof (M := fun i : ↥s => N i.1) R i v
+
+theorem dsIncl_apply_val (s : Set ι) (z : ⨁ i : s, N i.1) (i : s) :
+    (dsIncl R N s z) i.1 = z i := by
+  induction z using DirectSum.induction_on with
+  | zero => rw [map_zero]; rfl
+  | of j v =>
+      rw [← lof_eq_of R, dsIncl_lof R N s j v]
+      by_cases hji : j = i
+      · subst hji
+        rw [lof_eq_of R, lof_eq_of R, DirectSum.of_eq_same, DirectSum.of_eq_same]
+      · have hval : (j : ι) ≠ (i : ι) := fun h => hji (Subtype.ext h)
+        rw [lof_eq_of R, lof_eq_of R,
+          DirectSum.of_eq_of_ne (β := N) (j : ι) (i : ι) v (Ne.symm hval)]
+        exact (DirectSum.of_eq_of_ne (β := fun p : ↥s => N p.1) j i v (Ne.symm hji)).symm
+  | add a b ha hb =>
+      rw [map_add]
+      show (dsIncl R N s a) i.1 + (dsIncl R N s b) i.1 = a i + b i
+      rw [ha, hb]
+
+theorem dsIncl_injective (s : Set ι) : Function.Injective (dsIncl R N s) := by
+  intro z w h
+  refine DirectSum.ext (β := fun i : s => N i.1) fun i => ?_
+  rw [← dsIncl_apply_val R N s z i, ← dsIncl_apply_val R N s w i, h]
+
+theorem dsIncl_range (s : Set ι) : LinearMap.range (dsIncl R N s) = dsPart R N s := by
+  apply le_antisymm
+  · rintro m ⟨z, rfl⟩
+    induction z using DirectSum.induction_on with
+    | zero => rw [map_zero]; exact Submodule.zero_mem _
+    | of j v =>
+        rw [← lof_eq_of R, dsIncl_lof R N s j v]
+        exact lof_mem_dsPart R N j.2 v
+    | add a b ha hb => rw [map_add]; exact Submodule.add_mem _ ha hb
+  · intro m hm
+    rw [← DirectSum.sum_support_of m]
+    refine Submodule.sum_mem _ fun i hi => ?_
+    have hmi : m i ≠ 0 := DFinsupp.mem_support_iff.mp hi
+    have hmem : i ∈ s := by by_contra h; exact hmi (hm i h)
+    refine ⟨lof R (↥s) (fun i : s => N i.1) ⟨i, hmem⟩ (m i), ?_⟩
+    rw [dsIncl_lof R N s ⟨i, hmem⟩ (m i), lof_eq_of R]
+
+/-- `dsPart R N s` is (canonically isomorphic to) the direct sum of the `N i` for `i ∈ s`. -/
+noncomputable def dsPartIso (s : Set ι) : ↥(dsPart R N s) ≃ₗ[R] ⨁ i : s, N i.1 :=
+  (LinearEquiv.ofEq _ _ (dsIncl_range R N s)).symm.trans
+    (LinearEquiv.ofInjective _ (dsIncl_injective R N s)).symm
+
+end DsPart
+
 /-- Definition 4.1: `M` is `λ⁻`-*small* if every homomorphism from `M` into a direct sum
 lands in a sub-sum indexed by strictly fewer than `λ` indices. -/
 def IsLambdaSmall (lam : Cardinal.{u}) (M : Type u) [AddCommGroup M] [Module R M] : Prop :=
@@ -128,12 +281,166 @@ def IsLambdaSmall (lam : Cardinal.{u}) (M : Type u) [AddCommGroup M] [Module R M
 theorem isLambdaSmall_of_span {lam : Cardinal.{u}} (hlam : lam.IsRegular)
     (M : Type u) [AddCommGroup M] [Module R M] (s : Set M) (hs : #s < lam)
     (hspan : Submodule.span R s = ⊤) : IsLambdaSmall R lam M := by
-  sorry
+  intro ι N _ _ f
+  refine ⟨⋃ x : s, {i | (f x.1) i ≠ 0}, ?_, ?_⟩
+  · rw [Cardinal.card_iUnion_lt_iff_forall_of_isRegular hlam hs]
+    intro x
+    refine lt_of_lt_of_le ?_ hlam.aleph0_le
+    rw [Cardinal.lt_aleph0_iff_set_finite]
+    refine Set.Finite.subset (f x.1).support.finite_toSet ?_
+    intro i hi
+    exact Finset.mem_coe.mpr (DFinsupp.mem_support_iff.mpr hi)
+  · -- the set of elements whose image is supported in the union is a submodule containing `s`
+    have hmem : ∀ m : M, f m ∈ dsPart R N (⋃ x : s, {i | (f x.1) i ≠ 0}) := by
+      have hle : Submodule.span R s ≤ (dsPart R N (⋃ x : s, {i | (f x.1) i ≠ 0})).comap f := by
+        refine Submodule.span_le.mpr fun x hx => ?_
+        show f x ∈ dsPart R N _
+        intro i hi
+        by_contra hne
+        exact hi (Set.mem_iUnion.mpr ⟨⟨x, hx⟩, hne⟩)
+      intro m
+      exact hle (hspan ▸ Submodule.mem_top)
+    intro m i hi
+    exact hmem m i hi
 
 /-- Example 4.2(2): finitely generated modules are `ℵ₀⁻`-small. -/
 theorem isLambdaSmall_aleph0_of_fg (M : Type u) [AddCommGroup M] [Module R M]
     (h : Module.Finite R M) : IsLambdaSmall R ℵ₀ M := by
-  sorry
+  obtain ⟨s, hs⟩ := h.fg_top
+  refine isLambdaSmall_of_span R Cardinal.isRegular_aleph0 M (↑s) ?_ hs
+  rw [Cardinal.lt_aleph0_iff_set_finite]
+  exact s.finite_toSet
+
+
+section SmallTools
+
+variable {R}
+
+/-- `λ⁻`-smallness is monotone in `λ`. -/
+theorem IsLambdaSmall.mono {lam lam' : Cardinal.{u}} (h : lam ≤ lam') {M : Type u}
+    [AddCommGroup M] [Module R M] (hM : IsLambdaSmall R lam M) : IsLambdaSmall R lam' M := by
+  intro ι N i1 i2 f
+  obtain ⟨s, hs, hf⟩ := hM N i1 i2 f
+  exact ⟨s, hs.trans_le h, hf⟩
+
+theorem isLambdaSmall_of_subsingleton {lam : Cardinal.{u}} (hlam : 0 < lam) (M : Type u)
+    [AddCommGroup M] [Module R M] [Subsingleton M] : IsLambdaSmall R lam M := by
+  intro ι N _ _ f
+  refine ⟨∅, ?_, fun m i _ => ?_⟩
+  · rwa [Cardinal.mk_emptyCollection]
+  · rw [Subsingleton.elim m 0, map_zero]
+    rfl
+
+/-- A direct summand of a `λ⁻`-small module is `λ⁻`-small. -/
+theorem IsLambdaSmall.of_prod_left {lam : Cardinal.{u}} {M M' : Type u} [AddCommGroup M]
+    [Module R M] [AddCommGroup M'] [Module R M'] (h : IsLambdaSmall R lam (M × M')) :
+    IsLambdaSmall R lam M := by
+  intro ι N i1 i2 f
+  obtain ⟨s, hs, hf⟩ := h N i1 i2 (f.comp (LinearMap.fst R M M'))
+  refine ⟨s, hs, fun m i hi => ?_⟩
+  have hval := hf (m, 0) i hi
+  simpa using hval
+
+/-- A direct sum of fewer than `λ` many `λ⁻`-small modules is `λ⁻`-small. -/
+theorem isLambdaSmall_dsum {lam : Cardinal.{u}} (hlam : lam.IsRegular) {ι' : Type u}
+    (hι' : #ι' < lam) (Q : ι' → Type u) [∀ i, AddCommGroup (Q i)] [∀ i, Module R (Q i)]
+    (h : ∀ i, IsLambdaSmall R lam (Q i)) : IsLambdaSmall R lam (⨁ i, Q i) := by
+  intro ι N i1 i2 f
+  choose s hs hf using fun i' => h i' N i1 i2 (f.comp (DirectSum.lof R ι' Q i'))
+  refine ⟨⋃ i', s i', ?_, ?_⟩
+  · rw [Cardinal.card_iUnion_lt_iff_forall_of_isRegular hlam hι']
+    exact hs
+  · have hmem : ∀ m : ⨁ i, Q i, f m ∈ dsPart R N (⋃ i', s i') := by
+      intro m
+      induction m using DirectSum.induction_on with
+      | zero => rw [map_zero]; exact Submodule.zero_mem _
+      | of i' q =>
+          intro i hi
+          rw [← lof_eq_of R]
+          have := hf i' q i (fun hs => hi (Set.mem_iUnion.mpr ⟨i', hs⟩))
+          exact this
+      | add a b ha hb => rw [map_add]; exact Submodule.add_mem _ ha hb
+    intro m i hi
+    exact hmem m i hi
+
+end SmallTools
+
+/-! ## The internal direct sum of a family of submodules -/
+
+section DsSub
+
+variable {ι : Type u} (N : ι → Type u) [∀ i, AddCommGroup (N i)] [∀ i, Module R (N i)]
+
+/-- The internal direct sum `⨁ i, P i` of a family of submodules `P i ≤ N i`, as a submodule
+of `⨁ i, N i`. -/
+def dsSub (P : ∀ i, Submodule R (N i)) : Submodule R (⨁ i, N i) where
+  carrier := {m | ∀ i, m i ∈ P i}
+  add_mem' := by
+    intro a b ha hb i
+    show a i + b i ∈ P i
+    exact (P i).add_mem (ha i) (hb i)
+  zero_mem' := fun i => (P i).zero_mem
+  smul_mem' := by
+    intro c a ha i
+    show c • a i ∈ P i
+    exact (P i).smul_mem c (ha i)
+
+theorem mem_dsSub {P : ∀ i, Submodule R (N i)} {m : ⨁ i, N i} :
+    m ∈ dsSub R N P ↔ ∀ i, m i ∈ P i := Iff.rfl
+
+theorem lmap_subtype_range (P : ∀ i, Submodule R (N i)) :
+    LinearMap.range (DirectSum.lmap (fun i => (P i).subtype)) = dsSub R N P := by
+  apply le_antisymm
+  · rintro m ⟨x, rfl⟩ i
+    rw [DirectSum.lmap_apply]
+    exact (x i).2
+  · intro m hm
+    rw [← DirectSum.sum_support_of m]
+    refine Submodule.sum_mem _ fun i _ => ?_
+    refine ⟨lof R ι (fun i => ↥(P i)) i ⟨m i, hm i⟩, ?_⟩
+    rw [DirectSum.lmap_lof, lof_eq_of R]
+    rfl
+
+theorem lmap_subtype_injective (P : ∀ i, Submodule R (N i)) :
+    Function.Injective (DirectSum.lmap (fun i => (P i).subtype)) :=
+  (DirectSum.lmap_injective _).mpr fun _ => Subtype.val_injective
+
+/-- `⨁ i, P i` really is the direct sum of the `P i`. -/
+noncomputable def dsSubIso (P : ∀ i, Submodule R (N i)) :
+    ↥(dsSub R N P) ≃ₗ[R] ⨁ i, ↥(P i) :=
+  (LinearEquiv.ofEq _ _ (lmap_subtype_range R N P)).symm.trans
+    (LinearEquiv.ofInjective _ (lmap_subtype_injective R N P)).symm
+
+theorem dsSub_isCompl {P Q : ∀ i, Submodule R (N i)} (h : ∀ i, IsCompl (P i) (Q i)) :
+    IsCompl (dsSub R N P) (dsSub R N Q) := by
+  constructor
+  · rw [Submodule.disjoint_def]
+    intro m hmP hmQ
+    refine DirectSum.ext (β := N) fun i => ?_
+    show m i = 0
+    exact Submodule.disjoint_def.mp (h i).disjoint (m i) (hmP i) (hmQ i)
+  · rw [codisjoint_iff, eq_top_iff]
+    intro m _
+    set y : ⨁ i, N i :=
+      DirectSum.lmap (fun i => (P i).projection (Q i) (h i)) m with hydef
+    have hyi : ∀ i, y i = (P i).projection (Q i) (h i) (m i) := fun i =>
+      DirectSum.lmap_apply _ m i
+    have hyP : y ∈ dsSub R N P := by
+      intro i
+      rw [hyi i]
+      exact Submodule.projection_apply_mem (h i) (m i)
+    have hyQ : m - y ∈ dsSub R N Q := by
+      intro i
+      show m i - y i ∈ Q i
+      rw [hyi i]
+      refine (Submodule.projection_apply_eq_zero_iff (h i)).mp ?_
+      rw [map_sub, Submodule.projection_apply_of_mem_left (h i)
+        (Submodule.projection_apply_mem (h i) (m i)), sub_self]
+    have : m = y + (m - y) := by abel
+    rw [this]
+    exact Submodule.add_mem _ (Submodule.mem_sup_left hyP) (Submodule.mem_sup_right hyQ)
+
+end DsSub
 
 /-! ## Classes of modules and `V^κ(C)` -/
 
@@ -303,166 +610,12 @@ A `DoubleDecomp` is exactly the situation of the proof: a module `M` written in 
 
 section ModuleCore
 
-open scoped Classical
-
 variable {R}
 
 /-! ## Submodules of a direct sum spanned by a set of indices
 
 `dsPart R N s` is the internal direct sum `⨁_{i ∈ s} N i` inside `⨁ i, N i`. -/
 
-section DsPart
-
-variable (R)
-variable {ι : Type u} (N : ι → Type u) [∀ i, AddCommGroup (N i)] [∀ i, Module R (N i)]
-
-/-- The submodule of `⨁ i, N i` consisting of the elements supported in `s`; this is the
-internal direct sum `⨁_{i ∈ s} N i`. -/
-def dsPart (s : Set ι) : Submodule R (⨁ i, N i) where
-  carrier := {m | ∀ i ∉ s, m i = 0}
-  add_mem' := by
-    intro a b ha hb i hi
-    show a i + b i = 0
-    rw [ha i hi, hb i hi, add_zero]
-  zero_mem' := by intro i _; rfl
-  smul_mem' := by
-    intro c a ha i hi
-    show c • a i = 0
-    rw [ha i hi, smul_zero]
-
-theorem mem_dsPart {s : Set ι} {m : ⨁ i, N i} : m ∈ dsPart R N s ↔ ∀ i ∉ s, m i = 0 := Iff.rfl
-
-theorem dsPart_mono {s t : Set ι} (h : s ⊆ t) : dsPart R N s ≤ dsPart R N t :=
-  fun _ hm i hi => hm i fun hs => hi (h hs)
-
-@[simp] theorem dsPart_univ : dsPart R N Set.univ = ⊤ :=
-  eq_top_iff.mpr fun _ _ i hi => absurd (Set.mem_univ i) hi
-
-theorem dsPart_eq_top_of_subsingleton {s : Set ι} (h : ∀ i ∉ s, Subsingleton (N i)) :
-    dsPart R N s = ⊤ :=
-  eq_top_iff.mpr fun _ _ i hi => @Subsingleton.elim _ (h i hi) _ _
-
-theorem lof_mem_dsPart {s : Set ι} {i : ι} (hi : i ∈ s) (v : N i) :
-    lof R ι N i v ∈ dsPart R N s := by
-  intro j hj
-  have hne : j ≠ i := fun h => hj (h ▸ hi)
-  rw [lof_eq_of R]
-  exact DirectSum.of_eq_of_ne i j v hne
-
-theorem dsPart_disjoint {s t : Set ι} (h : Disjoint s t) :
-    Disjoint (dsPart R N s) (dsPart R N t) := by
-  rw [Submodule.disjoint_def]
-  intro m hms hmt
-  refine DirectSum.ext (β := N) fun i => ?_
-  show m i = 0
-  by_cases hi : i ∈ s
-  · exact hmt i fun hit => Set.disjoint_left.mp h hi hit
-  · exact hms i hi
-
-theorem dsPart_iUnion {J : Type w} (s : J → Set ι) :
-    dsPart R N (⋃ j, s j) = ⨆ j, dsPart R N (s j) := by
-  refine le_antisymm (fun m hm => ?_) (iSup_le fun j => dsPart_mono R N (Set.subset_iUnion s j))
-  rw [← DirectSum.sum_support_of m]
-  refine Submodule.sum_mem _ fun i hi => ?_
-  have hmi : m i ≠ 0 := DFinsupp.mem_support_iff.mp hi
-  obtain ⟨j, hj⟩ := Set.mem_iUnion.mp (show i ∈ ⋃ j, s j by
-    by_contra h
-    exact hmi (hm i h))
-  rw [← lof_eq_of R]
-  exact Submodule.mem_iSup_of_mem j (lof_mem_dsPart R N hj (m i))
-
-theorem dsPart_union (s t : Set ι) :
-    dsPart R N (s ∪ t) = dsPart R N s ⊔ dsPart R N t := by
-  refine le_antisymm (fun m hm => ?_)
-    (sup_le (dsPart_mono R N Set.subset_union_left) (dsPart_mono R N Set.subset_union_right))
-  rw [← DirectSum.sum_support_of m]
-  refine Submodule.sum_mem _ fun i hi => ?_
-  have hmi : m i ≠ 0 := DFinsupp.mem_support_iff.mp hi
-  have hmem : i ∈ s ∪ t := by by_contra h; exact hmi (hm i h)
-  rw [← lof_eq_of R]
-  rcases hmem with h | h
-  · exact Submodule.mem_sup_left (lof_mem_dsPart R N h (m i))
-  · exact Submodule.mem_sup_right (lof_mem_dsPart R N h (m i))
-
-theorem dsPart_isCompl (s : Set ι) : IsCompl (dsPart R N s) (dsPart R N sᶜ) := by
-  refine ⟨dsPart_disjoint R N disjoint_compl_right, ?_⟩
-  rw [codisjoint_iff, ← dsPart_union, Set.union_compl_self, dsPart_univ]
-
-/-- A single summand of a direct sum. -/
-noncomputable def dsPartSingletonIso (i₀ : ι) : ↥(dsPart R N {i₀}) ≃ₗ[R] N i₀ := by
-  refine LinearEquiv.ofLinear ((DirectSum.component R ι N i₀).comp (dsPart R N {i₀}).subtype)
-    (LinearMap.codRestrict _ (lof R ι N i₀)
-      (fun v => lof_mem_dsPart R N (Set.mem_singleton_iff.mpr rfl) v)) ?_ ?_
-  · refine LinearMap.ext fun v => ?_
-    show DirectSum.component R ι N i₀ (lof R ι N i₀ v) = v
-    exact DirectSum.component.lof_self R i₀ v
-  · refine LinearMap.ext fun m => ?_
-    refine Subtype.ext ?_
-    show lof R ι N i₀ ((m : ⨁ i, N i) i₀) = (m : ⨁ i, N i)
-    refine DirectSum.ext (β := N) fun j => ?_
-    by_cases hj : j = i₀
-    · subst hj
-      rw [lof_eq_of R, DirectSum.of_eq_same]
-    · rw [lof_eq_of R, DirectSum.of_eq_of_ne i₀ j _ hj]
-      exact (m.2 j hj).symm
-
-/-! ### `dsPart s` is the direct sum over `s` -/
-
-/-- The canonical map `⨁_{i ∈ s} N i → ⨁_{i} N i`. -/
-noncomputable def dsIncl (s : Set ι) : (⨁ i : s, N i.1) →ₗ[R] ⨁ i, N i :=
-  DirectSum.toModule R s _ fun i => lof R ι N i.1
-
-theorem dsIncl_lof (s : Set ι) (i : s) (v : N i.1) :
-    dsIncl R N s (lof R (↥s) (fun i : s => N i.1) i v) = lof R ι N i.1 v := by
-  unfold dsIncl
-  exact DirectSum.toModule_lof (M := fun i : ↥s => N i.1) R i v
-
-theorem dsIncl_apply_val (s : Set ι) (z : ⨁ i : s, N i.1) (i : s) :
-    (dsIncl R N s z) i.1 = z i := by
-  induction z using DirectSum.induction_on with
-  | zero => rw [map_zero]; rfl
-  | of j v =>
-      rw [← lof_eq_of R, dsIncl_lof R N s j v]
-      by_cases hji : j = i
-      · subst hji
-        rw [lof_eq_of R, lof_eq_of R, DirectSum.of_eq_same, DirectSum.of_eq_same]
-      · have hval : (j : ι) ≠ (i : ι) := fun h => hji (Subtype.ext h)
-        rw [lof_eq_of R, lof_eq_of R,
-          DirectSum.of_eq_of_ne (β := N) (j : ι) (i : ι) v (Ne.symm hval)]
-        exact (DirectSum.of_eq_of_ne (β := fun p : ↥s => N p.1) j i v (Ne.symm hji)).symm
-  | add a b ha hb =>
-      rw [map_add]
-      show (dsIncl R N s a) i.1 + (dsIncl R N s b) i.1 = a i + b i
-      rw [ha, hb]
-
-theorem dsIncl_injective (s : Set ι) : Function.Injective (dsIncl R N s) := by
-  intro z w h
-  refine DirectSum.ext (β := fun i : s => N i.1) fun i => ?_
-  rw [← dsIncl_apply_val R N s z i, ← dsIncl_apply_val R N s w i, h]
-
-theorem dsIncl_range (s : Set ι) : LinearMap.range (dsIncl R N s) = dsPart R N s := by
-  apply le_antisymm
-  · rintro m ⟨z, rfl⟩
-    induction z using DirectSum.induction_on with
-    | zero => rw [map_zero]; exact Submodule.zero_mem _
-    | of j v =>
-        rw [← lof_eq_of R, dsIncl_lof R N s j v]
-        exact lof_mem_dsPart R N j.2 v
-    | add a b ha hb => rw [map_add]; exact Submodule.add_mem _ ha hb
-  · intro m hm
-    rw [← DirectSum.sum_support_of m]
-    refine Submodule.sum_mem _ fun i hi => ?_
-    have hmi : m i ≠ 0 := DFinsupp.mem_support_iff.mp hi
-    have hmem : i ∈ s := by by_contra h; exact hmi (hm i h)
-    refine ⟨lof R (↥s) (fun i : s => N i.1) ⟨i, hmem⟩ (m i), ?_⟩
-    rw [dsIncl_lof R N s ⟨i, hmem⟩ (m i), lof_eq_of R]
-
-/-- `dsPart R N s` is (canonically isomorphic to) the direct sum of the `N i` for `i ∈ s`. -/
-noncomputable def dsPartIso (s : Set ι) : ↥(dsPart R N s) ≃ₗ[R] ⨁ i : s, N i.1 :=
-  (LinearEquiv.ofEq _ _ (dsIncl_range R N s)).symm.trans
-    (LinearEquiv.ofInjective _ (dsIncl_injective R N s)).symm
-
-end DsPart
 
 /-! ## Elementary facts about internal direct sums of submodules -/
 
@@ -1669,42 +1822,439 @@ theorem corollary_4_4 (C : ModuleClass R κ) (hκ : ℵ₀ ≤ κ) (lam : Cardin
       exact theorem_4_3_core C hκ lam hlam hlk S hsmall hSsub hSsummand a b hab
   exact ⟨hbr, hbr.isUniversalKExtension hlk⟩
 
+/-! ## The `λ⁻`-small part of a class of modules -/
+
+section SmallPart
+
+variable {κ : Cardinal.{u}} (C : ModuleClass R κ)
+
+theorem ModuleClass.mem_lambdaSmallPart {a : C.carrier} {lam : Cardinal.{u}}
+    (h : IsLambdaSmall R lam (C.rep a)) : a ∈ C.lambdaSmallPart lam := h
+
+theorem ModuleClass.isLambdaSmall_of_mem {a : C.carrier} {lam : Cardinal.{u}}
+    (h : a ∈ C.lambdaSmallPart lam) : IsLambdaSmall R lam (C.rep a) := h
+
+theorem ModuleClass.lambdaSmallPart_isLSubset (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u})
+    (hlam : lam.IsRegular) (hlk : lam ≤ κ) :
+    letI := C.instKMonoid hκ
+    IsLSubset lam hlk (C.lambdaSmallPart lam) := by
+  letI := C.instKMonoid hκ
+  constructor
+  · -- the zero module is `λ⁻`-small
+    haveI := C.subsingleton_rep_of_eq_zero (C.instKMonoid_zero hκ)
+    intro ι N iAG iMod f
+    exact isLambdaSmall_of_subsingleton (R := R) hlam.pos (C.rep 0) N iAG iMod f
+  · -- a direct sum of `< λ` many `λ⁻`-small modules is `λ⁻`-small
+    intro ι h x hx
+    have hsmall : IsLambdaSmall R lam (⨁ i, C.rep (x i)) :=
+      isLambdaSmall_dsum hlam h (fun i => C.rep (x i)) fun i => C.isLambdaSmall_of_mem (hx i)
+    intro ι₂ N iAG iMod f
+    exact IsLambdaSmall.of_equiv hsmall
+      (C.rep_sumOf hκ (h.le.trans hlk) x).some.symm N iAG iMod f
+
+theorem ModuleClass.lambdaSmallPart_summand (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) :
+    letI := C.instKMonoid hκ
+    ∀ a ∈ C.lambdaSmallPart lam, ∀ b : C.carrier, (∃ c, b + c = a) →
+      b ∈ C.lambdaSmallPart lam := by
+  letI := C.instKMonoid hκ
+  intro a ha b ⟨c, hc⟩
+  have hprod : IsLambdaSmall R lam (C.rep b × C.rep c) :=
+    IsLambdaSmall.of_equiv (C.isLambdaSmall_of_mem ha)
+      ((C.iso_of_eq hc).some.symm.trans (C.rep_add hκ b c).some)
+  intro ι N iAG iMod f
+  exact hprod.of_prod_left N iAG iMod f
+
+theorem ModuleClass.lambdaSmallPart_small (lam : Cardinal.{u}) :
+    ∀ a ∈ C.lambdaSmallPart lam, IsLambdaSmall R lam (C.rep a) := by
+  intro a ha ι N iAG iMod f
+  exact ha N iAG iMod f
+
+theorem ModuleClass.lambdaSmallPart_mono {lam lam' : Cardinal.{u}} (h : lam ≤ lam') :
+    C.lambdaSmallPart lam ⊆ C.lambdaSmallPart lam' := by
+  intro a ha ι N iAG iMod f
+  exact IsLambdaSmall.mono h (C.isLambdaSmall_of_mem ha) N iAG iMod f
+
+end SmallPart
+
+section Gen
+
+variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
+
+theorem KMonoid.kclosure_mono {S S' : Set H} (h : S ⊆ S') :
+    kclosure κ S ⊆ kclosure κ S' := by
+  intro x hx T hT
+  exact hx T ⟨h.trans hT.1, hT.2⟩
+
+theorem KMonoid.KGenerates.mono {S S' : Set H} (h : S ⊆ S') (hgen : KGenerates κ S) :
+    KGenerates κ S' :=
+  Set.eq_univ_of_univ_subset (hgen ▸ KMonoid.kclosure_mono h)
+
+end Gen
+
+/-- **Kaplansky's Theorem** [Kaplansky58] in its classical form, which we take as an axiom:
+every projective module is a direct sum of countably generated projective modules. -/
+axiom kaplansky_classical {R : Type u} [Ring R] (P : Type u) [AddCommGroup P] [Module R P]
+    [Module.Projective R P] :
+    ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i)) (_ : ∀ i, Module R (Q i)),
+      (∀ i, Module.Projective R (Q i)) ∧
+        (∀ i, ∃ s : Set (Q i), #s ≤ ℵ₀ ∧ Submodule.span R s = ⊤) ∧
+          Nonempty (P ≃ₗ[R] ⨁ i, Q i)
+
+
 /-! ## Projective modules: Corollaries 4.5–4.7 -/
 
 section Projective
 
-variable (R) [Ring R] (κ : Cardinal.{u})
+variable (R) (κ : Cardinal.{u})
 
-/-- `V^κ(R)`: the class of projective right `R`-modules generated by at most `κ` elements
-(Definition 2.4(2)). -/
-def projClass (hκ : ℵ₀ ≤ κ) : ModuleClass R κ := by
-  sorry
+/-! ### `V^κ(R)` as the direct summands of the free module `R^{(κ)}` -/
 
-/-- Kaplansky's Theorem: every projective module is a direct sum of countably generated
-modules.  In the `κ`-monoid language: `V^κ(R)` is generated by `V^{ℵ₀}(R)` as a
-`κ`-monoid. -/
+/-- The free module `R^{(κ)}`. -/
+abbrev freeMod : Type u := ⨁ _ : Idx κ, R
+
+/-- The `k`-th standard generator of `R^{(κ)}`. -/
+noncomputable def freeGen (k : Idx κ) : freeMod R κ := lof R (Idx κ) (fun _ => R) k 1
+
+theorem freeMod_span : Submodule.span R (Set.range (freeGen R κ)) = ⊤ := by
+  rw [eq_top_iff]
+  intro x _
+  rw [← DirectSum.sum_support_of x]
+  refine Submodule.sum_mem _ fun k _ => ?_
+  have hk : (of (fun _ : Idx κ => R) k) (x k) = (x k) • freeGen R κ k := by
+    rw [← lof_eq_of R, freeGen, ← LinearMap.map_smul]
+    congr 1
+    rw [smul_eq_mul, mul_one]
+  rw [hk]
+  exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨k, rfl⟩)
+
+/-- The direct summands of `R^{(κ)}`; these are exactly the projective modules generated by at
+most `κ` elements. -/
+def Summand : Type u := {P : Submodule R (freeMod R κ) // ∃ Q, IsCompl P Q}
+
+/-- Two summands are identified when they are isomorphic. -/
+instance summandSetoid : Setoid (Summand R κ) where
+  r P P' := Nonempty (↥P.1 ≃ₗ[R] ↥P'.1)
+  iseqv := ⟨fun _ => ⟨LinearEquiv.refl R _⟩, fun ⟨e⟩ => ⟨e.symm⟩, fun ⟨e⟩ ⟨e'⟩ => ⟨e.trans e'⟩⟩
+
+/-- A chosen complement of a summand. -/
+noncomputable def Summand.compl (P : Summand R κ) : Submodule R (freeMod R κ) := P.2.choose
+
+theorem Summand.isCompl (P : Summand R κ) : IsCompl P.1 (Summand.compl R κ P) := P.2.choose_spec
+
+/-- `κ` copies of `R^{(κ)}` form `R^{(κ)}`. -/
+noncomputable def freeSelfIso (hκ : ℵ₀ ≤ κ) :
+    (⨁ _ : Idx κ, freeMod R κ) ≃ₗ[R] freeMod R κ :=
+  (DirectSum.sigmaLcurryEquiv (R := R) (ι := Idx κ) (α := fun _ => Idx κ)
+      (δ := fun _ _ => R)).symm.trans
+    (DirectSum.lequivCongrLeft R
+      ((Equiv.sigmaEquivProd (Idx κ) (Idx κ)).trans (pairEquiv hκ)))
+
+/-- The direct sum of a `κ`-indexed family of summands of `R^{(κ)}`, again as a summand. -/
+noncomputable def projDsum (hκ : ℵ₀ ≤ κ) (f : Idx κ → Quotient (summandSetoid R κ)) :
+    Summand R κ :=
+  ⟨Submodule.map (freeSelfIso R κ hκ).toLinearMap
+      (dsSub R (fun _ : Idx κ => freeMod R κ) fun i => (f i).out.1),
+    ⟨Submodule.map (freeSelfIso R κ hκ).toLinearMap
+        (dsSub R (fun _ : Idx κ => freeMod R κ) fun i => Summand.compl R κ (f i).out),
+      isCompl_map_equiv _ (dsSub_isCompl R _ fun i => Summand.isCompl R κ (f i).out)⟩⟩
+
+/-- **Definition 2.4(2)**: `V^κ(R)`, the class of projective right `R`-modules generated by at
+most `κ` elements, presented as the direct summands of `R^{(κ)}` up to isomorphism. -/
+noncomputable def projClass (hκ : ℵ₀ ≤ κ) : ModuleClass R κ where
+  carrier := Quotient (summandSetoid R κ)
+  rep := fun a => ↥(a.out.1)
+  addCommGroup := fun _ => inferInstance
+  module := fun _ => inferInstance
+  eq_of_iso := fun {a b} e => by
+    rw [← Quotient.out_eq a, ← Quotient.out_eq b]
+    exact Quotient.sound ⟨e⟩
+  zero := ⟦⟨⊥, ⟨⊤, isCompl_bot_top⟩⟩⟧
+  subsingleton_rep_zero := by
+    haveI := subsingleton_bot (R := R) (M := freeMod R κ)
+    exact Equiv.subsingleton
+      (Quotient.mk_out (s := summandSetoid R κ) ⟨⊥, ⟨⊤, isCompl_bot_top⟩⟩).some.toEquiv
+  dsum := fun f => ⟦projDsum R κ hκ f⟧
+  dsum_iso := fun f => by
+    have e1 : ↥(((⟦projDsum R κ hκ f⟧ : Quotient (summandSetoid R κ)).out).1) ≃ₗ[R]
+        ↥((projDsum R κ hκ f).1) :=
+      (Quotient.mk_out (s := summandSetoid R κ) (projDsum R κ hκ f)).some
+    have e2 : ↥(dsSub R (fun _ : Idx κ => freeMod R κ) fun i => (f i).out.1) ≃ₗ[R]
+        ↥((projDsum R κ hκ f).1) :=
+      (freeSelfIso R κ hκ).submoduleMap
+        (dsSub R (fun _ : Idx κ => freeMod R κ) fun i => (f i).out.1)
+    exact ⟨e1.trans (e2.symm.trans
+      (dsSubIso R (fun _ : Idx κ => freeMod R κ) fun i => (f i).out.1))⟩
+  exists_of_isCompl := by
+    intro a N K hNK
+    obtain ⟨Qa, hQa⟩ := a.out.2
+    have hNle : Submodule.map a.out.1.subtype N ≤ a.out.1 := Submodule.map_subtype_le _ N
+    have hKle : Submodule.map a.out.1.subtype K ≤ a.out.1 := Submodule.map_subtype_le _ K
+    have hsup : Submodule.map a.out.1.subtype N ⊔ Submodule.map a.out.1.subtype K
+        = a.out.1 := by
+      rw [← Submodule.map_sup, hNK.sup_eq_top, Submodule.map_top, Submodule.range_subtype]
+    have hdisj : Disjoint (Submodule.map a.out.1.subtype N)
+        (Submodule.map a.out.1.subtype K ⊔ Qa) := by
+      rw [Submodule.disjoint_def]
+      intro x hxN hx
+      obtain ⟨k, hk, q, hq, hkq⟩ := Submodule.mem_sup.mp hx
+      have hqP : q ∈ a.out.1 := by
+        have hxP : x ∈ a.out.1 := hNle hxN
+        have : q = x - k := by rw [← hkq]; abel
+        rw [this]
+        exact Submodule.sub_mem _ hxP (hKle hk)
+      have hq0 : q = 0 := Submodule.disjoint_def.mp hQa.disjoint q hqP hq
+      have hxk : x = k := by rw [← hkq, hq0, add_zero]
+      -- now `x` lies in both images, so it comes from `N ⊓ K = ⊥`
+      obtain ⟨n, hn, hnx⟩ := hxN
+      obtain ⟨k', hk', hk'x⟩ := (hxk ▸ hk : x ∈ Submodule.map a.out.1.subtype K)
+      have hnk : n = k' := Subtype.ext (by rw [show (n : freeMod R κ) = x from hnx,
+        show (k' : freeMod R κ) = x from hk'x])
+      have : n ∈ N ⊓ K := ⟨hn, hnk ▸ hk'⟩
+      rw [hNK.inf_eq_bot] at this
+      rw [← hnx, (Submodule.mem_bot R).mp this]
+      rfl
+    have hcompl : IsCompl (Submodule.map a.out.1.subtype N)
+        (Submodule.map a.out.1.subtype K ⊔ Qa) := by
+      refine ⟨hdisj, ?_⟩
+      rw [codisjoint_iff, ← sup_assoc, hsup, ← codisjoint_iff]
+      exact hQa.codisjoint
+    refine ⟨⟦⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩⟧, ?_⟩
+    have e1 : ↥(((⟦(⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩ : Summand R κ)⟧ :
+          Quotient (summandSetoid R κ)).out).1) ≃ₗ[R] ↥(Submodule.map a.out.1.subtype N) :=
+      (Quotient.mk_out (s := summandSetoid R κ)
+        ⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩).some
+    have e2 : ↥N ≃ₗ[R] ↥(Submodule.map a.out.1.subtype N) :=
+      Submodule.equivMapOfInjective a.out.1.subtype a.out.1.injective_subtype N
+    exact ⟨e1.trans e2.symm⟩
+
+/-- A projective module generated by at most `κ` elements is a direct summand of `R^{(κ)}`. -/
+theorem exists_summand_of_projective (Q : Type u) [AddCommGroup Q] [Module R Q]
+    [Module.Projective R Q] (s : Set Q) (hs : #s ≤ κ) (hspan : Submodule.span R s = ⊤) :
+    ∃ P : Summand R κ, Nonempty (↥P.1 ≃ₗ[R] Q) := by
+  -- a surjection `R^{(κ)} → Q`
+  set g : Idx κ → Q := Function.extend (emb hs)
+    (fun x : s => (x : Q)) (0 : Idx κ → Q) with hgdef
+  have hgs : ∀ x : s, g (emb hs x) = (x : Q) :=
+    fun x => (emb hs).injective.extend_apply _ _ x
+  set π : freeMod R κ →ₗ[R] Q :=
+    DirectSum.toModule R (Idx κ) Q (fun k => LinearMap.toSpanSingleton R Q (g k)) with hπdef
+  have hπgen : ∀ k, π (freeGen R κ k) = g k := by
+    intro k
+    show π (lof R (Idx κ) (fun _ => R) k 1) = g k
+    rw [hπdef, DirectSum.toModule_lof (M := fun _ : Idx κ => R) R k (1 : R)]
+    show (1 : R) • g k = g k
+    rw [one_smul]
+  have hπsurj : Function.Surjective π := by
+    rw [← LinearMap.range_eq_top, eq_top_iff, ← hspan, Submodule.span_le]
+    intro x hx
+    exact ⟨freeGen R κ (emb hs ⟨x, hx⟩), by
+      rw [hπgen, hgs ⟨x, hx⟩]⟩
+  obtain ⟨σ, hσ⟩ := Module.projective_lifting_property π LinearMap.id hπsurj
+  have hσπ : ∀ q, π (σ q) = q := fun q => LinearMap.congr_fun hσ q
+  have hσinj : Function.Injective σ := by
+    intro q q' h
+    rw [← hσπ q, ← hσπ q', h]
+  refine ⟨⟨LinearMap.range σ, ⟨LinearMap.ker π, ?_⟩⟩,
+    ⟨(LinearEquiv.ofInjective σ hσinj).symm⟩⟩
+  constructor
+  · rw [Submodule.disjoint_def]
+    rintro x ⟨q, rfl⟩ hker
+    have : q = 0 := by rw [← hσπ q]; exact hker
+    rw [this, map_zero]
+  · rw [codisjoint_iff, eq_top_iff]
+    intro x _
+    refine Submodule.mem_sup.mpr ⟨σ (π x), ⟨π x, rfl⟩, x - σ (π x), ?_, by abel⟩
+    show π (x - σ (π x)) = 0
+    rw [map_sub, hσπ, sub_self]
+
+theorem dsum_restrict_iso {ι : Type u} (N : ι → Type u) [∀ i, AddCommGroup (N i)]
+    [∀ i, Module R (N i)] (T : Set ι) (h : ∀ i ∉ T, Subsingleton (N i)) :
+    Nonempty ((⨁ i, N i) ≃ₗ[R] ⨁ i : T, N i.1) :=
+  ⟨((LinearEquiv.ofEq _ _ (dsPart_eq_top_of_subsingleton R N h)).trans
+    Submodule.topEquiv).symm.trans (dsPartIso R N T)⟩
+
+/-- Direct summands of `R^{(κ)}` are projective. -/
+theorem summand_projective (P : Summand R κ) : Module.Projective R ↥P.1 :=
+  Module.Projective.of_split (R := R) (M := freeMod R κ) P.1.subtype
+    (Submodule.projectionOnto P.1 (Summand.compl R κ P) (Summand.isCompl R κ P))
+    (Submodule.projectionOnto_comp_subtype _)
+
+/-- A summand of `R^{(κ)}` is generated by at most `κ` elements, so if it is written as a
+direct sum then at most `κ` of the summands are non-trivial. -/
+theorem exists_small_support (hκ : ℵ₀ ≤ κ) (P : Summand R κ) {ι : Type u} (Q : ι → Type u)
+    [∀ i, AddCommGroup (Q i)] [∀ i, Module R (Q i)] (e : ↥P.1 ≃ₗ[R] ⨁ i, Q i) :
+    ∃ T : Set ι, #T ≤ κ ∧ ∀ i ∉ T, Subsingleton (Q i) := by
+  set σ : freeMod R κ →ₗ[R] ⨁ i, Q i :=
+    (e : ↥P.1 →ₗ[R] ⨁ i, Q i).comp
+      (Submodule.projectionOnto P.1 (Summand.compl R κ P) (Summand.isCompl R κ P)) with hσdef
+  have hsurj : Function.Surjective σ :=
+    e.surjective.comp (Submodule.projectionOnto_surjective _)
+  refine ⟨⋃ k, {i | (σ (freeGen R κ k)) i ≠ 0}, ?_, ?_⟩
+  · have hfin : ∀ k, #({i | (σ (freeGen R κ k)) i ≠ 0} : Set ι) ≤ ℵ₀ := by
+      intro k
+      refine le_of_lt ?_
+      rw [Cardinal.lt_aleph0_iff_set_finite]
+      refine Set.Finite.subset (σ (freeGen R κ k)).support.finite_toSet fun i hi => ?_
+      exact Finset.mem_coe.mpr (DFinsupp.mem_support_iff.mpr hi)
+    calc #(⋃ k, {i | (σ (freeGen R κ k)) i ≠ 0} : Set ι)
+        ≤ #(Idx κ) * ⨆ k, #({i | (σ (freeGen R κ k)) i ≠ 0} : Set ι) := Cardinal.mk_iUnion_le _
+      _ ≤ κ * ℵ₀ := mul_le_mul' (le_of_eq (mk_Idx κ)) (ciSup_le' hfin)
+      _ ≤ κ * κ := mul_le_mul' le_rfl hκ
+      _ = κ := Cardinal.mul_eq_self hκ
+  · -- everything in the direct sum is supported in the union
+    intro i hi
+    have htop : (⊤ : Submodule R (⨁ i, Q i)) ≤ dsPart R Q (⋃ k, {i | (σ (freeGen R κ k)) i ≠ 0}) := by
+      rw [← LinearMap.range_eq_top.mpr hsurj, LinearMap.range_eq_map, ← freeMod_span R κ,
+        Submodule.map_span, Submodule.span_le]
+      rintro y ⟨x, ⟨k, rfl⟩, rfl⟩ i' hi'
+      by_contra hne
+      exact hi' (Set.mem_iUnion.mpr ⟨k, hne⟩)
+    have hz : ∀ q : Q i, q = 0 := by
+      intro q
+      have hmem := htop (Submodule.mem_top (x := lof R ι Q i q))
+      have := hmem i hi
+      rwa [lof_eq_of R, DirectSum.of_eq_same] at this
+    exact ⟨fun q q' => by rw [hz q, hz q']⟩
+
+
+/-! ### Kaplansky's theorem and Corollary 4.5 -/
+
+/-- If every projective module is a direct sum of projective modules generated by fewer than
+`λ` elements, then `V^κ(R)` is generated as a `κ`-monoid by its `λ⁻`-small part. -/
+theorem kGenerates_of_decomposition (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (hlam : lam.IsRegular)
+    (hdec : ∀ (P : Type u) (_ : AddCommGroup P) (_ : Module R P), Module.Projective R P →
+      ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i)) (_ : ∀ i, Module R (Q i)),
+        (∀ i, Module.Projective R (Q i)) ∧
+          (∀ i, ∃ s : Set (Q i), #s < lam ∧ #s ≤ κ ∧ Submodule.span R s = ⊤) ∧
+            Nonempty (P ≃ₗ[R] ⨁ i, Q i)) :
+    letI := (projClass R κ hκ).instKMonoid hκ
+    KGenerates κ ((projClass R κ hκ).lambdaSmallPart lam) := by
+  letI := (projClass R κ hκ).instKMonoid hκ
+  apply Set.eq_univ_of_forall
+  intro a
+  -- Kaplansky's theorem applied to the projective module `rep a`
+  haveI : Module.Projective R ((projClass R κ hκ).rep a) := summand_projective R κ a.out
+  obtain ⟨ι, Q, iAG, iMod, hproj, hgen, ⟨e⟩⟩ :=
+    hdec ((projClass R κ hκ).rep a) inferInstance inferInstance inferInstance
+  -- at most `κ` of the summands are non-trivial
+  obtain ⟨T, hT, hTsub⟩ := exists_small_support R κ hκ a.out Q e
+  -- each non-trivial summand is a summand of `R^{(κ)}`
+  have hQi : ∀ i : T, ∃ P : Summand R κ, Nonempty (↥P.1 ≃ₗ[R] Q i.1) := by
+    intro i
+    obtain ⟨s, _, hsκ, hsp⟩ := hgen i.1
+    haveI := hproj i.1
+    exact exists_summand_of_projective R κ (Q i.1) s hsκ hsp
+  choose Pfam hPfam using hQi
+  -- the corresponding family of classes, padded by zeros
+  set c : T → (projClass R κ hκ).carrier := fun i => ⟦Pfam i⟧ with hcdef
+  set b : Idx κ → (projClass R κ hκ).carrier :=
+    Function.extend (emb hT) c (0 : Idx κ → (projClass R κ hκ).carrier) with hbdef
+  have hbc : ∀ i : T, b (emb hT i) = c i :=
+    fun i => (emb hT).injective.extend_apply c (0 : Idx κ → (projClass R κ hκ).carrier) i
+  have hb0 : ∀ k, k ∉ Set.range (emb hT) → b k = 0 := fun k hk =>
+    Function.extend_apply' c (0 : Idx κ → (projClass R κ hκ).carrier) k
+      fun ⟨i, hi⟩ => hk ⟨i, hi⟩
+  have hrepc : ∀ i : T, Nonempty ((projClass R κ hκ).rep (c i) ≃ₗ[R] Q i.1) := by
+    intro i
+    exact ⟨(Quotient.mk_out (s := summandSetoid R κ) (Pfam i)).some.trans (hPfam i).some⟩
+  have hbsub : ∀ k, k ∉ Set.range (emb hT) →
+      Subsingleton ((projClass R κ hκ).rep (b k)) := by
+    intro k hk
+    refine (projClass R κ hκ).subsingleton_rep_of_eq_zero ?_
+    rw [hb0 k hk]
+    exact (projClass R κ hκ).instKMonoid_zero hκ
+  -- the two decompositions of `rep a` agree, so `a` is the `κ`-sum of the family
+  have hdsum : (projClass R κ hκ).dsum b = a := by
+    have e1 : (projClass R κ hκ).rep ((projClass R κ hκ).dsum b) ≃ₗ[R]
+        ⨁ k, (projClass R κ hκ).rep (b k) := ((projClass R κ hκ).dsum_iso b).some
+    have e2 : (⨁ k, (projClass R κ hκ).rep (b k)) ≃ₗ[R]
+        ⨁ i : T, (projClass R κ hκ).rep (b (emb hT i)) :=
+      ((projClass R κ hκ).restrict_iso b (emb hT) hbsub).some
+    have e3 : (⨁ i : T, (projClass R κ hκ).rep (b (emb hT i))) ≃ₗ[R] ⨁ i : T, Q i.1 :=
+      DirectSum.congrLinearEquiv fun i : T =>
+        ((projClass R κ hκ).iso_of_eq (hbc i)).some.trans (hrepc i).some
+    have e4 : (⨁ i : T, Q i.1) ≃ₗ[R] ⨁ i : ι, Q i := (dsum_restrict_iso R Q T hTsub).some.symm
+    exact (projClass R κ hκ).eq_of_iso (e1.trans (e2.trans (e3.trans (e4.trans e.symm))))
+  have hmemS : ∀ k, b k ∈ (projClass R κ hκ).lambdaSmallPart lam := by
+    intro k
+    by_cases hk : k ∈ Set.range (emb hT)
+    · obtain ⟨i, rfl⟩ := hk
+      obtain ⟨s, hs, _, hsp⟩ := hgen i.1
+      have hsmall : IsLambdaSmall R lam (Q i.1) :=
+        isLambdaSmall_of_span R hlam (Q i.1) s hs hsp
+      have hfinal : IsLambdaSmall R lam ((projClass R κ hκ).rep (b (emb hT i))) := by
+        rw [hbc i]
+        exact IsLambdaSmall.of_equiv hsmall (hrepc i).some.symm
+      exact hfinal
+    · haveI := hbsub k hk
+      exact isLambdaSmall_of_subsingleton hlam.pos ((projClass R κ hκ).rep (b k))
+  have hksum : a = ksum (κ := κ) b := by
+    rw [(projClass R κ hκ).instKMonoid_ksum hκ b, hdsum]
+  rw [hksum]
+  exact (KMonoid.isKSubmonoid_kclosure κ _).ksum_mem b fun k => subset_kclosure (hmemS k)
+
+/-- **Kaplansky's Theorem**, `κ`-monoid form: `V^κ(R)` is generated as a `κ`-monoid by the
+classes of countably generated projective modules.  Countably generated modules are
+`ℵ₁⁻`-small by Example 4.2(2) (note that `ℵ₀⁻`-small would mean finitely generated). -/
 theorem kaplansky (hκ : ℵ₀ ≤ κ) :
     letI := (projClass R κ hκ).instKMonoid hκ
-    KGenerates κ ((projClass R κ hκ).lambdaSmallPart ℵ₀) := by
-  sorry
+    KGenerates κ ((projClass R κ hκ).lambdaSmallPart ℵ₁) := by
+  refine kGenerates_of_decomposition R κ hκ ℵ₁ Cardinal.isRegular_aleph_one ?_
+  intro P _ _ hP
+  obtain ⟨ι, Q, iAG, iMod, hproj, hgen, he⟩ := kaplansky_classical (R := R) P
+  refine ⟨ι, Q, iAG, iMod, hproj, fun i => ?_, he⟩
+  obtain ⟨s, hs, hsp⟩ := hgen i
+  exact ⟨s, lt_of_le_of_lt hs Cardinal.aleph0_lt_aleph_one, hs.trans hκ, hsp⟩
 
-/-- **Corollary 4.5(1)(2)**: for every regular `λ` with `ℵ₁ ≤ λ ≤ κ`, `V^κ(R)` is the
-universal `κ`-extension of `V^{λ⁻}(R)`; in particular `V^{ℵ₀}(R)` determines `V^κ(R)`. -/
+
+/-- **Corollary 4.5(1)(2)**: for every regular `λ` with `ℵ₁ ≤ λ ≤ κ` the `κ`-monoid `V^κ(R)`
+is `λ⁻`-braided over, and hence is the universal `κ`-extension of, the `λ⁻`-monoid
+`V^{λ⁻}(R)` of `λ⁻`-small projective modules.  For `λ = ℵ₁` this is `V^{ℵ₀}(R)`, the countably
+generated projective modules: `V^{ℵ₀}(R)` determines `V^κ(R)`. -/
 theorem corollary_4_5 (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (hlam : lam.IsRegular)
     (h₁ : ℵ₁ ≤ lam) (hlk : lam ≤ κ) :
     letI := (projClass R κ hκ).instKMonoid hκ
-    letI S := (projClass R κ hκ).lambdaSmallPart lam
-    True := by
-  -- The precise statement is `IsUniversalKExtension lam κ S (V^κ(R))`; spelling it out
-  -- requires the induced structures, as in `corollary_4_4`.
-  trivial
+    letI := IsLSubset.lmonoid hlam ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ lam hlam hlk)
+    IsBraidedOver lam κ ((projClass R κ hκ).lambdaSmallPart lam)
+        (projClass R κ hκ).carrier hlk (fun a => (a : (projClass R κ hκ).carrier)) ∧
+      IsUniversalKExtension lam κ ((projClass R κ hκ).lambdaSmallPart lam)
+        (projClass R κ hκ).carrier hlk (fun a => (a : (projClass R κ hκ).carrier)) := by
+  letI := (projClass R κ hκ).instKMonoid hκ
+  exact corollary_4_4 (projClass R κ hκ) hκ lam hlam hlk _
+    ((projClass R κ hκ).lambdaSmallPart_small lam)
+    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ lam hlam hlk)
+    ((projClass R κ hκ).lambdaSmallPart_summand hκ lam)
+    (KMonoid.KGenerates.mono ((projClass R κ hκ).lambdaSmallPart_mono h₁) (kaplansky R κ hκ))
 
-/-- **Corollary 4.5(3)**: if every projective `R`-module is a direct sum of finitely
-generated modules, then `V^κ(R)` is the universal `κ`-extension of the ordinary monoid
-`V(R)` of finitely generated projectives. -/
+/-- **Corollary 4.5(3)**: if every projective `R`-module is a direct sum of finitely generated
+modules, then `V^κ(R)` is the universal `κ`-extension of the monoid `V(R)` of finitely
+generated projective modules (an `ℵ₀⁻`-monoid is an ordinary commutative monoid). -/
 theorem corollary_4_5_three (hκ : ℵ₀ ≤ κ)
-    (hfg : ∀ (P : Type u) (_ : AddCommGroup P) (_ : Module R P), True) :
-    True := trivial
+    (hfg : ∀ (P : Type u) (_ : AddCommGroup P) (_ : Module R P), Module.Projective R P →
+      ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i)) (_ : ∀ i, Module R (Q i)),
+        (∀ i, Module.Projective R (Q i)) ∧ (∀ i, Module.Finite R (Q i)) ∧
+          Nonempty (P ≃ₗ[R] ⨁ i, Q i)) :
+    letI := (projClass R κ hκ).instKMonoid hκ
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+    IsBraidedOver ℵ₀ κ ((projClass R κ hκ).lambdaSmallPart ℵ₀)
+        (projClass R κ hκ).carrier hκ (fun a => (a : (projClass R κ hκ).carrier)) ∧
+      IsUniversalKExtension ℵ₀ κ ((projClass R κ hκ).lambdaSmallPart ℵ₀)
+        (projClass R κ hκ).carrier hκ (fun a => (a : (projClass R κ hκ).carrier)) := by
+  refine corollary_4_4 (projClass R κ hκ) hκ ℵ₀ Cardinal.isRegular_aleph0 hκ _
+    ((projClass R κ hκ).lambdaSmallPart_small ℵ₀)
+    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+    ((projClass R κ hκ).lambdaSmallPart_summand hκ ℵ₀) ?_
+  refine kGenerates_of_decomposition R κ hκ ℵ₀ Cardinal.isRegular_aleph0 ?_
+  intro P _ _ hP
+  obtain ⟨ι, Q, iAG, iMod, hproj, hfin, he⟩ := hfg P inferInstance inferInstance hP
+  refine ⟨ι, Q, iAG, iMod, hproj, fun i => ?_, he⟩
+  obtain ⟨s, hs⟩ := (hfin i).fg_top
+  have hlt : #(↑s : Set (Q i)) < ℵ₀ := by
+    rw [Cardinal.lt_aleph0_iff_set_finite]
+    exact s.finite_toSet
+  exact ⟨↑s, hlt, hlt.le.trans hκ, hs⟩
+
 
 /-- **Corollary 4.6**: classes of rings over which the hypothesis of Corollary 4.5(3) holds
 (weakly semihereditary, one-sided semihereditary, exchange, semiperfect, weakly noetherian
