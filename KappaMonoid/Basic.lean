@@ -8,617 +8,678 @@ Part 1 — Section 2: infinite summation, `κ`-monoids and `λ⁻`-monoids.
 
 Design notes (see also `README.md`):
 
-* Index sets.  The paper uses the von Neumann cardinal `κ` itself as index set.  We use
-  `Idx κ := κ.ord.toType`, a fixed type of cardinality `κ`, and derive summation over an
-  arbitrary index type of cardinality `≤ κ` (as the paper does after Lemma 2.5).
+* Index sets.  The paper indexes by the von Neumann cardinal `κ` itself.  We let the
+  summation operation act on families indexed by an *arbitrary* type of the right size:
+  `λ⁻`-monoids sum families indexed by any `ι` with `#ι < λ`.  Nothing has to be transported
+  along a chosen bijection, and the reindexing law is an axiom rather than a theorem.
 
-* Axiom (A1).  The paper states (A1) only for the distinguished element `0 ∈ κ`; combined
-  with (A2) this yields the commutativity law (A3) and hence (A1) at every index.  We
-  state (A1) at every index directly, which is equivalent and avoids having to name a
-  distinguished element of `Idx κ`.
+* One theory, not two.  A `κ`-monoid is exactly a `λ⁻`-monoid for `λ = κ⁺` (Remark 2.19;
+  `#ι ≤ κ ↔ #ι < κ⁺`, and `κ⁺` is regular).  So `LMonoid` is developed once and `KMonoid`
+  extends it; the `κ`-level names (`sumOf`, `ksum`, …) are a thin layer on top.
 
-* Underlying additive monoid.  By Lemma 2.5 and the discussion following it, a `κ`-monoid
-  carries a canonical commutative monoid structure with `a + b = Σ²(a, b)`.  Reconstructing
-  that structure inside Lean each time is unpleasant, so we let `KMonoid` *extend*
-  `AddCommMonoid` and add the (redundant, but harmless) compatibility axiom `ksum_two`.
-  `KMonoid.ofBare` below records that nothing is lost.
+* Underlying additive monoid.  By Lemma 2.5 a `λ⁻`-monoid carries a canonical commutative
+  monoid structure with `a + b = Σ²(a, b)`.  Following Mathlib's forgetful-inheritance
+  convention, `LMonoid` *extends* `AddCommMonoid` and adds the compatibility axiom
+  `add_eq_lsumOf`; this prevents a second, propositionally-equal `+` from appearing on types
+  that already have one.  Nothing is lost: `SumData.toLMonoid` builds the additive structure
+  from the summation alone (Lemma 2.5).
 
-* `λ⁻`-monoids.  Definition 2.18 gives a *partial* operation, defined on families indexed
-  by `λ` with support of cardinality `< λ`.  We model it by a total function together with
-  the junk convention `lsum x = 0` for families with large support; this pins the data down
-  uniquely without changing the mathematics.
+* (A1).  The paper states (A1) for the distinguished element `0 ∈ κ`.  Here it is the
+  statement that a sum over a one-point index type is its unique entry, which needs no
+  distinguished element and no `0`.
 -/
 import Mathlib
 
 universe u v w
 
-open Cardinal Function Set Classical
+open Cardinal Function Set
 
-namespace NS
+namespace KappaMonoid
 
-/-! ## The index types -/
+/-! ## Preliminaries on cardinals and index types -/
 
-/-- `Idx κ` is a fixed type of cardinality `κ`, playing the role of the von Neumann
-cardinal `κ` used as an index set in the paper. -/
+/-- `Idx κ` is a fixed type of cardinality `κ`, playing the role of the von Neumann cardinal
+`κ` used as an index set in the paper.  It no longer occurs in the axioms; it is kept for the
+constructions of Sections 3 and 4, which produce `κ`-indexed data. -/
 abbrev Idx (κ : Cardinal.{u}) : Type u := κ.ord.ToType
 
 @[simp] theorem mk_Idx (κ : Cardinal.{u}) : #(Idx κ) = κ := mk_ord_toType κ
 
-theorem nonempty_Idx {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) : Nonempty (Idx κ) := by
-  rw [← mk_ne_zero_iff, mk_Idx]
-  rintro rfl
-  exact aleph0_ne_zero (le_antisymm hκ zero_le)
+theorem infinite_Idx {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) : Infinite (Idx κ) :=
+  Cardinal.infinite_iff.mpr (by rw [mk_Idx]; exact hκ)
+
+theorem nonempty_Idx {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) : Nonempty (Idx κ) :=
+  have := infinite_Idx hκ
+  inferInstance
+
+theorem nontrivial_Idx {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) : Nontrivial (Idx κ) :=
+  have := infinite_Idx hκ
+  inferInstance
 
 /-- An embedding of any type of cardinality `≤ κ` into `Idx κ`. -/
 noncomputable def emb {ι : Type u} {κ : Cardinal.{u}} (h : #ι ≤ κ) : ι ↪ Idx κ :=
   ((Cardinal.le_def ι (Idx κ)).mp (by simpa using h)).some
 
 /-- For infinite `κ` we have `κ * κ = κ`, hence a bijection `Idx κ × Idx κ ≃ Idx κ`. -/
-noncomputable def pairEquiv {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) :
-    Idx κ × Idx κ ≃ Idx κ :=
+noncomputable def pairEquiv {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) : Idx κ × Idx κ ≃ Idx κ :=
   (Cardinal.eq.mp (by simp [Cardinal.mul_eq_self hκ])).some
 
-/-! ## `κ`-monoids (Definition 2.1) -/
+section Regular
 
-/-- A `κ`-monoid: a commutative monoid `H` equipped with a summation operation for
-`κ`-indexed families, subject to (A1) and (A2) of Definition 2.1. -/
-class KMonoid (κ : Cardinal.{u}) (H : Type v) extends AddCommMonoid H where
+variable {lam : Cardinal.{u}} (hlam : lam.IsRegular)
+include hlam
+
+theorem mk_lt_of_finite (ι : Type u) [Finite ι] : #ι < lam :=
+  (Cardinal.lt_aleph0_iff_finite.mpr ‹_›).trans_le hlam.aleph0_le
+
+/-- A `< λ`-indexed union of `< λ`-sized types is `< λ` (regularity of `λ`). -/
+theorem mk_sigma_lt {ι : Type u} {ρ : ι → Type u} (h : #ι < lam) (hρ : ∀ i, #(ρ i) < lam) :
+    #((i : ι) × ρ i) < lam := by
+  have : Fact lam.IsRegular := ⟨hlam⟩
+  rw [← hasCardinalLT_iff_cardinal_mk_lt]
+  exact hasCardinalLT_sigma ρ lam ((hasCardinalLT_iff_cardinal_mk_lt _ _).mpr h)
+    fun i => (hasCardinalLT_iff_cardinal_mk_lt _ _).mpr (hρ i)
+
+theorem mk_sum_lt {α β : Type u} (hα : #α < lam) (hβ : #β < lam) : #(α ⊕ β) < lam := by
+  rw [← hasCardinalLT_iff_cardinal_mk_lt]
+  exact (hasCardinalLT_sum_iff α β lam hlam.aleph0_le).mpr
+    ⟨(hasCardinalLT_iff_cardinal_mk_lt _ _).mpr hα, (hasCardinalLT_iff_cardinal_mk_lt _ _).mpr hβ⟩
+
+theorem mk_prod_lt {α β : Type u} (hα : #α < lam) (hβ : #β < lam) : #(α × β) < lam := by
+  rw [Cardinal.mk_prod]
+  simpa using Cardinal.mul_lt_of_lt hlam.aleph0_le hα hβ
+
+theorem mk_union_lt {ι : Type u} {S T : Set ι} (hS : #S < lam) (hT : #T < lam) :
+    #(↥(S ∪ T)) < lam := by
+  rw [← hasCardinalLT_iff_cardinal_mk_lt]
+  exact hasCardinalLT_union hlam.aleph0_le ((hasCardinalLT_iff_cardinal_mk_lt _ _).mpr hS)
+    ((hasCardinalLT_iff_cardinal_mk_lt _ _).mpr hT)
+
+end Regular
+
+theorem mk_lt_of_injective {lam : Cardinal.{u}} {α β : Type u} (hβ : #β < lam) (f : α → β)
+    (hf : Function.Injective f) : #α < lam :=
+  (Cardinal.mk_le_of_injective hf).trans_lt hβ
+
+/-! ### Two-element index types
+
+Binary addition is a sum over a two-element index type; these are the equivalences used to
+recognise it as such. -/
+
+/-- A pair of families, viewed as one dependent family over `ULift Bool`. -/
+def boolFam {α β : Type u} {X : Type v} (f : α → X) (g : β → X) :
+    ∀ p : ULift.{u} Bool, (bif p.down then β else α) → X
+  | ⟨true⟩ => g
+  | ⟨false⟩ => f
+
+/-- `Σ p : ULift Bool, (bif p.down then β else α) ≃ α ⊕ β`. -/
+def sigmaBoolEquiv (α β : Type u) :
+    ((p : ULift.{u} Bool) × (bif p.down then β else α)) ≃ α ⊕ β :=
+  (Equiv.sigmaCongrLeft' (Equiv.ulift (α := Bool))).trans (Equiv.sumEquivSigmaBool α β).symm
+
+/-- `ULift Bool ≃ PUnit ⊕ PUnit`, sending `false` to the left and `true` to the right. -/
+def uliftBoolEquiv : ULift.{u} Bool ≃ PUnit.{u + 1} ⊕ PUnit.{u + 1} :=
+  (Equiv.ulift (α := Bool)).trans Equiv.boolEquivPUnitSumPUnit
+
+/-! ## Bare summation data
+
+`SumData lam X` is a `λ⁻`-monoid structure without its additive monoid: the data of
+Definition 2.18 and nothing else.  `SumData.toLMonoid` reconstructs the addition
+(Lemma 2.5), so no generality is lost by letting `LMonoid` extend `AddCommMonoid`. -/
+
+/-- The data of a `λ⁻`-monoid: a summation operation for families indexed by an arbitrary
+type of cardinality `< lam`, subject to reindexing (A3), the one-point law (A1/B1) and the
+associativity law (A2/B2). -/
+structure SumData (lam : Cardinal.{u}) (X : Type v) where
+  /-- `lam` is regular. -/
+  isRegular : lam.IsRegular
+  /-- The summation operation. -/
+  sum : ∀ {ι : Type u}, #ι < lam → (ι → X) → X
+  /-- Sums are invariant under reindexing. -/
+  sum_congr : ∀ {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : ι ≃ ι') (x : ι' → X),
+      sum h (x ∘ e) = sum h' x
+  /-- (A1)/(B1): a sum over a one-point index type is its unique entry. -/
+  sum_unique : ∀ {ι : Type u} [Unique ι] (h : #ι < lam) (x : ι → X), sum h x = x default
+  /-- (A2)/(B2): a sum may be computed by first summing over the fibres of a partition. -/
+  sum_sigma : ∀ {ι : Type u} {ρ : ι → Type u} (h : #ι < lam) (hρ : ∀ i, #(ρ i) < lam)
+      (x : ∀ i, ρ i → X) (hσ : #((i : ι) × ρ i) < lam),
+      sum h (fun i => sum (hρ i) (x i)) = sum hσ (fun p => x p.1 p.2)
+
+namespace SumData
+
+variable {lam : Cardinal.{u}} {X : Type v} (S : SumData lam X)
+
+include S
+
+theorem small (ι : Type u) [Finite ι] : #ι < lam := mk_lt_of_finite S.isRegular ι
+
+theorem hsum {α β : Type u} (hα : #α < lam) (hβ : #β < lam) : #(α ⊕ β) < lam :=
+  mk_sum_lt S.isRegular hα hβ
+
+/-- The neutral element: the empty sum. -/
+noncomputable def zero : X := S.sum (S.small PEmpty.{u + 1}) PEmpty.elim
+
+/-- The binary operation: a sum over a two-point index type. -/
+noncomputable def add (a b : X) : X :=
+  S.sum (S.hsum (S.small PUnit.{u + 1}) (S.small PUnit.{u + 1}))
+    (Sum.elim (fun _ => a) (fun _ => b))
+
+theorem sum_punit (a : X) : S.sum (S.small PUnit.{u + 1}) (fun _ => a) = a := S.sum_unique _ _
+
+theorem add_def (hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X) :
+    S.sum hPP (Sum.elim (fun _ => a) (fun _ => b)) = S.add a b := rfl
+
+/-- A sum over `α ⊕ β` splits as a binary sum: the bridge between `sum` and `add`. -/
+theorem sum_sumType {α β : Type u} (hα : #α < lam) (hβ : #β < lam) (hαβ : #(α ⊕ β) < lam)
+    (f : α → X) (g : β → X) :
+    S.sum hαβ (Sum.elim f g) = S.add (S.sum hα f) (S.sum hβ g) := by
+  have hρ : ∀ p : ULift.{u} Bool, #(bif p.down then β else α) < lam := by
+    rintro ⟨(_ | _)⟩; exacts [hα, hβ]
+  have hσ := mk_sigma_lt S.isRegular (S.small (ULift.{u} Bool)) hρ
+  calc S.sum hαβ (Sum.elim f g)
+      = S.sum hσ (Sum.elim f g ∘ sigmaBoolEquiv α β) := (S.sum_congr hσ _ _ _).symm
+    _ = S.sum hσ (fun p => boolFam f g p.1 p.2) := by
+        congr 1; funext p; obtain ⟨⟨(_ | _)⟩, y⟩ := p <;> rfl
+    _ = S.sum (S.small (ULift.{u} Bool)) (fun p => S.sum (hρ p) (boolFam f g p)) :=
+        (S.sum_sigma (S.small (ULift.{u} Bool)) hρ (boolFam f g) hσ).symm
+    _ = S.sum (S.small (ULift.{u} Bool))
+          (Sum.elim (fun _ => S.sum hα f) (fun _ => S.sum hβ g) ∘ uliftBoolEquiv) := by
+        congr 1; funext p; obtain ⟨(_ | _)⟩ := p <;> rfl
+    _ = S.add (S.sum hα f) (S.sum hβ g) := S.sum_congr _ _ uliftBoolEquiv _
+
+theorem add_comm' (a b : X) : S.add a b = S.add b a := by
+  have hu := S.small PUnit.{u + 1}
+  calc S.add a b = S.sum (S.hsum hu hu) (Sum.elim (fun _ => a) (fun _ => b)) := rfl
+    _ = S.sum (S.hsum hu hu)
+          (Sum.elim (fun _ => b) (fun _ => a) ∘ Equiv.sumComm PUnit.{u + 1} PUnit.{u + 1}) := by
+        congr 1; funext p; rcases p with p | p <;> rfl
+    _ = S.add b a := S.sum_congr _ _ _ _
+
+theorem add_assoc' (a b c : X) : S.add (S.add a b) c = S.add a (S.add b c) := by
+  have hu := S.small PUnit.{u + 1}
+  have hab := S.sum_sumType (S.hsum hu hu) hu (S.hsum (S.hsum hu hu) hu)
+    (Sum.elim (fun _ => a) (fun _ => b)) (fun _ => c)
+  have hbc := S.sum_sumType hu (S.hsum hu hu) (S.hsum hu (S.hsum hu hu))
+    (fun _ => a) (Sum.elim (fun _ => b) (fun _ => c))
+  have hadd : ∀ x y : X, S.sum (S.hsum hu hu) (Sum.elim (fun _ => x) (fun _ => y)) = S.add x y :=
+    fun _ _ => rfl
+  rw [S.sum_punit, hadd] at hab hbc
+  rw [← hab, ← hbc, ← S.sum_congr (S.hsum (S.hsum hu hu) hu) (S.hsum hu (S.hsum hu hu))
+    (Equiv.sumAssoc PUnit.{u + 1} PUnit.{u + 1} PUnit.{u + 1})]
+  congr 1
+  funext p
+  rcases p with (p | p) | p <;> rfl
+
+theorem zero_add' (a : X) : S.add S.zero a = a := by
+  have hu := S.small PUnit.{u + 1}
+  have he := S.small PEmpty.{u + 1}
+  have h := S.sum_sumType he hu (S.hsum he hu) PEmpty.elim (fun _ => a)
+  rw [S.sum_punit] at h
+  rw [show S.sum he PEmpty.elim = S.zero from rfl] at h
+  rw [← h, ← S.sum_congr hu (S.hsum he hu) (Equiv.emptySum PEmpty.{u + 1} PUnit.{u + 1}).symm,
+    show (Sum.elim PEmpty.elim fun _ : PUnit.{u + 1} => a) ∘
+      (Equiv.emptySum PEmpty.{u + 1} PUnit.{u + 1}).symm = fun _ => a from rfl, S.sum_punit]
+
+/-- **Lemma 2.5**: the commutative monoid determined by the summation. -/
+@[instance_reducible]
+noncomputable def addCommMonoid : AddCommMonoid X :=
+  letI : Add X := ⟨S.add⟩
+  letI : Zero X := ⟨S.zero⟩
+  { add := S.add
+    zero := S.zero
+    nsmul := nsmulRec
+    nsmul_zero := fun _ => rfl
+    nsmul_succ := fun _ _ => rfl
+    add_assoc := S.add_assoc'
+    add_comm := S.add_comm'
+    zero_add := S.zero_add'
+    add_zero := fun a => (S.add_comm' a S.zero).trans (S.zero_add' a) }
+
+end SumData
+
+/-! ## `λ⁻`-monoids (Definition 2.18) and `κ`-monoids (Definition 2.1) -/
+
+/-- A `λ⁻`-monoid for a regular cardinal `λ`: a commutative monoid together with a summation
+operation for families indexed by any type of cardinality `< λ`, compatible with `+`.
+
+For `λ = κ⁺` this is Definition 2.1 of a `κ`-monoid, see `KMonoid`; for `λ = ℵ₀` it is just a
+commutative monoid, see `LMonoid.ofAddCommMonoid`. -/
+class LMonoid (lam : Cardinal.{u}) (X : Type v) extends AddCommMonoid X where
+  /-- `lam` is regular. -/
+  isRegular : lam.IsRegular
+  /-- The summation operation for families indexed by a type of cardinality `< lam`. -/
+  lsumOf : ∀ {ι : Type u}, #ι < lam → (ι → X) → X
+  /-- Sums are invariant under reindexing. -/
+  lsumOf_congr : ∀ {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : ι ≃ ι') (x : ι' → X),
+      lsumOf h (x ∘ e) = lsumOf h' x
+  /-- (B1): a sum over a one-point index type is its unique entry. -/
+  lsumOf_unique : ∀ {ι : Type u} [Unique ι] (h : #ι < lam) (x : ι → X), lsumOf h x = x default
+  /-- (B2): a sum may be computed by first summing over the fibres of a partition. -/
+  lsumOf_sigma : ∀ {ι : Type u} {ρ : ι → Type u} (h : #ι < lam) (hρ : ∀ i, #(ρ i) < lam)
+      (x : ∀ i, ρ i → X) (hσ : #((i : ι) × ρ i) < lam),
+      lsumOf h (fun i => lsumOf (hρ i) (x i)) = lsumOf hσ (fun p => x p.1 p.2)
+  /-- Compatibility of `+` with the summation.  This is not an extra assumption: by
+  Lemma 2.5 the binary sum *is* an addition, see `SumData.toLMonoid`. -/
+  add_eq_lsumOf : ∀ (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X),
+      a + b = lsumOf h (Sum.elim (fun _ => a) (fun _ => b))
+
+namespace SumData
+
+variable {lam : Cardinal.{u}} {X : Type v} (S : SumData lam X)
+
+/-- The `λ⁻`-monoid determined by bare summation data (Lemma 2.5). -/
+@[instance_reducible]
+noncomputable def toLMonoid : LMonoid lam X :=
+  letI := S.addCommMonoid
+  { toAddCommMonoid := S.addCommMonoid
+    isRegular := S.isRegular
+    lsumOf := S.sum
+    lsumOf_congr := S.sum_congr
+    lsumOf_unique := S.sum_unique
+    lsumOf_sigma := S.sum_sigma
+    add_eq_lsumOf := fun _ _ _ => rfl }
+
+/-- The `λ⁻`-monoid determined by summation data on a type that already carries a compatible
+commutative monoid structure. -/
+@[instance_reducible]
+noncomputable def toLMonoid' [AddCommMonoid X]
+    (hadd : ∀ (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X),
+      a + b = S.sum h (Sum.elim (fun _ => a) (fun _ => b))) : LMonoid lam X where
+  isRegular := S.isRegular
+  lsumOf := S.sum
+  lsumOf_congr := S.sum_congr
+  lsumOf_unique := S.sum_unique
+  lsumOf_sigma := S.sum_sigma
+  add_eq_lsumOf := hadd
+
+/-- Variant of `addCommMonoid` for a type that already carries the neutral element. -/
+@[instance_reducible]
+noncomputable def addCommMonoidOfZero [Zero X] (h0 : S.zero = 0) : AddCommMonoid X :=
+  letI : Add X := ⟨S.add⟩
+  { add := S.add
+    zero := (0 : X)
+    nsmul := nsmulRec
+    nsmul_zero := fun _ => rfl
+    nsmul_succ := fun _ _ => rfl
+    add_assoc := S.add_assoc'
+    add_comm := S.add_comm'
+    zero_add := fun a => h0 ▸ S.zero_add' a
+    add_zero := fun a => h0 ▸ (S.add_comm' a S.zero).trans (S.zero_add' a) }
+
+/-- Variant of `toLMonoid` for a type that already carries the neutral element. -/
+@[instance_reducible]
+noncomputable def toLMonoidOfZero [Zero X] (h0 : S.zero = 0) : LMonoid lam X :=
+  { toAddCommMonoid := S.addCommMonoidOfZero h0
+    isRegular := S.isRegular
+    lsumOf := S.sum
+    lsumOf_congr := S.sum_congr
+    lsumOf_unique := S.sum_unique
+    lsumOf_sigma := S.sum_sigma
+    add_eq_lsumOf := fun _ _ _ => rfl }
+
+end SumData
+
+namespace LMonoid
+
+variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
+
+theorem isRegular' {X : Type v} [inst : LMonoid lam X] : lam.IsRegular := inst.isRegular
+
+theorem aleph0_le {X : Type v} [inst : LMonoid lam X] : ℵ₀ ≤ lam := inst.isRegular.aleph0_le
+
+/-- The underlying bare summation data. -/
+def toSumData (lam : Cardinal.{u}) (X : Type v) [LMonoid lam X] : SumData lam X where
+  isRegular := isRegular' (X := X)
+  sum := lsumOf
+  sum_congr := lsumOf_congr
+  sum_unique := lsumOf_unique
+  sum_sigma := lsumOf_sigma
+
+theorem mk_lt_finite {X : Type v} [LMonoid lam X] (ι : Type u) [Finite ι] : #ι < lam :=
+  mk_lt_of_finite (isRegular' (X := X)) ι
+
+theorem mk_uLift_bool_lt {X : Type v} [LMonoid lam X] : #(ULift.{u} Bool) < lam :=
+  mk_lt_finite (X := X) _
+
+/-! ### Basic laws -/
+
+/-- Reindexing along an equivalence. -/
+theorem lsumOf_equiv {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : ι' ≃ ι) (x : ι → X) :
+    lsumOf (lam := lam) h x = lsumOf (lam := lam) h' (x ∘ e) :=
+  (lsumOf_congr h' h e x).symm
+
+/-- A sum over `α ⊕ β` splits as a binary sum. -/
+theorem lsumOf_sumType {α β : Type u} (hα : #α < lam) (hβ : #β < lam) (hαβ : #(α ⊕ β) < lam)
+    (f : α → X) (g : β → X) :
+    lsumOf (lam := lam) hαβ (Sum.elim f g)
+      = lsumOf (lam := lam) hα f + lsumOf (lam := lam) hβ g := by
+  have hρ : ∀ p : ULift.{u} Bool, #(bif p.down then β else α) < lam := by
+    rintro ⟨(_ | _)⟩; exacts [hα, hβ]
+  have hUB : #(ULift.{u} Bool) < lam := mk_uLift_bool_lt (X := X)
+  have hσ := mk_sigma_lt (isRegular' (X := X)) hUB hρ
+  have hu : #PUnit.{u + 1} < lam := mk_lt_finite (X := X) _
+  have hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam := mk_sum_lt (isRegular' (X := X)) hu hu
+  calc lsumOf (lam := lam) hαβ (Sum.elim f g)
+      = lsumOf (lam := lam) hσ (Sum.elim f g ∘ sigmaBoolEquiv α β) :=
+        lsumOf_equiv hαβ hσ (sigmaBoolEquiv α β) _
+    _ = lsumOf (lam := lam) hσ (fun p => boolFam f g p.1 p.2) := by
+        congr 1; funext p; obtain ⟨⟨(_ | _)⟩, y⟩ := p <;> rfl
+    _ = lsumOf (lam := lam) hUB (fun p => lsumOf (lam := lam) (hρ p) (boolFam f g p)) :=
+        (lsumOf_sigma hUB hρ (boolFam f g) hσ).symm
+    _ = lsumOf (lam := lam) hPP
+          (Sum.elim (fun _ => lsumOf (lam := lam) hα f) (fun _ => lsumOf (lam := lam) hβ g)) := by
+        rw [lsumOf_equiv hPP hUB uliftBoolEquiv]
+        congr 1; funext p; obtain ⟨(_ | _)⟩ := p <;> rfl
+    _ = lsumOf (lam := lam) hα f + lsumOf (lam := lam) hβ g := (add_eq_lsumOf _ _ _).symm
+
+@[simp] theorem lsumOf_isEmpty {ι : Type u} [IsEmpty ι] (h : #ι < lam) (x : ι → X) :
+    lsumOf (lam := lam) h x = 0 := by
+  have hu : #PUnit.{u + 1} < lam := mk_lt_finite (X := X) _
+  have hsum : #(PUnit.{u + 1} ⊕ ι) < lam := mk_sum_lt (isRegular' (X := X)) hu h
+  have h1 : lsumOf (lam := lam) hsum (Sum.elim (fun _ => (0 : X)) x) = 0 + lsumOf (lam := lam) h x := by
+    have hkey := lsumOf_sumType hu h hsum (fun _ => (0 : X)) x
+    rwa [lsumOf_unique hu (fun _ => (0 : X))] at hkey
+  have h2 : lsumOf (lam := lam) hsum (Sum.elim (fun _ => (0 : X)) x) = 0 := by
+    rw [lsumOf_equiv hsum hu (Equiv.sumEmpty PUnit.{u + 1} ι).symm]
+    exact lsumOf_unique hu _
+  rw [h2, zero_add] at h1
+  exact h1.symm
+
+@[simp] theorem lsumOf_zero {ι : Type u} (h : #ι < lam) :
+    lsumOf (lam := lam) (X := X) h (fun _ => 0) = 0 := by
+  have hE : ∀ _ : ι, #PEmpty.{u + 1} < lam := fun _ => mk_lt_finite (X := X) _
+  have hσ : #((_ : ι) × PEmpty.{u + 1}) < lam :=
+    mk_sigma_lt (isRegular' (X := X)) h hE
+  have : IsEmpty ((_ : ι) × PEmpty.{u + 1}) := ⟨fun p => p.2.elim⟩
+  have key := lsumOf_sigma h hE (fun (_ : ι) (p : PEmpty.{u + 1}) => (0 : X)) hσ
+  have hinner : (fun i : ι => lsumOf (lam := lam) (hE i) (fun _ : PEmpty.{u + 1} => (0 : X)))
+      = fun _ : ι => (0 : X) := funext fun i => lsumOf_isEmpty (X := X) (hE i) _
+  rw [hinner, lsumOf_isEmpty (X := X) hσ] at key
+  exact key
+
+theorem lsumOf_eq_zero_of_forall {ι : Type u} (h : #ι < lam) {x : ι → X} (hx : ∀ i, x i = 0) :
+    lsumOf (lam := lam) h x = 0 := by
+  rw [funext hx, lsumOf_zero]
+
+/-- Zero-padding along an embedding does not change a sum. -/
+theorem lsumOf_extend {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : ι ↪ ι') (x : ι → X) :
+    lsumOf (lam := lam) h' (Function.extend e x 0) = lsumOf (lam := lam) h x := by
+  have hρ : ∀ j : ι', #{i // e i = j} < lam :=
+    fun j => mk_lt_of_injective h Subtype.val Subtype.val_injective
+  have hσ : #((j : ι') × {i // e i = j}) < lam := mk_sigma_lt (isRegular' (X := X)) h' hρ
+  have hfib : ∀ j, lsumOf (lam := lam) (hρ j) (fun p => x p.1)
+      = Function.extend e x (0 : ι' → X) j := by
+    intro j
+    by_cases hj : ∃ i, e i = j
+    · obtain ⟨i, rfl⟩ := hj
+      let _ : Unique {i' // e i' = e i} := ⟨⟨⟨i, rfl⟩⟩, fun p => Subtype.ext (e.injective p.2)⟩
+      rw [lsumOf_unique, e.injective.extend_apply]
+      exact congrArg x (e.injective (default : {i' // e i' = e i}).2)
+    · have : IsEmpty {i // e i = j} := ⟨fun p => hj ⟨p.1, p.2⟩⟩
+      rw [lsumOf_isEmpty, Function.extend_apply' _ _ _ hj]
+      rfl
+  calc lsumOf (lam := lam) h' (Function.extend e x 0)
+      = lsumOf (lam := lam) h' (fun j => lsumOf (lam := lam) (hρ j) (fun p => x p.1)) := by
+        congr 1; funext j; exact (hfib j).symm
+    _ = lsumOf (lam := lam) hσ (fun p => x p.2.1) := lsumOf_sigma h' hρ _ hσ
+    _ = lsumOf (lam := lam) h x := (lsumOf_equiv h hσ (Equiv.sigmaFiberEquiv (fun i => e i)) x).symm
+
+/-- The binary sum, in the `Bool`-indexed form used throughout Sections 3 and 4. -/
+theorem lsumOf_two (a b : X) (hUB : #(ULift.{u} Bool) < lam) :
+    lsumOf (lam := lam) hUB (fun p : ULift.{u} Bool => if p.down then a else b) = a + b := by
+  have hu : #PUnit.{u + 1} < lam := mk_lt_finite (X := X) _
+  have hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam := mk_sum_lt (isRegular' (X := X)) hu hu
+  rw [lsumOf_equiv hUB hPP uliftBoolEquiv.symm,
+    show (fun p : ULift.{u} Bool => if p.down then a else b) ∘ uliftBoolEquiv.symm
+      = Sum.elim (fun _ => b) (fun _ => a) by funext p; rcases p with p | p <;> rfl,
+    lsumOf_sumType hu hu hPP, lsumOf_unique, lsumOf_unique]
+  exact add_comm b a
+
+/-- Sums are additive. -/
+theorem lsumOf_add {ι : Type u} (h : #ι < lam) (f g : ι → X) :
+    lsumOf (lam := lam) h (fun i => f i + g i)
+      = lsumOf (lam := lam) h f + lsumOf (lam := lam) h g := by
+  have hu : #PUnit.{u + 1} < lam := mk_lt_finite (X := X) _
+  have hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam := mk_sum_lt (isRegular' (X := X)) hu hu
+  have hσ : #((_ : ι) × (PUnit.{u + 1} ⊕ PUnit.{u + 1})) < lam :=
+    mk_sigma_lt (isRegular' (X := X)) h fun _ => hPP
+  have hιι : #(ι ⊕ ι) < lam := mk_sum_lt (isRegular' (X := X)) h h
+  set e : ((_ : ι) × (PUnit.{u + 1} ⊕ PUnit.{u + 1})) ≃ ι ⊕ ι :=
+    { toFun := fun p => Sum.elim (fun _ => Sum.inl p.1) (fun _ => Sum.inr p.1) p.2
+      invFun := Sum.elim (fun i => ⟨i, Sum.inl PUnit.unit⟩) (fun i => ⟨i, Sum.inr PUnit.unit⟩)
+      left_inv := by rintro ⟨i, (p | p)⟩ <;> rfl
+      right_inv := by rintro (i | i) <;> rfl } with hedef
+  have hinner : (fun i => f i + g i)
+      = fun i => lsumOf (lam := lam) hPP (Sum.elim (fun _ => f i) (fun _ => g i)) :=
+    funext fun i => add_eq_lsumOf _ _ _
+  rw [hinner, lsumOf_sigma h (fun _ => hPP)
+    (fun (i : ι) (p : PUnit.{u + 1} ⊕ PUnit.{u + 1}) =>
+      Sum.elim (fun _ => f i) (fun _ => g i) p) hσ,
+    lsumOf_equiv hσ hιι e.symm, ← lsumOf_sumType h h hιι f g]
+  congr 1
+  funext p
+  rcases p with i | i <;> rfl
+
+/-! ### Sums over subsets -/
+
+/-- Terms with value `0` may be discarded. -/
+theorem lsumOf_of_subset {ι : Type u} {S T : Set ι} (hS : #S < lam) (hT : #T < lam)
+    (hsub : T ⊆ S) (f : ι → X) (hzero : ∀ i ∈ S, i ∉ T → f i = 0) :
+    lsumOf (lam := lam) hS (fun i : S => f i) = lsumOf (lam := lam) hT (fun i : T => f i) := by
+  classical
+  set e : T ↪ S := ⟨Set.inclusion hsub, Set.inclusion_injective hsub⟩ with hedef
+  have hfun : (fun i : S => f i) = Function.extend (⇑e) (fun i : T => f i) 0 := by
+    funext s
+    by_cases hs : (s : ι) ∈ T
+    · have hval : e ⟨(s : ι), hs⟩ = s := rfl
+      rw [← hval, e.injective.extend_apply]
+      rfl
+    · rw [Function.extend_apply' (fun i : T => f i) (0 : S → X) s ?_]
+      · exact hzero s s.2 hs
+      · rintro ⟨t, ht⟩
+        exact hs (ht ▸ t.2)
+  rw [hfun, lsumOf_extend hT hS e (fun i : T => f i)]
+
+/-- A sum of zeros over a subset vanishes. -/
+theorem lsumOf_eq_zero {ι : Type u} {T : Set ι} (hT : #T < lam) (f : ι → X)
+    (hzero : ∀ i ∈ T, f i = 0) :
+    lsumOf (lam := lam) hT (fun i : T => f i) = 0 :=
+  lsumOf_eq_zero_of_forall hT fun i => hzero i i.2
+
+/-- Additivity over a disjoint union of two small subsets. -/
+theorem lsumOf_union {ι : Type u} (S T : Set ι) (hd : Disjoint S T) (hS : #S < lam)
+    (hT : #T < lam) (hST : #(↥(S ∪ T)) < lam) (f : ι → X) :
+    lsumOf (lam := lam) hST (fun i : ↥(S ∪ T) => f i)
+      = lsumOf (lam := lam) hS (fun i : S => f i) + lsumOf (lam := lam) hT (fun i : T => f i) := by
+  classical
+  have hsum : #(↥S ⊕ ↥T) < lam := mk_sum_lt (isRegular' (X := X)) hS hT
+  rw [lsumOf_equiv hST hsum (Equiv.Set.union hd).symm, ← lsumOf_sumType hS hT hsum]
+  congr 1
+  funext p
+  rcases p with p | p <;> rfl
+
+/-- Regrouping a sum over a set along a disjoint indexed cover by `< λ`-sized pieces. -/
+theorem lsumOf_biUnion_subset {ι J : Type u} (S : Set ι) (I : J → Set ι) (hIS : ∀ p, I p ⊆ S)
+    (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q)) (hcover : (⋃ p, I p) = S) (hJ : #J < lam)
+    (hS : #S < lam) (hI : ∀ p, #(I p) < lam) (x : ι → X) :
+    lsumOf (lam := lam) hJ (fun p => lsumOf (lam := lam) (hI p) (fun i : I p => x i))
+      = lsumOf (lam := lam) hS (fun i : S => x i) := by
+  set Φ : ((p : J) × I p) ≃ S := Equiv.ofBijective
+    (fun q : (p : J) × I p => (⟨(q.2 : ι), hIS q.1 q.2.2⟩ : S))
+    ⟨by
+      rintro ⟨p1, i1, hi1⟩ ⟨p2, i2, hi2⟩ heq
+      have heqι : i1 = i2 := congrArg Subtype.val heq
+      by_cases hpp : p1 = p2
+      · subst hpp; subst heqι; rfl
+      · exact absurd hi2 (heqι ▸ (Set.disjoint_left.mp (hdisj p1 p2 hpp) hi1)),
+      by
+      rintro ⟨i, hiS⟩
+      obtain ⟨p, hp⟩ := Set.mem_iUnion.mp (hcover ▸ hiS)
+      exact ⟨⟨p, ⟨i, hp⟩⟩, rfl⟩⟩ with hΦdef
+  have hσ : #((p : J) × I p) < lam := by rw [Cardinal.mk_congr Φ]; exact hS
+  exact (lsumOf_sigma hJ hI (fun p (i : I p) => x (i : ι)) hσ).trans
+    (lsumOf_equiv hS hσ Φ (fun s : S => x (s : ι))).symm
+
+/-- A sum over a two-element subset. -/
+theorem lsumOf_pair {ι : Type u} {a b : ι} (hab : a ≠ b) (hp : #(↥({a, b} : Set ι)) < lam)
+    (f : ι → X) :
+    lsumOf (lam := lam) hp (fun i : ({a, b} : Set ι) => f i) = f a + f b := by
+  classical
+  have hUB : #(ULift.{u} Bool) < lam := mk_uLift_bool_lt (X := X)
+  set e : ULift.{u} Bool ≃ ({a, b} : Set ι) :=
+    { toFun := fun p => if p.down then ⟨a, by simp⟩ else ⟨b, by simp⟩
+      invFun := fun i => ⟨decide ((i : ι) = a)⟩
+      left_inv := by
+        rintro ⟨(_ | _)⟩
+        · simp [hab.symm]
+        · simp
+      right_inv := by
+        rintro ⟨i, hi⟩
+        rcases hi with hi | hi
+        · simp [hi]
+        · simp only [Set.mem_singleton_iff] at hi
+          subst hi
+          simp [hab.symm] } with hedef
+  rw [lsumOf_equiv hp hUB e, ← lsumOf_two (f a) (f b) hUB]
+  congr 1
+  funext p
+  obtain ⟨(_ | _)⟩ := p <;> rfl
+
+/-! ### Restriction to a smaller cardinal -/
+
+/-- Remark 2.19: a `λ'⁻`-monoid is a `λ⁻`-monoid for every regular `λ ≤ λ'`. -/
+@[instance_reducible]
+noncomputable def ofLE {lam₁ lam₂ : Cardinal.{u}} {Y : Type v} [LMonoid lam₂ Y]
+    (hlam : lam₁.IsRegular) (hle : lam₁ ≤ lam₂) : LMonoid lam₁ Y where
+  isRegular := hlam
+  lsumOf h x := lsumOf (lam := lam₂) (h.trans_le hle) x
+  lsumOf_congr _ _ e x := lsumOf_congr _ _ e x
+  lsumOf_unique _ x := lsumOf_unique _ x
+  lsumOf_sigma h hρ x hσ :=
+    lsumOf_sigma (h.trans_le hle) (fun i => (hρ i).trans_le hle) x (hσ.trans_le hle)
+  add_eq_lsumOf _ a b := add_eq_lsumOf _ a b
+
+@[simp] theorem ofLE_lsumOf {lam₁ lam₂ : Cardinal.{u}} {Y : Type v} [LMonoid lam₂ Y]
+    (hlam : lam₁.IsRegular) (hle : lam₁ ≤ lam₂) {ι : Type u} (h : #ι < lam₁) (x : ι → Y) :
+    letI := ofLE (Y := Y) hlam hle
+    lsumOf (lam := lam₁) h x = lsumOf (lam := lam₂) (h.trans_le hle) x := rfl
+
+end LMonoid
+
+
+/-! ## `κ`-monoids (Definition 2.1)
+
+A `κ`-monoid is a `λ⁻`-monoid for `λ = κ⁺` (Remark 2.19): the families that may be summed
+are those indexed by a type of cardinality `< κ⁺`, i.e. of cardinality `≤ κ`. -/
+
+/-- A `κ`-monoid: a commutative monoid with a summation operation for families indexed by a
+type of cardinality `≤ κ`, subject to (A1) and (A2) of Definition 2.1. -/
+class KMonoid (κ : Cardinal.{u}) (H : Type v) extends LMonoid (Order.succ κ) H where
   /-- `κ` is an infinite cardinal. -/
   aleph0_le : ℵ₀ ≤ κ
-  /-- The `κ`-indexed summation `Σ : H^κ → H`. -/
-  ksum : (Idx κ → H) → H
-  /-- (A1): a family concentrated in one index sums to its unique possibly nonzero entry. -/
-  ksum_single : ∀ (i₀ : Idx κ) (x : Idx κ → H), (∀ i, i ≠ i₀ → x i = 0) → ksum x = x i₀
-  /-- (A2): the associativity law modelled on `⨁ᵢ ⨁ⱼ Mᵢⱼ ≅ ⨁_{(i,j)} Mᵢⱼ`. -/
-  ksum_sigma : ∀ (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx κ),
-      ksum (fun i => ksum (x i)) = ksum fun k => x (π.symm k).1 (π.symm k).2
-  /-- Compatibility of `+` with `Σ`.  This is not an extra assumption: by Lemma 2.5 the
-  binary operation `Σ²` obtained from `Σ` is commutative and associative, and `ksum_two`
-  holds for it by construction. -/
-  ksum_two : ∀ (a b : H) (i₀ i₁ : Idx κ), i₀ ≠ i₁ →
-      ksum (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b
 
 namespace KMonoid
 
 variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
 
-theorem ksum_zero : ksum (κ := κ) (fun _ : Idx κ => (0 : H)) = 0 := by
-  obtain ⟨i₀⟩ := nonempty_Idx (aleph0_le (κ := κ) (H := H))
-  exact ksum_single i₀ _ fun _ _ => rfl
+theorem lt_succ {ι : Type u} {κ : Cardinal.{u}} (h : #ι ≤ κ) : #ι < Order.succ κ :=
+  Order.lt_succ_iff.mpr h
 
-/-! ### The derived commutativity and associativity laws (Lemma 2.5) -/
+theorem le_of_lt_succ {ι : Type u} {κ : Cardinal.{u}} (h : #ι < Order.succ κ) : #ι ≤ κ :=
+  Order.lt_succ_iff.mp h
 
-/-- (A3), Lemma 2.5: `Σ` is invariant under permutations of the index set.
+theorem isRegular_succ' {H : Type v} [KMonoid κ H] : (Order.succ κ).IsRegular :=
+  Cardinal.isRegular_succ (aleph0_le (κ := κ) (H := H))
 
-Paper proof: spread `x` out as `y i j := if j = j₀ then x i else 0`, so that
-`Σⱼ y i j = x i` by (A1); then apply (A2) once with the bijection `f ∘ (π⁻¹, id)` and once
-with `f`, for an arbitrary bijection `f : κ × κ ≃ κ`. -/
-theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) :
-    ksum (κ := κ) x = ksum (κ := κ) (x ∘ π) := by
-  obtain ⟨j₀⟩ := nonempty_Idx (aleph0_le (κ := κ) (H := H))
-  set y : Idx κ → Idx κ → H := fun i j => if j = j₀ then x i else 0 with hy
-  set w : Idx κ → Idx κ → H := fun i j => y (π i) j with hw
-  have hxy : ∀ i, ksum (κ := κ) (y i) = x i := fun i =>
-    (ksum_single j₀ (y i) (fun j hj => if_neg hj)).trans (if_pos rfl)
-  have hwx : ∀ i, ksum (κ := κ) (w i) = x (π i) := fun i => hxy (π i)
-  set f := pairEquiv (aleph0_le (κ := κ) (H := H)) with hf
-  set g : Idx κ × Idx κ ≃ Idx κ := (π.symm.prodCongr (Equiv.refl (Idx κ))).trans f with hg
-  have hgsymm : ∀ l : Idx κ, g.symm l = (π (f.symm l).1, (f.symm l).2) := by
-    intro l
-    apply Prod.ext <;>
-      simp [hg, Equiv.prodCongr_symm, Equiv.prodCongr_apply, Prod.map_fst, Prod.map_snd]
-  have hstep : (fun l => y (g.symm l).1 (g.symm l).2) = fun l => w (f.symm l).1 (f.symm l).2 := by
-    funext l
-    rw [hgsymm l]
-  calc ksum (κ := κ) x
-      = ksum (κ := κ) (fun i => ksum (κ := κ) (y i)) := by
-        congr 1; funext i; exact (hxy i).symm
-    _ = ksum (κ := κ) (fun l => y (g.symm l).1 (g.symm l).2) := ksum_sigma y g
-    _ = ksum (κ := κ) (fun l => w (f.symm l).1 (f.symm l).2) := congrArg _ hstep
-    _ = ksum (κ := κ) (fun i => ksum (κ := κ) (w i)) := (ksum_sigma w f).symm
-    _ = ksum (κ := κ) (fun i => x (π i)) := by
-        congr 1; funext i; exact hwx i
-    _ = ksum (κ := κ) (x ∘ π) := rfl
+/-! ### Cardinal bookkeeping at the `κ`-level -/
 
-/-- (A4), Lemma 2.5: iterated sums may be interchanged.  Paper proof: apply (A2) twice,
-once for `f` and once for `τ ∘ f` with `τ` the transposition of `κ × κ`. -/
-theorem ksum_comm (x : Idx κ → Idx κ → H) :
-    ksum (κ := κ) (fun i => ksum (x i)) = ksum (κ := κ) (fun j => ksum fun i => x i j) := by
-  set y : Idx κ → Idx κ → H := fun i j => x j i with hy
-  set f := pairEquiv (aleph0_le (κ := κ) (H := H)) with hf
-  set τ : Idx κ × Idx κ ≃ Idx κ × Idx κ := Equiv.prodComm (Idx κ) (Idx κ) with hτ
-  set σ : Idx κ ≃ Idx κ := (f.symm.trans τ).trans f with hσ
-  have hστ : ∀ l : Idx κ, f.symm (σ l) = τ (f.symm l) := by
-    intro l
-    simp [hσ]
-  have hz : (fun l => x (f.symm l).2 (f.symm l).1) = (fun l => x (f.symm l).1 (f.symm l).2) ∘ σ := by
-    funext l
-    simp only [Function.comp_apply, hστ l, hτ, Equiv.prodComm_apply, Prod.swap]
-  calc ksum (κ := κ) (fun i => ksum (x i))
-      = ksum (κ := κ) (fun l => x (f.symm l).1 (f.symm l).2) := ksum_sigma x f
-    _ = ksum (κ := κ) ((fun l => x (f.symm l).1 (f.symm l).2) ∘ σ) := ksum_perm _ σ
-    _ = ksum (κ := κ) (fun l => x (f.symm l).2 (f.symm l).1) := by rw [← hz]
-    _ = ksum (κ := κ) (fun l => y (f.symm l).1 (f.symm l).2) := rfl
-    _ = ksum (κ := κ) (fun i => ksum (y i)) := (ksum_sigma y f).symm
-    _ = ksum (κ := κ) (fun j => ksum fun i => x i j) := rfl
+theorem mk_le_of_finite {H : Type v} [KMonoid κ H] (ι : Type u) [Finite ι] : #ι ≤ κ :=
+  le_of_lt_succ (mk_lt_of_finite (isRegular_succ' (H := H)) ι)
 
-/-! ### Summation over arbitrary index sets of cardinality `≤ κ`
+theorem mk_uLift_bool_le (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] : #(ULift.{u} Bool) ≤ κ :=
+  mk_le_of_finite (H := H) _
 
-This is the construction of `Σ^α` from `Σ^κ` described in the paper after Lemma 2.5. -/
+theorem mk_sigma_le {H : Type v} [KMonoid κ H] {ι : Type u} {ρ : ι → Type u} (h : #ι ≤ κ)
+    (hρ : ∀ i, #(ρ i) ≤ κ) : #((i : ι) × ρ i) ≤ κ :=
+  le_of_lt_succ
+    (mk_sigma_lt (isRegular_succ' (H := H)) (lt_succ h) fun i => lt_succ (hρ i))
 
-/-- Inserting zeros does not change a `κ`-sum.
+theorem mk_prod_le {H : Type v} [KMonoid κ H] {α β : Type u} (hα : #α ≤ κ) (hβ : #β ≤ κ) :
+    #(α × β) ≤ κ :=
+  le_of_lt_succ
+    (mk_prod_lt (isRegular_succ' (H := H)) (lt_succ hα) (lt_succ hβ))
 
-Paper proof (implicit): for `g` whose range has complement of cardinality `κ` this is (A2)
-applied to `y i j := if j = j₀ then x i else 0`; the general case follows by composing with
-such a `g` and using (A3). -/
-theorem ksum_extend (g : Idx κ ↪ Idx κ) (x : Idx κ → H) :
-    ksum (κ := κ) (Function.extend g x 0) = ksum (κ := κ) x := by
-  have hκ := aleph0_le (κ := κ) (H := H)
-  obtain ⟨j₀⟩ := nonempty_Idx hκ
-  have hInf : Infinite (Idx κ) := Cardinal.infinite_iff.mpr (by rw [mk_Idx]; exact hκ)
-  -- Case A: embeddings whose range has complement of cardinality `κ` absorb zero-padding.
-  have caseA : ∀ (e : Idx κ ↪ Idx κ), #(↥(Set.range e)ᶜ) = κ →
-      ∀ z : Idx κ → H, ksum (κ := κ) (Function.extend e z 0) = ksum (κ := κ) z := by
-    intro e hcompl z
-    set R₀ : Set (Idx κ × Idx κ) := Set.range (fun i : Idx κ => (i, j₀)) with hR₀def
-    have hR₀inj : Function.Injective (fun i : Idx κ => (i, j₀)) := fun a b hab =>
-      (Prod.ext_iff.mp hab).1
-    set ρ₀ : Idx κ ≃ ↥R₀ := Equiv.ofInjective _ hR₀inj with hρ₀def
-    set pt : Set (Idx κ) := {j₀} with hptdef
-    have hptlt : #(pt : Set (Idx κ)) < #(Idx κ) :=
-      (mk_singleton j₀).trans_lt (lt_of_lt_of_le one_lt_aleph0 (by rw [mk_Idx]; exact hκ))
-    have hptc : #(↥ptᶜ) = #(Idx κ) := mk_compl_of_infinite pt hptlt
-    set rowComplEquiv : ↥R₀ᶜ ≃ Idx κ × ↥ptᶜ :=
-      { toFun := fun p => (p.1.1, ⟨p.1.2, fun hmem => p.2 ⟨p.1.1, Prod.ext rfl hmem.symm⟩⟩)
-        invFun := fun q => ⟨(q.1, q.2.1), fun hmem => q.2.2 (by
-          obtain ⟨i, hi⟩ := hmem
-          exact (Prod.ext_iff.mp hi).2.symm)⟩
-        left_inv := fun _ => rfl
-        right_inv := fun _ => rfl } with hrowComplEquivdef
-    have hR₀c : #(↥R₀ᶜ) = κ := by
-      have heq := Cardinal.mk_congr rowComplEquiv
-      rw [heq, Cardinal.mk_prod, hptc, mk_Idx]
-      simp [Cardinal.mul_eq_self hκ]
-    obtain ⟨β⟩ := Cardinal.eq.mp (hR₀c.trans hcompl.symm)
-    set eEquiv : Idx κ ≃ ↥(Set.range e) := Equiv.ofInjective e e.injective with heEquivdef
-    set αe : ↥R₀ ≃ ↥(Set.range e) := ρ₀.symm.trans eEquiv with hαedef
-    set φ : Idx κ × Idx κ ≃ Idx κ :=
-      (Equiv.Set.sumCompl R₀).symm.trans ((αe.sumCongr β).trans (Equiv.Set.sumCompl (Set.range e)))
-      with hφdef
-    have hφ_row : ∀ i, φ (i, j₀) = e i := by
-      intro i
-      have hmem : (i, j₀) ∈ R₀ := ⟨i, rfl⟩
-      have h1 : (Equiv.Set.sumCompl R₀).symm (i, j₀) = Sum.inl ⟨(i, j₀), hmem⟩ :=
-        Equiv.Set.sumCompl_symm_apply_of_mem hmem
-      have h2 : ρ₀.symm ⟨(i, j₀), hmem⟩ = i := by
-        apply ρ₀.injective
-        rw [Equiv.apply_symm_apply]
-        rfl
-      show (Equiv.Set.sumCompl (Set.range e))
-          ((αe.sumCongr β) ((Equiv.Set.sumCompl R₀).symm (i, j₀))) = e i
-      rw [h1, Equiv.sumCongr_apply, Sum.map_inl, Equiv.Set.sumCompl_apply_inl]
-      show (eEquiv (ρ₀.symm ⟨(i, j₀), hmem⟩) : Idx κ) = e i
-      rw [h2]
-      rfl
-    set Y : Idx κ → Idx κ → H := fun i j => if j = j₀ then z i else 0 with hYdef
-    have hYsum : ∀ i, ksum (κ := κ) (Y i) = z i := fun i =>
-      (ksum_single j₀ (Y i) (fun j hj => if_neg hj)).trans (if_pos rfl)
-    have hkey : ∀ k, Y (φ.symm k).1 (φ.symm k).2 = Function.extend e z 0 k := by
-      intro k
-      by_cases hk : ∃ i, e i = k
-      · obtain ⟨i, hi⟩ := hk
-        have hφsymm : φ.symm k = (i, j₀) := by
-          rw [← hi, ← hφ_row i, Equiv.symm_apply_apply]
-        rw [hφsymm]
-        show (if j₀ = j₀ then z i else 0) = Function.extend e z 0 k
-        rw [if_pos rfl, ← hi, e.injective.extend_apply]
-      · have hnotR₀ : φ.symm k ∉ R₀ := by
-          rintro ⟨i, hi⟩
-          dsimp only at hi
-          apply hk
-          refine ⟨i, ?_⟩
-          rw [← hφ_row i, hi, Equiv.apply_symm_apply]
-        have hne : (φ.symm k).2 ≠ j₀ := by
-          intro heq
-          exact hnotR₀ ⟨(φ.symm k).1, by rw [← heq]⟩
-        show (if (φ.symm k).2 = j₀ then z (φ.symm k).1 else 0) = Function.extend e z 0 k
-        rw [if_neg hne, Function.extend_apply' z (0 : Idx κ → H) k hk]
-        rfl
-    calc ksum (κ := κ) (Function.extend e z 0)
-        = ksum (κ := κ) (fun k => Y (φ.symm k).1 (φ.symm k).2) := by
-          congr 1; funext k; exact (hkey k).symm
-      _ = ksum (κ := κ) (fun i => ksum (κ := κ) (Y i)) := (ksum_sigma Y φ).symm
-      _ = ksum (κ := κ) z := by congr 1; funext i; exact hYsum i
-  -- reduce the general case to Case A via a fixed "generic" embedding with big complement
-  have hSum : #(Idx κ ⊕ Idx κ) = κ := by
-    rw [mk_sum]
-    simp [Cardinal.add_eq_self hκ]
-  obtain ⟨Φ⟩ := Cardinal.eq.mp (hSum.trans (mk_Idx κ).symm)
-  have hΦinj : Function.Injective (fun i : Idx κ => Φ (Sum.inl i)) := fun a b hab =>
-    Sum.inl_injective (Φ.injective hab)
-  set h : Idx κ ↪ Idx κ := ⟨fun i => Φ (Sum.inl i), hΦinj⟩ with hhdef
-  have hrangeh : Set.range h = Φ '' Set.range (Sum.inl : Idx κ → Idx κ ⊕ Idx κ) := by
-    ext y
-    simp only [Set.mem_range, Set.mem_image]
-    constructor
-    · rintro ⟨i, hi⟩
-      exact ⟨Sum.inl i, ⟨i, rfl⟩, hi⟩
-    · rintro ⟨s, ⟨i, hi⟩, hs⟩
-      exact ⟨i, by show Φ (Sum.inl i) = y; rw [hi]; exact hs⟩
-  have hcomplh : #(↥(Set.range h)ᶜ) = κ := by
-    rw [hrangeh, ← Equiv.image_compl, Set.isCompl_range_inl_range_inr.compl_eq,
-      Cardinal.mk_image_eq Φ.injective, Cardinal.mk_range_eq Sum.inr Sum.inr_injective, mk_Idx]
-  set g'' : Idx κ ↪ Idx κ := ⟨(h : Idx κ → Idx κ) ∘ (g : Idx κ → Idx κ),
-    h.injective.comp g.injective⟩ with hg''def
-  have hrange_sub : Set.range g'' ⊆ Set.range h := by
-    rintro k ⟨i, hi⟩
-    exact ⟨g i, hi⟩
-  have hcomplg'' : #(↥(Set.range g'')ᶜ) = κ := by
-    have hsub : (Set.range h)ᶜ ⊆ (Set.range g'')ᶜ := Set.compl_subset_compl.mpr hrange_sub
-    have hle1 : κ ≤ #(↥(Set.range g'')ᶜ) := hcomplh.symm.trans_le (Cardinal.mk_le_mk_of_subset hsub)
-    have hle2 : #(↥(Set.range g'')ᶜ) ≤ κ := (Cardinal.mk_set_le _).trans_eq (mk_Idx κ)
-    exact le_antisymm hle2 hle1
-  have e1 := caseA h hcomplh (Function.extend g x 0)
-  have e2 := caseA g'' hcomplg'' x
-  have hraw := Function.Injective.extend_comp g.injective h.injective x (0 : Idx κ → H)
-  have h0 : (0 : Idx κ → H) ∘ (h : Idx κ → Idx κ) = (0 : Idx κ → H) := by
-    funext i; simp
-  rw [h0] at hraw
-  have hcomp : Function.extend (⇑g'') x 0 = Function.extend (⇑h) (Function.extend (⇑g) x 0) 0 :=
-    hraw
-  rw [hcomp] at e2
-  rw [← e1, ← e2]
+theorem mk_sum_le {H : Type v} [KMonoid κ H] {α β : Type u} (hα : #α ≤ κ) (hβ : #β ≤ κ) :
+    #(α ⊕ β) ≤ κ :=
+  le_of_lt_succ
+    (mk_sum_lt (isRegular_succ' (H := H)) (lt_succ hα) (lt_succ hβ))
 
-/-- Two embeddings of the same index type into `Idx κ`, both with complement of cardinality
-`κ`, give the same zero-padded `κ`-sum.  This is the workhorse behind `sumOf_eq_extend`. -/
-theorem ksum_extend_congr {ι : Type u} (hι : #ι ≤ κ) (z : ι → H) (e1 e2 : ι ↪ Idx κ)
-    (h1 : #(↥(Set.range e1)ᶜ) = κ) (h2 : #(↥(Set.range e2)ᶜ) = κ) :
-    ksum (κ := κ) (Function.extend e1 z 0) = ksum (κ := κ) (Function.extend e2 z 0) := by
-  have hκ := aleph0_le (κ := κ) (H := H)
-  have hInf : Infinite (Idx κ) := Cardinal.infinite_iff.mpr (by rw [mk_Idx]; exact hκ)
-  obtain ⟨j₀⟩ := nonempty_Idx hκ
-  set R₀ : Set (Idx κ × Idx κ) := Set.range (fun i : ι => (emb hι i, j₀)) with hR₀def
-  have hR₀inj : Function.Injective (fun i : ι => (emb hι i, j₀)) := fun a b hab =>
-    (emb hι).injective (Prod.ext_iff.mp hab).1
-  set ρ₀ : ι ≃ ↥R₀ := Equiv.ofInjective _ hR₀inj with hρ₀def
-  have hR₀c : #(↥R₀ᶜ) = κ := by
-    set FR : Set (Idx κ × Idx κ) := Set.range (fun i : Idx κ => (i, j₀)) with hFRdef
-    have hsub : FRᶜ ⊆ R₀ᶜ := by
-      apply Set.compl_subset_compl.mpr
-      rintro p ⟨i, hi⟩
-      exact ⟨emb hι i, hi⟩
-    have hFRc : #(↥FRᶜ) = κ := by
-      set pt : Set (Idx κ) := {j₀} with hptdef
-      have hptlt : #(pt : Set (Idx κ)) < #(Idx κ) :=
-        (mk_singleton j₀).trans_lt (lt_of_lt_of_le one_lt_aleph0 (by rw [mk_Idx]; exact hκ))
-      have hptc : #(↥ptᶜ) = #(Idx κ) := mk_compl_of_infinite pt hptlt
-      set rowComplEquiv : ↥FRᶜ ≃ Idx κ × ↥ptᶜ :=
-        { toFun := fun p => (p.1.1, ⟨p.1.2, fun hmem => p.2 ⟨p.1.1, Prod.ext rfl hmem.symm⟩⟩)
-          invFun := fun q => ⟨(q.1, q.2.1), fun hmem => q.2.2 (by
-            obtain ⟨i, hi⟩ := hmem
-            exact (Prod.ext_iff.mp hi).2.symm)⟩
-          left_inv := fun _ => rfl
-          right_inv := fun _ => rfl } with hrowComplEquivdef
-      have heq := Cardinal.mk_congr rowComplEquiv
-      rw [heq, Cardinal.mk_prod, hptc, mk_Idx]
-      simp [Cardinal.mul_eq_self hκ]
-    have hle1 : κ ≤ #(↥R₀ᶜ) := hFRc.symm.trans_le (Cardinal.mk_le_mk_of_subset hsub)
-    have hle2 : #(↥R₀ᶜ) ≤ κ := (Cardinal.mk_set_le _).trans_eq (by
-      rw [Cardinal.mk_prod, mk_Idx]; simp [Cardinal.mul_eq_self hκ])
-    exact le_antisymm hle2 hle1
-  set Y : Idx κ → Idx κ → H := fun a b =>
-    if hmem : (a, b) ∈ R₀ then z (ρ₀.symm ⟨(a, b), hmem⟩) else 0 with hYdef
-  have match_e : ∀ (e : ι ↪ Idx κ), #(↥(Set.range e)ᶜ) = κ →
-      ksum (κ := κ) (fun i => ksum (κ := κ) (Y i)) = ksum (κ := κ) (Function.extend e z 0) := by
-    intro e hcompl
-    obtain ⟨β⟩ := Cardinal.eq.mp (hR₀c.trans hcompl.symm)
-    set eEquiv : ι ≃ ↥(Set.range e) := Equiv.ofInjective e e.injective with heEquivdef
-    set αe : ↥R₀ ≃ ↥(Set.range e) := ρ₀.symm.trans eEquiv with hαedef
-    set φ : Idx κ × Idx κ ≃ Idx κ :=
-      (Equiv.Set.sumCompl R₀).symm.trans ((αe.sumCongr β).trans (Equiv.Set.sumCompl (Set.range e)))
-      with hφdef
-    have hφ_row : ∀ i : ι, φ (emb hι i, j₀) = e i := by
-      intro i
-      have hmem : (emb hι i, j₀) ∈ R₀ := ⟨i, rfl⟩
-      have h1eq : (Equiv.Set.sumCompl R₀).symm (emb hι i, j₀) = Sum.inl ⟨(emb hι i, j₀), hmem⟩ :=
-        Equiv.Set.sumCompl_symm_apply_of_mem hmem
-      have h2eq : ρ₀.symm ⟨(emb hι i, j₀), hmem⟩ = i := by
-        apply ρ₀.injective
-        rw [Equiv.apply_symm_apply]
-        rfl
-      show (Equiv.Set.sumCompl (Set.range e))
-          ((αe.sumCongr β) ((Equiv.Set.sumCompl R₀).symm (emb hι i, j₀))) = e i
-      rw [h1eq, Equiv.sumCongr_apply, Sum.map_inl, Equiv.Set.sumCompl_apply_inl]
-      show (eEquiv (ρ₀.symm ⟨(emb hι i, j₀), hmem⟩) : Idx κ) = e i
-      rw [h2eq]
-      rfl
-    have hkey : ∀ k, Y (φ.symm k).1 (φ.symm k).2 = Function.extend e z 0 k := by
-      intro k
-      by_cases hk : ∃ i, e i = k
-      · obtain ⟨i, hi⟩ := hk
-        have hmem : (emb hι i, j₀) ∈ R₀ := ⟨i, rfl⟩
-        have hφsymm : φ.symm k = (emb hι i, j₀) := by
-          rw [← hi, ← hφ_row i, Equiv.symm_apply_apply]
-        have hρ : ρ₀.symm ⟨(emb hι i, j₀), hmem⟩ = i := by
-          apply ρ₀.injective
-          rw [Equiv.apply_symm_apply]
-          rfl
-        show Y (φ.symm k).1 (φ.symm k).2 = Function.extend e z 0 k
-        rw [hφsymm, hYdef]
-        show (if hmem' : (emb hι i, j₀) ∈ R₀ then z (ρ₀.symm ⟨(emb hι i, j₀), hmem'⟩) else 0)
-          = Function.extend e z 0 k
-        rw [dif_pos hmem, hρ, ← hi, e.injective.extend_apply]
-      · have hnotR₀ : φ.symm k ∉ R₀ := by
-          rintro ⟨i, hi⟩
-          dsimp only at hi
-          apply hk
-          refine ⟨i, ?_⟩
-          rw [← hφ_row i, hi, Equiv.apply_symm_apply]
-        show Y (φ.symm k).1 (φ.symm k).2 = Function.extend e z 0 k
-        rw [hYdef]
-        show (if hmem : ((φ.symm k).1, (φ.symm k).2) ∈ R₀ then
-            z (ρ₀.symm ⟨((φ.symm k).1, (φ.symm k).2), hmem⟩) else 0) = Function.extend e z 0 k
-        rw [dif_neg hnotR₀, Function.extend_apply' z (0 : Idx κ → H) k hk]
-        rfl
-    calc ksum (κ := κ) (fun i => ksum (κ := κ) (Y i))
-        = ksum (κ := κ) (fun k => Y (φ.symm k).1 (φ.symm k).2) := ksum_sigma Y φ
-      _ = ksum (κ := κ) (Function.extend e z 0) := by
-          congr 1; funext k; exact hkey k
-  exact (match_e e1 h1).symm.trans (match_e e2 h2)
+/-! ### Summation -/
 
 /-- The sum of a family indexed by an arbitrary type of cardinality `≤ κ`. -/
 noncomputable def sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) : H :=
-  ksum (κ := κ) (Function.extend (emb h) x 0)
+  LMonoid.lsumOf (lam := Order.succ κ) (lt_succ h) x
 
-/-- `sumOf` may be computed using *any* embedding of the index type into `Idx κ`. -/
-theorem sumOf_eq_extend {ι : Type u} (h : #ι ≤ κ) (e : ι ↪ Idx κ) (x : ι → H) :
-    sumOf (κ := κ) h x = ksum (κ := κ) (Function.extend e x 0) := by
-  show ksum (κ := κ) (Function.extend (emb h) x 0) = ksum (κ := κ) (Function.extend e x 0)
-  have hκ := aleph0_le (κ := κ) (H := H)
-  -- a fixed self-embedding of `Idx κ` with complement of cardinality `κ`
-  have hSum : #(Idx κ ⊕ Idx κ) = κ := by
-    rw [mk_sum]; simp [Cardinal.add_eq_self hκ]
-  obtain ⟨Φ⟩ := Cardinal.eq.mp (hSum.trans (mk_Idx κ).symm)
-  have hΦinj : Function.Injective (fun i : Idx κ => Φ (Sum.inl i)) := fun a b hab =>
-    Sum.inl_injective (Φ.injective hab)
-  set Hgen : Idx κ ↪ Idx κ := ⟨fun i => Φ (Sum.inl i), hΦinj⟩ with hHgendef
-  have hrangeHgen : Set.range Hgen = Φ '' Set.range (Sum.inl : Idx κ → Idx κ ⊕ Idx κ) := by
-    ext y
-    simp only [Set.mem_range, Set.mem_image]
-    constructor
-    · rintro ⟨i, hi⟩
-      exact ⟨Sum.inl i, ⟨i, rfl⟩, hi⟩
-    · rintro ⟨s, ⟨i, hi⟩, hs⟩
-      exact ⟨i, by show Φ (Sum.inl i) = y; rw [hi]; exact hs⟩
-  have hcomplHgen : #(↥(Set.range Hgen)ᶜ) = κ := by
-    rw [hrangeHgen, ← Equiv.image_compl, Set.isCompl_range_inl_range_inr.compl_eq,
-      Cardinal.mk_image_eq Φ.injective, Cardinal.mk_range_eq Sum.inr Sum.inr_injective, mk_Idx]
-  -- boost both `emb h` and `e` by composing with `Hgen`, forcing big complements
-  set G1 : ι ↪ Idx κ := ⟨(Hgen : Idx κ → Idx κ) ∘ (emb h : ι → Idx κ),
-    Hgen.injective.comp (emb h).injective⟩ with hG1def
-  set G2 : ι ↪ Idx κ := ⟨(Hgen : Idx κ → Idx κ) ∘ (e : ι → Idx κ),
-    Hgen.injective.comp e.injective⟩ with hG2def
-  have hcomplBoost : ∀ f : ι ↪ Idx κ,
-      Set.range (⟨(Hgen : Idx κ → Idx κ) ∘ (f : ι → Idx κ), Hgen.injective.comp f.injective⟩ :
-        ι ↪ Idx κ) ⊆ Set.range Hgen := by
-    intro f
-    rintro k ⟨i, hi⟩
-    exact ⟨f i, hi⟩
-  have hcomplG1 : #(↥(Set.range G1)ᶜ) = κ := by
-    have hsub : (Set.range Hgen)ᶜ ⊆ (Set.range G1)ᶜ :=
-      Set.compl_subset_compl.mpr (hcomplBoost (emb h))
-    have hle1 : κ ≤ #(↥(Set.range G1)ᶜ) := hcomplHgen.symm.trans_le (Cardinal.mk_le_mk_of_subset hsub)
-    have hle2 : #(↥(Set.range G1)ᶜ) ≤ κ := (Cardinal.mk_set_le _).trans_eq (mk_Idx κ)
-    exact le_antisymm hle2 hle1
-  have hcomplG2 : #(↥(Set.range G2)ᶜ) = κ := by
-    have hsub : (Set.range Hgen)ᶜ ⊆ (Set.range G2)ᶜ :=
-      Set.compl_subset_compl.mpr (hcomplBoost e)
-    have hle1 : κ ≤ #(↥(Set.range G2)ᶜ) := hcomplHgen.symm.trans_le (Cardinal.mk_le_mk_of_subset hsub)
-    have hle2 : #(↥(Set.range G2)ᶜ) ≤ κ := (Cardinal.mk_set_le _).trans_eq (mk_Idx κ)
-    exact le_antisymm hle2 hle1
-  have hcompeq :
-      ksum (κ := κ) (Function.extend (⇑G1) x 0) = ksum (κ := κ) (Function.extend (⇑G2) x 0) :=
-    ksum_extend_congr h x G1 G2 hcomplG1 hcomplG2
-  have hcomp1 :
-      Function.extend (⇑G1) x 0 = Function.extend (⇑Hgen) (Function.extend (⇑(emb h)) x 0) 0 := by
-    have hraw := Function.Injective.extend_comp (emb h).injective Hgen.injective x (0 : Idx κ → H)
-    have h0 : (0 : Idx κ → H) ∘ (⇑Hgen) = (0 : Idx κ → H) := by funext i; simp
-    rw [h0] at hraw
-    exact hraw
-  have hcomp2 : Function.extend (⇑G2) x 0 = Function.extend (⇑Hgen) (Function.extend (⇑e) x 0) 0 := by
-    have hraw := Function.Injective.extend_comp e.injective Hgen.injective x (0 : Idx κ → H)
-    have h0 : (0 : Idx κ → H) ∘ (⇑Hgen) = (0 : Idx κ → H) := by funext i; simp
-    rw [h0] at hraw
-    exact hraw
-  rw [hcomp1, hcomp2] at hcompeq
-  rw [ksum_extend Hgen (Function.extend (⇑(emb h)) x 0),
-    ksum_extend Hgen (Function.extend (⇑e) x 0)] at hcompeq
-  exact hcompeq
+theorem sumOf_eq_lsumOf {ι : Type u} (h : #ι ≤ κ) (h' : #ι < Order.succ κ) (x : ι → H) :
+    sumOf (κ := κ) h x = LMonoid.lsumOf (lam := Order.succ κ) h' x := rfl
+
+theorem sumOf_equiv {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι' ≃ ι) (x : ι → H) :
+    sumOf (κ := κ) h x = sumOf (κ := κ) h' (x ∘ e) :=
+  LMonoid.lsumOf_equiv _ _ e x
+
+@[simp] theorem sumOf_unique {ι : Type u} [Unique ι] (h : #ι ≤ κ) (x : ι → H) :
+    sumOf (κ := κ) h x = x default :=
+  LMonoid.lsumOf_unique _ x
+
+@[simp] theorem sumOf_of_isEmpty {ι : Type u} [IsEmpty ι] (h : #ι ≤ κ) (x : ι → H) :
+    sumOf (κ := κ) h x = 0 :=
+  LMonoid.lsumOf_isEmpty _ x
 
 @[simp] theorem sumOf_zero {ι : Type u} (h : #ι ≤ κ) :
-    sumOf (κ := κ) (H := H) h (fun _ => 0) = 0 := by
-  show ksum (κ := κ) (Function.extend (emb h) (fun _ : ι => (0 : H)) 0) = 0
-  have heq : Function.extend (emb h) (fun _ : ι => (0 : H)) 0 = fun _ => (0 : H) := by
-    funext k
-    by_cases hk : ∃ i, emb h i = k
-    · obtain ⟨i, hi⟩ := hk
-      rw [← hi, (emb h).injective.extend_apply]
-    · rw [Function.extend_apply' (fun _ : ι => (0 : H)) (0 : Idx κ → H) k hk]
-      rfl
-  rw [heq]
-  exact ksum_zero
+    sumOf (κ := κ) (H := H) h (fun _ => 0) = 0 :=
+  LMonoid.lsumOf_zero _
 
-/-- `sumOf` is invariant under reindexing along an equivalence. -/
-theorem sumOf_equiv {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι' ≃ ι) (x : ι → H) :
-    sumOf (κ := κ) h x = sumOf (κ := κ) h' (x ∘ e) := by
-  rw [sumOf_eq_extend h' (e.toEmbedding.trans (emb h)) (x ∘ e)]
-  show ksum (κ := κ) (Function.extend (emb h) x 0) = _
-  congr 1
-  funext k
-  by_cases hk : ∃ i, emb h i = k
-  · obtain ⟨i, hi⟩ := hk
-    have hLHS : Function.extend (emb h) x 0 k = x i := by
-      rw [← hi]; exact (emb h).injective.extend_apply x 0 i
-    have hi' : (e.toEmbedding.trans (emb h)) (e.symm i) = k := by
-      show emb h (e (e.symm i)) = k
-      rw [Equiv.apply_symm_apply]; exact hi
-    have hRHS : Function.extend (e.toEmbedding.trans (emb h)) (x ∘ e) 0 k = x i := by
-      rw [← hi', (e.toEmbedding.trans (emb h)).injective.extend_apply]
-      show x (e (e.symm i)) = x i
-      rw [Equiv.apply_symm_apply]
-    rw [hLHS, hRHS]
-  · rw [Function.extend_apply' x (0 : Idx κ → H) k hk]
-    symm
-    apply Function.extend_apply'
-    rintro ⟨i', hi'⟩
-    exact hk ⟨e i', hi'⟩
+/-- The general associativity law: a `κ`-sum may be computed by first summing over the fibres
+of a partition. -/
+theorem sumOf_sigma {ι : Type u} {ρ : ι → Type u} (h : #ι ≤ κ) (hρ : ∀ i, #(ρ i) ≤ κ)
+    (hσ : #((i : ι) × ρ i) ≤ κ) (x : ∀ i, ρ i → H) :
+    sumOf (κ := κ) h (fun i => sumOf (κ := κ) (hρ i) (x i))
+      = sumOf (κ := κ) hσ (fun p => x p.1 p.2) :=
+  LMonoid.lsumOf_sigma _ (fun i => lt_succ (hρ i)) x _
 
-theorem sumOf_Idx (x : Idx κ → H) : sumOf (κ := κ) (le_of_eq (mk_Idx κ)) x = ksum (κ := κ) x := by
-  rw [sumOf_eq_extend (le_of_eq (mk_Idx κ)) (Equiv.refl (Idx κ)).toEmbedding x]
-  have heq : Function.extend (⇑(Equiv.refl (Idx κ)).toEmbedding) x (0 : Idx κ → H) = x := by
-    have hid : (⇑(Equiv.refl (Idx κ)).toEmbedding : Idx κ → Idx κ) = id := rfl
-    rw [hid, Function.extend_id]
-  rw [heq]
+/-- Zero-padding along an embedding does not change a `κ`-sum. -/
+theorem sumOf_extend {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι ↪ ι') (x : ι → H) :
+    sumOf (κ := κ) h' (Function.extend e x 0) = sumOf (κ := κ) h x :=
+  LMonoid.lsumOf_extend _ _ e x
+
+/-- A `κ`-sum indexed by (a universe-lifted) `Bool` recovers the binary operation `+`. -/
+theorem sumOf_two (a b : H) (hUB : #(ULift.{u} Bool) ≤ κ) :
+    sumOf (κ := κ) hUB (fun p : ULift.{u} Bool => if p.down then a else b) = a + b :=
+  LMonoid.lsumOf_two a b _
+
+/-- `κ`-sums are additive. -/
+theorem sumOf_add {ι : Type u} (h : #ι ≤ κ) (f g : ι → H) :
+    sumOf (κ := κ) h (fun i => f i + g i) = sumOf (κ := κ) h f + sumOf (κ := κ) h g :=
+  LMonoid.lsumOf_add _ f g
 
 /-- Terms with value `0` may be discarded. -/
 theorem sumOf_subtype_support {ι : Type u} (h : #ι ≤ κ) (x : ι → H)
     (h' : #(Function.support x) ≤ κ) :
     sumOf (κ := κ) h x = sumOf (κ := κ) h' (fun i : Function.support x => x i) := by
-  rw [sumOf_eq_extend h' ((Function.Embedding.subtype _).trans (emb h))
-    (fun i : Function.support x => x i)]
-  show ksum (κ := κ) (Function.extend (emb h) x 0) = _
-  congr 1
-  funext k
-  by_cases hk : ∃ i, emb h i = k
-  · obtain ⟨i, hi⟩ := hk
-    rw [← hi, (emb h).injective.extend_apply]
-    by_cases hxi : x i = 0
-    · have hne : ¬ ∃ i' : Function.support x,
-          ((Function.Embedding.subtype _).trans (emb h)) i' = emb h i := by
-        rintro ⟨i', hi'⟩
-        have hival : (i' : ι) = i := (emb h).injective hi'
-        apply i'.2
-        rw [hival]
-        exact hxi
-      rw [Function.extend_apply' (fun i : Function.support x => x i) (0 : Idx κ → H)
-        (emb h i) hne, hxi]
+  classical
+  set e : Function.support x ↪ ι := Function.Embedding.subtype _ with hedef
+  have hfun : x = Function.extend (⇑e) (fun i : Function.support x => x i) 0 := by
+    funext i
+    by_cases hi : i ∈ Function.support x
+    · have hval : e ⟨i, hi⟩ = i := rfl
+      rw [← hval, e.injective.extend_apply]
       rfl
-    · have hmem : i ∈ Function.support x := hxi
-      have hival : ((Function.Embedding.subtype _).trans (emb h))
-          (⟨i, hmem⟩ : Function.support x) = emb h i := rfl
-      rw [← hival, ((Function.Embedding.subtype _).trans (emb h)).injective.extend_apply]
-  · rw [Function.extend_apply' x (0 : Idx κ → H) k hk]
-    symm
-    apply Function.extend_apply'
-    rintro ⟨i', hi'⟩
-    exact hk ⟨i', hi'⟩
-
-@[simp] theorem sumOf_unique {ι : Type u} [Unique ι] (h : #ι ≤ κ) (x : ι → H) :
-    sumOf (κ := κ) h x = x default := by
-  show ksum (κ := κ) (Function.extend (emb h) x 0) = x default
-  have hproof : ∀ j : Idx κ, j ≠ emb h default → Function.extend (emb h) x 0 j = 0 := by
-    intro j hj
-    by_cases hjk : ∃ i, emb h i = j
-    · obtain ⟨i, hi⟩ := hjk
-      exact absurd (by rw [← hi, Unique.eq_default i]) hj
-    · exact Function.extend_apply' _ _ _ hjk
-  rw [ksum_single (emb h default) _ hproof, (emb h).injective.extend_apply]
-
-/-- The general associativity law for `sumOf`, i.e. the statement that a `κ`-sum may be
-computed by first summing over the fibres of a partition. -/
-theorem sumOf_sigma {ι : Type u} {ρ : ι → Type u} (h : #ι ≤ κ) (hρ : ∀ i, #(ρ i) ≤ κ)
-    (hσ : #(Σ i, ρ i) ≤ κ) (x : ∀ i, ρ i → H) :
-    sumOf (κ := κ) h (fun i => sumOf (κ := κ) (hρ i) (x i))
-      = sumOf (κ := κ) hσ (fun p : Σ i, ρ i => x p.1 p.2) := by
-  have hκ := aleph0_le (κ := κ) (H := H)
-  set e : ι ↪ Idx κ := emb h with hedef
-  set f : ∀ i, ρ i ↪ Idx κ := fun i => emb (hρ i) with hfdef
-  set π : Idx κ × Idx κ ≃ Idx κ := pairEquiv hκ with hπdef
-  set E : (Σ i, ρ i) ↪ Idx κ := ⟨fun p => π (e p.1, f p.1 p.2), by
-    rintro ⟨i1, r1⟩ ⟨i2, r2⟩ hEq
-    have hpair : (e i1, f i1 r1) = (e i2, f i2 r2) := π.injective hEq
-    have hi : i1 = i2 := e.injective (Prod.ext_iff.mp hpair).1
-    subst hi
-    have hr : r1 = r2 := (f i1).injective (Prod.ext_iff.mp hpair).2
-    subst hr
-    rfl⟩ with hEdef
-  set W : ∀ i, Idx κ → H := fun i => Function.extend (f i) (x i) 0 with hWdef
-  set G : Idx κ → (Idx κ → H) := Function.extend e W (fun _ => (0 : Idx κ → H)) with hGdef
-  have hGa : ∀ a, ksum (κ := κ) (G a) = Function.extend e (fun i => ksum (κ := κ) (W i)) 0 a := by
-    intro a
-    by_cases ha : ∃ i, e i = a
-    · obtain ⟨i, hi⟩ := ha
-      have h1 : G a = W i := by rw [← hi, hGdef, e.injective.extend_apply]
-      have h2 : Function.extend e (fun i => ksum (κ := κ) (W i)) 0 a = ksum (κ := κ) (W i) := by
-        rw [← hi, e.injective.extend_apply]
-      rw [h1, h2]
-    · have h1 : G a = fun _ => (0 : H) := by
-        rw [hGdef]
-        exact Function.extend_apply' W (fun _ => (0 : Idx κ → H)) a ha
-      have h2 : Function.extend e (fun i => ksum (κ := κ) (W i)) 0 a = 0 :=
-        Function.extend_apply' (fun i => ksum (κ := κ) (W i)) (0 : Idx κ → H) a ha
-      rw [h1, h2]
-      exact ksum_zero
-  have hGk : ∀ k, G (π.symm k).1 (π.symm k).2 = Function.extend E (fun p => x p.1 p.2) 0 k := by
-    intro k
-    by_cases ha : ∃ i, e i = (π.symm k).1
-    · obtain ⟨i, hi⟩ := ha
-      have hGaeq : G (π.symm k).1 = W i := by rw [← hi, hGdef, e.injective.extend_apply]
-      rw [hGaeq]
-      by_cases hb : ∃ r, f i r = (π.symm k).2
-      · obtain ⟨r, hr⟩ := hb
-        have hWeq : W i (π.symm k).2 = x i r := by
-          rw [← hr]
-          show Function.extend (f i) (x i) 0 (f i r) = x i r
-          exact (f i).injective.extend_apply (x i) 0 r
-        rw [hWeq]
-        have hEk : E ⟨i, r⟩ = k := by
-          show π (e i, f i r) = k
-          rw [hi, hr]
-          exact Equiv.apply_symm_apply π k
-        rw [← hEk, E.injective.extend_apply]
-      · have hWeq : W i (π.symm k).2 = 0 :=
-          Function.extend_apply' (x i) (0 : Idx κ → H) (π.symm k).2 hb
-        rw [hWeq]
-        symm
-        apply Function.extend_apply'
-        rintro ⟨⟨i', r'⟩, hp⟩
-        have heqp : (e i', f i' r') = π.symm k := by
-          rw [← hp]; exact (Equiv.symm_apply_apply π (e i', f i' r')).symm
-        have hi' : e i' = (π.symm k).1 := congrArg Prod.fst heqp
-        have hii : i' = i := e.injective (hi'.trans hi.symm)
-        subst hii
-        exact hb ⟨r', congrArg Prod.snd heqp⟩
-    · have hGaeq : G (π.symm k).1 = fun _ => (0 : H) := by
-        rw [hGdef]
-        exact Function.extend_apply' W (fun _ => (0 : Idx κ → H)) (π.symm k).1 ha
-      rw [hGaeq]
-      symm
-      apply Function.extend_apply'
-      rintro ⟨⟨i', r'⟩, hp⟩
-      apply ha
-      refine ⟨i', ?_⟩
-      have heqp : (e i', f i' r') = π.symm k := by
-        rw [← hp]; exact (Equiv.symm_apply_apply π (e i', f i' r')).symm
-      exact congrArg Prod.fst heqp
-  have step1 : sumOf (κ := κ) h (fun i => sumOf (κ := κ) (hρ i) (x i))
-      = ksum (κ := κ) (fun a => ksum (κ := κ) (G a)) := by
-    show ksum (κ := κ) (Function.extend e (fun i => ksum (κ := κ) (W i)) 0)
-      = ksum (κ := κ) (fun a => ksum (κ := κ) (G a))
-    congr 1
-    funext a
-    exact (hGa a).symm
-  have step2 : ksum (κ := κ) (fun a => ksum (κ := κ) (G a))
-      = ksum (κ := κ) (fun k => G (π.symm k).1 (π.symm k).2) := ksum_sigma G π
-  have step3 : ksum (κ := κ) (fun k => G (π.symm k).1 (π.symm k).2)
-      = ksum (κ := κ) (Function.extend E (fun p => x p.1 p.2) 0) := by
-    congr 1
-    funext k
-    exact hGk k
-  have step4 : ksum (κ := κ) (Function.extend E (fun p => x p.1 p.2) 0)
-      = sumOf (κ := κ) hσ (fun p : Σ i, ρ i => x p.1 p.2) :=
-    (sumOf_eq_extend hσ E (fun p => x p.1 p.2)).symm
-  rw [step1, step2, step3, step4]
+    · rw [Function.extend_apply' (fun i : Function.support x => x i) (0 : ι → H) i ?_]
+      · exact not_not.mp hi
+      · rintro ⟨t, ht⟩
+        exact hi (ht ▸ t.2)
+  conv_lhs => rw [hfun]
+  exact sumOf_extend h' h e _
 
 /-- The special case of `sumOf_sigma` for a partition of the index set into subsets. -/
 theorem sumOf_biUnion {ι J : Type u} (I : J → Set ι) (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
@@ -626,177 +687,189 @@ theorem sumOf_biUnion {ι J : Type u} (I : J → Set ι) (hdisj : ∀ p q, p ≠
     (x : ι → H) :
     sumOf (κ := κ) hJ (fun p => sumOf (κ := κ) (hI p) (fun i : I p => x i))
       = sumOf (κ := κ) hι x := by
-  set Φ : (Σ p : J, I p) ≃ ι := Equiv.ofBijective (fun q : Σ p : J, I p => (q.2 : ι))
-    ⟨by
-      rintro ⟨p1, i1, hi1⟩ ⟨p2, i2, hi2⟩ heq
-      have heqι : i1 = i2 := heq
-      by_cases hpp : p1 = p2
-      · subst hpp
-        subst heqι
-        rfl
-      · exact absurd hi2 (heqι ▸ (Set.disjoint_left.mp (hdisj p1 p2 hpp) hi1))
-      , by
-      intro i
-      have hi : i ∈ (⋃ p, I p) := hcover ▸ Set.mem_univ i
-      obtain ⟨p, hp⟩ := Set.mem_iUnion.mp hi
-      exact ⟨⟨p, ⟨i, hp⟩⟩, rfl⟩⟩ with hΦdef
-  have hσ : #(Σ p : J, I p) ≤ κ := (Cardinal.mk_congr Φ).trans_le hι
-  have hmain := sumOf_sigma hJ hI hσ (fun p (i : I p) => x (i : ι))
-  have hequiv := sumOf_equiv hι hσ Φ x
-  exact hmain.trans hequiv.symm
+  have huniv : #(↥(Set.univ : Set ι)) ≤ κ := (Cardinal.mk_congr (Equiv.Set.univ ι)).trans_le hι
+  have hkey := LMonoid.lsumOf_biUnion_subset (X := H) (Set.univ : Set ι) I
+    (fun p => Set.subset_univ _) hdisj hcover (lt_succ hJ) (lt_succ huniv)
+    (fun p => lt_succ (hI p)) x
+  calc sumOf (κ := κ) hJ (fun p => sumOf (κ := κ) (hI p) (fun i : I p => x i))
+      = sumOf (κ := κ) huniv (fun i : (Set.univ : Set ι) => x i) := hkey
+    _ = sumOf (κ := κ) hι x := (sumOf_equiv hι huniv (Equiv.Set.univ ι) x).symm
 
-/-! ### Cardinal scalar multiplication (Definition 2.6, Lemma 2.7) -/
+/-! ### Summation over the canonical index type `Idx κ` -/
 
-/-- `cmul α x` is the sum of `α` many copies of `x` (Definition 2.6). -/
-noncomputable def cmul (α : Cardinal.{u}) (hα : α ≤ κ) (x : H) : H :=
-  sumOf (κ := κ) (le_of_eq_of_le (mk_Idx α) hα) fun _ : Idx α => x
+/-- The `κ`-indexed summation `Σ : H^κ → H` of the paper. -/
+noncomputable def ksum (x : Idx κ → H) : H := sumOf (κ := κ) (le_of_eq (mk_Idx κ)) x
 
-@[simp] theorem cmul_zero_cardinal (x : H) :
-    cmul (κ := κ) 0 zero_le x = 0 := by
-  show ksum (κ := κ) (Function.extend (emb (le_of_eq_of_le (mk_Idx (0 : Cardinal)) zero_le))
-    (fun _ : Idx (0 : Cardinal) => x) 0) = 0
-  have hEmpty : IsEmpty (Idx (0 : Cardinal)) := Cardinal.mk_eq_zero_iff.mp (mk_Idx 0)
-  have heq : Function.extend (emb (le_of_eq_of_le (mk_Idx (0 : Cardinal)) zero_le))
-      (fun _ : Idx (0 : Cardinal) => x) (0 : Idx κ → H) = fun _ => (0 : H) := by
-    funext k
-    apply Function.extend_apply'
-    rintro ⟨i, _⟩
-    exact hEmpty.false i
-  rw [heq]
-  exact ksum_zero
+theorem sumOf_Idx (x : Idx κ → H) : sumOf (κ := κ) (le_of_eq (mk_Idx κ)) x = ksum (κ := κ) x := rfl
 
-/-- Lemma 2.7(2). -/
-theorem cmul_sumOf_cardinal {I : Type u} (hI : #I ≤ κ) (l : I → Cardinal.{u})
-    (hl : ∀ i, l i ≤ κ) (hsum : (sum l) ≤ κ) (x : H) :
-    cmul (κ := κ) (sum l) hsum x = sumOf (κ := κ) hI fun i => cmul (κ := κ) (l i) (hl i) x := by
-  set ρ : I → Type u := fun i => Idx (l i) with hρdef
-  have hρ : ∀ i, #(ρ i) ≤ κ := fun i => le_of_eq_of_le (mk_Idx (l i)) (hl i)
-  have hmk : #(Σ i, ρ i) = Cardinal.sum l := by
-    rw [mk_sigma]
-    congr 1
+/-- A `κ`-sum may be computed by padding with zeros along *any* embedding into `Idx κ`. -/
+theorem sumOf_eq_extend {ι : Type u} (h : #ι ≤ κ) (e : ι ↪ Idx κ) (x : ι → H) :
+    sumOf (κ := κ) h x = ksum (κ := κ) (Function.extend e x 0) :=
+  (sumOf_extend h (le_of_eq (mk_Idx κ)) e x).symm
+
+@[simp] theorem ksum_zero : ksum (κ := κ) (fun _ : Idx κ => (0 : H)) = 0 := sumOf_zero _
+
+/-- (A1): a family concentrated in one index sums to its unique possibly nonzero entry. -/
+theorem ksum_single (i₀ : Idx κ) (x : Idx κ → H) (hx : ∀ i, i ≠ i₀ → x i = 0) :
+    ksum (κ := κ) x = x i₀ := by
+  classical
+  have hpt : #PUnit.{u + 1} ≤ κ := mk_le_of_finite (H := H) _
+  set e : PUnit.{u + 1} ↪ Idx κ := ⟨fun _ => i₀, fun _ _ _ => rfl⟩ with hedef
+  have hfun : x = Function.extend (⇑e) (fun _ : PUnit.{u + 1} => x i₀) 0 := by
     funext i
-    exact mk_Idx (l i)
-  have hσ : #(Σ i, ρ i) ≤ κ := le_of_eq_of_le hmk hsum
-  obtain ⟨Ψ⟩ := Cardinal.eq.mp (hmk.trans (mk_Idx (Cardinal.sum l)).symm)
-  have step1 : cmul (κ := κ) (sum l) hsum x
-      = sumOf (κ := κ) hσ (fun _ : Σ i, ρ i => x) := by
-    show sumOf (κ := κ) (le_of_eq_of_le (mk_Idx (Cardinal.sum l)) hsum) (fun _ => x) = _
-    exact sumOf_equiv (le_of_eq_of_le (mk_Idx (Cardinal.sum l)) hsum) hσ Ψ (fun _ => x)
-  have step2 : sumOf (κ := κ) hσ (fun _ : Σ i, ρ i => x)
-      = sumOf (κ := κ) hI (fun i => cmul (κ := κ) (l i) (hl i) x) :=
-    (sumOf_sigma hI hρ hσ (fun i (_ : ρ i) => x)).symm
-  rw [step1, step2]
+    by_cases hi : i = i₀
+    · have hval : e PUnit.unit = i₀ := rfl
+      rw [hi, ← hval, e.injective.extend_apply]
+    · rw [Function.extend_apply' _ _ _ (by rintro ⟨p, hp⟩; exact hi hp.symm)]
+      exact hx i hi
+  show sumOf (κ := κ) (le_of_eq (mk_Idx κ)) x = x i₀
+  conv_lhs => rw [hfun]
+  rw [sumOf_extend hpt (le_of_eq (mk_Idx κ)) e, sumOf_unique]
 
-/-- Lemma 2.7(3). -/
-theorem cmul_sumOf {I : Type u} (hI : #I ≤ κ) (α : Cardinal.{u}) (hα : α ≤ κ) (x : I → H) :
-    cmul (κ := κ) α hα (sumOf (κ := κ) hI x)
-      = sumOf (κ := κ) hI fun i => cmul (κ := κ) α hα (x i) := by
-  have hκ := aleph0_le (κ := κ) (H := H)
-  set hα' : #(Idx α) ≤ κ := le_of_eq_of_le (mk_Idx α) hα with hα'def
-  have hprod1 : #(Idx α × I) ≤ κ := by
-    have hmp : #(Idx α × I) = #(Idx α) * #I := by simp [Cardinal.mk_prod]
-    rw [hmp]
-    calc #(Idx α) * #I ≤ κ * κ := mul_le_mul' hα' hI
-      _ = κ := Cardinal.mul_eq_self hκ
-  have hprod2 : #(I × Idx α) ≤ κ := by
-    have hmp : #(I × Idx α) = #I * #(Idx α) := by simp [Cardinal.mk_prod]
-    rw [hmp]
-    calc #I * #(Idx α) ≤ κ * κ := mul_le_mul' hI hα'
-      _ = κ := Cardinal.mul_eq_self hκ
-  have hσ1 : #(Σ _ : Idx α, I) ≤ κ :=
-    (Cardinal.mk_congr (Equiv.sigmaEquivProd (Idx α) I)).trans_le hprod1
-  have hσ2 : #(Σ _ : I, Idx α) ≤ κ :=
-    (Cardinal.mk_congr (Equiv.sigmaEquivProd I (Idx α))).trans_le hprod2
-  set Θ : (Σ _ : Idx α, I) ≃ (Σ _ : I, Idx α) :=
-    (Equiv.sigmaEquivProd (Idx α) I).trans
-      ((Equiv.prodComm (Idx α) I).trans (Equiv.sigmaEquivProd I (Idx α)).symm) with hΘdef
-  have hΘapp : ∀ (a : Idx α) (i : I), Θ ⟨a, i⟩ = ⟨i, a⟩ := by
-    intro a i
-    simp [hΘdef]
-  have stepA : cmul (κ := κ) α hα (sumOf (κ := κ) hI x)
-      = sumOf (κ := κ) hσ1 (fun p : Σ _ : Idx α, I => x p.2) :=
-    sumOf_sigma hα' (fun _ => hI) hσ1 (fun (_ : Idx α) (i : I) => x i)
-  have stepB : sumOf (κ := κ) hI (fun i => cmul (κ := κ) α hα (x i))
-      = sumOf (κ := κ) hσ2 (fun q : Σ _ : I, Idx α => x q.1) :=
-    sumOf_sigma hI (fun _ => hα') hσ2 (fun (i : I) (_ : Idx α) => x i)
-  have stepC : sumOf (κ := κ) hσ2 (fun q : Σ _ : I, Idx α => x q.1)
-      = sumOf (κ := κ) hσ1 (fun p : Σ _ : Idx α, I => x p.2) := by
-    rw [sumOf_equiv hσ2 hσ1 Θ (fun q : Σ _ : I, Idx α => x q.1)]
-    congr 1
-  rw [stepA, stepB, stepC]
+/-- (A2): the associativity law modelled on `⨁ᵢ ⨁ⱼ Mᵢⱼ ≅ ⨁_{(i,j)} Mᵢⱼ`. -/
+theorem ksum_sigma (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx κ) :
+    ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
+      = ksum (κ := κ) fun k => x (π.symm k).1 (π.symm k).2 := by
+  have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
+  have hσ : #((_ : Idx κ) × Idx κ) ≤ κ := mk_sigma_le (H := H) hidx fun _ => hidx
+  have h1 : ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
+      = sumOf (κ := κ) hσ (fun p => x p.1 p.2) := sumOf_sigma hidx (fun _ => hidx) hσ x
+  have h2 : sumOf (κ := κ) hσ (fun p => x p.1 p.2)
+      = ksum (κ := κ) (fun k => x (π.symm k).1 (π.symm k).2) :=
+    sumOf_equiv hσ hidx (π.symm.trans (Equiv.sigmaEquivProd (Idx κ) (Idx κ)).symm) _
+  exact h1.trans h2
 
-/-! ### Reducedness (Lemma 2.8) -/
+/-- Compatibility of `+` with `Σ`. -/
+theorem ksum_two (a b : H) (i₀ i₁ : Idx κ) (hne : i₀ ≠ i₁) :
+    ksum (κ := κ) (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b := by
+  classical
+  have hUB : #(ULift.{u} Bool) ≤ κ := mk_uLift_bool_le κ H
+  set e : ULift.{u} Bool ↪ Idx κ := ⟨fun p => if p.down then i₀ else i₁, by
+    rintro ⟨(_ | _)⟩ ⟨(_ | _)⟩ h
+    · rfl
+    · exact absurd h.symm hne
+    · exact absurd h hne
+    · rfl⟩ with hedef
+  have he0 : e ⟨true⟩ = i₀ := rfl
+  have he1 : e ⟨false⟩ = i₁ := rfl
+  set F : ULift.{u} Bool → H := fun p => if p.down then a else b with hFdef
+  have hfun : (fun i => if i = i₀ then a else if i = i₁ then b else 0)
+      = Function.extend (⇑e) F 0 := by
+    funext i
+    by_cases h0 : i = i₀
+    · have hval : Function.extend (⇑e) F 0 i = a := by
+        rw [h0, ← he0, e.injective.extend_apply]
+        simp [hFdef]
+      rw [hval, if_pos h0]
+    · by_cases h1 : i = i₁
+      · have hval : Function.extend (⇑e) F 0 i = b := by
+          rw [h1, ← he1, e.injective.extend_apply]
+          simp [hFdef]
+        rw [hval, if_neg h0, if_pos h1]
+      · have hval : Function.extend (⇑e) F 0 i = 0 := by
+          apply Function.extend_apply'
+          rintro ⟨⟨(_ | _)⟩, hp⟩
+          · exact h1 (by rw [← hp, he1])
+          · exact h0 (by rw [← hp, he0])
+        rw [hval, if_neg h0, if_neg h1]
+  show sumOf (κ := κ) (le_of_eq (mk_Idx κ)) _ = a + b
+  rw [hfun, sumOf_extend hUB (le_of_eq (mk_Idx κ)) e, sumOf_two a b hUB]
+
+/-- (A3), Lemma 2.5: `Σ` is invariant under permutations of the index set. -/
+theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) :
+    ksum (κ := κ) x = ksum (κ := κ) (x ∘ π) :=
+  sumOf_equiv _ _ π x
+
+/-- (A4), Lemma 2.5: iterated sums may be interchanged. -/
+theorem ksum_comm (x : Idx κ → Idx κ → H) :
+    ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
+      = ksum (κ := κ) (fun j => ksum (κ := κ) fun i => x i j) := by
+  have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
+  have hσ : #((_ : Idx κ) × Idx κ) ≤ κ := mk_sigma_le (H := H) hidx fun _ => hidx
+  have h1 : ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
+      = sumOf (κ := κ) hσ (fun p => x p.1 p.2) := sumOf_sigma hidx (fun _ => hidx) hσ x
+  have h2 : ksum (κ := κ) (fun j => ksum (κ := κ) fun i => x i j)
+      = sumOf (κ := κ) hσ (fun p => x p.2 p.1) :=
+    sumOf_sigma hidx (fun _ => hidx) hσ (fun j i => x i j)
+  rw [h1, h2]
+  exact sumOf_equiv hσ hσ ((Equiv.sigmaEquivProd (Idx κ) (Idx κ)).trans
+    ((Equiv.prodComm (Idx κ) (Idx κ)).trans (Equiv.sigmaEquivProd (Idx κ) (Idx κ)).symm)) _
+
+/-- Zero-padding along a self-embedding of `Idx κ` does not change a `κ`-sum. -/
+theorem ksum_extend (g : Idx κ ↪ Idx κ) (x : Idx κ → H) :
+    ksum (κ := κ) (Function.extend g x 0) = ksum (κ := κ) x :=
+  sumOf_extend _ _ g x
+
+end KMonoid
+
+/-! ## Reducedness -/
 
 /-- A commutative monoid is *reduced* (or *conical*) if `a + b = 0` forces `a = b = 0`. -/
 def IsConical (X : Type v) [AddCommMonoid X] : Prop :=
   ∀ a b : X, a + b = 0 → a = 0 ∧ b = 0
 
-/-- A `sumOf` indexed by (a universe-lifted) `Bool` recovers the binary operation `+`. -/
-theorem sumOf_two (a b : H) (hUB : #(ULift.{u} Bool) ≤ κ) :
-    sumOf (κ := κ) hUB (fun p : ULift.{u} Bool => if p.down then a else b) = a + b := by
-  have hκ := aleph0_le (κ := κ) (H := H)
-  have hnt : Nontrivial (Idx κ) := by
-    rw [← Cardinal.one_lt_iff_nontrivial, mk_Idx]
-    exact lt_of_lt_of_le one_lt_aleph0 hκ
-  obtain ⟨i0, i1, hne⟩ := hnt.exists_pair_ne
-  set e : ULift.{u} Bool ↪ Idx κ := ⟨fun p => if p.down then i0 else i1, by
-    intro p q hpq
-    match p, q with
-    | ⟨true⟩, ⟨true⟩ => rfl
-    | ⟨false⟩, ⟨false⟩ => rfl
-    | ⟨true⟩, ⟨false⟩ => exact absurd hpq hne
-    | ⟨false⟩, ⟨true⟩ => exact absurd hpq.symm hne⟩ with hedef
-  rw [sumOf_eq_extend hUB e (fun p : ULift.{u} Bool => if p.down then a else b)]
-  have heq : Function.extend e (fun p : ULift.{u} Bool => if p.down then a else b) 0
-      = fun j => if j = i0 then a else if j = i1 then b else 0 := by
-    funext j
-    by_cases hj : ∃ p, e p = j
-    · obtain ⟨p, hp⟩ := hj
-      match p with
-      | ⟨true⟩ =>
-        have hval : Function.extend e (fun p : ULift.{u} Bool => if p.down then a else b) 0 j
-            = a := by
-          rw [← hp]; exact e.injective.extend_apply _ _ _
-        rw [hval]
-        have hji0 : j = i0 := hp.symm
-        rw [hji0]
-        simp
-      | ⟨false⟩ =>
-        have hval : Function.extend e (fun p : ULift.{u} Bool => if p.down then a else b) 0 j
-            = b := by
-          rw [← hp]; exact e.injective.extend_apply _ _ _
-        rw [hval]
-        have hji1 : j = i1 := hp.symm
-        rw [hji1]
-        simp [hne.symm]
-    · rw [Function.extend_apply' _ _ _ hj]
-      have hj0 : j ≠ i0 := fun heq0 => hj ⟨⟨true⟩, heq0.symm⟩
-      have hj1 : j ≠ i1 := fun heq1 => hj ⟨⟨false⟩, heq1.symm⟩
-      simp [hj0, hj1]
-  rw [heq]
-  exact ksum_two a b i0 i1 hne
+namespace KMonoid
 
-theorem mk_uLift_bool_le (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] :
-    #(ULift.{u} Bool) ≤ κ := by
-  have hκ := aleph0_le (κ := κ) (H := H)
-  rw [Cardinal.mk_uLift]
-  calc Cardinal.lift.{u, 0} (#Bool) ≤ Cardinal.lift.{u, 0} ℵ₀ :=
-        Cardinal.lift_le.mpr Cardinal.mk_le_aleph0
-    _ = ℵ₀ := Cardinal.lift_aleph0
-    _ ≤ κ := hκ
+/-! ### Cardinal scalar multiplication (Definition 2.6, Lemma 2.7) -/
+
+section Cmul
+
+variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
+
+/-- `cmul α x` is the sum of `α` many copies of `x` (Definition 2.6). -/
+noncomputable def cmul (α : Cardinal.{u}) (hα : α ≤ κ) (x : H) : H :=
+  sumOf (κ := κ) (le_of_eq_of_le (mk_Idx α) hα) fun _ : Idx α => x
+
+@[simp] theorem cmul_zero_cardinal (x : H) : cmul (κ := κ) 0 zero_le x = 0 := by
+  have : IsEmpty (Idx (0 : Cardinal.{u})) := Cardinal.mk_eq_zero_iff.mp (mk_Idx 0)
+  exact sumOf_of_isEmpty _ _
+
+/-- Lemma 2.7(2). -/
+theorem cmul_sumOf_cardinal {I : Type u} (hI : #I ≤ κ) (l : I → Cardinal.{u})
+    (hl : ∀ i, l i ≤ κ) (hsum : Cardinal.sum l ≤ κ) (x : H) :
+    cmul (κ := κ) (Cardinal.sum l) hsum x = sumOf (κ := κ) hI fun i => cmul (κ := κ) (l i) (hl i) x := by
+  have hρ : ∀ i, #(Idx (l i)) ≤ κ := fun i => le_of_eq_of_le (mk_Idx (l i)) (hl i)
+  have hmk : #((i : I) × Idx (l i)) = Cardinal.sum l := by
+    rw [mk_sigma]; exact congrArg _ (funext fun i => mk_Idx (l i))
+  have hσ : #((i : I) × Idx (l i)) ≤ κ := le_of_eq_of_le hmk hsum
+  obtain ⟨Ψ⟩ := Cardinal.eq.mp (hmk.trans (mk_Idx (Cardinal.sum l)).symm)
+  calc cmul (κ := κ) (Cardinal.sum l) hsum x
+      = sumOf (κ := κ) hσ (fun _ : (i : I) × Idx (l i) => x) :=
+        sumOf_equiv (le_of_eq_of_le (mk_Idx (Cardinal.sum l)) hsum) hσ Ψ (fun _ => x)
+    _ = sumOf (κ := κ) hI (fun i => cmul (κ := κ) (l i) (hl i) x) :=
+        (sumOf_sigma hI hρ hσ fun i (_ : Idx (l i)) => x).symm
+
+/-- Lemma 2.7(3). -/
+theorem cmul_sumOf {I : Type u} (hI : #I ≤ κ) (α : Cardinal.{u}) (hα : α ≤ κ) (x : I → H) :
+    cmul (κ := κ) α hα (sumOf (κ := κ) hI x)
+      = sumOf (κ := κ) hI fun i => cmul (κ := κ) α hα (x i) := by
+  have hα' : #(Idx α) ≤ κ := le_of_eq_of_le (mk_Idx α) hα
+  have hσ1 : #((_ : Idx α) × I) ≤ κ := mk_sigma_le (H := H) hα' fun _ => hI
+  have hσ2 : #((_ : I) × Idx α) ≤ κ := mk_sigma_le (H := H) hI fun _ => hα'
+  have stepA : cmul (κ := κ) α hα (sumOf (κ := κ) hI x)
+      = sumOf (κ := κ) hσ1 (fun p : (_ : Idx α) × I => x p.2) :=
+    sumOf_sigma hα' (fun _ => hI) hσ1 fun (_ : Idx α) (i : I) => x i
+  have stepB : sumOf (κ := κ) hI (fun i => cmul (κ := κ) α hα (x i))
+      = sumOf (κ := κ) hσ2 (fun q : (_ : I) × Idx α => x q.1) :=
+    sumOf_sigma hI (fun _ => hα') hσ2 fun (i : I) (_ : Idx α) => x i
+  have stepC : sumOf (κ := κ) hσ2 (fun q : (_ : I) × Idx α => x q.1)
+      = sumOf (κ := κ) hσ1 (fun p : (_ : Idx α) × I => x p.2) :=
+    sumOf_equiv hσ2 hσ1 ((Equiv.sigmaEquivProd (Idx α) I).trans
+      ((Equiv.prodComm (Idx α) I).trans (Equiv.sigmaEquivProd I (Idx α)).symm)) _
+  rw [stepA, stepB, stepC]
+
+/-! ### Reducedness (Lemma 2.8) -/
 
 /-- `κ`-many copies of `0` sum to `0`. -/
 theorem cmul_top_zero (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] :
-    cmul (κ := κ) κ le_rfl (0 : H) = 0 := by
-  show sumOf (κ := κ) (le_of_eq_of_le (mk_Idx κ) le_rfl) (fun _ : Idx κ => (0 : H)) = 0
-  exact sumOf_zero _
+    cmul (κ := κ) κ le_rfl (0 : H) = 0 := sumOf_zero _
 
-/-- Scaling by `κ` distributes over `+` (a consequence of Lemma 2.7(3) via `sumOf_two`). -/
+/-- Scaling by `κ` distributes over `+`. -/
 theorem cmul_top_distrib (a b : H) :
-    cmul (κ := κ) κ le_rfl (a + b)
-      = cmul (κ := κ) κ le_rfl a + cmul (κ := κ) κ le_rfl b := by
+    cmul (κ := κ) κ le_rfl (a + b) = cmul (κ := κ) κ le_rfl a + cmul (κ := κ) κ le_rfl b := by
   have hUB := mk_uLift_bool_le κ H
-  rw [← sumOf_two a b hUB, cmul_sumOf hUB κ le_rfl (fun p : ULift.{u} Bool => if p.down then a else b)]
+  rw [← sumOf_two a b hUB,
+    cmul_sumOf hUB κ le_rfl (fun p : ULift.{u} Bool => if p.down then a else b)]
   have hcongr : (fun p : ULift.{u} Bool => cmul (κ := κ) κ le_rfl (if p.down then a else b))
       = fun p : ULift.{u} Bool =>
         if p.down then cmul (κ := κ) κ le_rfl a else cmul (κ := κ) κ le_rfl b := by
@@ -811,7 +884,7 @@ theorem add_cmul_top_self (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] (z : H
     z + cmul (κ := κ) κ le_rfl z = cmul (κ := κ) κ le_rfl z := by
   have hκ := aleph0_le (κ := κ) (H := H)
   obtain ⟨j0⟩ := nonempty_Idx hκ
-  have hInf : Infinite (Idx κ) := Cardinal.infinite_iff.mpr (by rw [mk_Idx]; exact hκ)
+  have : Infinite (Idx κ) := infinite_Idx hκ
   have hcompl : #(↥({j0}ᶜ : Set (Idx κ))) = κ :=
     (mk_compl_of_infinite {j0} (by
       rw [mk_singleton]
@@ -820,12 +893,11 @@ theorem add_cmul_top_self (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] (z : H
     | ⟨true⟩ => ({j0} : Set (Idx κ))
     | ⟨false⟩ => {j0}ᶜ with hIdef
   have hdisj : ∀ p q : ULift.{u} Bool, p ≠ q → Disjoint (I p) (I q) := by
-    intro p q hpq
-    match p, q with
-    | ⟨true⟩, ⟨true⟩ => exact absurd rfl hpq
-    | ⟨false⟩, ⟨false⟩ => exact absurd rfl hpq
-    | ⟨true⟩, ⟨false⟩ => exact disjoint_compl_right
-    | ⟨false⟩, ⟨true⟩ => exact disjoint_compl_left
+    rintro ⟨(_ | _)⟩ ⟨(_ | _)⟩ hpq
+    · exact absurd rfl hpq
+    · exact disjoint_compl_left
+    · exact disjoint_compl_right
+    · exact absurd rfl hpq
   have hcover : (⋃ p, I p) = Set.univ := by
     apply Set.eq_univ_of_forall
     intro a
@@ -834,34 +906,23 @@ theorem add_cmul_top_self (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] (z : H
     · exact Set.mem_iUnion.mpr ⟨⟨false⟩, ha⟩
   have hJ := mk_uLift_bool_le κ H
   have hI : ∀ p : ULift.{u} Bool, #(I p) ≤ κ := by
-    intro p
-    match p with
-    | ⟨true⟩ =>
-      show #(({j0} : Set (Idx κ))) ≤ κ
+    rintro ⟨(_ | _)⟩
+    · exact hcompl.le
+    · show #(({j0} : Set (Idx κ))) ≤ κ
       rw [mk_singleton]
       exact one_le_aleph0.trans hκ
-    | ⟨false⟩ =>
-      show #(({j0}ᶜ : Set (Idx κ))) ≤ κ
-      exact hcompl.le
   have hmain := sumOf_biUnion I hdisj hcover hJ (le_of_eq (mk_Idx κ)) hI (fun _ : Idx κ => z)
-  have hleftpt : sumOf (κ := κ) (hI (⟨true⟩ : ULift.{u} Bool))
-      (fun i : I (⟨true⟩ : ULift.{u} Bool) => z) = z :=
-    sumOf_unique (hI (⟨true⟩ : ULift.{u} Bool)) (fun _ => z)
   have hleftcompl : sumOf (κ := κ) (hI (⟨false⟩ : ULift.{u} Bool))
-      (fun i : I (⟨false⟩ : ULift.{u} Bool) => z) = cmul (κ := κ) κ le_rfl z := by
-    show sumOf (κ := κ) (hI (⟨false⟩ : ULift.{u} Bool)) (fun i : ({j0}ᶜ : Set (Idx κ)) => z) = _
+      (fun _ : I (⟨false⟩ : ULift.{u} Bool) => z) = cmul (κ := κ) κ le_rfl z := by
     obtain ⟨Ψ⟩ := Cardinal.eq.mp (hcompl.trans (mk_Idx κ).symm)
-    exact (sumOf_equiv (le_of_eq (mk_Idx κ)) (hI (⟨false⟩ : ULift.{u} Bool)) Ψ (fun _ => z)).symm
-  have hleft : sumOf (κ := κ) hJ (fun p => sumOf (κ := κ) (hI p) (fun i : I p => z))
-      = sumOf (κ := κ) hJ (fun p : ULift.{u} Bool =>
-          if p.down then z else cmul (κ := κ) κ le_rfl z) := by
-    congr 1
+    exact (sumOf_equiv (le_of_eq (mk_Idx κ)) (hI (⟨false⟩ : ULift.{u} Bool)) Ψ fun _ => z).symm
+  have hleft : (fun p => sumOf (κ := κ) (hI p) (fun _ : I p => z))
+      = fun p : ULift.{u} Bool => if p.down then z else cmul (κ := κ) κ le_rfl z := by
     funext p
     match p with
-    | ⟨true⟩ => exact hleftpt
+    | ⟨true⟩ => exact sumOf_unique (hI (⟨true⟩ : ULift.{u} Bool)) (fun _ => z)
     | ⟨false⟩ => exact hleftcompl
-  rw [hleft] at hmain
-  rw [sumOf_two z (cmul (κ := κ) κ le_rfl z) hJ] at hmain
+  rw [hleft, sumOf_two z (cmul (κ := κ) κ le_rfl z) hJ] at hmain
   exact hmain
 
 /-- Lemma 2.8(1): a variant of the Eilenberg–Mazur swindle shows that every `κ`-monoid is
@@ -870,51 +931,32 @@ reduced.
 Paper proof: if `x + y = 0` then
 `x = x + κ·0 = x + κ(x+y) = (x + κx) + κy = κx + κy = κ(x+y) = 0`. -/
 theorem isConical (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] : IsConical H := by
-  intro x y hxy
-  have hcz := cmul_top_zero κ H
-  have step1 : x = cmul (κ := κ) κ le_rfl x + cmul (κ := κ) κ le_rfl y := by
+  have key : ∀ x y : H, x + y = 0 → x = 0 := by
+    intro x y hxy
+    have hcz := cmul_top_zero κ H
     calc x = x + (0 : H) := (add_zero x).symm
       _ = x + cmul (κ := κ) κ le_rfl 0 := by rw [hcz]
       _ = x + cmul (κ := κ) κ le_rfl (x + y) := by rw [hxy]
       _ = x + (cmul (κ := κ) κ le_rfl x + cmul (κ := κ) κ le_rfl y) := by rw [cmul_top_distrib]
       _ = (x + cmul (κ := κ) κ le_rfl x) + cmul (κ := κ) κ le_rfl y := (add_assoc _ _ _).symm
       _ = cmul (κ := κ) κ le_rfl x + cmul (κ := κ) κ le_rfl y := by rw [add_cmul_top_self κ H x]
-  have step2 : cmul (κ := κ) κ le_rfl x + cmul (κ := κ) κ le_rfl y = 0 := by
-    rw [← cmul_top_distrib, hxy]; exact hcz
-  have hx0 : x = 0 := step1.trans step2
-  have hyx : y + x = 0 := by rw [add_comm]; exact hxy
-  have step1' : y = cmul (κ := κ) κ le_rfl y + cmul (κ := κ) κ le_rfl x := by
-    calc y = y + (0 : H) := (add_zero y).symm
-      _ = y + cmul (κ := κ) κ le_rfl 0 := by rw [hcz]
-      _ = y + cmul (κ := κ) κ le_rfl (y + x) := by rw [hyx]
-      _ = y + (cmul (κ := κ) κ le_rfl y + cmul (κ := κ) κ le_rfl x) := by rw [cmul_top_distrib]
-      _ = (y + cmul (κ := κ) κ le_rfl y) + cmul (κ := κ) κ le_rfl x := (add_assoc _ _ _).symm
-      _ = cmul (κ := κ) κ le_rfl y + cmul (κ := κ) κ le_rfl x := by rw [add_cmul_top_self κ H y]
-  have step2' : cmul (κ := κ) κ le_rfl y + cmul (κ := κ) κ le_rfl x = 0 := by
-    rw [← cmul_top_distrib, hyx]; exact hcz
-  have hy0 : y = 0 := step1'.trans step2'
-  exact ⟨hx0, hy0⟩
+      _ = cmul (κ := κ) κ le_rfl (x + y) := (cmul_top_distrib x y).symm
+      _ = 0 := by rw [hxy, hcz]
+  exact fun x y hxy => ⟨key x y hxy, key y x (by rw [add_comm]; exact hxy)⟩
 
 /-- Applying `cmul κ` twice is the same as applying it once (since `κ * κ = κ`). -/
 theorem cmul_top_idem (z : H) :
     cmul (κ := κ) κ le_rfl (cmul (κ := κ) κ le_rfl z) = cmul (κ := κ) κ le_rfl z := by
   have hκ := aleph0_le (κ := κ) (H := H)
-  have hρ : ∀ _ : Idx κ, #(Idx κ) ≤ κ := fun _ => le_of_eq (mk_Idx κ)
-  have hσm : #(Σ _ : Idx κ, Idx κ) = κ := by
-    have heq1 : #(Σ _ : Idx κ, Idx κ) = #(Idx κ) * #(Idx κ) := by
-      rw [Cardinal.mk_congr (Equiv.sigmaEquivProd (Idx κ) (Idx κ))]
-      simp [Cardinal.mk_prod]
-    rw [heq1, mk_Idx]
-    exact Cardinal.mul_eq_self hκ
-  have hσ : #(Σ _ : Idx κ, Idx κ) ≤ κ := le_of_eq hσm
-  have step1 : cmul (κ := κ) κ le_rfl (cmul (κ := κ) κ le_rfl z)
-      = sumOf (κ := κ) hσ (fun _ : Σ _ : Idx κ, Idx κ => z) :=
-    sumOf_sigma (le_of_eq (mk_Idx κ)) hρ hσ (fun (_ _ : Idx κ) => z)
+  have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
+  have hσm : #((_ : Idx κ) × Idx κ) = κ := by
+    rw [Cardinal.mk_congr (Equiv.sigmaEquivProd (Idx κ) (Idx κ)), Cardinal.mk_prod]
+    simp [Cardinal.mul_eq_self hκ]
   obtain ⟨Ψ⟩ := Cardinal.eq.mp (hσm.trans (mk_Idx κ).symm)
-  have step2 : sumOf (κ := κ) hσ (fun _ : Σ _ : Idx κ, Idx κ => z)
-      = cmul (κ := κ) κ le_rfl z :=
-    (sumOf_equiv (le_of_eq (mk_Idx κ)) hσ Ψ (fun _ => z)).symm
-  rw [step1, step2]
+  calc cmul (κ := κ) κ le_rfl (cmul (κ := κ) κ le_rfl z)
+      = sumOf (κ := κ) (le_of_eq hσm) (fun _ : (_ : Idx κ) × Idx κ => z) :=
+        sumOf_sigma hidx (fun _ => hidx) (le_of_eq hσm) fun (_ _ : Idx κ) => z
+    _ = cmul (κ := κ) κ le_rfl z := (sumOf_equiv hidx (le_of_eq hσm) Ψ fun _ => z).symm
 
 /-- Lemma 2.8(2). -/
 theorem add_cmul_top_eq {t₁ t₂ t₃ : H} (h : t₁ + t₂ = cmul (κ := κ) κ le_rfl t₃) :
@@ -928,7 +970,13 @@ theorem add_cmul_top_eq {t₁ t₂ t₃ : H} (h : t₁ + t₂ = cmul (κ := κ) 
     _ = cmul (κ := κ) κ le_rfl (t₁ + t₂) := by rw [cmul_top_distrib]
     _ = cmul (κ := κ) κ le_rfl t₃ := hstep
 
+end Cmul
+
 /-! ### Homomorphisms, submonoids and generation (Section 2.1) -/
+
+section Sub
+
+variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
 
 /-- A homomorphism of `κ`-monoids. -/
 def IsKHom (κ : Cardinal.{u}) {H : Type v} {K : Type w} [KMonoid κ H] [KMonoid κ K]
@@ -940,26 +988,216 @@ structure IsKSubmonoid (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set 
   zero_mem : (0 : H) ∈ S
   ksum_mem : ∀ x : Idx κ → H, (∀ i, x i ∈ S) → ksum (κ := κ) x ∈ S
 
+/-- A `κ`-submonoid is closed under sums over arbitrary small index types. -/
+theorem IsKSubmonoid.sumOf_mem {S : Set H} (hS : IsKSubmonoid κ S) {ι : Type u} (h : #ι ≤ κ)
+    (x : ι → H) (hx : ∀ i, x i ∈ S) : sumOf (κ := κ) h x ∈ S := by
+  classical
+  rw [← sumOf_extend h (le_of_eq (mk_Idx κ)) (emb h) x]
+  refine hS.ksum_mem _ fun k => ?_
+  by_cases hk : ∃ i, emb h i = k
+  · obtain ⟨i, rfl⟩ := hk
+    rw [(emb h).injective.extend_apply]
+    exact hx i
+  · rw [Function.extend_apply' _ _ _ hk]
+    exact hS.zero_mem
+
+/-- A `κ`-submonoid is closed under `+`. -/
+theorem IsKSubmonoid.add_mem {S : Set H} (hS : IsKSubmonoid κ S) {a b : H} (ha : a ∈ S)
+    (hb : b ∈ S) : a + b ∈ S := by
+  have hUB := mk_uLift_bool_le κ H
+  rw [← sumOf_two a b hUB]
+  exact hS.sumOf_mem hUB _ (by rintro ⟨(_ | _)⟩ <;> simpa)
+
 /-- The `κ`-submonoid `⟨S⟩_κ` generated by a subset. -/
 def kclosure (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Set H :=
   ⋂₀ {T | S ⊆ T ∧ IsKSubmonoid κ T}
 
-theorem subset_kclosure {S : Set H} : S ⊆ kclosure κ S := by
-  intro _ hx _ hT; exact hT.1 hx
+theorem subset_kclosure {S : Set H} : S ⊆ kclosure κ S := fun _ hx _ hT => hT.1 hx
+
+/-- The `κ`-closure of a set is a `κ`-submonoid: an intersection of `κ`-submonoids is one. -/
+theorem isKSubmonoid_kclosure (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) :
+    IsKSubmonoid κ (kclosure κ S) where
+  zero_mem := fun _ hT => hT.2.zero_mem
+  ksum_mem := fun x hx T hT => hT.2.ksum_mem x fun i => hx i T hT
+
+/-- `⟨S⟩_κ` is the smallest `κ`-submonoid containing `S`. -/
+theorem kclosure_le {S T : Set H} (hST : S ⊆ T) (hT : IsKSubmonoid κ T) : kclosure κ S ⊆ T :=
+  fun _ hx => hx T ⟨hST, hT⟩
+
+theorem kclosure_mono {S S' : Set H} (h : S ⊆ S') : kclosure κ S ⊆ kclosure κ S' :=
+  kclosure_le (h.trans subset_kclosure) (isKSubmonoid_kclosure κ S')
+
+/-- Elements of `⟨S⟩_κ` are exactly the `κ`-sums of families in `S`. -/
+theorem mem_kclosure_iff {S : Set H} (h0 : (0 : H) ∈ S) (h : H) :
+    h ∈ kclosure κ S ↔ ∃ x : Idx κ → H, (∀ i, x i ∈ S) ∧ h = ksum (κ := κ) x := by
+  classical
+  have hκ := aleph0_le (κ := κ) (H := H)
+  obtain ⟨i₀⟩ := nonempty_Idx hκ
+  refine ⟨fun hh => ?_, ?_⟩
+  · refine hh {h | ∃ x : Idx κ → H, (∀ i, x i ∈ S) ∧ h = ksum (κ := κ) x} ⟨?_, ?_, ?_⟩
+    · intro a ha
+      refine ⟨fun i => if i = i₀ then a else 0, fun i => ?_, ?_⟩
+      · show (if i = i₀ then a else 0) ∈ S
+        by_cases hi : i = i₀
+        · rwa [if_pos hi]
+        · rwa [if_neg hi]
+      · rw [ksum_single i₀ _ fun i hi => if_neg hi, if_pos rfl]
+    · exact ⟨fun _ => 0, fun _ => h0, ksum_zero.symm⟩
+    · intro y hy
+      choose x hxS hxsum using hy
+      refine ⟨fun k => x ((pairEquiv hκ).symm k).1 ((pairEquiv hκ).symm k).2, fun k => hxS _ _, ?_⟩
+      rw [← ksum_sigma x (pairEquiv hκ)]
+      exact congrArg _ (funext hxsum)
+  · rintro ⟨x, hxS, rfl⟩
+    exact (isKSubmonoid_kclosure κ S).ksum_mem x fun i => subset_kclosure (hxS i)
 
 /-- Definition 2.10: `H` is generated as a `κ`-monoid by `S`. -/
 def KGenerates (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Prop :=
   kclosure κ S = Set.univ
 
+end Sub
+
 end KMonoid
 
-/-! ### Reconstructing a `κ`-monoid from bare data (Lemma 2.5) -/
+/-! ## Induced structures on sub-objects -/
+
+/-- The commutative monoid structure on a subset containing `0` and closed under `+`. -/
+@[instance_reducible]
+def addCommMonoidOfClosed {H : Type v} [AddCommMonoid H] {S : Set H} (h0 : (0 : H) ∈ S)
+    (hadd : ∀ a ∈ S, ∀ b ∈ S, a + b ∈ S) : AddCommMonoid ↥S :=
+  inferInstanceAs (AddCommMonoid
+    ↥({ carrier := S, add_mem' := fun {a b} ha hb => hadd a ha b hb, zero_mem' := h0 } :
+      AddSubmonoid H))
+
+/-- A subset of a `κ`-monoid closed under `λ⁻`-sums. -/
+structure IsLSubset (lam : Cardinal.{u}) {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
+    (hlk : lam ≤ κ) (S : Set H) : Prop where
+  zero_mem : (0 : H) ∈ S
+  sumOf_mem : ∀ {ι : Type u} (h : #ι < lam) (x : ι → H), (∀ i, x i ∈ S) →
+    KMonoid.sumOf (κ := κ) (h.le.trans hlk) x ∈ S
+
+namespace KMonoid
+
+variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
+
+/-- A `κ`-submonoid of a `κ`-monoid is itself a `κ`-monoid. -/
+@[instance_reducible]
+noncomputable def IsKSubmonoid.kmonoid {S : Set H} (hS : IsKSubmonoid κ S) : KMonoid κ ↥S :=
+  letI acm : AddCommMonoid ↥S :=
+    addCommMonoidOfClosed hS.zero_mem fun _ ha _ hb => hS.add_mem ha hb
+  { toAddCommMonoid := acm
+    aleph0_le := aleph0_le (κ := κ) (H := H)
+    isRegular := isRegular_succ' (H := H)
+    lsumOf := fun {ι} h x =>
+      ⟨sumOf (κ := κ) (le_of_lt_succ h) fun i => (x i : H),
+        hS.sumOf_mem _ _ fun i => (x i).2⟩
+    lsumOf_congr := fun h h' e x =>
+      Subtype.ext (sumOf_equiv (le_of_lt_succ h') (le_of_lt_succ h) e fun i => (x i : H)).symm
+    lsumOf_unique := fun h x => Subtype.ext (sumOf_unique (le_of_lt_succ h) fun i => (x i : H))
+    lsumOf_sigma := fun h hρ x hσ =>
+      Subtype.ext (sumOf_sigma (le_of_lt_succ h) (fun i => le_of_lt_succ (hρ i))
+        (le_of_lt_succ hσ) fun i j => (x i j : H))
+    add_eq_lsumOf := fun h a b => Subtype.ext (by
+      show (a : H) + (b : H) = sumOf (κ := κ) (le_of_lt_succ h) _
+      rw [LMonoid.add_eq_lsumOf (lam := Order.succ κ) (le_of_lt_succ h |> lt_succ) (a : H) (b : H)]
+      exact congrArg _ (funext fun p => by rcases p with p | p <;> rfl)) }
+
+/-- A `λ⁻`-closed subset of a `κ`-monoid is a `λ⁻`-monoid. -/
+@[instance_reducible]
+noncomputable def _root_.KappaMonoid.IsLSubset.lmonoid {lam : Cardinal.{u}} {hlk : lam ≤ κ} {S : Set H}
+    (hlam : lam.IsRegular) (hS : IsLSubset lam hlk S) : LMonoid lam ↥S :=
+  letI hadd : ∀ a ∈ S, ∀ b ∈ S, a + b ∈ S := by
+    intro a ha b hb
+    have hUB : #(ULift.{u} Bool) < lam :=
+      lt_of_lt_of_le (Cardinal.lt_aleph0_iff_finite.mpr inferInstance) hlam.aleph0_le
+    have hmem := hS.sumOf_mem hUB (fun p : ULift.{u} Bool => if p.down then a else b)
+      (by rintro ⟨(_ | _)⟩ <;> simpa)
+    rwa [sumOf_two a b (hUB.le.trans hlk)] at hmem
+  letI acm : AddCommMonoid ↥S := addCommMonoidOfClosed hS.zero_mem hadd
+  { toAddCommMonoid := acm
+    isRegular := hlam
+    lsumOf := fun {ι} h x =>
+      ⟨sumOf (κ := κ) (h.le.trans hlk) fun i => (x i : H), hS.sumOf_mem h _ fun i => (x i).2⟩
+    lsumOf_congr := fun h h' e x =>
+      Subtype.ext (sumOf_equiv (h'.le.trans hlk) (h.le.trans hlk) e fun i => (x i : H)).symm
+    lsumOf_unique := fun h x => Subtype.ext (sumOf_unique (h.le.trans hlk) fun i => (x i : H))
+    lsumOf_sigma := fun h hρ x hσ =>
+      Subtype.ext (sumOf_sigma (h.le.trans hlk) (fun i => (hρ i).le.trans hlk)
+        (hσ.le.trans hlk) fun i j => (x i j : H))
+    add_eq_lsumOf := fun h a b => Subtype.ext (by
+      show (a : H) + (b : H) = sumOf (κ := κ) (h.le.trans hlk) _
+      rw [LMonoid.add_eq_lsumOf (lam := Order.succ κ) (lt_succ (h.le.trans hlk)) (a : H) (b : H)]
+      exact congrArg _ (funext fun p => by rcases p with p | p <;> rfl)) }
+
+/-- The inclusion of a `κ`-submonoid preserves sums over arbitrary small index types. -/
+theorem IsKSubmonoid.coe_sumOf {T : Set H} (hT : IsKSubmonoid κ T) {ι : Type u} (hι : #ι ≤ κ)
+    (z : ι → T) :
+    letI := hT.kmonoid
+    ((sumOf (κ := κ) hι z : T) : H) = sumOf (κ := κ) hι fun i => (z i : H) := rfl
+
+/-- The inclusion of a `κ`-submonoid preserves `κ`-sums. -/
+theorem IsKSubmonoid.coe_ksum {T : Set H} (hT : IsKSubmonoid κ T) (z : Idx κ → T) :
+    letI := hT.kmonoid
+    ((ksum (κ := κ) z : T) : H) = ksum (κ := κ) fun i => (z i : H) := rfl
+
+/-- The inclusion of a `λ⁻`-closed subset preserves `λ⁻`-sums: they are computed as the
+ambient `κ`-sums. -/
+theorem _root_.KappaMonoid.IsLSubset.coe_lsumOf {lam : Cardinal.{u}} {hlk : lam ≤ κ} {S : Set H}
+    (hlam : lam.IsRegular) (hS : IsLSubset lam hlk S) {ι : Type u} (hι : #ι < lam) (z : ι → S) :
+    letI := hS.lmonoid hlam
+    ((LMonoid.lsumOf (lam := lam) hι z : S) : H)
+      = sumOf (κ := κ) (hι.le.trans hlk) fun i => (z i : H) := rfl
+
+/-- A `κ`-monoid is a `λ⁻`-monoid for every regular `λ ≤ κ` (Remark 2.19). -/
+@[instance_reducible]
+noncomputable def toLMonoidOfLE (H : Type v) [KMonoid κ H] {lam : Cardinal.{u}}
+    (hlam : lam.IsRegular) (hlk : lam ≤ κ) : LMonoid lam H :=
+  LMonoid.ofLE (lam₂ := Order.succ κ) hlam (hlk.trans (Order.le_succ κ))
+
+/-- The `λ⁻`-sums induced on a `κ`-monoid by `toLMonoidOfLE` are its `κ`-sums. -/
+theorem toLMonoidOfLE_lsumOf {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+    {ι : Type u} (h : #ι < lam) (x : ι → H) :
+    letI := toLMonoidOfLE H hlam hlk
+    LMonoid.lsumOf (lam := lam) h x = sumOf (κ := κ) (h.le.trans hlk) x := rfl
+
+end KMonoid
+
+
+/-! ## Reconstructing a `κ`-monoid from `κ`-indexed data (Lemma 2.5)
+
+The constructions of Sections 3 and 4 produce a summation operation for `Idx κ`-indexed
+families only.  This section turns such data into a `κ`-monoid: an arbitrary family of size
+`≤ κ` is summed by padding it with zeros along an embedding into `Idx κ`, the point being
+that the result does not depend on the embedding chosen. -/
+
+/-- Two embeddings whose ranges have equinumerous complements differ by a permutation. -/
+theorem exists_perm_comp {ι : Type u} {κ : Cardinal.{u}} (e₁ e₂ : ι ↪ Idx κ)
+    (h : #(↥(Set.range ⇑e₁)ᶜ) = #(↥(Set.range ⇑e₂)ᶜ)) :
+    ∃ σ : Idx κ ≃ Idx κ, ∀ i, σ (e₁ i) = e₂ i := by
+  classical
+  obtain ⟨γ⟩ := Cardinal.eq.mp h
+  set α : ↥(Set.range ⇑e₁) ≃ ↥(Set.range ⇑e₂) :=
+    (Equiv.ofInjective _ e₁.injective).symm.trans (Equiv.ofInjective _ e₂.injective) with hα
+  refine ⟨(Equiv.Set.sumCompl (Set.range ⇑e₁)).symm.trans
+    ((α.sumCongr γ).trans (Equiv.Set.sumCompl (Set.range ⇑e₂))), fun i => ?_⟩
+  have hmem : e₁ i ∈ Set.range ⇑e₁ := ⟨i, rfl⟩
+  have hval : α ⟨e₁ i, hmem⟩ = Equiv.ofInjective _ e₂.injective i := by
+    rw [hα, Equiv.trans_apply]
+    congr 1
+    apply (Equiv.ofInjective _ e₁.injective).injective
+    rw [Equiv.apply_symm_apply]
+    rfl
+  show (Equiv.Set.sumCompl (Set.range ⇑e₂))
+      ((α.sumCongr γ) ((Equiv.Set.sumCompl (Set.range ⇑e₁)).symm (e₁ i))) = e₂ i
+  rw [Equiv.Set.sumCompl_symm_apply_of_mem hmem, Equiv.sumCongr_apply, Sum.map_inl,
+    Equiv.Set.sumCompl_apply_inl, hval]
+  rfl
 
 /-- "Bare" `κ`-monoid data: a pointed type with a `κ`-indexed summation subject to (A1) and
-(A2) of Definition 2.1, and *no* binary operation.  By Lemma 2.5 the commutative monoid
-structure is determined by this data; `KMonoid.ofBare` reconstructs it. -/
+(A2).  By Lemma 2.5 the additive structure and the sums over arbitrary index types of size
+`≤ κ` are determined by this data; `KMonoid.ofBare` reconstructs them. -/
 structure BareKMonoid (κ : Cardinal.{u}) (H : Type v) [Zero H] where
-  /-- `κ` is infinite. -/
+  /-- `κ` is an infinite cardinal. -/
   aleph0_le : ℵ₀ ≤ κ
   /-- The `κ`-indexed summation. -/
   ksum : (Idx κ → H) → H
@@ -967,53 +1205,30 @@ structure BareKMonoid (κ : Cardinal.{u}) (H : Type v) [Zero H] where
   ksum_single : ∀ (i₀ : Idx κ) (x : Idx κ → H), (∀ i, i ≠ i₀ → x i = 0) → ksum x = x i₀
   /-- (A2). -/
   ksum_sigma : ∀ (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx κ),
-    ksum (fun i => ksum (x i)) = ksum fun k => x (π.symm k).1 (π.symm k).2
-
-/-- The family with value `a` at `p`, value `b` at `q`, and `0` elsewhere. -/
-noncomputable def twoFam {κ : Cardinal.{u}} {H : Type v} [Zero H] (p q : Idx κ) (a b : H) : Idx κ → H :=
-  fun i => if i = p then a else if i = q then b else 0
-
-theorem twoFam_left {κ : Cardinal.{u}} {H : Type v} [Zero H] (p q : Idx κ) (a b : H) :
-    twoFam p q a b p = a := if_pos rfl
-
-theorem twoFam_right {κ : Cardinal.{u}} {H : Type v} [Zero H] {p q : Idx κ} (h : p ≠ q)
-    (a b : H) : twoFam p q a b q = b := by
-  rw [twoFam, if_neg (Ne.symm h), if_pos rfl]
-
-theorem twoFam_other {κ : Cardinal.{u}} {H : Type v} [Zero H] {p q i : Idx κ} (hp : i ≠ p)
-    (hq : i ≠ q) (a b : H) : twoFam p q a b i = 0 := by
-  rw [twoFam, if_neg hp, if_neg hq]
-
-/-- A permutation matching two prescribed pairs of distinct points. -/
-theorem exists_equiv_two {α : Type*} {p₁ p₂ q₁ q₂ : α} (hp : p₁ ≠ p₂) (hq : q₁ ≠ q₂) :
-    ∃ π : α ≃ α, π p₁ = q₁ ∧ π p₂ = q₂ := by
-  classical
-  set σ₁ : α ≃ α := Equiv.swap p₁ q₁ with hσ₁
-  have h1 : σ₁ p₁ = q₁ := Equiv.swap_apply_left p₁ q₁
-  have h2 : σ₁ p₂ ≠ q₁ := fun hc => hp (σ₁.injective (h1.trans hc.symm))
-  refine ⟨σ₁.trans (Equiv.swap (σ₁ p₂) q₂), ?_, ?_⟩
-  · show Equiv.swap (σ₁ p₂) q₂ (σ₁ p₁) = q₁
-    rw [h1, Equiv.swap_apply_of_ne_of_ne (Ne.symm h2) hq]
-  · show Equiv.swap (σ₁ p₂) q₂ (σ₁ p₂) = q₂
-    exact Equiv.swap_apply_left _ _
+      ksum (fun i => ksum (x i)) = ksum fun k => x (π.symm k).1 (π.symm k).2
 
 namespace BareKMonoid
 
 variable {κ : Cardinal.{u}} {H : Type v} [Zero H] (B : BareKMonoid κ H)
 
-theorem ksum_zero : B.ksum (fun _ => 0) = 0 := by
-  obtain ⟨i₀⟩ := nonempty_Idx B.aleph0_le
-  exact B.ksum_single i₀ _ fun _ _ => rfl
+include B
 
-/-- (A3), Lemma 2.5, for bare data: `Σ` is invariant under permutations of the index set. -/
+/-- A fixed bijection `Idx κ × Idx κ ≃ Idx κ`. -/
+noncomputable def pair : Idx κ × Idx κ ≃ Idx κ := pairEquiv B.aleph0_le
+
+/-- A fixed index, used as the "column" along which families are spread out. -/
+noncomputable def j₀ : Idx κ := (nonempty_Idx B.aleph0_le).some
+
+theorem ksum_zero : B.ksum (fun _ => 0) = 0 :=
+  B.ksum_single B.j₀ _ fun _ _ => rfl
+
+/-- (A3): the summation is invariant under permutations of `Idx κ`. -/
 theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) : B.ksum x = B.ksum (x ∘ π) := by
-  obtain ⟨j₀⟩ := nonempty_Idx B.aleph0_le
-  set y : Idx κ → Idx κ → H := fun i j => if j = j₀ then x i else 0 with hy
-  set w : Idx κ → Idx κ → H := fun i j => y (π i) j with hw
+  set y : Idx κ → Idx κ → H := fun i j => if j = B.j₀ then x i else 0 with hy
+  set w : Idx κ → Idx κ → H := fun i j => y (π i) j
   have hxy : ∀ i, B.ksum (y i) = x i := fun i =>
-    (B.ksum_single j₀ (y i) (fun j hj => if_neg hj)).trans (if_pos rfl)
-  have hwx : ∀ i, B.ksum (w i) = x (π i) := fun i => hxy (π i)
-  set f := pairEquiv B.aleph0_le with hf
+    (B.ksum_single B.j₀ (y i) fun j hj => if_neg hj).trans (if_pos rfl)
+  set f := B.pair with hf
   set g : Idx κ × Idx κ ≃ Idx κ := (π.symm.prodCongr (Equiv.refl (Idx κ))).trans f with hg
   have hgsymm : ∀ l : Idx κ, g.symm l = (π (f.symm l).1, (f.symm l).2) := by
     intro l
@@ -1022,1134 +1237,363 @@ theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) : B.ksum x = B.ksu
   have hstep : (fun l => y (g.symm l).1 (g.symm l).2) = fun l => w (f.symm l).1 (f.symm l).2 := by
     funext l
     rw [hgsymm l]
-  calc B.ksum x
-      = B.ksum (fun i => B.ksum (y i)) := by congr 1; funext i; exact (hxy i).symm
+  calc B.ksum x = B.ksum (fun i => B.ksum (y i)) := by congr 1; funext i; exact (hxy i).symm
     _ = B.ksum (fun l => y (g.symm l).1 (g.symm l).2) := B.ksum_sigma y g
     _ = B.ksum (fun l => w (f.symm l).1 (f.symm l).2) := congrArg _ hstep
     _ = B.ksum (fun i => B.ksum (w i)) := (B.ksum_sigma w f).symm
-    _ = B.ksum (fun i => x (π i)) := by congr 1; funext i; exact hwx i
-    _ = B.ksum (x ∘ π) := rfl
+    _ = B.ksum (x ∘ π) := by congr 1; funext i; exact hxy (π i)
 
-/-- The sum of a two-point family does not depend on the two points. -/
-theorem ksum_twoFam_eq {p q p' q' : Idx κ} (h : p ≠ q) (h' : p' ≠ q') (a b : H) :
-    B.ksum (twoFam p q a b) = B.ksum (twoFam p' q' a b) := by
-  classical
-  obtain ⟨π, hπ1, hπ2⟩ := exists_equiv_two h h'
-  have hfun : twoFam p q a b = (twoFam p' q' a b) ∘ π := by
-    funext i
-    have e1 : (π i = p') ↔ (i = p) := by
-      rw [← hπ1]
-      exact ⟨fun hc => π.injective hc, fun hc => by rw [hc]⟩
-    have e2 : (π i = q') ↔ (i = q) := by
-      rw [← hπ2]
-      exact ⟨fun hc => π.injective hc, fun hc => by rw [hc]⟩
-    show (if i = p then a else if i = q then b else 0)
-      = (if π i = p' then a else if π i = q' then b else 0)
-    by_cases c1 : i = p
-    · rw [if_pos c1, if_pos (e1.mpr c1)]
-    · rw [if_neg c1, if_neg (fun hc => c1 (e1.mp hc))]
-      by_cases c2 : i = q
-      · rw [if_pos c2, if_pos (e2.mpr c2)]
-      · rw [if_neg c2, if_neg (fun hc => c2 (e2.mp hc))]
-  rw [hfun]
-  exact (B.ksum_perm (twoFam p' q' a b) π).symm
+/-- The "first row" embedding `i ↦ (i, j₀)` of `Idx κ` into itself. -/
+noncomputable def row : Idx κ ↪ Idx κ :=
+  ⟨fun i => B.pair (i, B.j₀), fun _ _ h => (Prod.ext_iff.mp (B.pair.injective h)).1⟩
 
-end BareKMonoid
-
-/-! #### The commutative monoid determined by the bare data -/
-
-/-- `Idx κ` has at least two elements. -/
-theorem nontrivial_Idx {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) : Nontrivial (Idx κ) := by
-  rw [← Cardinal.one_lt_iff_nontrivial, mk_Idx]
-  exact lt_of_lt_of_le one_lt_aleph0 hκ
-
-namespace BareKMonoid
-
-variable {κ : Cardinal.{u}} {H : Type v} [Zero H]
-
-/-- The first of two chosen distinct indices. -/
-noncomputable def i₀ (B : BareKMonoid κ H) : Idx κ :=
-  (nontrivial_Idx B.aleph0_le).exists_pair_ne.choose
-
-/-- The second of two chosen distinct indices. -/
-noncomputable def i₁ (B : BareKMonoid κ H) : Idx κ :=
-  (nontrivial_Idx B.aleph0_le).exists_pair_ne.choose_spec.choose
-
-theorem i₀_ne_i₁ (B : BareKMonoid κ H) : B.i₀ ≠ B.i₁ :=
-  (nontrivial_Idx B.aleph0_le).exists_pair_ne.choose_spec.choose_spec
-
-/-- The binary operation `Σ²` determined by the bare data. -/
-noncomputable def add (B : BareKMonoid κ H) (a b : H) : H := B.ksum (twoFam B.i₀ B.i₁ a b)
-
-/-- `Σ²` may be computed at any pair of distinct indices. -/
-theorem add_any (B : BareKMonoid κ H) (p q : Idx κ) (hpq : p ≠ q) (a b : H) :
-    B.ksum (twoFam p q a b) = B.add a b :=
-  B.ksum_twoFam_eq hpq B.i₀_ne_i₁ a b
-
-theorem zero_add' (B : BareKMonoid κ H) (a : H) : B.add 0 a = a := by
-  show B.ksum (twoFam B.i₀ B.i₁ 0 a) = a
-  rw [B.ksum_single B.i₁ _ (fun i hi => ?_), twoFam_right B.i₀_ne_i₁]
-  by_cases h0 : i = B.i₀
-  · rw [h0, twoFam_left]
-  · exact twoFam_other h0 hi 0 a
-
-theorem add_comm' (B : BareKMonoid κ H) (a b : H) : B.add a b = B.add b a := by
-  have hne := B.i₀_ne_i₁
-  have hfun : twoFam B.i₀ B.i₁ a b = twoFam B.i₁ B.i₀ b a := by
-    funext i
-    by_cases h0 : i = B.i₀
-    · rw [h0, twoFam_left, twoFam_right (Ne.symm hne)]
-    · by_cases h1 : i = B.i₁
-      · rw [h1, twoFam_right hne, twoFam_left]
-      · rw [twoFam_other h0 h1, twoFam_other h1 h0]
-  show B.ksum (twoFam B.i₀ B.i₁ a b) = B.add b a
-  rw [hfun]
-  exact B.add_any B.i₁ B.i₀ (Ne.symm hne) b a
-
-theorem add_zero' (B : BareKMonoid κ H) (a : H) : B.add a 0 = a := (B.add_comm' a 0).trans (B.zero_add' a)
-
-/-- Associativity of `Σ²`, obtained by flattening two double families along suitably
-matched bijections `κ × κ ≃ κ`. -/
-theorem add_assoc' (B : BareKMonoid κ H) (a b c : H) : B.add (B.add a b) c = B.add a (B.add b c) := by
-  classical
-  have hne := B.i₀_ne_i₁
-  set i₀ := B.i₀ with hi₀def
-  set i₁ := B.i₁ with hi₁def
-  set P := pairEquiv B.aleph0_le with hPdef
-  set Y : Idx κ → Idx κ → H := fun u =>
-    if u = i₀ then twoFam i₀ i₁ a b else if u = i₁ then twoFam i₀ i₁ c 0 else fun _ => 0
-    with hYdef
-  set Z : Idx κ → Idx κ → H := fun u =>
-    if u = i₀ then twoFam i₀ i₁ a 0 else if u = i₁ then twoFam i₀ i₁ b c else fun _ => 0
-    with hZdef
-  have hY0 : Y i₀ = twoFam i₀ i₁ a b := if_pos rfl
-  have hY1 : Y i₁ = twoFam i₀ i₁ c 0 := by
-    show (if i₁ = i₀ then twoFam i₀ i₁ a b else
-      if i₁ = i₁ then twoFam i₀ i₁ c 0 else fun _ => (0 : H)) = _
-    rw [if_neg (Ne.symm hne), if_pos rfl]
-  have hYo : ∀ u, u ≠ i₀ → u ≠ i₁ → Y u = fun _ => (0 : H) := by
-    intro u h0 h1
-    show (if u = i₀ then twoFam i₀ i₁ a b else
-      if u = i₁ then twoFam i₀ i₁ c 0 else fun _ => (0 : H)) = _
-    rw [if_neg h0, if_neg h1]
-  have hZ0 : Z i₀ = twoFam i₀ i₁ a 0 := if_pos rfl
-  have hZ1 : Z i₁ = twoFam i₀ i₁ b c := by
-    show (if i₁ = i₀ then twoFam i₀ i₁ a 0 else
-      if i₁ = i₁ then twoFam i₀ i₁ b c else fun _ => (0 : H)) = _
-    rw [if_neg (Ne.symm hne), if_pos rfl]
-  have hZo : ∀ u, u ≠ i₀ → u ≠ i₁ → Z u = fun _ => (0 : H) := by
-    intro u h0 h1
-    show (if u = i₀ then twoFam i₀ i₁ a 0 else
-      if u = i₁ then twoFam i₀ i₁ b c else fun _ => (0 : H)) = _
-    rw [if_neg h0, if_neg h1]
-  -- the row sums
-  have hYrow : (fun u => B.ksum (Y u)) = twoFam i₀ i₁ (B.add a b) c := by
-    funext u
-    by_cases h0 : u = i₀
-    · rw [h0, hY0, twoFam_left]
-      exact B.add_any i₀ i₁ hne a b
-    · by_cases h1 : u = i₁
-      · rw [h1, hY1, twoFam_right hne, B.ksum_single i₀ _ (fun i hi => ?_), twoFam_left]
-        by_cases hj : i = i₁
-        · rw [hj, twoFam_right hne]
-        · exact twoFam_other hi hj c 0
-      · rw [hYo u h0 h1, twoFam_other h0 h1]
-        exact B.ksum_zero
-  have hZrow : (fun u => B.ksum (Z u)) = twoFam i₀ i₁ a (B.add b c) := by
-    funext u
-    by_cases h0 : u = i₀
-    · rw [h0, hZ0, twoFam_left, B.ksum_single i₀ _ (fun i hi => ?_), twoFam_left]
-      by_cases hj : i = i₁
-      · rw [hj, twoFam_right hne]
-      · exact twoFam_other hi hj a 0
-    · by_cases h1 : u = i₁
-      · rw [h1, hZ1, twoFam_right hne]
-        exact B.add_any i₀ i₁ hne b c
-      · rw [hZo u h0 h1, twoFam_other h0 h1]
-        exact B.ksum_zero
-  -- the 3-cycle on `κ × κ` matching the supports of `Y` and `Z`
-  set A : Idx κ × Idx κ := (i₀, i₀) with hAdef
-  set Bp : Idx κ × Idx κ := (i₀, i₁) with hBdef
-  set Cp : Idx κ × Idx κ := (i₁, i₀) with hCdef
-  set D : Idx κ × Idx κ := (i₁, i₁) with hDdef
-  set σ : (Idx κ × Idx κ) ≃ (Idx κ × Idx κ) :=
-    (Equiv.swap Cp D).trans (Equiv.swap Bp Cp) with hσdef
-  have hBC : Bp ≠ Cp := fun hc => hne (congrArg Prod.fst hc)
-  have hCD : Cp ≠ D := fun hc => hne (congrArg Prod.snd hc)
-  have hBD : Bp ≠ D := fun hc => hne (congrArg Prod.fst hc)
-  have hAB : A ≠ Bp := fun hc => hne (congrArg Prod.snd hc)
-  have hAC : A ≠ Cp := fun hc => hne (congrArg Prod.fst hc)
-  have hAD : A ≠ D := fun hc => hne (congrArg Prod.fst hc)
-  have hσA : σ A = A := by
-    show Equiv.swap Bp Cp (Equiv.swap Cp D A) = A
-    rw [Equiv.swap_apply_of_ne_of_ne hAC hAD, Equiv.swap_apply_of_ne_of_ne hAB hAC]
-  have hσB : σ Bp = Cp := by
-    show Equiv.swap Bp Cp (Equiv.swap Cp D Bp) = Cp
-    rw [Equiv.swap_apply_of_ne_of_ne hBC hBD, Equiv.swap_apply_left]
-  have hσC : σ Cp = D := by
-    show Equiv.swap Bp Cp (Equiv.swap Cp D Cp) = D
-    rw [Equiv.swap_apply_left, Equiv.swap_apply_of_ne_of_ne (Ne.symm hBD) (Ne.symm hCD)]
-  have hσD : σ D = Bp := by
-    show Equiv.swap Bp Cp (Equiv.swap Cp D D) = Bp
-    rw [Equiv.swap_apply_right, Equiv.swap_apply_right]
-  have hσother : ∀ z : Idx κ × Idx κ, z ≠ Bp → z ≠ Cp → z ≠ D → σ z = z := by
-    intro z h1 h2 h3
-    show Equiv.swap Bp Cp (Equiv.swap Cp D z) = z
-    rw [Equiv.swap_apply_of_ne_of_ne h2 h3, Equiv.swap_apply_of_ne_of_ne h1 h2]
-  have hσZY : ∀ z : Idx κ × Idx κ, Z (σ z).1 (σ z).2 = Y z.1 z.2 := by
-    rintro ⟨u, v⟩
-    by_cases hu0 : u = i₀
-    · by_cases hv0 : v = i₀
-      · have hz : ((u, v) : Idx κ × Idx κ) = A := by rw [hu0, hv0]
-        rw [hz, hσA]
-        show Z i₀ i₀ = Y i₀ i₀
-        rw [hZ0, hY0, twoFam_left, twoFam_left]
-      · by_cases hv1 : v = i₁
-        · have hz : ((u, v) : Idx κ × Idx κ) = Bp := by rw [hu0, hv1]
-          rw [hz, hσB]
-          show Z i₁ i₀ = Y i₀ i₁
-          rw [hZ1, hY0, twoFam_left, twoFam_right hne]
-        · have h1 : ((u, v) : Idx κ × Idx κ) ≠ Bp := fun hc => hv1 (congrArg Prod.snd hc)
-          have h2 : ((u, v) : Idx κ × Idx κ) ≠ Cp :=
-            fun hc => hne (hu0.symm.trans (congrArg Prod.fst hc))
-          have h3 : ((u, v) : Idx κ × Idx κ) ≠ D :=
-            fun hc => hne (hu0.symm.trans (congrArg Prod.fst hc))
-          rw [hσother _ h1 h2 h3]
-          show Z u v = Y u v
-          rw [hu0, hZ0, hY0, twoFam_other hv0 hv1, twoFam_other hv0 hv1]
-    · by_cases hu1 : u = i₁
-      · by_cases hv0 : v = i₀
-        · have hz : ((u, v) : Idx κ × Idx κ) = Cp := by rw [hu1, hv0]
-          rw [hz, hσC]
-          show Z i₁ i₁ = Y i₁ i₀
-          rw [hZ1, hY1, twoFam_right hne, twoFam_left]
-        · by_cases hv1 : v = i₁
-          · have hz : ((u, v) : Idx κ × Idx κ) = D := by rw [hu1, hv1]
-            rw [hz, hσD]
-            show Z i₀ i₁ = Y i₁ i₁
-            rw [hZ0, hY1, twoFam_right hne, twoFam_right hne]
-          · have h1 : ((u, v) : Idx κ × Idx κ) ≠ Bp :=
-              fun hc => hne ((congrArg Prod.fst hc).symm.trans hu1)
-            have h2 : ((u, v) : Idx κ × Idx κ) ≠ Cp := fun hc => hv0 (congrArg Prod.snd hc)
-            have h3 : ((u, v) : Idx κ × Idx κ) ≠ D := fun hc => hv1 (congrArg Prod.snd hc)
-            rw [hσother _ h1 h2 h3]
-            show Z u v = Y u v
-            rw [hu1, hZ1, hY1, twoFam_other hv0 hv1, twoFam_other hv0 hv1]
-      · have h1 : ((u, v) : Idx κ × Idx κ) ≠ Bp := fun hc => hu0 (congrArg Prod.fst hc)
-        have h2 : ((u, v) : Idx κ × Idx κ) ≠ Cp := fun hc => hu1 (congrArg Prod.fst hc)
-        have h3 : ((u, v) : Idx κ × Idx κ) ≠ D := fun hc => hu1 (congrArg Prod.fst hc)
-        rw [hσother _ h1 h2 h3]
-        show Z u v = Y u v
-        rw [hZo u hu0 hu1, hYo u hu0 hu1]
-  -- now compare the two flattenings
-  have hflat : (fun k => Z ((σ.symm.trans P).symm k).1 ((σ.symm.trans P).symm k).2)
-      = fun k => Y (P.symm k).1 (P.symm k).2 := by
-    funext k
-    have hsymm : (σ.symm.trans P).symm k = σ (P.symm k) := rfl
-    rw [hsymm]
-    exact hσZY (P.symm k)
-  calc B.add (B.add a b) c
-      = B.ksum (fun u => B.ksum (Y u)) := by
-        rw [hYrow]
-        exact (B.add_any i₀ i₁ hne (B.add a b) c).symm
-    _ = B.ksum (fun k => Y (P.symm k).1 (P.symm k).2) := B.ksum_sigma Y P
-    _ = B.ksum (fun k => Z ((σ.symm.trans P).symm k).1 ((σ.symm.trans P).symm k).2) := by
-        rw [hflat]
-    _ = B.ksum (fun u => B.ksum (Z u)) := (B.ksum_sigma Z (σ.symm.trans P)).symm
-    _ = B.add a (B.add b c) := by
-        rw [hZrow]
-        exact B.add_any i₀ i₁ hne a (B.add b c)
-
-/-- **Lemma 2.5**: the commutative monoid structure determined by bare `κ`-monoid data. -/
-@[instance_reducible]
-noncomputable def addCommMonoid (B : BareKMonoid κ H) : AddCommMonoid H :=
-  letI : Add H := ⟨B.add⟩
-  { zero := 0
-    add := B.add
-    nsmul := nsmulRec
-    nsmul_zero := fun _ => rfl
-    nsmul_succ := fun _ _ => rfl
-    add_assoc := B.add_assoc'
-    zero_add := B.zero_add'
-    add_zero := B.add_zero'
-    add_comm := B.add_comm' }
-
-end BareKMonoid
-
-/-- **Lemma 2.5**: a `κ`-monoid is determined by its summation operation; nothing is lost by
-letting `KMonoid` extend `AddCommMonoid`, since the addition is recovered as `a + b = Σ²(a, b)`
-(`KMonoid.ofBare_add`). -/
-@[instance_reducible]
-noncomputable def KMonoid.ofBare {κ : Cardinal.{u}} {H : Type v} [Zero H]
-    (B : BareKMonoid κ H) : KMonoid κ H :=
-  { toAddCommMonoid := B.addCommMonoid
-    aleph0_le := B.aleph0_le
-    ksum := B.ksum
-    ksum_single := B.ksum_single
-    ksum_sigma := B.ksum_sigma
-    ksum_two := fun a b p q hpq => B.add_any p q hpq a b }
-
-@[simp] theorem KMonoid.ofBare_ksum {κ : Cardinal.{u}} {H : Type v} [Zero H]
-    (B : BareKMonoid κ H) (x : Idx κ → H) :
-    letI := KMonoid.ofBare B
-    ksum (κ := κ) x = B.ksum x := rfl
-
-@[simp] theorem KMonoid.ofBare_add {κ : Cardinal.{u}} {H : Type v} [Zero H]
-    (B : BareKMonoid κ H) (a b : H) :
-    letI := KMonoid.ofBare B
-    a + b = B.add a b := rfl
-
-@[simp] theorem KMonoid.ofBare_zero {κ : Cardinal.{u}} {H : Type v} [Zero H]
-    (B : BareKMonoid κ H) :
-    letI := KMonoid.ofBare B
-    (0 : H) = (0 : H) := rfl
-
-/-! ## `λ⁻`-monoids (Definition 2.18) -/
-
-open KMonoid
-
-/-- A `λ⁻`-monoid for a regular cardinal `λ`: a commutative monoid with a summation
-operation for families indexed by `λ` whose support has cardinality *strictly less than*
-`λ`.  The operation is made total by the junk convention that families with large support
-sum to `0`. -/
-class LMonoid (lam : Cardinal.{u}) (X : Type v) extends AddCommMonoid X where
-  isRegular : lam.IsRegular
-  lsum : (Idx lam → X) → X
-  /-- Junk convention outside the intended domain. -/
-  lsum_of_large : ∀ x, ¬ #(Function.support x) < lam → lsum x = 0
-  /-- (B1). -/
-  lsum_single : ∀ (i₀ : Idx lam) (x : Idx lam → X), (∀ i, i ≠ i₀ → x i = 0) → lsum x = x i₀
-  /-- (B2). -/
-  lsum_sigma : ∀ (x : Idx lam → Idx lam → X) (π : Idx lam × Idx lam ≃ Idx lam),
-      #{i | ∃ j, x i j ≠ 0} < lam → #{j | ∃ i, x i j ≠ 0} < lam →
-      lsum (fun i => lsum (x i)) = lsum fun k => x (π.symm k).1 (π.symm k).2
-  /-- Compatibility of `+` with `Σ`; cf. `KMonoid.ksum_two`. -/
-  lsum_two : ∀ (a b : X) (i₀ i₁ : Idx lam), i₀ ≠ i₁ →
-      lsum (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b
-
-namespace LMonoid
-
-variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
-
-theorem aleph0_le {X : Type v} [LMonoid lam X] : ℵ₀ ≤ lam := (‹LMonoid lam X›.isRegular).aleph0_le
-
-/-- Summation of a family indexed by an arbitrary type of cardinality `< λ`. -/
-noncomputable def lsumOf {ι : Type u} (h : #ι < lam) (x : ι → X) : X :=
-  lsum (Function.extend (emb h.le) x 0)
-
-theorem lsumOf_eq_extend {ι : Type u} (h : #ι < lam) (e : ι ↪ Idx lam) (x : ι → X) :
-    lsumOf (lam := lam) h x = lsum (Function.extend e x 0) := by
-  show lsum (Function.extend (emb h.le) x 0) = lsum (Function.extend e x 0)
-  have hlam0 := aleph0_le (lam := lam) (X := X)
-  -- Any embedding out of a `< lam`-sized type has complement of full cardinality `lam`.
-  have hbig : ∀ e' : ι ↪ Idx lam, #(↥(Set.range e')ᶜ) = lam := by
-    intro e'
-    have hlt : #(↥(Set.range e')) < lam := by
-      rw [Cardinal.mk_range_eq e' e'.injective]; exact h
-    have hle : #(↥(Set.range e')ᶜ) ≤ lam := (Cardinal.mk_set_le _).trans_eq (mk_Idx lam)
-    by_contra hne
-    have hlt2 : #(↥(Set.range e')ᶜ) < lam := lt_of_le_of_ne hle hne
-    have hsum : #(↥(Set.range e')) + #(↥(Set.range e')ᶜ) = lam := by
-      rw [Cardinal.mk_sum_compl]; exact mk_Idx lam
-    exact absurd hsum (ne_of_lt (Cardinal.add_lt_of_lt hlam0 hlt hlt2))
-  obtain ⟨j₀⟩ := nonempty_Idx hlam0
-  set R₀ : Set (Idx lam × Idx lam) := Set.range (fun i : ι => (emb h.le i, j₀)) with hR₀def
-  have hR₀inj : Function.Injective (fun i : ι => (emb h.le i, j₀)) := fun a b hab =>
-    (emb h.le).injective (Prod.ext_iff.mp hab).1
-  set ρ₀ : ι ≃ ↥R₀ := Equiv.ofInjective _ hR₀inj with hρ₀def
-  have hR₀c : #(↥R₀ᶜ) = lam := by
-    set FR : Set (Idx lam × Idx lam) := Set.range (fun i : Idx lam => (i, j₀)) with hFRdef
-    have hsub : FRᶜ ⊆ R₀ᶜ := by
-      apply Set.compl_subset_compl.mpr
-      rintro p ⟨i, hi⟩
-      exact ⟨emb h.le i, hi⟩
-    have hInf : Infinite (Idx lam) := Cardinal.infinite_iff.mpr (by rw [mk_Idx]; exact hlam0)
-    have hFRc : #(↥FRᶜ) = lam := by
-      set pt : Set (Idx lam) := {j₀} with hptdef
-      have hptlt : #(pt : Set (Idx lam)) < #(Idx lam) :=
-        (mk_singleton j₀).trans_lt (lt_of_lt_of_le one_lt_aleph0 (by rw [mk_Idx]; exact hlam0))
-      have hptc : #(↥ptᶜ) = #(Idx lam) := mk_compl_of_infinite pt hptlt
-      set rowComplEquiv : ↥FRᶜ ≃ Idx lam × ↥ptᶜ :=
-        { toFun := fun p => (p.1.1, ⟨p.1.2, fun hmem => p.2 ⟨p.1.1, Prod.ext rfl hmem.symm⟩⟩)
-          invFun := fun q => ⟨(q.1, q.2.1), fun hmem => q.2.2 (by
-            obtain ⟨i, hi⟩ := hmem
-            exact (Prod.ext_iff.mp hi).2.symm)⟩
-          left_inv := fun _ => rfl
-          right_inv := fun _ => rfl } with hrowComplEquivdef
-      have heq := Cardinal.mk_congr rowComplEquiv
-      rw [heq, Cardinal.mk_prod, hptc, mk_Idx]
-      simp [Cardinal.mul_eq_self hlam0]
-    have hle1 : lam ≤ #(↥R₀ᶜ) := hFRc.symm.trans_le (Cardinal.mk_le_mk_of_subset hsub)
-    have hle2 : #(↥R₀ᶜ) ≤ lam := (Cardinal.mk_set_le _).trans_eq (by
-      rw [Cardinal.mk_prod, mk_Idx]; simp [Cardinal.mul_eq_self hlam0])
-    exact le_antisymm hle2 hle1
-  set Y : Idx lam → Idx lam → X := fun a b =>
-    if hmem : (a, b) ∈ R₀ then x (ρ₀.symm ⟨(a, b), hmem⟩) else 0 with hYdef
-  have hYrow : #{a : Idx lam | ∃ b, Y a b ≠ 0} < lam := by
-    have hsub : {a : Idx lam | ∃ b, Y a b ≠ 0} ⊆ Set.range (emb h.le) := by
-      rintro a ⟨b, hab⟩
-      by_contra hna
-      apply hab
-      have hnotR₀ : (a, b) ∉ R₀ := by
-        rintro ⟨i, hi⟩; exact hna ⟨i, (Prod.ext_iff.mp hi).1⟩
-      show Y a b = 0
-      rw [hYdef]
-      exact dif_neg hnotR₀
-    calc #{a : Idx lam | ∃ b, Y a b ≠ 0} ≤ #(Set.range (emb h.le)) :=
-          Cardinal.mk_le_mk_of_subset hsub
-      _ = #ι := Cardinal.mk_range_eq (emb h.le) (emb h.le).injective
-      _ < lam := h
-  have hYcol : #{b : Idx lam | ∃ a, Y a b ≠ 0} < lam := by
-    have hsub : {b : Idx lam | ∃ a, Y a b ≠ 0} ⊆ ({j₀} : Set (Idx lam)) := by
-      rintro b ⟨a, hab⟩
-      by_contra hnb
-      apply hab
-      have hnotR₀ : (a, b) ∉ R₀ := by
-        rintro ⟨i, hi⟩; exact hnb (Prod.ext_iff.mp hi).2.symm
-      show Y a b = 0
-      rw [hYdef]
-      exact dif_neg hnotR₀
-    calc #{b : Idx lam | ∃ a, Y a b ≠ 0} ≤ #({j₀} : Set (Idx lam)) :=
-          Cardinal.mk_le_mk_of_subset hsub
-      _ = 1 := mk_singleton j₀
-      _ < lam := lt_of_lt_of_le one_lt_aleph0 hlam0
-  have hYsum : ∀ i, lsum (Y (emb h.le i)) = x i := by
-    intro i
-    have hmem : (emb h.le i, j₀) ∈ R₀ := ⟨i, rfl⟩
-    have hval : Y (emb h.le i) j₀ = x i := by
-      rw [hYdef]
-      show (if hmem' : (emb h.le i, j₀) ∈ R₀ then x (ρ₀.symm ⟨(emb h.le i, j₀), hmem'⟩) else 0)
-        = x i
-      rw [dif_pos hmem]
-      congr 1
-      apply ρ₀.injective
-      rw [Equiv.apply_symm_apply]
+/-- Zero-padding along `row` does not change the sum: this is (A2) applied to a family
+concentrated in one column. -/
+theorem ksum_row (z : Idx κ → H) : B.ksum (Function.extend ⇑B.row z 0) = B.ksum z := by
+  set Y : Idx κ → Idx κ → H := fun i j => if j = B.j₀ then z i else 0
+  have hYsum : ∀ i, B.ksum (Y i) = z i := fun i =>
+    (B.ksum_single B.j₀ (Y i) fun j hj => if_neg hj).trans (if_pos rfl)
+  have hkey : ∀ k, Y (B.pair.symm k).1 (B.pair.symm k).2 = Function.extend ⇑B.row z 0 k := by
+    intro k
+    by_cases hk : ∃ i, B.row i = k
+    · obtain ⟨i, rfl⟩ := hk
+      have hps : B.pair.symm (B.row i) = (i, B.j₀) := B.pair.symm_apply_apply (i, B.j₀)
+      rw [hps]
+      show (if B.j₀ = B.j₀ then z i else 0) = _
+      rw [if_pos rfl, B.row.injective.extend_apply]
+    · have hne : (B.pair.symm k).2 ≠ B.j₀ := by
+        intro heq
+        exact hk ⟨(B.pair.symm k).1, by
+          show B.pair ((B.pair.symm k).1, B.j₀) = k
+          rw [← heq]
+          exact B.pair.apply_symm_apply k⟩
+      show (if (B.pair.symm k).2 = B.j₀ then _ else 0) = _
+      rw [if_neg hne, Function.extend_apply' z (0 : Idx κ → H) k hk]
       rfl
-    rw [lsum_single j₀ (Y (emb h.le i)) ?_ , hval]
-    intro j hj
-    rw [hYdef]
-    show (if hmem' : (emb h.le i, j) ∈ R₀ then x (ρ₀.symm ⟨(emb h.le i, j), hmem'⟩) else 0) = 0
-    apply dif_neg
-    rintro ⟨i', hi'⟩
-    exact hj (Prod.ext_iff.mp hi').2.symm
-  have caseA : ∀ (e' : ι ↪ Idx lam), #(↥(Set.range e')ᶜ) = lam →
-      lsum (fun a => lsum (Y a)) = lsum (Function.extend e' x 0) := by
-    intro e' hcompl
-    obtain ⟨β⟩ := Cardinal.eq.mp (hR₀c.trans hcompl.symm)
-    set e'Equiv : ι ≃ ↥(Set.range e') := Equiv.ofInjective e' e'.injective with he'Equivdef
-    set αe : ↥R₀ ≃ ↥(Set.range e') := ρ₀.symm.trans e'Equiv with hαedef
-    set φ : Idx lam × Idx lam ≃ Idx lam :=
-      (Equiv.Set.sumCompl R₀).symm.trans
-        ((αe.sumCongr β).trans (Equiv.Set.sumCompl (Set.range e')))
-      with hφdef
-    have hφ_row : ∀ i : ι, φ (emb h.le i, j₀) = e' i := by
-      intro i
-      have hmem : (emb h.le i, j₀) ∈ R₀ := ⟨i, rfl⟩
-      have h1eq : (Equiv.Set.sumCompl R₀).symm (emb h.le i, j₀) = Sum.inl ⟨(emb h.le i, j₀), hmem⟩ :=
-        Equiv.Set.sumCompl_symm_apply_of_mem hmem
-      have h2eq : ρ₀.symm ⟨(emb h.le i, j₀), hmem⟩ = i := by
-        apply ρ₀.injective
+  calc B.ksum (Function.extend ⇑B.row z 0)
+      = B.ksum (fun k => Y (B.pair.symm k).1 (B.pair.symm k).2) := by
+        congr 1; funext k; exact (hkey k).symm
+    _ = B.ksum (fun i => B.ksum (Y i)) := (B.ksum_sigma Y B.pair).symm
+    _ = B.ksum z := by congr 1; funext i; exact hYsum i
+
+theorem mk_compl_row : #(↥(Set.range ⇑B.row)ᶜ) = κ := by
+  have := nontrivial_Idx B.aleph0_le
+  obtain ⟨j₁, hj₁⟩ := exists_ne B.j₀
+  have hmem : ∀ i : Idx κ, B.pair (i, j₁) ∈ (Set.range ⇑B.row)ᶜ := by
+    rintro i ⟨i', hi'⟩
+    exact hj₁ (Prod.ext_iff.mp (B.pair.injective hi')).2.symm
+  have hinj : Function.Injective
+      (fun i : Idx κ => (⟨B.pair (i, j₁), hmem i⟩ : ↥(Set.range ⇑B.row)ᶜ)) := by
+    intro a b hab
+    exact (Prod.ext_iff.mp (B.pair.injective (congrArg Subtype.val hab))).1
+  exact le_antisymm ((Cardinal.mk_set_le _).trans_eq (mk_Idx κ))
+    ((mk_Idx κ).symm.trans_le (Cardinal.mk_le_of_injective hinj))
+
+/-- Composing with `row` forces the complement of the range to have full cardinality. -/
+theorem mk_compl_trans {ι : Type u} (e : ι ↪ Idx κ) :
+    #(↥(Set.range ⇑(e.trans B.row))ᶜ) = κ := by
+  have hsub : (Set.range ⇑B.row)ᶜ ⊆ (Set.range ⇑(e.trans B.row))ᶜ := by
+    apply Set.compl_subset_compl.mpr
+    rintro k ⟨i, rfl⟩
+    exact ⟨e i, rfl⟩
+  exact le_antisymm ((Cardinal.mk_set_le _).trans_eq (mk_Idx κ))
+    (B.mk_compl_row.symm.trans_le (Cardinal.mk_le_mk_of_subset hsub))
+
+/-- Zero-padded sums do not depend on the embedding, as long as both ranges have large
+complement. -/
+theorem ksum_extend_congr {ι : Type u} (e₁ e₂ : ι ↪ Idx κ) (h₁ : #(↥(Set.range ⇑e₁)ᶜ) = κ)
+    (h₂ : #(↥(Set.range ⇑e₂)ᶜ) = κ) (x : ι → H) :
+    B.ksum (Function.extend ⇑e₁ x 0) = B.ksum (Function.extend ⇑e₂ x 0) := by
+  obtain ⟨σ, hσ⟩ := exists_perm_comp e₁ e₂ (h₁.trans h₂.symm)
+  have hfun : Function.extend ⇑e₂ x 0 = (Function.extend ⇑e₁ x 0) ∘ σ.symm := by
+    funext k
+    by_cases hk : ∃ i, e₂ i = k
+    · obtain ⟨i, rfl⟩ := hk
+      show Function.extend ⇑e₂ x 0 (e₂ i) = Function.extend ⇑e₁ x 0 (σ.symm (e₂ i))
+      rw [e₂.injective.extend_apply, ← hσ i, Equiv.symm_apply_apply, e₁.injective.extend_apply]
+    · have hnot : ¬ ∃ i, e₁ i = σ.symm k := by
+        rintro ⟨i, hi⟩
+        exact hk ⟨i, by rw [← hσ i, hi, Equiv.apply_symm_apply]⟩
+      show Function.extend ⇑e₂ x 0 k = Function.extend ⇑e₁ x 0 (σ.symm k)
+      rw [Function.extend_apply' _ _ _ hk, Function.extend_apply' _ _ _ hnot]
+      rfl
+  rw [hfun]
+  exact B.ksum_perm _ σ.symm
+
+/-- The sum of a family indexed by an arbitrary type of cardinality `≤ κ`. -/
+noncomputable def bsum {ι : Type u} (h : #ι ≤ κ) (x : ι → H) : H :=
+  B.ksum (Function.extend ⇑((emb h).trans B.row) x 0)
+
+theorem extend_trans_row {ι : Type u} (e : ι ↪ Idx κ) (x : ι → H) :
+    Function.extend ⇑(e.trans B.row) x 0 = Function.extend ⇑B.row (Function.extend ⇑e x 0) 0 := by
+  have hraw := Function.Injective.extend_comp e.injective B.row.injective x (0 : Idx κ → H)
+  have h0 : (0 : Idx κ → H) ∘ (⇑B.row) = (0 : Idx κ → H) := rfl
+  rw [h0] at hraw
+  exact hraw
+
+/-- `bsum` may be computed using *any* embedding of the index type into `Idx κ`. -/
+theorem ksum_extend_eq {ι : Type u} (h : #ι ≤ κ) (e : ι ↪ Idx κ) (x : ι → H) :
+    B.ksum (Function.extend ⇑e x 0) = B.bsum h x := by
+  have h1 : B.ksum (Function.extend ⇑(e.trans B.row) x 0) = B.ksum (Function.extend ⇑e x 0) := by
+    rw [B.extend_trans_row e x]; exact B.ksum_row _
+  exact h1.symm.trans
+    (B.ksum_extend_congr (e.trans B.row) ((emb h).trans B.row) (B.mk_compl_trans e)
+      (B.mk_compl_trans (emb h)) x)
+
+theorem bsum_unique {ι : Type u} [Unique ι] (h : #ι ≤ κ) (x : ι → H) : B.bsum h x = x default := by
+  set E := (emb h).trans B.row with hE
+  show B.ksum (Function.extend ⇑E x 0) = x default
+  rw [B.ksum_single (E default) _ ?_, E.injective.extend_apply]
+  intro j hj
+  by_cases hjk : ∃ i, E i = j
+  · obtain ⟨i, rfl⟩ := hjk
+    exact absurd (congrArg E (Unique.eq_default i)) hj
+  · exact Function.extend_apply' _ _ _ hjk
+
+theorem bsum_congr {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι ≃ ι') (x : ι' → H) :
+    B.bsum h (x ∘ e) = B.bsum h' x := by
+  set E' : ι' ↪ Idx κ := (emb h').trans B.row
+  have hE : Function.extend ⇑(e.toEmbedding.trans E') (x ∘ e) 0 = Function.extend ⇑E' x 0 := by
+    funext k
+    by_cases hk : ∃ i', E' i' = k
+    · obtain ⟨i', rfl⟩ := hk
+      have hval : (e.toEmbedding.trans E') (e.symm i') = E' i' := by
+        show E' (e (e.symm i')) = _
         rw [Equiv.apply_symm_apply]
-        rfl
-      show (Equiv.Set.sumCompl (Set.range e'))
-          ((αe.sumCongr β) ((Equiv.Set.sumCompl R₀).symm (emb h.le i, j₀))) = e' i
-      rw [h1eq, Equiv.sumCongr_apply, Sum.map_inl, Equiv.Set.sumCompl_apply_inl]
-      show (e'Equiv (ρ₀.symm ⟨(emb h.le i, j₀), hmem⟩) : Idx lam) = e' i
-      rw [h2eq]
-      rfl
-    have hkey : ∀ k, Y (φ.symm k).1 (φ.symm k).2 = Function.extend e' x 0 k := by
-      intro k
-      by_cases hk : ∃ i, e' i = k
-      · obtain ⟨i, hi⟩ := hk
-        have hmem : (emb h.le i, j₀) ∈ R₀ := ⟨i, rfl⟩
-        have hφsymm : φ.symm k = (emb h.le i, j₀) := by
-          rw [← hi, ← hφ_row i, Equiv.symm_apply_apply]
-        have hρ : ρ₀.symm ⟨(emb h.le i, j₀), hmem⟩ = i := by
-          apply ρ₀.injective
-          rw [Equiv.apply_symm_apply]
-          rfl
-        show Y (φ.symm k).1 (φ.symm k).2 = Function.extend e' x 0 k
-        rw [hφsymm, hYdef]
-        show (if hmem' : (emb h.le i, j₀) ∈ R₀ then x (ρ₀.symm ⟨(emb h.le i, j₀), hmem'⟩) else 0)
-          = Function.extend e' x 0 k
-        rw [dif_pos hmem, hρ, ← hi, e'.injective.extend_apply]
-      · have hnotR₀ : φ.symm k ∉ R₀ := by
-          rintro ⟨i, hi⟩
-          dsimp only at hi
-          apply hk
-          refine ⟨i, ?_⟩
-          rw [← hφ_row i, hi, Equiv.apply_symm_apply]
-        show Y (φ.symm k).1 (φ.symm k).2 = Function.extend e' x 0 k
-        rw [hYdef]
-        show (if hmem : ((φ.symm k).1, (φ.symm k).2) ∈ R₀ then
-            x (ρ₀.symm ⟨((φ.symm k).1, (φ.symm k).2), hmem⟩) else 0) = Function.extend e' x 0 k
-        rw [dif_neg hnotR₀, Function.extend_apply' x (0 : Idx lam → X) k hk]
-        rfl
-    calc lsum (fun a => lsum (Y a))
-        = lsum (fun k => Y (φ.symm k).1 (φ.symm k).2) := lsum_sigma Y φ hYrow hYcol
-      _ = lsum (Function.extend e' x 0) := by
-          congr 1; funext k; exact hkey k
-  exact (caseA (emb h.le) (hbig (emb h.le))).symm.trans (caseA e (hbig e))
-
-@[simp] theorem lsumOf_zero {ι : Type u} (h : #ι < lam) :
-    lsumOf (lam := lam) (X := X) h (fun _ => 0) = 0 := by
-  show lsum (Function.extend (emb h.le) (fun _ : ι => (0 : X)) 0) = 0
-  obtain ⟨j₀⟩ := nonempty_Idx (aleph0_le (lam := lam) (X := X))
-  have heq : Function.extend (emb h.le) (fun _ : ι => (0 : X)) 0 = fun _ => (0 : X) := by
-    funext k
-    by_cases hk : ∃ i, emb h.le i = k
-    · obtain ⟨i, hi⟩ := hk
-      rw [← hi, (emb h.le).injective.extend_apply]
-    · rw [Function.extend_apply' (fun _ : ι => (0 : X)) (0 : Idx lam → X) k hk]
-      rfl
-  rw [heq]
-  exact lsum_single j₀ (fun _ => (0 : X)) (fun _ _ => rfl)
-
-theorem lsumOf_equiv {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : ι' ≃ ι) (x : ι → X) :
-    lsumOf (lam := lam) h x = lsumOf (lam := lam) h' (x ∘ e) := by
-  rw [lsumOf_eq_extend h' (e.toEmbedding.trans (emb h.le)) (x ∘ e)]
-  show lsum (Function.extend (emb h.le) x 0) = _
-  congr 1
-  funext k
-  by_cases hk : ∃ i, emb h.le i = k
-  · obtain ⟨i, hi⟩ := hk
-    have hLHS : Function.extend (emb h.le) x 0 k = x i := by
-      rw [← hi]; exact (emb h.le).injective.extend_apply x 0 i
-    have hi' : (e.toEmbedding.trans (emb h.le)) (e.symm i) = k := by
-      show emb h.le (e (e.symm i)) = k
-      rw [Equiv.apply_symm_apply]; exact hi
-    have hRHS : Function.extend (e.toEmbedding.trans (emb h.le)) (x ∘ e) 0 k = x i := by
-      rw [← hi', (e.toEmbedding.trans (emb h.le)).injective.extend_apply]
-      show x (e (e.symm i)) = x i
+      rw [E'.injective.extend_apply, ← hval,
+        (e.toEmbedding.trans E').injective.extend_apply]
+      show x (e (e.symm i')) = x i'
       rw [Equiv.apply_symm_apply]
-    rw [hLHS, hRHS]
-  · rw [Function.extend_apply' x (0 : Idx lam → X) k hk]
-    symm
-    apply Function.extend_apply'
-    rintro ⟨i', hi'⟩
-    exact hk ⟨e i', hi'⟩
+    · have hnot : ¬ ∃ i, (e.toEmbedding.trans E') i = k := by
+        rintro ⟨i, hi⟩
+        exact hk ⟨e i, hi⟩
+      rw [Function.extend_apply' _ _ _ hnot, Function.extend_apply' _ _ _ hk]
+  rw [← B.ksum_extend_eq h (e.toEmbedding.trans E') (x ∘ e), hE]
+  exact B.ksum_extend_eq h' E' x
 
-@[simp] theorem lsumOf_unique {ι : Type u} [Unique ι] (h : #ι < lam) (x : ι → X) :
-    lsumOf (lam := lam) h x = x default := by
-  show lsum (Function.extend (emb h.le) x 0) = x default
-  have hproof : ∀ j : Idx lam, j ≠ emb h.le default → Function.extend (emb h.le) x 0 j = 0 := by
-    intro j hj
-    by_cases hjk : ∃ i, emb h.le i = j
-    · obtain ⟨i, hi⟩ := hjk
-      exact absurd (by rw [← hi, Unique.eq_default i]) hj
-    · exact Function.extend_apply' _ _ _ hjk
-  rw [lsum_single (emb h.le default) _ hproof, (emb h.le).injective.extend_apply]
-
-@[simp] theorem lsumOf_isEmpty {ι : Type u} [IsEmpty ι] (h : #ι < lam) (x : ι → X) :
-    lsumOf (lam := lam) h x = 0 := by
-  show lsum (Function.extend (emb h.le) x 0) = 0
-  obtain ⟨j₀⟩ := nonempty_Idx (aleph0_le (lam := lam) (X := X))
-  have heq : Function.extend (emb h.le) x 0 = fun _ => (0 : X) := by
-    funext k
-    apply Function.extend_apply'
-    rintro ⟨i, _⟩
-    exact IsEmpty.false i
-  rw [heq]
-  exact lsum_single j₀ (fun _ => (0 : X)) (fun _ _ => rfl)
-
-/-- General associativity for `lsumOf`; regularity of `λ` is what makes the total index
-type small again. -/
-theorem lsumOf_sigma {ι : Type u} {ρ : ι → Type u} (h : #ι < lam) (hρ : ∀ i, #(ρ i) < lam)
-    (x : ∀ i, ρ i → X) (hσ : #(Σ i, ρ i) < lam) :
-    lsumOf (lam := lam) h (fun i => lsumOf (lam := lam) (hρ i) (x i))
-      = lsumOf (lam := lam) hσ (fun p : Σ i, ρ i => x p.1 p.2) := by
-  have hlam0 := aleph0_le (lam := lam) (X := X)
-  obtain ⟨j₀⟩ := nonempty_Idx hlam0
-  set e : ι ↪ Idx lam := emb h.le with hedef
-  set f : ∀ i, ρ i ↪ Idx lam := fun i => emb (hρ i).le with hfdef
-  set π : Idx lam × Idx lam ≃ Idx lam := pairEquiv hlam0 with hπdef
-  set E : (Σ i, ρ i) ↪ Idx lam := ⟨fun p => π (e p.1, f p.1 p.2), by
+theorem bsum_sigma {ι : Type u} {ρ : ι → Type u} (h : #ι ≤ κ) (hρ : ∀ i, #(ρ i) ≤ κ)
+    (x : ∀ i, ρ i → H) (hσ : #((i : ι) × ρ i) ≤ κ) :
+    B.bsum h (fun i => B.bsum (hρ i) (x i)) = B.bsum hσ (fun p => x p.1 p.2) := by
+  set e : ι ↪ Idx κ := (emb h).trans B.row with hedef
+  set f : ∀ i, ρ i ↪ Idx κ := fun i => (emb (hρ i)).trans B.row
+  set π : Idx κ × Idx κ ≃ Idx κ := B.pair with hπdef
+  set E : ((i : ι) × ρ i) ↪ Idx κ := ⟨fun p => π (e p.1, f p.1 p.2), by
     rintro ⟨i1, r1⟩ ⟨i2, r2⟩ hEq
     have hpair : (e i1, f i1 r1) = (e i2, f i2 r2) := π.injective hEq
     have hi : i1 = i2 := e.injective (Prod.ext_iff.mp hpair).1
     subst hi
-    have hr : r1 = r2 := (f i1).injective (Prod.ext_iff.mp hpair).2
-    subst hr
-    rfl⟩ with hEdef
-  set W : ∀ i, Idx lam → X := fun i => Function.extend (f i) (x i) 0 with hWdef
-  set G : Idx lam → (Idx lam → X) := Function.extend e W (fun _ => (0 : Idx lam → X)) with hGdef
-  have hGrow : #{a : Idx lam | ∃ b, G a b ≠ 0} < lam := by
-    have hsub : {a : Idx lam | ∃ b, G a b ≠ 0} ⊆ Set.range e := by
-      rintro a ⟨b, hab⟩
-      by_contra ha
-      exact hab (by rw [hGdef, Function.extend_apply' _ _ _ ha]; rfl)
-    calc #{a : Idx lam | ∃ b, G a b ≠ 0} ≤ #(Set.range e) := Cardinal.mk_le_mk_of_subset hsub
-      _ = #ι := Cardinal.mk_range_eq e e.injective
-      _ < lam := h
-  have hGcol : #{b : Idx lam | ∃ a, G a b ≠ 0} < lam := by
-    have hsub : {b : Idx lam | ∃ a, G a b ≠ 0} ⊆ ⋃ i : ι, Set.range (f i) := by
-      rintro b ⟨a, hab⟩
-      by_cases ha : ∃ i, e i = a
-      · obtain ⟨i, hi⟩ := ha
-        have hGa : G a = W i := by rw [← hi, hGdef, e.injective.extend_apply]
-        by_contra hb
-        apply hab
-        rw [hGa, hWdef]
-        apply Function.extend_apply'
-        rintro ⟨r, hr⟩
-        exact hb (Set.mem_iUnion.mpr ⟨i, ⟨r, hr⟩⟩)
-      · exfalso
-        apply hab
-        rw [hGdef, Function.extend_apply' _ _ _ ha]
-        rfl
-    calc #{b : Idx lam | ∃ a, G a b ≠ 0} ≤ #(⋃ i : ι, Set.range (f i)) :=
-          Cardinal.mk_le_mk_of_subset hsub
-      _ < lam := by
-          apply (Cardinal.card_iUnion_lt_iff_forall_of_isRegular
-            (‹LMonoid lam X›.isRegular) h).mpr
-          intro i
-          rw [Cardinal.mk_range_eq (f i) (f i).injective]
-          exact hρ i
-  have hGa : ∀ a, lsum (G a) = Function.extend e (fun i => lsum (W i)) 0 a := by
+    exact congrArg _ ((f i1).injective (Prod.ext_iff.mp hpair).2)⟩ with hEdef
+  set W : ∀ _ : ι, Idx κ → H := fun i => Function.extend ⇑(f i) (x i) 0 with hWdef
+  set G : Idx κ → (Idx κ → H) := Function.extend ⇑e W (fun _ => (0 : Idx κ → H)) with hGdef
+  have hGa : ∀ a, B.ksum (G a) = Function.extend ⇑e (fun i => B.ksum (W i)) 0 a := by
     intro a
     by_cases ha : ∃ i, e i = a
-    · obtain ⟨i, hi⟩ := ha
-      have h1 : G a = W i := by rw [← hi, hGdef, e.injective.extend_apply]
-      have h2 : Function.extend e (fun i => lsum (W i)) 0 a = lsum (W i) := by
-        rw [← hi, e.injective.extend_apply]
-      rw [h1, h2]
-    · have h1 : G a = fun _ => (0 : X) := by
-        rw [hGdef]
-        exact Function.extend_apply' W (fun _ => (0 : Idx lam → X)) a ha
-      have h2 : Function.extend e (fun i => lsum (W i)) 0 a = 0 :=
-        Function.extend_apply' (fun i => lsum (W i)) (0 : Idx lam → X) a ha
-      rw [h1, h2]
-      exact lsum_single j₀ (fun _ => (0 : X)) (fun _ _ => rfl)
-  have hGk : ∀ k, G (π.symm k).1 (π.symm k).2 = Function.extend E (fun p => x p.1 p.2) 0 k := by
+    · obtain ⟨i, rfl⟩ := ha
+      rw [hGdef, e.injective.extend_apply, e.injective.extend_apply]
+    · rw [hGdef, Function.extend_apply' W (fun _ => (0 : Idx κ → H)) a ha,
+        Function.extend_apply' (fun i => B.ksum (W i)) (0 : Idx κ → H) a ha]
+      exact B.ksum_zero
+  have hGk : ∀ k, G (π.symm k).1 (π.symm k).2 = Function.extend ⇑E (fun p => x p.1 p.2) 0 k := by
     intro k
     by_cases ha : ∃ i, e i = (π.symm k).1
     · obtain ⟨i, hi⟩ := ha
-      have hGaeq : G (π.symm k).1 = W i := by rw [← hi, hGdef, e.injective.extend_apply]
+      have hGaeq : G (π.symm k).1 = W i := by rw [hGdef, ← hi, e.injective.extend_apply]
       rw [hGaeq]
       by_cases hb : ∃ r, f i r = (π.symm k).2
       · obtain ⟨r, hr⟩ := hb
         have hWeq : W i (π.symm k).2 = x i r := by
-          rw [← hr]
-          show Function.extend (f i) (x i) 0 (f i r) = x i r
+          rw [hWdef, ← hr]
           exact (f i).injective.extend_apply (x i) 0 r
-        rw [hWeq]
         have hEk : E ⟨i, r⟩ = k := by
           show π (e i, f i r) = k
           rw [hi, hr]
-          exact Equiv.apply_symm_apply π k
-        rw [← hEk, E.injective.extend_apply]
-      · have hWeq : W i (π.symm k).2 = 0 :=
-          Function.extend_apply' (x i) (0 : Idx lam → X) (π.symm k).2 hb
-        rw [hWeq]
+          exact π.apply_symm_apply k
+        rw [hWeq, ← hEk, E.injective.extend_apply]
+      · show Function.extend ⇑(f i) (x i) 0 (π.symm k).2 = _
+        rw [Function.extend_apply' (x i) (0 : Idx κ → H) (π.symm k).2 hb]
         symm
         apply Function.extend_apply'
         rintro ⟨⟨i', r'⟩, hp⟩
         have heqp : (e i', f i' r') = π.symm k := by
-          rw [← hp]; exact (Equiv.symm_apply_apply π (e i', f i' r')).symm
-        have hi' : e i' = (π.symm k).1 := congrArg Prod.fst heqp
-        have hii : i' = i := e.injective (hi'.trans hi.symm)
+          rw [← hp]; exact (π.symm_apply_apply (e i', f i' r')).symm
+        have hii : i' = i := e.injective ((congrArg Prod.fst heqp).trans hi.symm)
         subst hii
         exact hb ⟨r', congrArg Prod.snd heqp⟩
-    · have hGaeq : G (π.symm k).1 = fun _ => (0 : X) := by
+    · have hGaeq : G (π.symm k).1 = fun _ => (0 : H) := by
         rw [hGdef]
-        exact Function.extend_apply' W (fun _ => (0 : Idx lam → X)) (π.symm k).1 ha
+        exact Function.extend_apply' W (fun _ => (0 : Idx κ → H)) (π.symm k).1 ha
       rw [hGaeq]
       symm
       apply Function.extend_apply'
       rintro ⟨⟨i', r'⟩, hp⟩
-      apply ha
-      refine ⟨i', ?_⟩
       have heqp : (e i', f i' r') = π.symm k := by
-        rw [← hp]; exact (Equiv.symm_apply_apply π (e i', f i' r')).symm
-      exact congrArg Prod.fst heqp
-  have step1 : lsumOf (lam := lam) h (fun i => lsumOf (lam := lam) (hρ i) (x i))
-      = lsum (fun a => lsum (G a)) := by
-    show lsum (Function.extend e (fun i => lsum (W i)) 0) = lsum (fun a => lsum (G a))
-    congr 1
-    funext a
-    exact (hGa a).symm
-  have step2 : lsum (fun a => lsum (G a))
-      = lsum (fun k => G (π.symm k).1 (π.symm k).2) := lsum_sigma G π hGrow hGcol
-  have step3 : lsum (fun k => G (π.symm k).1 (π.symm k).2)
-      = lsum (Function.extend E (fun p => x p.1 p.2) 0) := by
-    congr 1
+        rw [← hp]; exact (π.symm_apply_apply (e i', f i' r')).symm
+      exact ha ⟨i', congrArg Prod.fst heqp⟩
+  calc B.bsum h (fun i => B.bsum (hρ i) (x i))
+      = B.ksum (fun a => B.ksum (G a)) := by
+        show B.ksum (Function.extend ⇑e (fun i => B.ksum (W i)) 0) = _
+        congr 1
+        funext a
+        exact (hGa a).symm
+    _ = B.ksum (fun k => G (π.symm k).1 (π.symm k).2) := B.ksum_sigma G π
+    _ = B.ksum (Function.extend ⇑E (fun p => x p.1 p.2) 0) := by
+        congr 1; funext k; exact hGk k
+    _ = B.bsum hσ (fun p => x p.1 p.2) := B.ksum_extend_eq hσ E _
+
+/-- The summation data determined by the bare data. -/
+noncomputable def sumData : SumData (Order.succ κ) H where
+  isRegular := Cardinal.isRegular_succ B.aleph0_le
+  sum := fun h x => B.bsum (KMonoid.le_of_lt_succ h) x
+  sum_congr := fun _ _ e x => B.bsum_congr _ _ e x
+  sum_unique := fun _ x => B.bsum_unique _ x
+  sum_sigma := fun _ hρ x hσ =>
+    B.bsum_sigma _ (fun i => KMonoid.le_of_lt_succ (hρ i)) x (KMonoid.le_of_lt_succ hσ)
+
+theorem sumData_zero : B.sumData.zero = 0 := by
+  show B.bsum _ (PEmpty.elim : PEmpty.{u + 1} → H) = 0
+  show B.ksum _ = 0
+  have heq : Function.extend ⇑((emb (KMonoid.le_of_lt_succ (B.sumData.small PEmpty.{u + 1})))
+      |>.trans B.row) (PEmpty.elim : PEmpty.{u + 1} → H) (0 : Idx κ → H) = fun _ => 0 := by
     funext k
-    exact hGk k
-  have step4 : lsum (Function.extend E (fun p => x p.1 p.2) 0)
-      = lsumOf (lam := lam) hσ (fun p : Σ i, ρ i => x p.1 p.2) :=
-    (lsumOf_eq_extend hσ E (fun p => x p.1 p.2)).symm
-  rw [step1, step2, step3, step4]
-
-/-- A `lsumOf` indexed by (a universe-lifted) `Bool` recovers the binary operation `+`. -/
-theorem lsumOf_two (a b : X) (hUB : #(ULift.{u} Bool) < lam) :
-    lsumOf (lam := lam) hUB (fun p : ULift.{u} Bool => if p.down then a else b) = a + b := by
-  have hlam0 := aleph0_le (lam := lam) (X := X)
-  have hnt : Nontrivial (Idx lam) := by
-    rw [← Cardinal.one_lt_iff_nontrivial, mk_Idx]
-    exact lt_of_lt_of_le one_lt_aleph0 hlam0
-  obtain ⟨i0, i1, hne⟩ := hnt.exists_pair_ne
-  set e : ULift.{u} Bool ↪ Idx lam := ⟨fun p => if p.down then i0 else i1, by
-    intro p q hpq
-    match p, q with
-    | ⟨true⟩, ⟨true⟩ => rfl
-    | ⟨false⟩, ⟨false⟩ => rfl
-    | ⟨true⟩, ⟨false⟩ => exact absurd hpq hne
-    | ⟨false⟩, ⟨true⟩ => exact absurd hpq.symm hne⟩ with hedef
-  rw [lsumOf_eq_extend hUB e (fun p : ULift.{u} Bool => if p.down then a else b)]
-  have heq : Function.extend e (fun p : ULift.{u} Bool => if p.down then a else b) 0
-      = fun j => if j = i0 then a else if j = i1 then b else 0 := by
-    funext j
-    by_cases hj : ∃ p, e p = j
-    · obtain ⟨p, hp⟩ := hj
-      match p with
-      | ⟨true⟩ =>
-        have hval : Function.extend e (fun p : ULift.{u} Bool => if p.down then a else b) 0 j
-            = a := by
-          rw [← hp]; exact e.injective.extend_apply _ _ _
-        rw [hval]
-        have hji0 : j = i0 := hp.symm
-        rw [hji0]
-        simp
-      | ⟨false⟩ =>
-        have hval : Function.extend e (fun p : ULift.{u} Bool => if p.down then a else b) 0 j
-            = b := by
-          rw [← hp]; exact e.injective.extend_apply _ _ _
-        rw [hval]
-        have hji1 : j = i1 := hp.symm
-        rw [hji1]
-        simp [hne.symm]
-    · rw [Function.extend_apply' _ _ _ hj]
-      have hj0 : j ≠ i0 := fun heq0 => hj ⟨⟨true⟩, heq0.symm⟩
-      have hj1 : j ≠ i1 := fun heq1 => hj ⟨⟨false⟩, heq1.symm⟩
-      simp [hj0, hj1]
+    exact Function.extend_apply' _ _ _ (by rintro ⟨p, _⟩; exact p.elim)
   rw [heq]
-  exact lsum_two a b i0 i1 hne
+  exact B.ksum_zero
 
-/-- `Option α` decomposed as a `Bool`-indexed disjoint union: `true` selects `α` itself,
-`false` selects the single point `none`. -/
-def optionSigmaEquiv (α : Type u) :
-    Option α ≃ Σ p : ULift.{u} Bool, (if p.down then α else PUnit.{u + 1}) where
-  toFun := fun o => match o with
-    | some i => ⟨ULift.up true, i⟩
-    | none => ⟨ULift.up false, PUnit.unit⟩
-  invFun := fun s => match s with
-    | ⟨⟨true⟩, y⟩ => some y
-    | ⟨⟨false⟩, _⟩ => none
-  left_inv := fun o => by cases o <;> rfl
-  right_inv := fun s => by
-    obtain ⟨p, y⟩ := s
-    match p with
-    | ⟨true⟩ => rfl
-    | ⟨false⟩ => rfl
+end BareKMonoid
 
-/-- For `λ = ℵ₀` a `λ⁻`-monoid is nothing but a commutative monoid, and `lsumOf` is the
-ordinary finite sum. -/
-theorem lsumOf_aleph0_eq_finsum {ι : Type u} [Fintype ι] (h : #ι < ℵ₀)
-    {X : Type v} [LMonoid ℵ₀ X] (x : ι → X) :
-    lsumOf (lam := ℵ₀) h x = ∑ i, x i := by
+/-- **Lemma 2.5**: a `κ`-monoid is determined by its `κ`-indexed summation. -/
+@[instance_reducible]
+noncomputable def KMonoid.ofBare {κ : Cardinal.{u}} {H : Type v} [Zero H]
+    (B : BareKMonoid κ H) : KMonoid κ H :=
+  { toLMonoid := B.sumData.toLMonoidOfZero B.sumData_zero
+    aleph0_le := B.aleph0_le }
+
+@[simp] theorem KMonoid.ofBare_ksum {κ : Cardinal.{u}} {H : Type v} [Zero H]
+    (B : BareKMonoid κ H) (x : Idx κ → H) :
+    letI := KMonoid.ofBare B
+    ksum (κ := κ) x = B.ksum x := by
+  show B.bsum (le_of_eq (mk_Idx κ)) x = B.ksum x
+  rw [← B.ksum_extend_eq (le_of_eq (mk_Idx κ)) (Function.Embedding.refl (Idx κ)) x]
+  congr 1
+  funext k
+  exact (Function.Embedding.refl (Idx κ)).injective.extend_apply x 0 k
+
+/-- A `κ`-monoid structure from `κ`-indexed data on a type that already carries a compatible
+commutative monoid structure. -/
+@[instance_reducible]
+noncomputable def KMonoid.ofKsum {κ : Cardinal.{u}} {H : Type v} [AddCommMonoid H]
+    (B : BareKMonoid κ H)
+    (two : ∀ (a b : H) (i₀ i₁ : Idx κ), i₀ ≠ i₁ →
+      B.ksum (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b) :
+    KMonoid κ H := by
+  classical
+  refine { toLMonoid := B.sumData.toLMonoid' ?_, aleph0_le := B.aleph0_le }
+  intro h a b
+  set E : (PUnit.{u + 1} ⊕ PUnit.{u + 1}) ↪ Idx κ :=
+    (emb (KMonoid.le_of_lt_succ h)).trans B.row with hEdef
+  have hne : E (Sum.inl PUnit.unit) ≠ E (Sum.inr PUnit.unit) := by
+    intro hh
+    exact Sum.inl_ne_inr (E.injective hh)
+  have hfun : Function.extend ⇑E (Sum.elim (fun _ => a) (fun _ => b)) 0
+      = fun i => if i = E (Sum.inl PUnit.unit) then a
+        else if i = E (Sum.inr PUnit.unit) then b else 0 := by
+    funext k
+    by_cases hk : ∃ p, E p = k
+    · obtain ⟨p, rfl⟩ := hk
+      rcases p with ⟨⟩ | ⟨⟩
+      · rw [E.injective.extend_apply, if_pos rfl]
+        rfl
+      · rw [E.injective.extend_apply, if_neg (fun hh => hne hh.symm), if_pos rfl]
+        rfl
+    · rw [Function.extend_apply' _ _ _ hk,
+        if_neg (fun hh => hk ⟨Sum.inl PUnit.unit, hh.symm⟩),
+        if_neg (fun hh => hk ⟨Sum.inr PUnit.unit, hh.symm⟩)]
+      rfl
+  show a + b = B.ksum (Function.extend ⇑E (Sum.elim (fun _ => a) (fun _ => b)) 0)
+  rw [hfun, two a b _ _ hne]
+
+@[simp] theorem KMonoid.ofKsum_ksum {κ : Cardinal.{u}} {H : Type v} [AddCommMonoid H]
+    (B : BareKMonoid κ H) (two : ∀ (a b : H) (i₀ i₁ : Idx κ), i₀ ≠ i₁ →
+      B.ksum (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b)
+    (x : Idx κ → H) :
+    letI := KMonoid.ofKsum B two
+    ksum (κ := κ) x = B.ksum x := by
+  show B.bsum (le_of_eq (mk_Idx κ)) x = B.ksum x
+  rw [← B.ksum_extend_eq (le_of_eq (mk_Idx κ)) (Function.Embedding.refl (Idx κ)) x]
+  congr 1
+  funext k
+  exact (Function.Embedding.refl (Idx κ)).injective.extend_apply x 0 k
+
+theorem KMonoid.ofBare_zero {κ : Cardinal.{u}} {H : Type v} [Zero H] (B : BareKMonoid κ H) :
+    letI := KMonoid.ofBare B
+    (0 : H) = 0 := rfl
+
+/-! ## `λ = ℵ₀`: `λ⁻`-monoids are ordinary commutative monoids -/
+
+namespace LMonoid
+
+theorem mk_lt_aleph0_iff_finite {ι : Type u} : #ι < ℵ₀ ↔ Finite ι :=
+  Cardinal.lt_aleph0_iff_finite
+
+/-- For `λ = ℵ₀` every commutative monoid is a `λ⁻`-monoid, with the finite sum as its
+summation. -/
+@[instance_reducible]
+noncomputable def ofAddCommMonoid (M : Type v) [inst : AddCommMonoid M] : LMonoid ℵ₀ M where
+  toAddCommMonoid := inst
+  isRegular := Cardinal.isRegular_aleph0
+  lsumOf := fun _ x => ∑ᶠ i, x i
+  lsumOf_congr := fun _ _ e x => finsum_comp_equiv e
+  lsumOf_unique := fun _ x =>
+    finsum_eq_single x default fun b hb => absurd (Unique.eq_default b) hb
+  lsumOf_sigma := fun {ι ρ} h hρ x hσ => by
+    have : Finite ι := mk_lt_aleph0_iff_finite.mp h
+    have : ∀ i, Finite (ρ i) := fun i => mk_lt_aleph0_iff_finite.mp (hρ i)
+    have : Finite ((i : ι) × ρ i) := mk_lt_aleph0_iff_finite.mp hσ
+    let _ : Fintype ι := Fintype.ofFinite ι
+    let _ : ∀ i, Fintype (ρ i) := fun i => Fintype.ofFinite (ρ i)
+    rw [finsum_eq_sum_of_fintype]
+    rw [show (fun i => ∑ᶠ j, x i j) = fun i => ∑ j, x i j from
+      funext fun i => finsum_eq_sum_of_fintype _]
+    rw [finsum_eq_sum_of_fintype, ← Finset.univ_sigma_univ, Finset.sum_sigma]
+  add_eq_lsumOf := fun _ a b => by
+    rw [finsum_eq_sum_of_fintype, Fintype.sum_sum_type]
+    simp
+
+/-- For `λ = ℵ₀` the summation of any `λ⁻`-monoid structure is the ordinary finite sum. -/
+theorem lsumOf_aleph0_eq_finsum {ι : Type u} [Fintype ι] (h : #ι < ℵ₀) {X : Type v}
+    [LMonoid ℵ₀ X] (x : ι → X) : lsumOf (lam := ℵ₀) h x = ∑ i, x i := by
   revert h x
   refine Fintype.induction_empty_option
     (P := fun (ι : Type u) [Fintype ι] =>
-      ∀ (h : #ι < ℵ₀) (x : ι → X), lsumOf (lam := ℵ₀) h x = ∑ i, x i)
-    ?_ ?_ ?_ ι
+      ∀ (h : #ι < ℵ₀) (x : ι → X), lsumOf (lam := ℵ₀) h x = ∑ i, x i) ?_ ?_ ?_ ι
   · intro α β _ e ih h x
-    letI : Fintype α := Fintype.ofEquiv β e.symm
+    let _ : Fintype α := Fintype.ofEquiv β e.symm
     have hα : #α < ℵ₀ := by rw [Cardinal.mk_congr e]; exact h
     rw [lsumOf_equiv h hα e x, ih hα (x ∘ e)]
     exact Equiv.sum_comp e x
   · intro h x
-    simp [lsumOf_isEmpty]
+    simp
   · intro α _ ih h x
     have hα : #α < ℵ₀ := lt_of_le_of_lt (Cardinal.mk_le_of_injective (Option.some_injective α)) h
-    set e : Option α ≃ Σ p : ULift.{u} Bool, (if p.down then α else PUnit.{u + 1}) :=
-      optionSigmaEquiv α with hedef
-    have hUB : #(ULift.{u} Bool) < ℵ₀ := Cardinal.lt_aleph0_iff_finite.mpr inferInstance
-    have hρ : ∀ p : ULift.{u} Bool, #(if p.down then α else PUnit.{u + 1}) < ℵ₀ := by
-      intro p
-      match p with
-      | ⟨true⟩ => exact hα
-      | ⟨false⟩ =>
-        show #(PUnit.{u + 1}) < ℵ₀
-        exact Cardinal.lt_aleph0_iff_finite.mpr inferInstance
-    have hσ : #(Σ p : ULift.{u} Bool, if p.down then α else PUnit.{u + 1}) < ℵ₀ := by
-      rw [Cardinal.mk_congr e.symm]; exact h
-    have hmain := lsumOf_sigma (X := X) hUB hρ
-      (fun p (y : if p.down then α else PUnit.{u + 1}) => x (e.symm ⟨p, y⟩)) hσ
-    have hcomp : (x ∘ (⇑e.symm)) = fun p => x (e.symm ⟨p.fst, p.snd⟩) := rfl
-    rw [lsumOf_equiv h hσ e.symm x, hcomp, ← hmain]
-    have hinner_true : lsumOf (hρ (ULift.up true))
-        (fun y => x (e.symm (⟨ULift.up true, y⟩ :
-          Σ p : ULift.{u} Bool, if p.down then α else PUnit.{u + 1}))) = ∑ i, x (some i) :=
-      ih hα (x ∘ some)
-    have hinner_false : lsumOf (hρ (ULift.up false))
-        (fun y => x (e.symm (⟨ULift.up false, y⟩ :
-          Σ p : ULift.{u} Bool, if p.down then α else PUnit.{u + 1}))) = x none := by
-      haveI : Unique (if ({down := false} : ULift.{u} Bool).down = true then α
-          else PUnit.{u + 1}) := by
-        show Unique PUnit.{u + 1}
-        infer_instance
-      exact lsumOf_unique (hρ (ULift.up false)) (fun _ => x none)
-    have heq : (fun p : ULift.{u} Bool =>
-        lsumOf (hρ p) (fun y => x (e.symm ⟨p, y⟩)))
-        = fun p => if p.down then ∑ i, x (some i) else x none := by
-      funext p
-      match p with
-      | ⟨true⟩ => exact hinner_true
-      | ⟨false⟩ => exact hinner_false
-    rw [heq, lsumOf_two (∑ i, x (some i)) (x none) hUB, Fintype.sum_option x, add_comm]
+    have hu : #PUnit.{u + 1} < ℵ₀ := mk_lt_finite (X := X) _
+    have hsum : #(α ⊕ PUnit.{u + 1}) < ℵ₀ := mk_sum_lt (isRegular' (X := X)) hα hu
+    rw [lsumOf_equiv h hsum (Equiv.optionEquivSumPUnit α).symm x,
+      show x ∘ (Equiv.optionEquivSumPUnit α).symm
+        = Sum.elim (fun a => x (some a)) (fun _ => x none) by
+        funext p; rcases p with p | p <;> rfl,
+      lsumOf_sumType hα hu hsum, ih hα (fun a => x (some a)), lsumOf_unique,
+      Fintype.sum_option]
+    exact add_comm _ _
 
-/-- Every `κ`-monoid is a `λ⁻`-monoid for every regular `λ ≤ κ` (Remark 2.19). -/
-@[instance_reducible]
-noncomputable def _root_.NS.KMonoid.toLMonoid {κ : Cardinal.{u}} (H : Type v) [KMonoid κ H]
-    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) : LMonoid lam H where
-  isRegular := hlam
-  lsum x := if h : #(Function.support x) < lam then
-      sumOf (κ := κ) (le_of_eq_of_le (mk_Idx lam) hlk) x else 0
-  lsum_of_large := by intro x hx; simp [hx]
-  lsum_single := by
-    intro i₀ x hx
-    have hsupp : #(Function.support x) < lam := by
-      have hsub : Function.support x ⊆ {i₀} := by
-        intro i hi
-        by_contra hne
-        exact hi (hx i (fun h => hne (Set.mem_singleton_iff.mpr h)))
-      calc #(Function.support x) ≤ #({i₀} : Set (Idx lam)) := Cardinal.mk_le_mk_of_subset hsub
-        _ = 1 := mk_singleton i₀
-        _ < lam := lt_of_lt_of_le one_lt_aleph0 hlam.aleph0_le
-    show (if h : #(Function.support x) < lam then
-        sumOf (κ := κ) (le_of_eq_of_le (mk_Idx lam) hlk) x else 0) = x i₀
-    rw [dif_pos hsupp]
-    show ksum (κ := κ) (Function.extend (emb (le_of_eq_of_le (mk_Idx lam) hlk)) x 0) = x i₀
-    set e := emb (le_of_eq_of_le (mk_Idx lam) hlk) with hedef
-    rw [ksum_single (e i₀) _ ?_, e.injective.extend_apply]
-    intro j hj
-    by_cases hjk : ∃ i, e i = j
-    · obtain ⟨i, hi⟩ := hjk
-      rw [← hi, e.injective.extend_apply]
-      apply hx i
-      intro hii0
-      apply hj
-      rw [← hi, hii0]
-    · exact Function.extend_apply' _ _ _ hjk
-  lsum_sigma := by
-    intro x π hrow hcol
-    have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
-    have hidx : #(Idx lam) ≤ κ := le_of_eq_of_le (mk_Idx lam) hlk
-    set L : (Idx lam → H) → H := fun z =>
-      if h : #(Function.support z) < lam then sumOf (κ := κ) hidx z else 0 with hLdef
-    show L (fun i => L (x i)) = L (fun k => x (π.symm k).1 (π.symm k).2)
-    -- Every row has small support (it is contained in the column-marginal).
-    have hsupp_row : ∀ i, #(Function.support (x i)) < lam := by
-      intro i
-      refine lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset ?_) hcol
-      intro j hj
-      exact ⟨i, hj⟩
-    have hlsum_row : ∀ i, L (x i) = sumOf (κ := κ) hidx (x i) := by
-      intro i
-      rw [hLdef]
-      exact dif_pos (hsupp_row i)
-    -- Hence the outer family `fun i => L (x i)` has support inside the row-marginal.
-    have hsupp_outer : #(Function.support (fun i => L (x i))) < lam := by
-      refine lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset ?_) hrow
-      intro i hi
-      by_contra hcontra
-      apply hi
-      show L (x i) = 0
-      rw [hlsum_row i]
-      have hz : x i = fun _ => (0 : H) := by
-        funext j
-        by_contra hxij
-        exact hcontra ⟨j, hxij⟩
-      rw [hz]
-      exact sumOf_zero hidx
-    have hstep1 : L (fun i => L (x i))
-        = sumOf (κ := κ) hidx (fun i => sumOf (κ := κ) hidx (x i)) := by
-      show (if _ : #(Function.support (fun i => L (x i))) < lam then
-          sumOf (κ := κ) hidx (fun i => L (x i)) else 0) = _
-      rw [dif_pos hsupp_outer]
-      congr 1
-      funext i
-      exact hlsum_row i
-    have hσ' : #(Σ _ : Idx lam, Idx lam) ≤ κ := by
-      have heq1 : #(Σ _ : Idx lam, Idx lam) = #(Idx lam) * #(Idx lam) := by
-        rw [Cardinal.mk_congr (Equiv.sigmaEquivProd (Idx lam) (Idx lam))]
-        simp [Cardinal.mk_prod]
-      rw [heq1]
-      calc #(Idx lam) * #(Idx lam) ≤ κ * κ := mul_le_mul' hidx hidx
-        _ = κ := Cardinal.mul_eq_self hκ
-    have hstep2 : sumOf (κ := κ) hidx (fun i => sumOf (κ := κ) hidx (x i))
-        = sumOf (κ := κ) hσ' (fun p : Σ _ : Idx lam, Idx lam => x p.1 p.2) :=
-      sumOf_sigma hidx (fun _ => hidx) hσ' (fun (i j : Idx lam) => x i j)
-    have hprod : #(Idx lam × Idx lam) ≤ κ := by
-      have hmp : #(Idx lam × Idx lam) = #(Idx lam) * #(Idx lam) := by simp [Cardinal.mk_prod]
-      rw [hmp]
-      calc #(Idx lam) * #(Idx lam) ≤ κ * κ := mul_le_mul' hidx hidx
-        _ = κ := Cardinal.mul_eq_self hκ
-    have hstep3 : sumOf (κ := κ) hσ' (fun p : Σ _ : Idx lam, Idx lam => x p.1 p.2)
-        = sumOf (κ := κ) hprod (fun q : Idx lam × Idx lam => x q.1 q.2) :=
-      (sumOf_equiv hprod hσ' (Equiv.sigmaEquivProd (Idx lam) (Idx lam)) (fun q => x q.1 q.2)).symm
-    -- The 2-dimensional support of `x` is small: it embeds into the product of the marginals.
-    have hqsubset : {q : Idx lam × Idx lam | x q.1 q.2 ≠ 0} ⊆
-        {i : Idx lam | ∃ j, x i j ≠ 0} ×ˢ {j : Idx lam | ∃ i, x i j ≠ 0} := by
-      rintro ⟨a, b⟩ hab
-      exact ⟨⟨b, hab⟩, ⟨a, hab⟩⟩
-    have hSTequiv :
-        ↥({i : Idx lam | ∃ j, x i j ≠ 0} ×ˢ {j : Idx lam | ∃ i, x i j ≠ 0}) ≃
-          ↥{i : Idx lam | ∃ j, x i j ≠ 0} × ↥{j : Idx lam | ∃ i, x i j ≠ 0} :=
-      { toFun := fun p => (⟨p.1.1, p.2.1⟩, ⟨p.1.2, p.2.2⟩)
-        invFun := fun q => ⟨(q.1.1, q.2.1), q.1.2, q.2.2⟩
-        left_inv := fun _ => rfl
-        right_inv := fun _ => rfl }
-    have hqcard : #{q : Idx lam × Idx lam | x q.1 q.2 ≠ 0} < lam := by
-      calc #{q : Idx lam × Idx lam | x q.1 q.2 ≠ 0}
-          ≤ #(↥({i : Idx lam | ∃ j, x i j ≠ 0} ×ˢ {j : Idx lam | ∃ i, x i j ≠ 0})) :=
-            Cardinal.mk_le_mk_of_subset hqsubset
-        _ = #(↥{i : Idx lam | ∃ j, x i j ≠ 0}) * #(↥{j : Idx lam | ∃ i, x i j ≠ 0}) :=
-            Cardinal.mk_congr hSTequiv
-        _ < lam := Cardinal.mul_lt_of_lt hlam.aleph0_le hrow hcol
-    have hkey : #{k : Idx lam | x (π.symm k).1 (π.symm k).2 ≠ 0} < lam := by
-      have heqset : {k : Idx lam | x (π.symm k).1 (π.symm k).2 ≠ 0}
-          = π.symm ⁻¹' {q : Idx lam × Idx lam | x q.1 q.2 ≠ 0} := rfl
-      rw [heqset, Cardinal.mk_preimage_equiv]
-      exact hqcard
-    have hstep4 : sumOf (κ := κ) hprod (fun q : Idx lam × Idx lam => x q.1 q.2)
-        = sumOf (κ := κ) hidx (fun k => x (π.symm k).1 (π.symm k).2) :=
-      sumOf_equiv hprod hidx π.symm (fun q => x q.1 q.2)
-    have hsupp_k : #(Function.support (fun k => x (π.symm k).1 (π.symm k).2)) < lam :=
-      lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset (fun k hk => hk)) hkey
-    have hstep5 : L (fun k => x (π.symm k).1 (π.symm k).2)
-        = sumOf (κ := κ) hidx (fun k => x (π.symm k).1 (π.symm k).2) := by
-      rw [hLdef]
-      exact dif_pos hsupp_k
-    rw [hstep1, hstep2, hstep3, hstep4, ← hstep5]
-  lsum_two := by
-    intro a b i0 i1 hne
-    set y : Idx lam → H := fun i => if i = i0 then a else if i = i1 then b else 0 with hydef
-    have hsub : Function.support y ⊆ {i0, i1} := by
-      intro i hi
-      simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
-      by_contra hcontra
-      push Not at hcontra
-      apply hi
-      simp [hydef, hcontra.1, hcontra.2]
-    have hsupp : #(Function.support y) < lam :=
-      (((Set.finite_singleton i1).insert i0).subset hsub).lt_aleph0.trans_le
-        hlam.aleph0_le
-    show (if h : #(Function.support y) < lam then
-        sumOf (κ := κ) (le_of_eq_of_le (mk_Idx lam) hlk) y else 0) = a + b
-    rw [dif_pos hsupp]
-    show ksum (κ := κ) (Function.extend (emb (le_of_eq_of_le (mk_Idx lam) hlk)) y 0) = a + b
-    set e := emb (le_of_eq_of_le (mk_Idx lam) hlk) with hedef
-    have heq : Function.extend e y 0
-        = fun k => if k = e i0 then a else if k = e i1 then b else 0 := by
-      funext k
-      by_cases hk : ∃ i, e i = k
-      · obtain ⟨i, hi⟩ := hk
-        rw [← hi, e.injective.extend_apply, hydef]
-        by_cases hi0 : i = i0
-        · simp [hi0]
-        · have hei0 : e i ≠ e i0 := fun h => hi0 (e.injective h)
-          by_cases hi1 : i = i1
-          · simp [hi1]
-          · have hei1 : e i ≠ e i1 := fun h => hi1 (e.injective h)
-            simp [hi0, hi1, hei0, hei1]
-      · rw [Function.extend_apply' _ _ _ hk]
-        have hne0 : k ≠ e i0 := fun h => hk ⟨i0, h.symm⟩
-        have hne1 : k ≠ e i1 := fun h => hk ⟨i1, h.symm⟩
-        simp [hne0, hne1]
-    rw [heq]
-    exact ksum_two a b (e i0) (e i1) (fun h => hne (e.injective h))
-
-/-- A `λ⁻`-homomorphism from a `λ⁻`-monoid into (the underlying `λ⁻`-monoid of) a
-`κ`-monoid. -/
-def IsLHom {lam κ : Cardinal.{u}} {X : Type v} {H : Type w}
-    [LMonoid lam X] [KMonoid κ H] (hκ : lam ≤ κ) (f : X → H) : Prop :=
-  f 0 = 0 ∧ ∀ {ι : Type u} (h : #ι < lam) (x : ι → X),
-    f (lsumOf (lam := lam) h x) = sumOf (κ := κ) (h.le.trans hκ) (f ∘ x)
+/-- For `λ = ℵ₀`, a sum over a small subset is the `finsum` over that subset. -/
+theorem lsumOf_eq_finsum {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {S : Set ι} (h : #S < ℵ₀)
+    (f : ι → X) : lsumOf (lam := ℵ₀) h (fun i : S => f i) = ∑ᶠ i ∈ S, f i := by
+  have hfin : S.Finite := Cardinal.lt_aleph0_iff_set_finite.mp h
+  let _ : Fintype S := hfin.fintype
+  rw [lsumOf_aleph0_eq_finsum h (fun i : S => f i), ← finsum_eq_sum_of_fintype,
+    finsum_set_coe_eq_finsum_mem]
 
 end LMonoid
-
-/-! ## Induced structures on sub-objects -/
-
-/-- A subset of a `κ`-monoid closed under `λ⁻`-sums. -/
-structure IsLSubset (lam : Cardinal.{u}) {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
-    (hlk : lam ≤ κ) (S : Set H) : Prop where
-  zero_mem : (0 : H) ∈ S
-  sumOf_mem : ∀ {ι : Type u} (h : #ι < lam) (x : ι → H), (∀ i, x i ∈ S) →
-    sumOf (κ := κ) (h.le.trans hlk) x ∈ S
-
-/-- A `κ`-submonoid of a `κ`-monoid is itself a `κ`-monoid. -/
-@[instance_reducible]
-noncomputable def KMonoid.IsKSubmonoid.kmonoid {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
-    {S : Set H} (hS : IsKSubmonoid κ S) : KMonoid κ S := by
-  have hnt : Nontrivial (Idx κ) := by
-    rw [← Cardinal.one_lt_iff_nontrivial, mk_Idx]
-    exact lt_of_lt_of_le one_lt_aleph0 (KMonoid.aleph0_le (κ := κ) (H := H))
-  set i0 := hnt.exists_pair_ne.choose with hi0def
-  set i1 := hnt.exists_pair_ne.choose_spec.choose with hi1def
-  have hne : i0 ≠ i1 := hnt.exists_pair_ne.choose_spec.choose_spec
-  have hadd : ∀ a b : H, a ∈ S → b ∈ S → a + b ∈ S := by
-    intro a b ha hb
-    have hmem := hS.ksum_mem (fun i => if i = i0 then a else if i = i1 then b else 0) (by
-      intro i
-      by_cases hi0 : i = i0
-      · simpa [hi0] using ha
-      · by_cases hi1 : i = i1
-        · rw [if_neg hi0, if_pos hi1]; exact hb
-        · rw [if_neg hi0, if_neg hi1]; exact hS.zero_mem)
-    rwa [ksum_two a b i0 i1 hne] at hmem
-  letI zeroS : Zero (↥S) := ⟨⟨0, hS.zero_mem⟩⟩
-  letI addS : Add (↥S) := ⟨fun a b => ⟨a.1 + b.1, hadd a.1 b.1 a.2 b.2⟩⟩
-  have hzero : (0 : ↥S).1 = (0 : H) := rfl
-  have haddv : ∀ a b : ↥S, (a + b).1 = a.1 + b.1 := fun _ _ => rfl
-  letI addCommMonoidS : AddCommMonoid (↥S) :=
-    { add_assoc := fun a b c => Subtype.ext (by simp only [haddv, add_assoc])
-      zero_add := fun a => Subtype.ext (by simp only [haddv, hzero, zero_add])
-      add_zero := fun a => Subtype.ext (by simp only [haddv, hzero, add_zero])
-      add_comm := fun a b => Subtype.ext (by simp only [haddv, add_comm])
-      nsmul := fun n a => ⟨n • a.1, by
-        induction n with
-        | zero => rw [zero_nsmul]; exact hS.zero_mem
-        | succ n ih => rw [succ_nsmul]; exact hadd _ _ ih a.2⟩
-      nsmul_zero := fun a => Subtype.ext (by show (0 : ℕ) • a.1 = (0 : H); simp)
-      nsmul_succ := fun n a => Subtype.ext (by
-        show (n + 1 : ℕ) • a.1 = n • a.1 + a.1
-        simp [succ_nsmul]) }
-  refine
-  { toAddCommMonoid := addCommMonoidS
-    aleph0_le := KMonoid.aleph0_le (κ := κ) (H := H)
-    ksum := fun x => ⟨ksum (κ := κ) (fun i => (x i).1), hS.ksum_mem _ (fun i => (x i).2)⟩
-    ksum_single := ?_
-    ksum_sigma := ?_
-    ksum_two := ?_ }
-  · intro i₀ x hx
-    apply Subtype.ext
-    show ksum (κ := κ) (fun i => (x i).1) = (x i₀).1
-    apply ksum_single i₀
-    intro i hi
-    exact congrArg Subtype.val (hx i hi)
-  · intro x π
-    apply Subtype.ext
-    show ksum (κ := κ) (fun i => ksum (κ := κ) (fun j => (x i j).1))
-      = ksum (κ := κ) (fun k => (x (π.symm k).1 (π.symm k).2).1)
-    exact ksum_sigma (fun i j => (x i j).1) π
-  · intro a b i₀ i₁ hne'
-    apply Subtype.ext
-    have key : ∀ i : Idx κ,
-        ((if i = i₀ then a else if i = i₁ then b else 0 : ↥S) : H)
-          = if i = i₀ then a.1 else if i = i₁ then b.1 else 0 := by
-      intro i
-      by_cases hi0 : i = i₀
-      · rw [if_pos hi0, if_pos hi0]
-      · rw [if_neg hi0, if_neg hi0]
-        by_cases hi1 : i = i₁
-        · rw [if_pos hi1, if_pos hi1]
-        · rw [if_neg hi1, if_neg hi1]
-          exact hzero
-    show ksum (κ := κ) (fun i =>
-        ((if i = i₀ then a else if i = i₁ then b else 0 : ↥S) : H)) = a.1 + b.1
-    simp_rw [key]
-    exact ksum_two a.1 b.1 i₀ i₁ hne'
-
-/-- A `λ⁻`-closed subset of a `κ`-monoid is a `λ⁻`-monoid. -/
-@[instance_reducible]
-noncomputable def IsLSubset.lmonoid {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
-    {hlk : lam ≤ κ} {S : Set H} (hlam : lam.IsRegular) (hS : IsLSubset lam hlk S) :
-    LMonoid lam S := by
-  have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
-  have hidx : #(Idx lam) ≤ κ := le_of_eq_of_le (mk_Idx lam) hlk
-  letI LH : LMonoid lam H := KMonoid.toLMonoid H hlam hlk
-  have hUBlt : #(ULift.{u} Bool) < lam :=
-    lt_of_lt_of_le (Cardinal.lt_aleph0_iff_finite.mpr inferInstance) hlam.aleph0_le
-  have hadd : ∀ a b : H, a ∈ S → b ∈ S → a + b ∈ S := by
-    intro a b ha hb
-    have hmem := hS.sumOf_mem hUBlt (fun p : ULift.{u} Bool => if p.down then a else b) (by
-      intro p
-      by_cases hp : p.down
-      · simpa [hp] using ha
-      · simpa [hp] using hb)
-    rwa [sumOf_two a b (hUBlt.le.trans hlk)] at hmem
-  letI zeroS : Zero (↥S) := ⟨⟨0, hS.zero_mem⟩⟩
-  letI addS : Add (↥S) := ⟨fun a b => ⟨a.1 + b.1, hadd a.1 b.1 a.2 b.2⟩⟩
-  have hzero : (0 : ↥S).1 = (0 : H) := rfl
-  have haddv : ∀ a b : ↥S, (a + b).1 = a.1 + b.1 := fun _ _ => rfl
-  letI addCommMonoidS : AddCommMonoid (↥S) :=
-    { add_assoc := fun a b c => Subtype.ext (by simp only [haddv, add_assoc])
-      zero_add := fun a => Subtype.ext (by simp only [haddv, hzero, zero_add])
-      add_zero := fun a => Subtype.ext (by simp only [haddv, hzero, add_zero])
-      add_comm := fun a b => Subtype.ext (by simp only [haddv, add_comm])
-      nsmul := fun n a => ⟨n • a.1, by
-        induction n with
-        | zero => rw [zero_nsmul]; exact hS.zero_mem
-        | succ n ih => rw [succ_nsmul]; exact hadd _ _ ih a.2⟩
-      nsmul_zero := fun a => Subtype.ext (by show (0 : ℕ) • a.1 = (0 : H); simp)
-      nsmul_succ := fun n a => Subtype.ext (by
-        show (n + 1 : ℕ) • a.1 = n • a.1 + a.1
-        simp [succ_nsmul]) }
-  have hsupp_eq : ∀ x : Idx lam → ↥S,
-      Function.support (fun i => (x i).1) = Function.support x := by
-    intro x
-    ext i
-    simp only [Function.mem_support, ne_eq, Subtype.ext_iff, hzero]
-  have hmem_of_small : ∀ (y : Idx lam → H), #(Function.support y) < lam →
-      (∀ i, y i ∈ S) → sumOf (κ := κ) hidx y ∈ S := by
-    intro y hy hyS
-    rw [sumOf_subtype_support hidx y (hy.le.trans hlk)]
-    exact hS.sumOf_mem hy (fun i : Function.support y => y i) (fun i => hyS i)
-  have hLHmem : ∀ x : Idx lam → ↥S, LH.lsum (fun i => (x i).1) ∈ S := by
-    intro x
-    show (if h : #(Function.support (fun i => (x i).1)) < lam then
-        sumOf (κ := κ) hidx (fun i => (x i).1) else 0) ∈ S
-    by_cases h : #(Function.support (fun i => (x i).1)) < lam
-    · rw [dif_pos h]
-      exact hmem_of_small _ h (fun i => (x i).2)
-    · rw [dif_neg h]
-      exact hS.zero_mem
-  refine
-  { toAddCommMonoid := addCommMonoidS
-    isRegular := hlam
-    lsum := fun x => ⟨LH.lsum (fun i => (x i).1), hLHmem x⟩
-    lsum_of_large := ?_
-    lsum_single := ?_
-    lsum_sigma := ?_
-    lsum_two := ?_ }
-  · intro x hx
-    apply Subtype.ext
-    show LH.lsum (fun i => (x i).1) = (0 : H)
-    apply LH.lsum_of_large
-    rwa [hsupp_eq]
-  · intro i₀ x hx
-    apply Subtype.ext
-    show LH.lsum (fun i => (x i).1) = (x i₀).1
-    apply LH.lsum_single
-    intro i hi
-    exact congrArg Subtype.val (hx i hi)
-  · intro x π hrow hcol
-    apply Subtype.ext
-    show LH.lsum (fun i => LH.lsum (fun j => (x i j).1))
-      = LH.lsum (fun k => (x (π.symm k).1 (π.symm k).2).1)
-    have hSeteq_row : {i : Idx lam | ∃ j, x i j ≠ 0} = {i : Idx lam | ∃ j, (x i j).1 ≠ 0} := by
-      ext i; simp only [Set.mem_ofPred_eq, ne_eq, Subtype.ext_iff, hzero]
-    have hSeteq_col : {j : Idx lam | ∃ i, x i j ≠ 0} = {j : Idx lam | ∃ i, (x i j).1 ≠ 0} := by
-      ext j; simp only [Set.mem_ofPred_eq, ne_eq, Subtype.ext_iff, hzero]
-    exact LH.lsum_sigma (fun i j => (x i j).1) π (hSeteq_row ▸ hrow) (hSeteq_col ▸ hcol)
-  · intro a b i₀ i₁ hne'
-    apply Subtype.ext
-    have key : ∀ i : Idx lam,
-        ((if i = i₀ then a else if i = i₁ then b else 0 : ↥S) : H)
-          = if i = i₀ then a.1 else if i = i₁ then b.1 else 0 := by
-      intro i
-      by_cases hi0 : i = i₀
-      · rw [if_pos hi0, if_pos hi0]
-      · rw [if_neg hi0, if_neg hi0]
-        by_cases hi1 : i = i₁
-        · rw [if_pos hi1, if_pos hi1]
-        · rw [if_neg hi1, if_neg hi1]
-          exact hzero
-    show LH.lsum (fun i =>
-        ((if i = i₀ then a else if i = i₁ then b else 0 : ↥S) : H)) = a.1 + b.1
-    simp_rw [key]
-    exact LH.lsum_two a.1 b.1 i₀ i₁ hne'
 
 /-! ## The reducedness of `λ⁻`-monoids that embed into `κ`-monoids
 
@@ -2157,11 +1601,18 @@ This is the observation behind the hypothesis that has to be added to Theorem 3.
 
 namespace LMonoid
 
+/-- A `λ⁻`-homomorphism from a `λ⁻`-monoid into (the underlying `λ⁻`-monoid of) a
+`κ`-monoid. -/
+def IsLHom {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
+    (hκ : lam ≤ κ) (f : X → H) : Prop :=
+  f 0 = 0 ∧ ∀ {ι : Type u} (h : #ι < lam) (x : ι → X),
+    f (lsumOf (lam := lam) h x) = KMonoid.sumOf (κ := κ) (h.le.trans hκ) (f ∘ x)
+
 variable {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
 
 /-- If a `λ⁻`-monoid `X` admits an injective additive map into a `κ`-monoid, then `X` is
-reduced.  Since `Theorem 3.11` asserts the existence of a `κ`-monoid `Ĥ ⊇ H`, this shows
-that reducedness of `H` is a *necessary* hypothesis there. -/
+reduced.  Since Theorem 3.11 asserts the existence of a `κ`-monoid `Ĥ ⊇ H`, this shows that
+reducedness of `H` is a *necessary* hypothesis there. -/
 theorem isConical_of_injective (f : X → H) (hf : Function.Injective f) (h0 : f 0 = 0)
     (hadd : ∀ a b, f (a + b) = f a + f b) : IsConical X := by
   intro a b hab
@@ -2171,4 +1622,4 @@ theorem isConical_of_injective (f : X → H) (hf : Function.Injective f) (h0 : f
 
 end LMonoid
 
-end NS
+end KappaMonoid

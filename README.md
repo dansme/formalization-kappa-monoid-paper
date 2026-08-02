@@ -2,22 +2,15 @@
 
 Sections 2–4 of the paper. Section 5 is omitted, as requested.
 
-## Honest status
+## Status
 
-**This is a scaffold, not a machine-checked formalisation.** Every definition and every
-theorem statement is written out in full; most proofs are `sorry`, with the paper's argument
-recorded in the docstring. It has **not** been compiled — building Mathlib was not possible
-in this environment — so expect to fix Mathlib lemma names (`Cardinal.mk_ord_toType`,
-`Cardinal.le_def`, `DirectSum.component`, …), universe annotations, and `letI` plumbing on
-first `lake build`.
-
-What this gives you is the hard part of a formalisation project of this kind: the
-*encoding* decisions. Those are discussed below, and each is a place where a different
-choice would change the shape of every downstream proof.
+Complete and `sorry`-free: `lake build` checks every definition and every theorem, including
+Theorem 3.11 (universal `κ`-extensions) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over
+`V^{λ⁻}(C_{λ⁻})`).
 
 | File | Contents |
 |---|---|
-| `KappaMonoid/Basic.lean` | §2: `KMonoid`, `LMonoid` (= `λ⁻`-monoid), (A3)/(A4), sums over arbitrary small index types, cardinal scalar multiplication, reducedness (Lemma 2.8), homomorphisms, `⟨S⟩_κ`, induced structures on sub-objects |
+| `KappaMonoid/Basic.lean` | §2: `LMonoid` (= `λ⁻`-monoid), `KMonoid`, sums over arbitrary small index types, cardinal scalar multiplication, reducedness (Lemma 2.8), homomorphisms, `⟨S⟩_κ`, induced structures on sub-objects, `KMonoid.ofBare` (Lemma 2.5) |
 | `KappaMonoid/Braiding.lean` | §3: `BraidingData`, `IsBraided`, Lemmas 3.2/3.4/3.6/3.7/3.8, `braidingSetoid`, `IsBraidedOver` (Def. 3.1(2)) |
 | `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11**, and the necessity of the added hypothesis |
 | `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5–4.7 |
@@ -56,27 +49,51 @@ error in the mathematics.
 
 ## Encoding decisions
 
-**Index sets.** The paper indexes by the von Neumann cardinal `κ` itself. We use
-`Idx κ := κ.ord.toType`, a fixed type of cardinality `κ`, and then *derive* summation over
-any index type of cardinality `≤ κ` (`KMonoid.sumOf`), exactly as the paper does after
-Lemma 2.5 by choosing an injection. Independence of the chosen injection
-(`sumOf_eq_extend`) needs the zero-insertion lemma `ksum_extend`, which in turn needs (A3);
-this is the one piece of §2 bookkeeping the paper leaves implicit.
+**Index sets: arbitrary types, not the cardinal.** The paper indexes by the von Neumann
+cardinal `κ` itself. Here the summation operation is applied directly to a family indexed by
+an *arbitrary* type of the right size:
 
-**(A1) at every index.** The paper states (A1) only at the distinguished element `0 ∈ κ`,
-and derives the general case from (A3). Since `Idx κ` has no distinguished element, `KMonoid`
-states (A1) at every index. Equivalent, given (A2).
+```lean
+lsumOf : ∀ {ι : Type u}, #ι < lam → (ι → X) → X
+```
 
-**The additive monoid.** By Lemma 2.5 a `κ`-monoid carries a canonical commutative monoid
-structure with `a + b = Σ²(a,b)`. Rebuilding that structure on the fly is painful in Lean, so
-`KMonoid extends AddCommMonoid` with a compatibility axiom `ksum_two`. Redundant but
-harmless, and it means `+`, `∑`, `simp` lemmas and `AddSubmonoid` all work.
+Consequently the reindexing law (A3) is an axiom rather than a theorem, and nothing has to be
+transported along a chosen bijection. `Idx κ := κ.ord.toType` survives only as a convenient
+`κ`-sized index type for the constructions of §3 and §4, which really do produce `κ`-indexed
+data; `KMonoid.ksum` is the specialisation of `sumOf` to it.
 
-**`λ⁻`-monoids.** Definition 2.18 gives a partial operation (on families with support of
-size `< λ`). Lean prefers total functions, so `LMonoid.lsum` is total with the junk
-convention `lsum x = 0` for large support; the axioms are only imposed on the intended
-domain. This pins down the data uniquely without changing the mathematics. Note that
-`LMonoid ℵ₀ X` is equivalent to `AddCommMonoid X`.
+**One theory, not two.** A `κ`-monoid is exactly a `λ⁻`-monoid for `λ = κ⁺` (this is
+Remark 2.19: `#ι ≤ κ ↔ #ι < κ⁺`, and `κ⁺` is regular). So `KMonoid κ H` is declared as
+`extends LMonoid (Order.succ κ) H`, the whole of §2 is proved once for `λ⁻`-monoids, and the
+`κ`-level names (`sumOf`, `ksum`, `cmul`, …) are a thin layer on top. Notably:
+
+* the `λ⁻`-analogues of `sumOf_sigma`, `sumOf_extend`, … are not separate developments;
+* `LMonoid.ofLE` (a five-line restriction along `λ ≤ λ'`) subsumes Remark 2.19 in general;
+* only genuinely `κ`-specific statements — Lemma 2.8, which needs a largest admissible
+  cardinal — are proved at the `κ`-level.
+
+**No junk convention.** Definition 2.18 gives a *partial* operation, defined on families with
+support of size `< λ`. That is modelled by restricting the *index type*, not by extending the
+operation to all families with a junk value: `lsumOf` simply takes `#ι < λ` as a hypothesis.
+
+**The additive monoid.** By Lemma 2.5 a `λ⁻`-monoid carries a canonical commutative monoid
+structure with `a + b = Σ²(a,b)`. Following Mathlib's forgetful-inheritance convention,
+`LMonoid` *extends* `AddCommMonoid` and adds the compatibility axiom `add_eq_lsumOf`; this
+avoids a second, merely propositionally equal `+` on types that already have one (e.g. `ℕ`
+as an `ℵ₀⁻`-monoid). Nothing is lost:
+
+* `SumData` is the bare data (summation only, no `0`, no `+`), and `SumData.toLMonoid`
+  constructs the additive structure from it — this *is* Lemma 2.5, and it is short: the
+  associativity of `+` is `sum_sigma` for a three-element index type;
+* `BareKMonoid` + `KMonoid.ofBare` do the same starting from `Idx κ`-indexed data satisfying
+  (A1) and (A2) only, which is what §3 and §4 supply. The one non-formal ingredient is that
+  a zero-padded sum does not depend on the chosen embedding into `Idx κ`; this is proved by
+  moving both embeddings into the first "row" of a bijection `κ × κ ≃ κ`, where the two
+  ranges have equinumerous complements and hence differ by a permutation.
+
+**(A1) at every index.** The paper states (A1) at the distinguished element `0 ∈ κ`. Here it
+is `lsumOf_unique`: a sum over a one-point index type is its unique entry. No distinguished
+element is needed, and the axiom does not mention `0`.
 
 **The limit well-order (the one substantive choice).** Definition 3.1 fixes a limit
 well-order on `κ` — a well-order in which every element has a successor, i.e. with no
@@ -107,29 +124,6 @@ the corresponding isomorphisms of direct sums. `V^{λ⁻}(Cλ⁻)` is the subset
 `κ`-submonoid, and `corollary_4_4` gives the "in particular" plus the universal-extension
 conclusion. Splitting it this way keeps the transfinite recursion (the actual work) free of
 subtype and instance plumbing.
-
-## What formalising the remaining proofs would take
-
-Roughly in order of effort:
-
-1. **§2 infrastructure** (`ksum_perm`, `ksum_comm`, `ksum_extend`, `sumOf_*`, `cmul`,
-   `isConical`). Routine but genuinely fiddly cardinal bookkeeping — the zero-insertion
-   lemma needs a permutation argument on complements of ranges. A week or two of work, and
-   everything else depends on it.
-2. **Lemma 3.8 (transitivity)** via Lemma 3.7. The paper's proof is an eight-condition
-   transfinite recursion building left-saturated `λ⁻`-intervals; it is the most intricate
-   purely combinatorial argument in the paper. The `ι × ℕ` normal form should help
-   substantially, since the alignment condition becomes a statement about `ℕ`-indexed
-   blocks. Expect this to dominate §3.
-3. **Theorem 3.11** is then short: Prop. 3.9 is a telescoping computation, and the quotient
-   construction needs only that braidings concatenate.
-4. **Theorem 4.3.** The recursion itself is not conceptually hard, but internal direct sums
-   over transfinite index sets are awkward in Mathlib. The realistic route is to avoid
-   internal sums: reformulate the invariant as a chain of split injections
-   `⨁_{μ<α}⨁_{i∈I μ} A i ↪ M` with chosen complements, and carry the splittings as data
-   through the recursion. `Submodule.IsCompl` plus `DirectSum.IsInternal` will do the work,
-   but the equations `(5)`/`(6)` need to be stated in a form that survives `α ↦ α+1` without
-   re-deriving the whole decomposition.
 
 ## Building
 

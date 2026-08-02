@@ -44,7 +44,7 @@ universe u v w
 
 open Cardinal Function Set
 
-namespace NS
+namespace KappaMonoid
 
 open KMonoid LMonoid
 
@@ -53,21 +53,6 @@ open KMonoid LMonoid
 section Aux
 
 variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
-
-/-- A `λ⁻`-sum over a two-element set. -/
-theorem LMonoid.lsumOf_pair {ι : Type u} {a b : ι} (hab : a ≠ b)
-    (h : #({a, b} : Set ι) < lam) (f : ι → X) :
-    lsumOf (lam := lam) h (fun i : ({a, b} : Set ι) => f i) = f a + f b := by
-  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
-  have hone : ∀ c : ι, #({c} : Set ι) < lam := fun c => by
-    rw [Cardinal.mk_singleton]; exact lt_of_lt_of_le one_lt_aleph0 hlam0
-  have hd : Disjoint ({a} : Set ι) ({b} : Set ι) := by simpa using hab
-  refine (lsumOf_union ({a} : Set ι) ({b} : Set ι) hd (hone a) (hone b) h f).trans ?_
-  letI : Unique ({a} : Set ι) := Set.uniqueSingleton a
-  letI : Unique ({b} : Set ι) := Set.uniqueSingleton b
-  rw [lsumOf_unique (hone a) (fun i : ({a} : Set ι) => f i),
-    lsumOf_unique (hone b) (fun i : ({b} : Set ι) => f i)]
-  rfl
 
 /-- Braiding is invariant under reindexing both families along one and the same
 bijection of index types. -/
@@ -447,15 +432,15 @@ theorem IsLHom.map_add (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) (a b
 /-- A `λ⁻`-homomorphism carries braided families to braided families. -/
 theorem IsBraided.map_lhom (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) {ι : Type u}
     {x y : ι → X} (h : IsBraided lam x y) :
-    letI := KMonoid.toLMonoid H (‹LMonoid lam X›.isRegular) hlk
+    letI := KMonoid.toLMonoidOfLE H (‹LMonoid lam X›.isRegular) hlk
     IsBraided lam (f ∘ x) (f ∘ y) := by
   have hlam : lam.IsRegular := ‹LMonoid lam X›.isRegular
-  letI := KMonoid.toLMonoid H hlam hlk
+  letI := KMonoid.toLMonoidOfLE H hlam hlk
   obtain ⟨d⟩ := h
   have hpush : ∀ {S : Set ι} (hS : #S < lam) (g : ι → X),
       lsumOf (lam := lam) hS (fun i : S => (f ∘ g) i) = f (lsumOf (lam := lam) hS (fun i : S => g i)) := by
     intro S hS g
-    rw [KMonoid.toLMonoid_lsumOf hlam hlk hS (fun i : S => (f ∘ g) i), hf.2 hS (fun i : S => g i)]
+    rw [KMonoid.toLMonoidOfLE_lsumOf hlam hlk hS (fun i : S => (f ∘ g) i), hf.2 hS (fun i : S => g i)]
     rfl
   exact ⟨{ I := d.I
            J := d.J
@@ -478,7 +463,7 @@ into a `κ`-monoid takes braided families to families with equal `κ`-sums. -/
 theorem sumOf_map_eq_of_isBraided (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f)
     {ι : Type u} (hι : #ι ≤ κ) {x y : ι → X} (h : IsBraided lam x y) :
     sumOf (κ := κ) hι (f ∘ x) = sumOf (κ := κ) hι (f ∘ y) := by
-  letI := KMonoid.toLMonoid H (‹LMonoid lam X›.isRegular) hlk
+  letI := KMonoid.toLMonoidOfLE H (‹LMonoid lam X›.isRegular) hlk
   exact sumOf_eq_of_isBraided (‹LMonoid lam X›.isRegular) hlk hι _ _ (h.map_lhom hlk hf)
 
 end AuxHom
@@ -865,12 +850,27 @@ theorem ksumQ_two (hκ : ℵ₀ ≤ κ) (a b : UnivExt lam κ X) (i₀ i₁ : Id
 noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ κ) :
     KMonoid κ (UnivExt lam κ X) :=
   letI hκ : ℵ₀ ≤ κ := hlam.aleph0_le.trans hlk
-  { toAddCommMonoid := instAddCommMonoid hκ
-    aleph0_le := hκ
-    ksum := ksumQ hκ
-    ksum_single := fun i₀ A hA => ksumQ_single hκ i₀ A hA
-    ksum_sigma := fun A π => ksumQ_sigma hκ A π
-    ksum_two := fun a b i₀ i₁ hne => ksumQ_two hκ a b i₀ i₁ hne }
+  letI := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
+  KMonoid.ofKsum
+    { aleph0_le := hκ
+      ksum := ksumQ hκ
+      ksum_single := fun i₀ A hA => ksumQ_single hκ i₀ A hA
+      ksum_sigma := fun A π => ksumQ_sigma hκ A π }
+    fun a b i₀ i₁ hne => ksumQ_two hκ a b i₀ i₁ hne
+
+/-- The `κ`-sum on `Ĥ` is the concatenation operation `ksumQ`. -/
+@[simp] theorem instKMonoid_ksum (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+    (A : Idx κ → UnivExt lam κ X) :
+    letI := instKMonoid (lam := lam) (κ := κ) (X := X) hlam hlk
+    ksum (κ := κ) A = ksumQ (hlam.aleph0_le.trans hlk) A := by
+  letI hκ : ℵ₀ ≤ κ := hlam.aleph0_le.trans hlk
+  letI := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
+  exact KMonoid.ofKsum_ksum
+    { aleph0_le := hκ
+      ksum := ksumQ hκ
+      ksum_single := fun i₀ A hA => ksumQ_single hκ i₀ A hA
+      ksum_sigma := fun A π => ksumQ_sigma hκ A π }
+    (fun a b i₀ i₁ hne => ksumQ_two hκ a b i₀ i₁ hne) A
 
 /-- The canonical `λ⁻`-homomorphism `X → Ĥ`, sending `x` to the class of the family
 concentrated at one index. -/
@@ -1013,7 +1013,7 @@ theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type u) [LMo
   letI inst : KMonoid κ (UnivExt lam κ X) := UnivExt.instKMonoid hlam hlk
   have hgen : ∀ w : Idx κ → X,
       ksum (κ := κ) (fun i => UnivExt.of (lam := lam) i₀ (w i)) = UnivExt.mk w :=
-    fun w => UnivExt.ksumQ_of hκ i₀ w
+    fun w => (UnivExt.instKMonoid_ksum hlam hlk _).trans (UnivExt.ksumQ_of hκ i₀ w)
   have hof0 : UnivExt.of (lam := lam) (κ := κ) (X := X) i₀ 0 = 0 := UnivExt.of_zero i₀
   have hbraided : IsBraidedOver lam κ X (UnivExt lam κ X) hlk (UnivExt.of i₀) := by
     refine ⟨⟨hof0, ?_⟩, UnivExt.of_injective hlam hlk hred i₀, ?_, ?_⟩
@@ -1031,8 +1031,8 @@ theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type u) [LMo
           show (0 : UnivExt lam κ X) = UnivExt.of i₀ (0 : X)
           rw [hof0]
       show UnivExt.of i₀ (lsumOf h z)
-        = ksum (κ := κ) (Function.extend g (fun i => UnivExt.of (lam := lam) i₀ (z i)) 0)
-      rw [hfam, hgen (Function.extend g z 0)]
+        = sumOf (κ := κ) hg (fun i => UnivExt.of (lam := lam) i₀ (z i))
+      rw [KMonoid.sumOf_eq_extend hg g, hfam, hgen (Function.extend g z 0)]
       -- both sides are classes of families with small support and equal sums
       refine UnivExt.mk_eq_mk.mpr ?_
       have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
@@ -1071,50 +1071,6 @@ theorem isConical_of_isUniversalKExtension {X : Type v} {Hh : Type w}
   LMonoid.isConical_of_injective (lam := lam) (κ := κ) f hf hhom.1
     (fun a b => IsLHom.map_add hlk hhom a b)
 
-/-- For `λ = ℵ₀` a `λ⁻`-monoid is nothing but a commutative monoid: every commutative monoid
-carries a canonical `ℵ₀⁻`-monoid structure, with `lsum` the ordinary finite sum. -/
-@[instance_reducible]
-noncomputable def LMonoid.ofAddCommMonoid (M : Type v) [inst : AddCommMonoid M] :
-    LMonoid ℵ₀ M where
-  toAddCommMonoid := inst
-  isRegular := Cardinal.isRegular_aleph0
-  lsum x := ∑ᶠ i, x i
-  lsum_of_large := fun x hx =>
-    finsum_of_infinite_support (Set.not_finite.mp fun hfin =>
-      hx (Cardinal.lt_aleph0_iff_set_finite.mpr hfin))
-  lsum_single := fun i₀ x hx => finsum_eq_single x i₀ hx
-  lsum_two := by
-    intro a b i₀ i₁ hne
-    classical
-    set F : Idx ℵ₀ → M := fun i => if i = i₀ then a else if i = i₁ then b else 0 with hF
-    have hsupp : ∀ i ∈ Function.support F,
-        i ∈ (Set.univ : Set (Idx ℵ₀)) ↔ i ∈ ({i₀, i₁} : Set (Idx ℵ₀)) := by
-      intro i hi
-      refine ⟨fun _ => ?_, fun _ => Set.mem_univ i⟩
-      by_contra hcon
-      apply hi
-      have h0 : i ≠ i₀ := fun h => hcon (Or.inl h)
-      have h1 : i ≠ i₁ := fun h => hcon (Or.inr h)
-      show (if i = i₀ then a else if i = i₁ then b else 0) = 0
-      rw [if_neg h0, if_neg h1]
-    show ∑ᶠ i, F i = a + b
-    rw [← finsum_mem_univ F, finsum_mem_inter_support_eq' F Set.univ {i₀, i₁} hsupp,
-      finsum_mem_pair hne]
-    show (if i₀ = i₀ then a else if i₀ = i₁ then b else 0)
-      + (if i₁ = i₀ then a else if i₁ = i₁ then b else 0) = a + b
-    rw [if_pos rfl, if_neg (Ne.symm hne), if_pos rfl]
-  lsum_sigma := by
-    intro x π hrow hcol
-    have hrowf : {i : Idx ℵ₀ | ∃ j, x i j ≠ 0}.Finite := Cardinal.lt_aleph0_iff_set_finite.mp hrow
-    have hcolf : {j : Idx ℵ₀ | ∃ i, x i j ≠ 0}.Finite := Cardinal.lt_aleph0_iff_set_finite.mp hcol
-    have hsupp : (Function.support (fun p : Idx ℵ₀ × Idx ℵ₀ => x p.1 p.2)).Finite := by
-      refine Set.Finite.subset (hrowf.prod hcolf) ?_
-      rintro ⟨i, j⟩ hij
-      exact ⟨⟨j, hij⟩, ⟨i, hij⟩⟩
-    show ∑ᶠ i, ∑ᶠ j, x i j = ∑ᶠ k, x (π.symm k).1 (π.symm k).2
-    rw [← finsum_curry (fun p : Idx ℵ₀ × Idx ℵ₀ => x p.1 p.2) hsupp]
-    exact (finsum_comp_equiv π.symm (f := fun p : Idx ℵ₀ × Idx ℵ₀ => x p.1 p.2)).symm
-
 /-- A concrete counterexample to Theorem 3.11 as printed: `ℤ` is an `ℵ₀⁻`-monoid (i.e. a
 commutative monoid) that is not reduced, hence embeds into no `κ`-monoid.
 
@@ -1133,4 +1089,4 @@ example (hlk : (ℵ₀ : Cardinal.{u}) ≤ κ) {Hh : Type w} [KMonoid κ Hh]
   have h1 := congrArg ULift.down (hcon ⟨1⟩ ⟨(-1 : ℤ)⟩ h0).1
   exact one_ne_zero h1
 
-end NS
+end KappaMonoid

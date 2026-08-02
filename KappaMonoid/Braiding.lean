@@ -21,123 +21,16 @@ universe u v w
 
 open Cardinal Function Set
 
-namespace NS
+namespace KappaMonoid
 
 open KMonoid LMonoid
 
-/-! ## Auxiliary summation lemmas
+/-! ## Auxiliary lemmas
 
-Generic facts about `sumOf` and `lsumOf` — Section 2 material that the braiding arguments
-below need.  Nothing here is specific to braiding; they live in this file only to keep
-`Basic.lean` untouched. -/
+Cardinal bookkeeping for the index type `ι × ℕ` of braiding partitions, and the `finsum`
+bridge used for `λ = ℵ₀`. -/
 
 section Aux
-
-/-- Zero-padding along an embedding does not change a `κ`-sum.  This is the `sumOf`-level
-form of `KMonoid.ksum_extend`. -/
-theorem KMonoid.sumOf_extend {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {ι ι' : Type u}
-    (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι ↪ ι') (x : ι → H) :
-    sumOf (κ := κ) h' (Function.extend e x 0) = sumOf (κ := κ) h x := by
-  have hraw := Function.Injective.extend_comp e.injective (emb h').injective x (0 : Idx κ → H)
-  have h0 : (0 : Idx κ → H) ∘ (⇑(emb h')) = (0 : ι' → H) := by funext i; simp
-  rw [h0] at hraw
-  rw [sumOf_eq_extend h (e.trans (emb h')) x]
-  show ksum (κ := κ) (Function.extend (⇑(emb h')) (Function.extend (⇑e) x 0) 0) = _
-  rw [← hraw]
-  rfl
-
-/-- Zero-padding along an embedding does not change a `λ⁻`-sum. -/
-theorem LMonoid.lsumOf_extend {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι ι' : Type u}
-    (h : #ι < lam) (h' : #ι' < lam) (e : ι ↪ ι') (x : ι → X) :
-    lsumOf (lam := lam) h' (Function.extend e x 0) = lsumOf (lam := lam) h x := by
-  have hraw := Function.Injective.extend_comp e.injective (emb h'.le).injective x
-    (0 : Idx lam → X)
-  have h0 : (0 : Idx lam → X) ∘ (⇑(emb h'.le)) = (0 : ι' → X) := by funext i; simp
-  rw [h0] at hraw
-  rw [lsumOf_eq_extend h (e.trans (emb h'.le)) x]
-  show lsum (Function.extend (⇑(emb h'.le)) (Function.extend (⇑e) x 0) 0) = _
-  rw [← hraw]
-  rfl
-
-/-- A `λ⁻`-sum of zeros vanishes. -/
-theorem LMonoid.lsumOf_eq_zero {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
-    {T : Set ι} (hT : #T < lam) (f : ι → X) (hzero : ∀ i ∈ T, f i = 0) :
-    lsumOf (lam := lam) hT (fun i : T => f i) = 0 := by
-  have heq : (fun i : T => f i) = fun _ : T => (0 : X) := funext fun i => hzero i i.2
-  rw [heq]
-  exact lsumOf_zero hT
-
-/-- Enlarging the index set of a `λ⁻`-sum by indices where the summand vanishes does not
-change the sum. -/
-theorem LMonoid.lsumOf_of_subset {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
-    {S T : Set ι} (hS : #S < lam) (hT : #T < lam) (hsub : T ⊆ S) (f : ι → X)
-    (hzero : ∀ i ∈ S, i ∉ T → f i = 0) :
-    lsumOf (lam := lam) hS (fun i : S => f i) = lsumOf (lam := lam) hT (fun i : T => f i) := by
-  classical
-  set e : T ↪ S := ⟨Set.inclusion hsub, Set.inclusion_injective hsub⟩ with hedef
-  have hfun : (fun i : S => f i) = Function.extend (⇑e) (fun i : T => f i) 0 := by
-    funext s
-    by_cases hs : (s : ι) ∈ T
-    · have hval : e ⟨(s : ι), hs⟩ = s := rfl
-      rw [← hval, e.injective.extend_apply]
-      rfl
-    · rw [Function.extend_apply' (fun i : T => f i) (0 : S → X) s ?_]
-      · exact hzero s s.2 hs
-      · rintro ⟨t, ht⟩
-        exact hs (ht ▸ t.2)
-  rw [hfun, LMonoid.lsumOf_extend hT hS e (fun i : T => f i)]
-
-/-- `κ`-sums are additive. -/
-theorem KMonoid.sumOf_add {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {ι : Type u}
-    (h : #ι ≤ κ) (f g : ι → H) :
-    sumOf (κ := κ) h (fun i => f i + g i) = sumOf (κ := κ) h f + sumOf (κ := κ) h g := by
-  have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
-  have hUB : #(ULift.{u} Bool) ≤ κ := KMonoid.mk_uLift_bool_le κ H
-  set F : ULift.{u} Bool → ι → H := fun b i => if b.down then f i else g i with hFdef
-  have hprod1 : #((ULift.{u} Bool) × ι) ≤ κ := by
-    have hmp : #((ULift.{u} Bool) × ι) = #(ULift.{u} Bool) * #ι := by simp [Cardinal.mk_prod]
-    rw [hmp]
-    calc #(ULift.{u} Bool) * #ι ≤ κ * κ := mul_le_mul' hUB h
-      _ = κ := Cardinal.mul_eq_self hκ
-  have hprod2 : #(ι × (ULift.{u} Bool)) ≤ κ := by
-    have hmp : #(ι × (ULift.{u} Bool)) = #ι * #(ULift.{u} Bool) := by simp [Cardinal.mk_prod]
-    rw [hmp]
-    calc #ι * #(ULift.{u} Bool) ≤ κ * κ := mul_le_mul' h hUB
-      _ = κ := Cardinal.mul_eq_self hκ
-  have hσ1 : #(Σ _ : ι, ULift.{u} Bool) ≤ κ :=
-    (Cardinal.mk_congr (Equiv.sigmaEquivProd ι (ULift.{u} Bool))).trans_le hprod2
-  have hσ2 : #(Σ _ : ULift.{u} Bool, ι) ≤ κ :=
-    (Cardinal.mk_congr (Equiv.sigmaEquivProd (ULift.{u} Bool) ι)).trans_le hprod1
-  set Θ : (Σ _ : ι, ULift.{u} Bool) ≃ (Σ _ : ULift.{u} Bool, ι) :=
-    (Equiv.sigmaEquivProd ι (ULift.{u} Bool)).trans
-      ((Equiv.prodComm ι (ULift.{u} Bool)).trans
-        (Equiv.sigmaEquivProd (ULift.{u} Bool) ι).symm) with hΘdef
-  have hΘapp : ∀ (i : ι) (b : ULift.{u} Bool), Θ ⟨i, b⟩ = ⟨b, i⟩ := by
-    intro i b
-    simp [hΘdef]
-  have stepA : sumOf (κ := κ) h (fun i => f i + g i)
-      = sumOf (κ := κ) hσ1 (fun p : Σ _ : ι, ULift.{u} Bool => F p.2 p.1) := by
-    have hinner : (fun i => f i + g i)
-        = fun i => sumOf (κ := κ) hUB (fun b : ULift.{u} Bool => F b i) := by
-      funext i
-      exact (sumOf_two (f i) (g i) hUB).symm
-    rw [hinner]
-    exact sumOf_sigma h (fun _ => hUB) hσ1 (fun (i : ι) (b : ULift.{u} Bool) => F b i)
-  have stepB : sumOf (κ := κ) hσ2 (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)
-      = sumOf (κ := κ) hσ1 (fun p : Σ _ : ι, ULift.{u} Bool => F p.2 p.1) := by
-    rw [sumOf_equiv hσ2 hσ1 Θ (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)]
-    congr 1
-  have stepC : sumOf (κ := κ) hσ2 (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)
-      = sumOf (κ := κ) hUB (fun b => sumOf (κ := κ) h (fun i => F b i)) :=
-    (sumOf_sigma hUB (fun _ => h) hσ2 (fun (b : ULift.{u} Bool) (i : ι) => F b i)).symm
-  have stepD : (fun b : ULift.{u} Bool => sumOf (κ := κ) h (fun i => F b i))
-      = fun b : ULift.{u} Bool =>
-        if b.down then sumOf (κ := κ) h f else sumOf (κ := κ) h g := by
-    funext b
-    match b with
-    | ⟨true⟩ => simp [hFdef]
-    | ⟨false⟩ => simp [hFdef]
-  rw [stepA, ← stepB, stepC, stepD, sumOf_two (sumOf (κ := κ) h f) (sumOf (κ := κ) h g) hUB]
 
 /-- `#(ι × ℕ) ≤ κ` whenever `#ι ≤ κ` and `κ` is infinite: the index type of braiding
 partitions is no bigger than the index type of the families. -/
@@ -148,129 +41,12 @@ theorem mk_prod_nat_le {κ : Cardinal.{u}} {ι : Type u} (hκ : ℵ₀ ≤ κ) (
   calc #ι * ℵ₀ ≤ κ * κ := mul_le_mul' hι hκ
     _ = κ := Cardinal.mul_eq_self hκ
 
-/-- The `λ⁻`-sums induced on a `κ`-monoid by `KMonoid.toLMonoid` are its `κ`-sums. -/
-theorem KMonoid.toLMonoid_lsumOf {κ lam : Cardinal.{u}} {H : Type v} [KMonoid κ H]
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ) {ι : Type u} (h : #ι < lam) (x : ι → H) :
-    letI := KMonoid.toLMonoid H hlam hlk
-    LMonoid.lsumOf (lam := lam) h x = sumOf (κ := κ) (h.le.trans hlk) x := by
-  letI := KMonoid.toLMonoid H hlam hlk
-  have hidx : #(Idx lam) ≤ κ := le_of_eq_of_le (mk_Idx lam) hlk
-  have hsub : Function.support (Function.extend (⇑(emb h.le)) x (0 : Idx lam → H))
-      ⊆ Set.range (emb h.le) := by
-    intro k hk
-    by_contra hkr
-    apply hk
-    rw [Function.extend_apply' x (0 : Idx lam → H) k hkr]
-    rfl
-  have hsupp : #(Function.support (Function.extend (⇑(emb h.le)) x (0 : Idx lam → H))) < lam := by
-    calc #(Function.support (Function.extend (⇑(emb h.le)) x (0 : Idx lam → H)))
-        ≤ #(Set.range (emb h.le)) := Cardinal.mk_le_mk_of_subset hsub
-      _ = #ι := Cardinal.mk_range_eq _ (emb h.le).injective
-      _ < lam := h
-  show (if _ : #(Function.support (Function.extend (⇑(emb h.le)) x (0 : Idx lam → H))) < lam then
-      sumOf (κ := κ) hidx (Function.extend (⇑(emb h.le)) x (0 : Idx lam → H)) else 0)
-    = sumOf (κ := κ) (h.le.trans hlk) x
-  rw [dif_pos hsupp]
-  exact KMonoid.sumOf_extend (h.le.trans hlk) hidx (emb h.le) x
-
-/-- `λ⁻`-sums are additive: the `LMonoid` analogue of `KMonoid.sumOf_add`. -/
-theorem LMonoid.lsumOf_add {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
-    (h : #ι < lam) (f g : ι → X) :
-    lsumOf (lam := lam) h (fun i => f i + g i)
-      = lsumOf (lam := lam) h f + lsumOf (lam := lam) h g := by
-  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
-  have hUB : #(ULift.{u} Bool) < lam := lt_of_lt_of_le (by simp) hlam0
-  set F : ULift.{u} Bool → ι → X := fun b i => if b.down then f i else g i with hFdef
-  have hprod1 : #((ULift.{u} Bool) × ι) < lam := by
-    have hmp : #((ULift.{u} Bool) × ι) = #(ULift.{u} Bool) * #ι := by simp [Cardinal.mk_prod]
-    rw [hmp]
-    exact Cardinal.mul_lt_of_lt hlam0 hUB h
-  have hprod2 : #(ι × (ULift.{u} Bool)) < lam := by
-    have hmp : #(ι × (ULift.{u} Bool)) = #ι * #(ULift.{u} Bool) := by simp [Cardinal.mk_prod]
-    rw [hmp]
-    exact Cardinal.mul_lt_of_lt hlam0 h hUB
-  have hσ1 : #(Σ _ : ι, ULift.{u} Bool) < lam :=
-    (Cardinal.mk_congr (Equiv.sigmaEquivProd ι (ULift.{u} Bool))).trans_lt hprod2
-  have hσ2 : #(Σ _ : ULift.{u} Bool, ι) < lam :=
-    (Cardinal.mk_congr (Equiv.sigmaEquivProd (ULift.{u} Bool) ι)).trans_lt hprod1
-  set Θ : (Σ _ : ι, ULift.{u} Bool) ≃ (Σ _ : ULift.{u} Bool, ι) :=
-    (Equiv.sigmaEquivProd ι (ULift.{u} Bool)).trans
-      ((Equiv.prodComm ι (ULift.{u} Bool)).trans
-        (Equiv.sigmaEquivProd (ULift.{u} Bool) ι).symm) with hΘdef
-  have hΘapp : ∀ (i : ι) (b : ULift.{u} Bool), Θ ⟨i, b⟩ = ⟨b, i⟩ := by
-    intro i b
-    simp [hΘdef]
-  have stepA : lsumOf (lam := lam) h (fun i => f i + g i)
-      = lsumOf (lam := lam) hσ1 (fun p : Σ _ : ι, ULift.{u} Bool => F p.2 p.1) := by
-    have hinner : (fun i => f i + g i)
-        = fun i => lsumOf (lam := lam) hUB (fun b : ULift.{u} Bool => F b i) := by
-      funext i
-      exact (LMonoid.lsumOf_two (f i) (g i) hUB).symm
-    rw [hinner]
-    exact LMonoid.lsumOf_sigma h (fun _ => hUB) (fun (i : ι) (b : ULift.{u} Bool) => F b i) hσ1
-  have stepB : lsumOf (lam := lam) hσ2 (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)
-      = lsumOf (lam := lam) hσ1 (fun p : Σ _ : ι, ULift.{u} Bool => F p.2 p.1) := by
-    rw [LMonoid.lsumOf_equiv hσ2 hσ1 Θ (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)]
-    congr 1
-  have stepC : lsumOf (lam := lam) hσ2 (fun q : Σ _ : ULift.{u} Bool, ι => F q.1 q.2)
-      = lsumOf (lam := lam) hUB (fun b => lsumOf (lam := lam) h (fun i => F b i)) :=
-    (LMonoid.lsumOf_sigma hUB (fun _ => h) (fun (b : ULift.{u} Bool) (i : ι) => F b i) hσ2).symm
-  have stepD : (fun b : ULift.{u} Bool => lsumOf (lam := lam) h (fun i => F b i))
-      = fun b : ULift.{u} Bool =>
-        if b.down then lsumOf (lam := lam) h f else lsumOf (lam := lam) h g := by
-    funext b
-    match b with
-    | ⟨true⟩ => simp [hFdef]
-    | ⟨false⟩ => simp [hFdef]
-  rw [stepA, ← stepB, stepC, stepD,
-    LMonoid.lsumOf_two (lsumOf (lam := lam) h f) (lsumOf (lam := lam) h g) hUB]
-
-/-- Regrouping a `λ⁻`-sum over a set `S` along a disjoint indexed cover of `S` by
-`< λ`-sized pieces: the "sum over a subset" form of `LMonoid.lsumOf_sigma`, needed since
-braiding partitions only cover an ambient index type, not necessarily a designated small
-subset. -/
-theorem LMonoid.lsumOf_biUnion_subset {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
-    {ι J : Type u} (S : Set ι) (I : J → Set ι) (hIS : ∀ p, I p ⊆ S)
-    (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
-    (hcover : (⋃ p, I p) = S) (hJ : #J < lam) (hS : #S < lam) (hI : ∀ p, #(I p) < lam)
-    (x : ι → X) :
-    lsumOf (lam := lam) hJ (fun p => lsumOf (lam := lam) (hI p) (fun i : I p => x i))
-      = lsumOf (lam := lam) hS (fun i : S => x i) := by
-  set Φ : (Σ p : J, I p) ≃ S := Equiv.ofBijective
-    (fun q : Σ p : J, I p => (⟨(q.2 : ι), hIS q.1 q.2.2⟩ : S))
-    ⟨by
-      rintro ⟨p1, i1, hi1⟩ ⟨p2, i2, hi2⟩ heq
-      have heqι : i1 = i2 := congrArg Subtype.val heq
-      by_cases hpp : p1 = p2
-      · subst hpp
-        subst heqι
-        rfl
-      · exact absurd hi2 (heqι ▸ (Set.disjoint_left.mp (hdisj p1 p2 hpp) hi1)),
-      by
-      rintro ⟨i, hiS⟩
-      have hi : i ∈ (⋃ p, I p) := hcover ▸ hiS
-      obtain ⟨p, hp⟩ := Set.mem_iUnion.mp hi
-      exact ⟨⟨p, ⟨i, hp⟩⟩, rfl⟩⟩ with hΦdef
-  have hσ : #(Σ p : J, I p) < lam := by rw [Cardinal.mk_congr Φ]; exact hS
-  have hmain := LMonoid.lsumOf_sigma hJ hI (fun p (i : I p) => x (i : ι)) hσ
-  have hequiv := LMonoid.lsumOf_equiv hS hσ Φ (fun s : S => x (s : ι))
-  exact hmain.trans hequiv.symm
-
 /-! ## Finsum bridge for `λ = ℵ₀`
 
 For `lam = ℵ₀` every index set occurring in a braiding is finite, so all the sums involved are
 ordinary finite sums.  Working with `∑ᶠ i ∈ S, f i` (Mathlib's `finsum`) instead of
 `lsumOf hS (fun i : S => f i)` removes the finiteness side conditions from the *terms* and gives
 access to Mathlib's `finsum_mem_*` API. -/
-
-/-- For `λ = ℵ₀`, an `lsumOf` over a small subset is the `finsum` over that subset. -/
-theorem LMonoid.lsumOf_eq_finsum {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {S : Set ι}
-    (h : #S < ℵ₀) (f : ι → X) :
-    lsumOf (lam := ℵ₀) h (fun i : S => f i) = ∑ᶠ i ∈ S, f i := by
-  have hfin : S.Finite := lt_aleph0_iff_set_finite.mp h
-  letI : Fintype S := hfin.fintype
-  rw [LMonoid.lsumOf_aleph0_eq_finsum h (fun i : S => f i), ← finsum_eq_sum_of_fintype,
-    finsum_set_coe_eq_finsum_mem]
 
 /-- Splitting a `finsum` over a finite set along a subset. -/
 theorem finsum_mem_split {α : Type u} {M : Type v} [AddCommMonoid M] (f : α → M) {S T : Set α}
@@ -306,64 +82,6 @@ theorem bsucc_injective {ι : Type u} : Function.Injective (bsucc (ι := ι)) :=
   simp [h.1, h.2]
 
 @[simp] theorem bsucc_snd_ne_zero {ι : Type u} (p : ι × ℕ) : (bsucc p).2 ≠ 0 := Nat.succ_ne_zero _
-
-/-- Additivity of `lsumOf` over a disjoint union of two small subsets: the "two-piece"
-special case of `lsumOf_sigma`, obtained by transporting along the equivalence
-`↥(S ∪ T) ≃ Σ p : ULift Bool, (if p.down then ↥S else ↥T)` and collapsing the outer
-`Bool`-indexed sum via `lsumOf_two`. Needed to regroup braiding partitions (Lemma 3.6(2)). -/
-theorem lsumOf_union {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
-    (S T : Set ι) (hd : Disjoint S T) (hS : #S < lam) (hT : #T < lam)
-    (hST : #(S ∪ T : Set ι) < lam) (f : ι → X) :
-    lsumOf (lam := lam) hST (fun i : (S ∪ T : Set ι) => f i)
-      = lsumOf (lam := lam) hS (fun i : S => f i) + lsumOf (lam := lam) hT (fun i : T => f i) := by
-  classical
-  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
-  have hUB : #(ULift.{u} Bool) < lam :=
-    lt_of_lt_of_le (by simp) hlam0
-  set ρ : ULift.{u} Bool → Type u := fun p => if p.down then (S : Type u) else (T : Type u)
-    with hρdef
-  set e : (S ∪ T : Set ι) ≃ Σ p : ULift.{u} Bool, ρ p :=
-    (Equiv.Set.union hd).trans
-      { toFun := fun s => Sum.rec (fun a => ⟨ULift.up true, a⟩) (fun b => ⟨ULift.up false, b⟩) s
-        invFun := fun p => match p with
-          | ⟨⟨true⟩, a⟩ => Sum.inl a
-          | ⟨⟨false⟩, b⟩ => Sum.inr b
-        left_inv := fun s => by cases s <;> rfl
-        right_inv := fun p => by
-          obtain ⟨q, y⟩ := p
-          match q with
-          | ⟨true⟩ => rfl
-          | ⟨false⟩ => rfl } with hedef
-  have hρbound : ∀ p : ULift.{u} Bool, #(ρ p) < lam := by
-    intro p
-    match p with
-    | ⟨true⟩ => exact hS
-    | ⟨false⟩ => exact hT
-  have hσ : #(Σ p : ULift.{u} Bool, ρ p) < lam := by
-    rw [← Cardinal.mk_congr e]
-    exact hST
-  have hmain := lsumOf_sigma (X := X) hUB hρbound
-    (fun p (y : ρ p) => f (e.symm ⟨p, y⟩)) hσ
-  have step1 : lsumOf (lam := lam) hST (fun i : (S ∪ T : Set ι) => f i)
-      = lsumOf (lam := lam) hσ ((fun i : (S ∪ T : Set ι) => f i) ∘ e.symm) :=
-    lsumOf_equiv hST hσ e.symm (fun i => f i)
-  have hcomp2 : ((fun i : (S ∪ T : Set ι) => f i) ∘ e.symm)
-      = fun p : Σ q : ULift.{u} Bool, ρ q => f (e.symm ⟨p.fst, p.snd⟩) := rfl
-  rw [step1, hcomp2, ← hmain]
-  have htrue : lsumOf (hρbound (ULift.up true)) (fun y => f (e.symm (⟨ULift.up true, y⟩ :
-      Σ p : ULift.{u} Bool, ρ p))) = lsumOf (lam := lam) hS (fun i : S => f i) := by
-    congr 1
-  have hfalse : lsumOf (hρbound (ULift.up false)) (fun y => f (e.symm (⟨ULift.up false, y⟩ :
-      Σ p : ULift.{u} Bool, ρ p))) = lsumOf (lam := lam) hT (fun i : T => f i) := by
-    congr 1
-  have heq : (fun p : ULift.{u} Bool => lsumOf (hρbound p) (fun y => f (e.symm ⟨p, y⟩)))
-      = fun p => if p.down then lsumOf (lam := lam) hS (fun i : S => f i)
-        else lsumOf (lam := lam) hT (fun i : T => f i) := by
-    funext p
-    match p with
-    | ⟨true⟩ => exact htrue
-    | ⟨false⟩ => exact hfalse
-  rw [heq, LMonoid.lsumOf_two (lsumOf hS (fun i : S => f i)) (lsumOf hT (fun i : T => f i)) hUB]
 
 /-! ## Definition 3.1(1): braided families -/
 
@@ -1765,9 +1483,9 @@ variable {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
 Note that the braiding is taken with respect to the `λ⁻`-monoid structure that `H` carries
 as a `κ`-monoid (`KMonoid.toLMonoid`). -/
 theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
-    (h : letI := KMonoid.toLMonoid H hlam hlk; IsBraided lam x y) :
+    (h : letI := KMonoid.toLMonoidOfLE H hlam hlk; IsBraided lam x y) :
     sumOf (κ := κ) hι x = sumOf (κ := κ) hι y := by
-  letI := KMonoid.toLMonoid H hlam hlk
+  letI := KMonoid.toLMonoidOfLE H hlam hlk
   obtain ⟨d⟩ := h
   have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
   have hP : #(ι × ℕ) ≤ κ := mk_prod_nat_le hκ hι
@@ -1778,13 +1496,13 @@ theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
     rw [← sumOf_biUnion d.I d.I_disjoint d.I_cover hP hι hIle x]
     congr 1
     funext p
-    exact (KMonoid.toLMonoid_lsumOf hlam hlk (d.I_small p)
+    exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk (d.I_small p)
       (fun i : d.I p => x i)).symm.trans (d.hI p)
   have hysum : sumOf (κ := κ) hι y = sumOf (κ := κ) hP (fun p => d.v (bsucc p) + d.u p) := by
     rw [← sumOf_biUnion d.J d.J_disjoint d.J_cover hP hι hJle y]
     congr 1
     funext p
-    exact (KMonoid.toLMonoid_lsumOf hlam hlk (d.J_small p)
+    exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk (d.J_small p)
       (fun j : d.J p => y j)).symm.trans (d.hJ p)
   -- The telescoping step: `v` vanishes at the limit elements `(a, 0)`, and `bsucc` is a
   -- bijection onto the non-limit elements, so `Σ v = Σ (v ∘ bsucc)`.
@@ -2714,4 +2432,4 @@ structure IsBraidedOver (lam κ : Cardinal.{u}) (X : Type v) (H : Type w)
   braided : ∀ x y : Idx κ → X,
     (ksum (κ := κ) fun i => f (x i)) = (ksum (κ := κ) fun i => f (y i)) → IsBraided lam x y
 
-end NS
+end KappaMonoid

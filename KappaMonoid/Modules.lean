@@ -22,97 +22,9 @@ universe u v w
 open Cardinal Function Set DirectSum
 open scoped Classical
 
-namespace NS
+namespace KappaMonoid
 
 open KMonoid LMonoid
-
-/-! ## General facts about `κ`-submonoids
-
-These are statements about `KappaMonoid.Basic` notions only (`kclosure`, and the structures
-induced on sub-objects); they are collected here because they are what turns the
-module-theoretic core of Theorem 4.3 into the statement of Section 3. -/
-
-section Sub
-
-variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
-
-/-- The `κ`-closure of a set is a `κ`-submonoid: an intersection of `κ`-submonoids is one. -/
-theorem KMonoid.isKSubmonoid_kclosure (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H]
-    (S : Set H) : IsKSubmonoid κ (kclosure κ S) where
-  zero_mem := fun _ hT => hT.2.zero_mem
-  ksum_mem := fun x hx T hT => hT.2.ksum_mem x fun i => hx i T hT
-
-/-- Elements of `⟨S⟩_κ` are exactly the `κ`-sums of families in `S`. -/
-theorem KMonoid.mem_kclosure_iff {S : Set H} (h0 : (0 : H) ∈ S) (h : H) :
-    h ∈ kclosure κ S ↔ ∃ x : Idx κ → H, (∀ i, x i ∈ S) ∧ h = ksum (κ := κ) x := by
-  classical
-  have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
-  obtain ⟨i₀⟩ := nonempty_Idx hκ
-  constructor
-  · intro hh
-    set T : Set H := {h | ∃ x : Idx κ → H, (∀ i, x i ∈ S) ∧ h = ksum (κ := κ) x} with hTdef
-    have hST : S ⊆ T := by
-      intro a ha
-      refine ⟨fun i => if i = i₀ then a else 0, fun i => ?_, ?_⟩
-      · show (if i = i₀ then a else 0) ∈ S
-        by_cases hi : i = i₀
-        · rwa [if_pos hi]
-        · rwa [if_neg hi]
-      · rw [ksum_single i₀ _ (fun i hi => if_neg hi), if_pos rfl]
-    have hTsub : IsKSubmonoid κ T := by
-      refine ⟨⟨fun _ => 0, fun _ => h0, ksum_zero.symm⟩, fun y hy => ?_⟩
-      choose x hxS hxsum using hy
-      refine ⟨fun k => x ((pairEquiv hκ).symm k).1 ((pairEquiv hκ).symm k).2,
-        fun k => hxS _ _, ?_⟩
-      rw [← ksum_sigma x (pairEquiv hκ)]
-      exact congrArg _ (funext hxsum)
-    exact hh T ⟨hST, hTsub⟩
-  · rintro ⟨x, hxS, rfl⟩
-    exact (KMonoid.isKSubmonoid_kclosure κ S).ksum_mem x fun i => subset_kclosure (hxS i)
-
-/-- The inclusion of a `κ`-submonoid preserves `κ`-sums. -/
-theorem KMonoid.IsKSubmonoid.coe_ksum {T : Set H} (hT : IsKSubmonoid κ T) (z : Idx κ → T) :
-    letI := hT.kmonoid
-    ((ksum (κ := κ) z : T) : H) = ksum (κ := κ) fun i => (z i : H) := rfl
-
-/-- The inclusion of a `κ`-submonoid preserves sums over arbitrary small index types. -/
-theorem KMonoid.IsKSubmonoid.coe_sumOf {T : Set H} (hT : IsKSubmonoid κ T) {ι : Type u}
-    (hι : #ι ≤ κ) (z : ι → T) :
-    letI := hT.kmonoid
-    ((sumOf (κ := κ) hι z : T) : H) = sumOf (κ := κ) hι fun i => (z i : H) := by
-  letI := hT.kmonoid
-  show ((ksum (κ := κ) (Function.extend (emb hι) z 0) : T) : H)
-    = ksum (κ := κ) (Function.extend (emb hι) (fun i => (z i : H)) 0)
-  rw [hT.coe_ksum]
-  congr 1
-  funext k
-  by_cases hk : ∃ i, emb hι i = k
-  · obtain ⟨i, rfl⟩ := hk
-    rw [(emb hι).injective.extend_apply, (emb hι).injective.extend_apply]
-  · rw [Function.extend_apply' _ _ _ hk, Function.extend_apply' _ _ _ hk]
-    rfl
-
-/-- The inclusion of a `λ⁻`-closed subset preserves `λ⁻`-sums: they are computed as the
-ambient `κ`-sums. -/
-theorem IsLSubset.coe_lsumOf {lam : Cardinal.{u}} {hlk : lam ≤ κ} {S : Set H}
-    (hlam : lam.IsRegular) (hS : IsLSubset lam hlk S) {ι : Type u} (hι : #ι < lam) (z : ι → S) :
-    letI := hS.lmonoid hlam
-    ((lsumOf (lam := lam) hι z : S) : H) = sumOf (κ := κ) (hι.le.trans hlk) fun i => (z i : H) := by
-  letI := hS.lmonoid hlam
-  letI LH := KMonoid.toLMonoid H hlam hlk
-  have hext : (fun i => ((Function.extend (emb hι.le) z 0) i : H))
-      = Function.extend (emb hι.le) (fun i => (z i : H)) 0 := by
-    funext k
-    by_cases hk : ∃ i, emb hι.le i = k
-    · obtain ⟨i, rfl⟩ := hk
-      rw [(emb hι.le).injective.extend_apply, (emb hι.le).injective.extend_apply]
-    · rw [Function.extend_apply' _ _ _ hk, Function.extend_apply' _ _ _ hk]
-      rfl
-  show LH.lsum (fun i => ((Function.extend (emb hι.le) z 0) i : H)) = _
-  rw [hext]
-  exact KMonoid.toLMonoid_lsumOf hlam hlk hι (fun i => (z i : H))
-
-end Sub
 
 /-! ## Definition 4.1: `λ⁻`-small modules -/
 
@@ -479,7 +391,7 @@ variable {R} {κ : Cardinal.{u}} (C : ModuleClass R κ)
 attribute [instance] ModuleClass.addCommGroup ModuleClass.module
 
 /-- A direct sum all but one of whose summands is trivial *is* that summand. -/
-noncomputable def _root_.NS.directSumEquivOfSubsingleton {R : Type u} [Ring R] {ι : Type u}
+noncomputable def _root_.KappaMonoid.directSumEquivOfSubsingleton {R : Type u} [Ring R] {ι : Type u}
     {N : ι → Type u} [∀ i, AddCommGroup (N i)] [∀ i, Module R (N i)] (i₀ : ι)
     (h : ∀ i, i ≠ i₀ → Subsingleton (N i)) : (⨁ i, N i) ≃ₗ[R] N i₀ := by
   classical
@@ -496,13 +408,11 @@ noncomputable def _root_.NS.directSumEquivOfSubsingleton {R : Type u} [Ring R] {
       subst hm
       simp
 
-/-- `V^κ(C)` is a `κ`-monoid (Examples 2.3(4)): (A1) and (A2) hold because direct sums do,
-and by Lemma 2.5 (`KMonoid.ofBare`) the additive structure is then determined. -/
-@[instance_reducible]
-noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ C.carrier := by
+/-- The bare `κ`-monoid data on `V^κ(C)`: (A1) and (A2) hold because direct sums do. -/
+noncomputable def bareKMonoid (hκ : ℵ₀ ≤ κ) : @BareKMonoid κ C.carrier ⟨C.zero⟩ := by
   classical
   letI : Zero C.carrier := ⟨C.zero⟩
-  refine KMonoid.ofBare
+  refine
     { aleph0_le := hκ
       ksum := C.dsum
       ksum_single := ?_
@@ -532,10 +442,17 @@ noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ C.carrier := by
     have e5 := (C.dsum_iso (fun k => x (π.symm k).1 (π.symm k).2)).some
     exact e1.trans (e2.trans (e3.symm.trans (e4.trans e5.symm)))
 
+/-- `V^κ(C)` is a `κ`-monoid (Examples 2.3(4)); by Lemma 2.5 (`KMonoid.ofBare`) the additive
+structure is determined by the direct sum. -/
+@[instance_reducible]
+noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ C.carrier :=
+  @KMonoid.ofBare κ C.carrier ⟨C.zero⟩ (C.bareKMonoid hκ)
+
 /-- The `κ`-sum on `V^κ(C)` is the direct sum. -/
 theorem instKMonoid_ksum (hκ : ℵ₀ ≤ κ) (x : Idx κ → C.carrier) :
     letI := C.instKMonoid hκ
-    ksum (κ := κ) x = C.dsum x := rfl
+    ksum (κ := κ) x = C.dsum x :=
+  @KMonoid.ofBare_ksum κ C.carrier ⟨C.zero⟩ (C.bareKMonoid hκ) x
 
 /-- The zero of `V^κ(C)` is the class of the zero module. -/
 theorem instKMonoid_zero (hκ : ℵ₀ ≤ κ) :
@@ -711,11 +628,6 @@ theorem IsLambdaSmall.of_equiv {lam : Cardinal.{u}} {M M' : Type u}
   have hval := hf (e.symm m) i hi
   simpa using hval
 
-theorem KMonoid.sumOf_of_isEmpty {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {ι : Type u}
-    [IsEmpty ι] (h : #ι ≤ κ) (x : ι → H) : sumOf (κ := κ) h x = 0 := by
-  have hx : x = fun _ => (0 : H) := funext fun i => isEmptyElim i
-  rw [hx, sumOf_zero]
-
 /-! ## Classes of direct sums and of direct summands -/
 
 namespace ModuleClass
@@ -756,7 +668,8 @@ theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι
     refine C.subsingleton_rep_of_eq_zero ?_
     rw [hg0 k hk]
     exact C.instKMonoid_zero hκ
-  have hsum : sumOf (κ := κ) hι a = C.dsum g := C.instKMonoid_ksum hκ g
+  have hsum : sumOf (κ := κ) hι a = C.dsum g :=
+    (KMonoid.sumOf_eq_extend hι (emb hι) a).trans (C.instKMonoid_ksum hκ g)
   rw [hsum]
   obtain ⟨e1⟩ := C.dsum_iso g
   obtain ⟨e2⟩ := C.restrict_iso g (emb hι) hsub
@@ -1880,11 +1793,6 @@ section Gen
 
 variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
 
-theorem KMonoid.kclosure_mono {S S' : Set H} (h : S ⊆ S') :
-    kclosure κ S ⊆ kclosure κ S' := by
-  intro x hx T hT
-  exact hx T ⟨h.trans hT.1, hT.2⟩
-
 theorem KMonoid.KGenerates.mono {S S' : Set H} (h : S ⊆ S') (hgen : KGenerates κ S) :
     KGenerates κ S' :=
   Set.eq_univ_of_univ_subset (hgen ▸ KMonoid.kclosure_mono h)
@@ -2271,4 +2179,4 @@ theorem corollary_4_7 : True := trivial
 
 end Projective
 
-end NS
+end KappaMonoid
