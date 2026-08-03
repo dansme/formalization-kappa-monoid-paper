@@ -112,11 +112,6 @@ def IsBraided (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι : Type u} (x
     Prop :=
   Nonempty (BraidingData lam x y)
 
-/-- For `λ = ℵ₀` — the case the paper singles out as the interesting one — we simply say
-*braided*. -/
-abbrev IsBraided₀ {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} (x y : ι → X) : Prop :=
-  IsBraided ℵ₀ x y
-
 /-- Building `BraidingData ℵ₀` from finite partitions and `finsum` equations. -/
 def BraidingData.mk_finsum {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {x y : ι → X}
     (I J : ι × ℕ → Set ι)
@@ -448,9 +443,6 @@ theorem kOrd_iff {p q : ι × ℕ} :
     kOrd ι p q ↔ WellOrderingRel p.1 q.1 ∨ (p.1 = q.1 ∧ p.2 < q.2) :=
   Prod.lex_def
 
-/-- The order type of `(ι × ℕ, kOrd)`, i.e. the paper's limit well-order on `κ`. -/
-noncomputable def kType (ι : Type u) : Ordinal.{u} := Ordinal.type (kOrd ι)
-
 theorem kOrd_bsucc (p : ι × ℕ) : kOrd ι p (bsucc p) :=
   Prod.Lex.right p.1 (Nat.lt_succ_self p.2)
 
@@ -465,26 +457,6 @@ theorem kOrd_not_between {p q : ι × ℕ} (h1 : kOrd ι p q) (h2 : kOrd ι q (b
   · rw [h2a] at h1; exact hirr _ _ h1 h1
   · rw [← h1a] at h2; exact hirr _ _ h2 h2
   · omega
-
-/-- The ordinal position of `bsucc p` is exactly one more than that of `p`: `bsucc` matches the
-successor structure of the limit well-order `kOrd`. -/
-theorem typein_kOrd_bsucc (p : ι × ℕ) :
-    Ordinal.typein (kOrd ι) (bsucc p) = Ordinal.typein (kOrd ι) p + 1 := by
-  apply le_antisymm
-  · by_contra hcon
-    rw [not_le] at hcon
-    have hlt2 : Ordinal.typein (kOrd ι) p + 1 < Ordinal.type (kOrd ι) :=
-      hcon.trans (Ordinal.typein_lt_type (kOrd ι) (bsucc p))
-    obtain ⟨q, hq⟩ := Ordinal.typein_surj (kOrd ι) hlt2
-    have hpq : kOrd ι p q := by
-      rw [← Ordinal.typein_lt_typein (kOrd ι), hq]
-      exact Order.add_one_le_iff.mp le_rfl
-    have hqb : kOrd ι q (bsucc p) := by
-      rw [← Ordinal.typein_lt_typein (kOrd ι), hq]
-      exact hcon
-    exact kOrd_not_between hpq hqb
-  · exact Order.add_one_le_iff.mpr
-      ((Ordinal.typein_lt_typein (kOrd ι)).mpr (kOrd_bsucc p))
 
 /-! ### The `blockOf` choice function
 
@@ -609,21 +581,6 @@ theorem exists_cover_step {x y : ι → X} (d : BraidingData ℵ₀ x y) {Ua : S
     simp only [Set.mem_iUnion]
     exact ⟨blockOf d.J d.J_cover i, subset_satClosure _ _ (Set.mem_image_of_mem _ hi),
       mem_blockOf d.J d.J_cover i⟩
-
-/-- If `i` is not covered by the `d.J`-pieces already in use (`Ua`), its own piece cannot be
-in `Ua` either. This discharges the side condition of `exists_cover_step` for the residual
-`R := {i | i ∉ ⋃ ν ∈ Ua, d.J ν}` that actually arises in the recursion. -/
-theorem not_mem_Ua_of_not_covered {x y : ι → X} (d : BraidingData ℵ₀ x y) {Ua : Set (ι × ℕ)}
-    {i : ι} (hi : i ∉ ⋃ ν ∈ Ua, d.J ν) : blockOf d.J d.J_cover i ∉ Ua :=
-  fun hmem => hi (Set.mem_biUnion hmem (mem_blockOf d.J d.J_cover i))
-
-/-- A general version of `exists_cover_step` starting from an arbitrary finite seed (rather than
-one built from a residual via `blockOf`): used to additionally seed the recursion step with
-successor-linking (`repSucc`) and exhaustion (`minCompl`) requirements. -/
-theorem exists_cover_of_seed {Ua C : Set (ι × ℕ)} (hC : C.Finite) (hCUa : Disjoint C Ua) :
-    ∃ 𝒜 : Set (ι × ℕ), 𝒜.Finite ∧ Disjoint 𝒜 Ua ∧ LeftSaturated 𝒜 Ua ∧ C ⊆ 𝒜 :=
-  ⟨satClosure Ua C, satClosure_finite hC, satClosure_disjoint hCUa, leftSaturated_satClosure _ _,
-    subset_satClosure _ _⟩
 
 theorem kOrd_wf : WellFounded (kOrd ι) := IsWellFounded.wf
 
@@ -1859,10 +1816,6 @@ theorem nbhd_symm {i j : ι} (h : j ∈ nbhd J J' i) : i ∈ nbhd J J' j := by
   rcases h with ⟨p, hi, hj⟩ | ⟨p, hi, hj⟩
   · exact Or.inl ⟨p, hj, hi⟩
   · exact Or.inr ⟨p, hj, hi⟩
-
-theorem self_mem_nbhd (hJcov : (⋃ p, J p) = Set.univ) (i : ι) : i ∈ nbhd J J' i := by
-  obtain ⟨p, hp⟩ := Set.mem_iUnion.mp (hJcov ▸ Set.mem_univ i)
-  exact Or.inl ⟨p, hp, hp⟩
 
 theorem nbhd_subset {i : ι} {p q : ι × ℕ} (hp : i ∈ J p) (hq : i ∈ J' q)
     (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q))

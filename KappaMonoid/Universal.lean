@@ -757,9 +757,6 @@ noncomputable def addQ (hκ : ℵ₀ ≤ κ) :
     UnivExt lam κ X → UnivExt lam κ X → UnivExt lam κ X :=
   Quotient.map₂ (fun x y i => x i + y i) fun _ _ hx _ _ hy => isBraided_add hκ hx hy
 
-theorem addQ_mk (hκ : ℵ₀ ≤ κ) (x y : Idx κ → X) :
-    addQ (lam := lam) hκ (mk x) (mk y) = mk (fun i => x i + y i) := rfl
-
 /-- The commutative monoid structure on `Ĥ`, induced by the pointwise one on `X^κ`. -/
 @[instance_reducible]
 noncomputable def instAddCommMonoid (hκ : ℵ₀ ≤ κ) : AddCommMonoid (UnivExt lam κ X) :=

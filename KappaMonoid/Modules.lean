@@ -102,10 +102,6 @@ theorem dsPart_union (s t : Set ι) :
   · exact Submodule.mem_sup_left (lof_mem_dsPart R N h (m i))
   · exact Submodule.mem_sup_right (lof_mem_dsPart R N h (m i))
 
-theorem dsPart_isCompl (s : Set ι) : IsCompl (dsPart R N s) (dsPart R N sᶜ) := by
-  refine ⟨dsPart_disjoint R N disjoint_compl_right, ?_⟩
-  rw [codisjoint_iff, ← dsPart_union, Set.union_compl_self, dsPart_univ]
-
 /-- A single summand of a direct sum. -/
 noncomputable def dsPartSingletonIso (i₀ : ι) : ↥(dsPart R N {i₀}) ≃ₗ[R] N i₀ := by
   refine LinearEquiv.ofLinear ((DirectSum.component R ι N i₀).comp (dsPart R N {i₀}).subtype)
@@ -490,28 +486,6 @@ theorem iso_of_isCompl_left {A B C' : Submodule R M} (h₁ : IsCompl A B) (h₂ 
   ⟨(Submodule.quotientEquivOfIsCompl A B h₁).symm.trans
     (Submodule.quotientEquivOfIsCompl A C' h₂)⟩
 
-/-- (M2): if `M = A ⊕ B` and `A ≤ C`, then `C = A ⊕ (B ⊓ C)`; in particular a direct
-summand of `M` contained in `C` is a direct summand of `C`. -/
-theorem isCompl_inf_of_le {A B : Submodule R M} (h : IsCompl A B) {C' : Submodule R M}
-    (hAC : A ≤ C') : IsCompl (A.comap C'.subtype) ((B ⊓ C').comap C'.subtype) := by
-  constructor
-  · rw [Submodule.disjoint_def]
-    intro x hx1 hx2
-    have h1 : (x : M) ∈ A := hx1
-    have h2 : (x : M) ∈ B := hx2.1
-    exact Subtype.ext (Submodule.disjoint_def.mp h.disjoint (x : M) h1 h2)
-  · rw [codisjoint_iff, eq_top_iff]
-    rintro x -
-    have hx : (x : M) ∈ A ⊔ B := by
-      rw [codisjoint_iff.mp h.codisjoint]; trivial
-    obtain ⟨a, ha, b, hb, hab⟩ := Submodule.mem_sup.mp hx
-    have hbC : b ∈ C' := by
-      have hbeq : b = (x : M) - a := eq_sub_of_add_eq' hab
-      rw [hbeq]
-      exact Submodule.sub_mem C' x.2 (hAC ha)
-    exact Submodule.mem_sup.mpr
-      ⟨⟨a, hAC ha⟩, ha, ⟨b, hbC⟩, ⟨hb, hbC⟩, Subtype.ext hab⟩
-
 end ModuleFacts
 
 /-! ## Machinery for Theorem 4.3
@@ -539,20 +513,6 @@ variable {R}
 section Lattice
 
 variable {M : Type u} [AddCommGroup M] [Module R M]
-
-/-- Associativity of internal direct sums. -/
-theorem disjoint_sup_assoc {P T S : Submodule R M} (h1 : Disjoint P T)
-    (h2 : Disjoint (P ⊔ T) S) : Disjoint P (T ⊔ S) := by
-  rw [Submodule.disjoint_def]
-  intro m hmP hmTS
-  obtain ⟨t, ht, s, hs, hts⟩ := Submodule.mem_sup.mp hmTS
-  have hsP : s ∈ P ⊔ T := by
-    have hse : s = m - t := by rw [← hts]; abel
-    rw [hse]
-    exact Submodule.sub_mem _ (Submodule.mem_sup_left hmP) (Submodule.mem_sup_right ht)
-  have hs0 : s = 0 := Submodule.disjoint_def.mp h2 s hsP hs
-  have hm : m = t := by rw [← hts, hs0, add_zero]
-  exact Submodule.disjoint_def.mp h1 m hmP (hm ▸ ht)
 
 /-- (M2): a direct summand of `M` contained in `D` is a direct summand of `D`. -/
 theorem relCompl_of_isCompl {A B : Submodule R M} (h : IsCompl A B) {D : Submodule R M}
@@ -604,18 +564,6 @@ theorem isCompl_map_equiv {M' : Type u} [AddCommGroup M'] [Module R M'] (f : M �
     IsCompl (A.map (f : M →ₗ[R] M')) (B.map (f : M →ₗ[R] M')) :=
   (Submodule.orderIsoMapComap f).isCompl h
 
-theorem subsingleton_bot : Subsingleton ↥(⊥ : Submodule R M) :=
-  ⟨fun x y => Subtype.ext (by rw [(Submodule.mem_bot R).mp x.2, (Submodule.mem_bot R).mp y.2])⟩
-
-theorem subsingleton_iso {A B : Type u} [AddCommGroup A] [Module R A] [AddCommGroup B]
-    [Module R B] (hA : Subsingleton A) (hB : Subsingleton B) : Nonempty (A ≃ₗ[R] B) :=
-  ⟨{ toFun := fun _ => 0
-     invFun := fun _ => 0
-     map_add' := fun _ _ => (by rw [add_zero])
-     map_smul' := fun _ _ => (by rw [smul_zero])
-     left_inv := fun a => Subsingleton.elim _ _
-     right_inv := fun b => Subsingleton.elim _ _ }⟩
-
 end Lattice
 
 /-- `λ⁻`-smallness only depends on the isomorphism class. -/
@@ -635,7 +583,8 @@ namespace ModuleClass
 variable {κ : Cardinal.{u}} (C : ModuleClass R κ)
 
 theorem eq_zero_of_subsingleton {b : C.carrier} (h : Subsingleton (C.rep b)) : b = C.zero :=
-  C.eq_of_iso (subsingleton_iso h C.subsingleton_rep_zero).some
+  haveI := h; haveI := C.subsingleton_rep_zero
+  C.eq_of_iso (LinearEquiv.ofSubsingleton _ _)
 
 theorem subsingleton_rep_of_eq_zero {b : C.carrier} (h : b = C.zero) :
     Subsingleton (C.rep b) := by
@@ -911,8 +860,8 @@ theorem zero_mem_S : C.zero ∈ B.S := by
   rwa [C.instKMonoid_zero B.hκ] at h
 
 theorem isRep_zero : IsRep C C.zero (⊥ : Submodule R M) :=
-  subsingleton_iso C.subsingleton_rep_zero
-    ⟨fun x y => Subtype.ext (by rw [(Submodule.mem_bot R).mp x.2, (Submodule.mem_bot R).mp y.2])⟩
+  haveI := C.subsingleton_rep_zero
+  ⟨LinearEquiv.ofSubsingleton (R := R) (C.rep C.zero) ↥(⊥ : Submodule R M)⟩
 
 theorem empty_small (hlam : lam.IsRegular) : #(∅ : Set (Idx κ)) < lam := by
   have h0 : #(∅ : Set (Idx κ)) = 0 := Cardinal.mk_emptyCollection _
@@ -1011,7 +960,7 @@ theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
     have hdTS : Disjoint Told Ssub := hd1.mono_left hTold_le_PJ
     -- (M1): `S_α ⊕ T_α ≅ ⨁_{i ∈ I_α} A i`
     have hd_U_TS : Disjoint (B.D₁.P Uidx) (Told ⊔ Ssub) := by
-      refine disjoint_sup_assoc hdisj.symm ?_
+      refine hdisj.symm.disjoint_sup_right_of_disjoint_sup_left ?_
       rw [sup_comm]
       exact hd1.mono_left (le_of_eq heq)
     have hs_U_TS : B.D₁.P Uidx ⊔ (Told ⊔ Ssub)
@@ -1044,7 +993,7 @@ theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
       B.D₁.P (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc}))ᶜ ⊓ B.D₂.P (Jidx ∪ t') with hTsubdef
     have hd_S_T : Disjoint Ssub Tsub := hd2.mono_left hSsub_le
     have hd_J_ST : Disjoint (B.D₂.P Jidx) (Ssub ⊔ Tsub) := by
-      refine disjoint_sup_assoc hd1 ?_
+      refine hd1.disjoint_sup_right_of_disjoint_sup_left ?_
       rw [hs1]; exact hd2
     have hs_J_ST : B.D₂.P Jidx ⊔ (Ssub ⊔ Tsub) = B.D₂.P (Jidx ∪ t') := by
       rw [← sup_assoc, hs1, hs2]
@@ -1078,7 +1027,7 @@ theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
       exact hUc
     have hPtop : B.D₁.P Uidx = ⊤ := by rw [hUuniv, B.D₁.P_univ]
     have hTold : Told = ⊥ := disjoint_top.mp (hPtop ▸ hdisj)
-    haveI hsubT : Subsingleton ↥Told := by rw [hTold]; exact subsingleton_bot
+    haveI hsubT : Subsingleton ↥Told := by rw [hTold]; infer_instance
     have hvc0 : vc = C.zero :=
       C.eq_zero_of_subsingleton (Equiv.subsingleton hvrep.some.toEquiv)
     refine ⟨B.defaultStep, ?_⟩
@@ -1878,7 +1827,7 @@ noncomputable def projClass (hκ : ℵ₀ ≤ κ) : ModuleClass R κ where
     exact Quotient.sound ⟨e⟩
   zero := ⟦⟨⊥, ⟨⊤, isCompl_bot_top⟩⟩⟧
   subsingleton_rep_zero := by
-    haveI := subsingleton_bot (R := R) (M := freeMod R κ)
+    haveI : Subsingleton ↥(⊥ : Submodule R (freeMod R κ)) := inferInstance
     exact Equiv.subsingleton
       (Quotient.mk_out (s := summandSetoid R κ) ⟨⊥, ⟨⊤, isCompl_bot_top⟩⟩).some.toEquiv
   dsum := fun f => ⟦projDsum R κ hκ f⟧

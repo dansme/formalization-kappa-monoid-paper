@@ -166,9 +166,6 @@ noncomputable def add (a b : X) : X :=
 
 theorem sum_punit (a : X) : S.sum (S.small PUnit.{u + 1}) (fun _ => a) = a := S.sum_unique _ _
 
-theorem add_def (hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X) :
-    S.sum hPP (Sum.elim (fun _ => a) (fun _ => b)) = S.add a b := rfl
-
 /-- A sum over `α ⊕ β` splits as a binary sum: the bridge between `sum` and `add`. -/
 theorem sum_sumType {α β : Type u} (hα : #α < lam) (hβ : #β < lam) (hαβ : #(α ⊕ β) < lam)
     (f : α → X) (g : β → X) :
@@ -326,14 +323,6 @@ variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
 theorem isRegular' {X : Type v} [inst : LMonoid lam X] : lam.IsRegular := inst.isRegular
 
 theorem aleph0_le {X : Type v} [inst : LMonoid lam X] : ℵ₀ ≤ lam := inst.isRegular.aleph0_le
-
-/-- The underlying bare summation data. -/
-def toSumData (lam : Cardinal.{u}) (X : Type v) [LMonoid lam X] : SumData lam X where
-  isRegular := isRegular' (X := X)
-  sum := lsumOf
-  sum_congr := lsumOf_congr
-  sum_unique := lsumOf_unique
-  sum_sigma := lsumOf_sigma
 
 theorem mk_lt_finite {X : Type v} [LMonoid lam X] (ι : Type u) [Finite ι] : #ι < lam :=
   mk_lt_of_finite (isRegular' (X := X)) ι
@@ -619,9 +608,6 @@ theorem mk_sum_le {H : Type v} [KMonoid κ H] {α β : Type u} (hα : #α ≤ κ
 /-- The sum of a family indexed by an arbitrary type of cardinality `≤ κ`. -/
 noncomputable def sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) : H :=
   LMonoid.lsumOf (lam := Order.succ κ) (lt_succ h) x
-
-theorem sumOf_eq_lsumOf {ι : Type u} (h : #ι ≤ κ) (h' : #ι < Order.succ κ) (x : ι → H) :
-    sumOf (κ := κ) h x = LMonoid.lsumOf (lam := Order.succ κ) h' x := rfl
 
 theorem sumOf_equiv {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι' ≃ ι) (x : ι → H) :
     sumOf (κ := κ) h x = sumOf (κ := κ) h' (x ∘ e) :=
@@ -1523,10 +1509,6 @@ noncomputable def KMonoid.ofKsum {κ : Cardinal.{u}} {H : Type v} [AddCommMonoid
   congr 1
   funext k
   exact (Function.Embedding.refl (Idx κ)).injective.extend_apply x 0 k
-
-theorem KMonoid.ofBare_zero {κ : Cardinal.{u}} {H : Type v} [Zero H] (B : BareKMonoid κ H) :
-    letI := KMonoid.ofBare B
-    (0 : H) = 0 := rfl
 
 /-! ## `λ = ℵ₀`: `λ⁻`-monoids are ordinary commutative monoids -/
 
