@@ -853,6 +853,48 @@ theorem cmul_sumOf {I : Type u} (hI : #I ≤ κ) (α : Cardinal.{u}) (hα : α �
       ((Equiv.prodComm (Idx α) I).trans (Equiv.sigmaEquivProd I (Idx α)).symm)) _
   rw [stepA, stepB, stepC]
 
+theorem cmul_congr {α β : Cardinal.{u}} (h : α = β) (hα : α ≤ κ) (hβ : β ≤ κ) (x : H) :
+    cmul (κ := κ) α hα x = cmul (κ := κ) β hβ x := by subst h; rfl
+
+/-- A cardinal sum over a two-point index type. -/
+theorem csum_pair' (α β : Cardinal.{u}) :
+    Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α) fun _ : PUnit.{u + 1} => β) = α + β := by
+  have hone : ∀ γ : Cardinal.{u}, (Cardinal.sum fun _ : PUnit.{u + 1} => #γ.out) = γ := fun γ => by
+    rw [Cardinal.sum_const', Cardinal.mk_eq_one PUnit.{u + 1}, one_mul, Cardinal.mk_out]
+  have h1 : Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α) fun _ : PUnit.{u + 1} => β)
+      = #((_ : PUnit.{u + 1}) × α.out ⊕ (_ : PUnit.{u + 1}) × β.out) :=
+    Cardinal.mk_congr (Equiv.sumSigmaDistrib _)
+  rw [h1, Cardinal.mk_sum, Cardinal.mk_sigma, Cardinal.mk_sigma, hone, hone,
+    Cardinal.lift_id, Cardinal.lift_id]
+
+
+/-- Lemma 2.7(2) for a two-term sum of cardinals. -/
+theorem cmul_add {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hαβ : α + β ≤ κ) (x : H) :
+    cmul (κ := κ) (α + β) hαβ x = cmul (κ := κ) α hα x + cmul (κ := κ) β hβ x := by
+  have hu : #PUnit.{u + 1} ≤ κ := mk_le_of_finite (H := H) _
+  have hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) ≤ κ := mk_sum_le (H := H) hu hu
+  have hcast : ∀ p : PUnit.{u + 1} ⊕ PUnit.{u + 1},
+      Sum.elim (fun _ : PUnit.{u + 1} => α) (fun _ : PUnit.{u + 1} => β) p ≤ κ := by
+    rintro (p | p)
+    · exact hα
+    · exact hβ
+  have hsum := csum_pair' α β
+  calc cmul (κ := κ) (α + β) hαβ x
+      = cmul (κ := κ) (Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α)
+          fun _ : PUnit.{u + 1} => β)) (le_of_eq_of_le hsum hαβ) x := cmul_congr hsum.symm _ _ x
+    _ = sumOf (κ := κ) hPP (fun p => cmul (κ := κ) _ (hcast p) x) :=
+        cmul_sumOf_cardinal hPP _ hcast (le_of_eq_of_le hsum hαβ) x
+    _ = cmul (κ := κ) α hα x + cmul (κ := κ) β hβ x := by
+        rw [show (fun p => cmul (κ := κ) _ (hcast p) x)
+            = Sum.elim (fun _ : PUnit.{u + 1} => cmul (κ := κ) α hα x)
+              (fun _ : PUnit.{u + 1} => cmul (κ := κ) β hβ x) from
+          funext fun p => by rcases p with p | p <;> rfl]
+        show LMonoid.lsumOf (lam := Order.succ κ) (lt_succ hPP) (Sum.elim _ _) = _
+        rw [LMonoid.lsumOf_sumType (lam := Order.succ κ) (lt_succ hu) (lt_succ hu) (lt_succ hPP)]
+        show sumOf (κ := κ) hu (fun _ : PUnit.{u + 1} => cmul (κ := κ) α hα x)
+            + sumOf (κ := κ) hu (fun _ : PUnit.{u + 1} => cmul (κ := κ) β hβ x) = _
+        rw [sumOf_unique, sumOf_unique]
+
 /-! ### Reducedness (Lemma 2.8) -/
 
 /-- `κ`-many copies of `0` sum to `0`. -/
