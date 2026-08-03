@@ -1989,50 +1989,160 @@ theorem nat_split (k : ℕ) : k = 0 ∨ (∃ m, k = 2 * m + 1) ∨ (∃ m, k = 2
     · exact Or.inr (Or.inr ⟨(k - 2) / 2, by omega⟩)
     · exact Or.inr (Or.inl ⟨(k - 1) / 2, by omega⟩)
 
-/-- The grouping of the pieces of `J`: at the slot `(a, 0)` all pieces belonging to the component
-with representative `a`, at the slot `(a, 2m+1)` the single piece `(a, m)` if that piece is empty,
-and nothing elsewhere. -/
-def groupA (J : ι × ℕ → Set ι) (r : ι → ι) (μ : ι × ℕ) : Set (ι × ℕ) :=
+/-- The grouping of the pieces of a partition `J` along a map `r` that is constant on pieces: at
+the slot `(a, 0)` all nonempty pieces whose `r`-value is `a`, at the slot `(a, 2m + c)` the piece
+`(a, m)` if that piece is empty, and nothing elsewhere.
+
+The offset `c` is `1` or `2`; using both values parks the empty pieces of two partitions at
+disjoint sets of slots, which is what makes the two groupings of
+`exists_common_regrouping` cover the same sets slot by slot. -/
+def group (c : ℕ) (J : ι × ℕ → Set ι) (r : ι → ι) (μ : ι × ℕ) : Set (ι × ℕ) :=
   if μ.2 = 0 then {p | (J p).Nonempty ∧ ∀ i ∈ J p, r i = μ.1}
-  else if μ.2 % 2 = 1 then (if J (μ.1, (μ.2 - 1) / 2) = ∅ then {(μ.1, (μ.2 - 1) / 2)} else ∅)
+  else if μ.2 % 2 = c % 2 then (if J (μ.1, (μ.2 - c) / 2) = ∅ then {(μ.1, (μ.2 - c) / 2)} else ∅)
   else ∅
 
-/-- The grouping of the pieces of `J'`; the empty pieces are parked at the slots `(a, 2m+2)`, so
-that they do not collide with the empty pieces of `J`. -/
-def groupB (J' : ι × ℕ → Set ι) (r : ι → ι) (μ : ι × ℕ) : Set (ι × ℕ) :=
-  if μ.2 = 0 then {p | (J' p).Nonempty ∧ ∀ i ∈ J' p, r i = μ.1}
-  else if μ.2 % 2 = 0 then (if J' (μ.1, (μ.2 - 2) / 2) = ∅ then {(μ.1, (μ.2 - 2) / 2)} else ∅)
-  else ∅
+variable {c : ℕ} (J : ι × ℕ → Set ι) (r : ι → ι)
 
-theorem groupA_zero (J : ι × ℕ → Set ι) (r : ι → ι) (a : ι) :
-    groupA J r (a, 0) = {p | (J p).Nonempty ∧ ∀ i ∈ J p, r i = a} := by
-  unfold groupA; rw [if_pos rfl]
+theorem group_zero (a : ι) :
+    group c J r (a, 0) = {p | (J p).Nonempty ∧ ∀ i ∈ J p, r i = a} := by
+  unfold group; rw [if_pos rfl]
 
-theorem groupA_odd (J : ι × ℕ → Set ι) (r : ι → ι) (a : ι) (m : ℕ) :
-    groupA J r (a, 2 * m + 1) = if J (a, m) = ∅ then {(a, m)} else ∅ := by
-  unfold groupA
-  rw [if_neg (show (2 * m + 1 : ℕ) ≠ 0 by omega), if_pos (show (2 * m + 1) % 2 = 1 by omega),
-    show (2 * m + 1 - 1) / 2 = m by omega]
+theorem group_slot (hc : c = 1 ∨ c = 2) (a : ι) (m : ℕ) :
+    group c J r (a, 2 * m + c) = if J (a, m) = ∅ then {(a, m)} else ∅ := by
+  unfold group
+  rcases hc with rfl | rfl <;>
+    rw [if_neg (show ¬ (2 * m + _ : ℕ) = 0 by omega),
+      if_pos (show (2 * m + _) % 2 = _ % 2 by omega),
+      show (2 * m + _ - _) / 2 = m by omega]
 
-theorem groupA_even (J : ι × ℕ → Set ι) (r : ι → ι) (a : ι) (m : ℕ) :
-    groupA J r (a, 2 * m + 2) = ∅ := by
-  unfold groupA
-  rw [if_neg (show (2 * m + 2 : ℕ) ≠ 0 by omega), if_neg (show ¬ (2 * m + 2) % 2 = 1 by omega)]
+theorem group_other (hc : c = 1 ∨ c = 2) (a : ι) (m : ℕ) :
+    group c J r (a, 2 * m + (3 - c)) = ∅ := by
+  unfold group
+  rcases hc with rfl | rfl <;>
+    rw [if_neg (show ¬ (2 * m + _ : ℕ) = 0 by omega),
+      if_neg (show ¬ (2 * m + _) % 2 = _ % 2 by omega)]
 
-theorem groupB_zero (J' : ι × ℕ → Set ι) (r : ι → ι) (a : ι) :
-    groupB J' r (a, 0) = {p | (J' p).Nonempty ∧ ∀ i ∈ J' p, r i = a} := by
-  unfold groupB; rw [if_pos rfl]
+/-- Every offset is either `0`, a `c`-slot or a `(3 - c)`-slot. -/
+theorem nat_split_offset (hc : c = 1 ∨ c = 2) (k : ℕ) :
+    k = 0 ∨ (∃ m, k = 2 * m + c) ∨ (∃ m, k = 2 * m + (3 - c)) := by
+  rcases hc with rfl | rfl <;> rcases nat_split k with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩
+  · exact Or.inl rfl
+  · exact Or.inr (Or.inl ⟨m, rfl⟩)
+  · exact Or.inr (Or.inr ⟨m, rfl⟩)
+  · exact Or.inl rfl
+  · exact Or.inr (Or.inr ⟨m, rfl⟩)
+  · exact Or.inr (Or.inl ⟨m, rfl⟩)
 
-theorem groupB_even (J' : ι × ℕ → Set ι) (r : ι → ι) (a : ι) (m : ℕ) :
-    groupB J' r (a, 2 * m + 2) = if J' (a, m) = ∅ then {(a, m)} else ∅ := by
-  unfold groupB
-  rw [if_neg (show (2 * m + 2 : ℕ) ≠ 0 by omega), if_pos (show (2 * m + 2) % 2 = 0 by omega),
-    show (2 * m + 2 - 2) / 2 = m by omega]
-
-theorem groupB_odd (J' : ι × ℕ → Set ι) (r : ι → ι) (a : ι) (m : ℕ) :
-    groupB J' r (a, 2 * m + 1) = ∅ := by
-  unfold groupB
-  rw [if_neg (show (2 * m + 1 : ℕ) ≠ 0 by omega), if_neg (show ¬ (2 * m + 1) % 2 = 0 by omega)]
+/-- The properties of `group c J r` that do not depend on `c`, proved once and used for both
+offsets in `exists_common_regrouping`.  Only two things are needed of `r`: it is constant on the
+pieces of `J`, and its fibres are small. -/
+theorem group_spec (hreg : lam.IsRegular) (hc : c = 1 ∨ c = 2)
+    (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q)) (hJcov : (⋃ p, J p) = Set.univ)
+    (hrJ : ∀ (p : ι × ℕ) (i j : ι), i ∈ J p → j ∈ J p → r i = r j)
+    (hrfib : ∀ a : ι, #{i | r i = a} < lam) :
+    (∀ μ, #(group c J r μ) < lam) ∧ (∀ μ ν, μ ≠ ν → Disjoint (group c J r μ) (group c J r ν)) ∧
+      (⋃ μ, group c J r μ) = Set.univ ∧
+      (∀ a : ι, (⋃ p ∈ group c J r (a, 0), J p) = {i | r i = a}) ∧
+      (∀ (a : ι) (k : ℕ), k ≠ 0 → (⋃ p ∈ group c J r (a, k), J p) = ∅) := by
+  classical
+  have hone : (1 : Cardinal.{u}) < lam := lt_of_lt_of_le one_lt_aleph0 hreg.aleph0_le
+  have hzero : (0 : Cardinal.{u}) < lam := hone.trans_le' zero_le_one
+  -- at a `c`-slot the group is a single empty piece, or nothing
+  have hslot_empty : ∀ (a : ι) (k : ℕ), k ≠ 0 → ∀ p ∈ group c J r (a, k), J p = ∅ := by
+    intro a k hk p hp
+    rcases nat_split_offset hc k with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩
+    · exact absurd rfl hk
+    · rw [group_slot J r hc a m] at hp
+      by_cases hJa : J (a, m) = ∅
+      · rw [if_pos hJa] at hp
+        rwa [show p = (a, m) from hp]
+      · rw [if_neg hJa] at hp; exact absurd hp (Set.notMem_empty p)
+    · rw [group_other J r hc a m] at hp
+      exact absurd hp (Set.notMem_empty p)
+  refine ⟨?_, ?_, ?_, ?_, fun a k hk => ?_⟩
+  · -- the groups are small
+    rintro ⟨a, k⟩
+    rcases nat_split_offset hc k with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩
+    · rw [group_zero J r a]
+      refine lt_of_le_of_lt (Cardinal.mk_le_of_injective
+        (f := fun p : {p | (J p).Nonempty ∧ ∀ i ∈ J p, r i = a} =>
+          (⟨p.2.1.some, p.2.2 _ p.2.1.some_mem⟩ : {i | r i = a})) ?_) (hrfib a)
+      intro p q hpq
+      have hval : p.2.1.some = q.2.1.some := congrArg Subtype.val hpq
+      refine Subtype.ext ?_
+      by_contra hne
+      exact Set.disjoint_left.mp (hJdisj _ _ hne) p.2.1.some_mem (hval ▸ q.2.1.some_mem)
+    · rw [group_slot J r hc a m]
+      split
+      · rw [Cardinal.mk_singleton]; exact hone
+      · rw [Cardinal.mk_set_eq_zero_iff.mpr rfl]; exact hzero
+    · rw [group_other J r hc a m, Cardinal.mk_set_eq_zero_iff.mpr rfl]; exact hzero
+  · -- the groups are pairwise disjoint
+    rintro ⟨a, k⟩ ⟨b, l⟩ hne
+    rw [Set.disjoint_left]
+    intro p hp hq
+    -- a piece in a group at a nonzero slot is empty and determines the slot
+    have key : ∀ (x : ι) (n : ℕ), n ≠ 0 → p ∈ group c J r (x, n) → x = p.1 ∧ n = 2 * p.2 + c := by
+      intro x n hn hmem
+      rcases nat_split_offset hc n with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩
+      · exact absurd rfl hn
+      · rw [group_slot J r hc x m] at hmem
+        by_cases hJx : J (x, m) = ∅
+        · rw [if_pos hJx] at hmem
+          rw [show p = (x, m) from hmem]
+          exact ⟨rfl, rfl⟩
+        · rw [if_neg hJx] at hmem; exact absurd hmem (Set.notMem_empty p)
+      · rw [group_other J r hc x m] at hmem; exact absurd hmem (Set.notMem_empty p)
+    by_cases hk : k = 0
+    · subst hk
+      by_cases hl : l = 0
+      · subst hl
+        rw [group_zero J r a] at hp
+        rw [group_zero J r b] at hq
+        obtain ⟨i, hi⟩ := hp.1
+        exact hne (by rw [← hp.2 i hi, ← hq.2 i hi])
+      · rw [group_zero J r a] at hp
+        obtain ⟨i, hi⟩ := hp.1
+        rw [hslot_empty b l hl p hq] at hi
+        exact hi
+    · obtain ⟨hx, hn⟩ := key a k hk hp
+      by_cases hl : l = 0
+      · subst hl
+        rw [group_zero J r b] at hq
+        obtain ⟨i, hi⟩ := hq.1
+        rw [hslot_empty a k hk p hp] at hi
+        exact hi
+      · obtain ⟨hy, hm⟩ := key b l hl hq
+        exact hne (by rw [Prod.ext_iff]; exact ⟨hx.trans hy.symm, hn.trans hm.symm⟩)
+  · -- every piece lies in some group
+    apply Set.eq_univ_of_forall
+    rintro ⟨b, m⟩
+    rcases Set.eq_empty_or_nonempty (J (b, m)) with hemp | ⟨i, hi⟩
+    · refine Set.mem_iUnion.mpr ⟨(b, 2 * m + c), ?_⟩
+      rw [group_slot J r hc b m, if_pos hemp]
+      rfl
+    · refine Set.mem_iUnion.mpr ⟨(r i, 0), ?_⟩
+      rw [group_zero J r (r i)]
+      exact ⟨⟨i, hi⟩, fun j hj => hrJ _ j i hj hi⟩
+  · -- the group at a component slot covers exactly the fibre of `r`
+    intro a
+    apply Set.Subset.antisymm
+    · intro i hi
+      obtain ⟨p, hp, hip⟩ := mem_biUnion_iff.mp hi
+      rw [group_zero J r a] at hp
+      exact hp.2 i hip
+    · intro i hi
+      refine Set.mem_biUnion (show blockOf J hJcov i ∈ group c J r (a, 0) from ?_)
+        (mem_blockOf J hJcov i)
+      rw [group_zero J r a]
+      exact ⟨⟨i, mem_blockOf J hJcov i⟩,
+        fun j hj => (hrJ _ j i hj (mem_blockOf J hJcov i)).trans hi⟩
+  · -- the groups at the remaining slots cover nothing
+    apply Set.eq_empty_of_forall_notMem
+    intro i hi
+    obtain ⟨p, hp, hip⟩ := mem_biUnion_iff.mp hi
+    rw [hslot_empty a k hk p hp] at hip
+    exact hip
 
 /-- The combinatorial core of transitivity for uncountable `λ`: two partitions `J`, `J'` of the
 same index type can be grouped — into `< λ`-sized groups of pieces — in such a way that the two
@@ -2050,215 +2160,26 @@ theorem exists_common_regrouping (hreg : lam.IsRegular) (hlam0 : ℵ₀ < lam)
       (∀ μ ν, μ ≠ ν → Disjoint (GA μ) (GA ν)) ∧ (∀ μ ν, μ ≠ ν → Disjoint (GB μ) (GB ν)) ∧
       (⋃ μ, GA μ) = Set.univ ∧ (⋃ μ, GB μ) = Set.univ ∧
       ∀ μ, (⋃ p ∈ GA μ, J p) = ⋃ p ∈ GB μ, J' p := by
-  classical
   set r : ι → ι := crep J J' with hrdef
-  -- indices in a common piece have the same representative
+  -- `r` is constant on the pieces of either partition, and its fibres are small
   have hrJ : ∀ (p : ι × ℕ) (i j : ι), i ∈ J p → j ∈ J p → r i = r j := fun p i j hi hj =>
     crep_eq_of_mem J J' (mem_ccomp_of_mem_same J J' hi hj)
   have hrJ' : ∀ (p : ι × ℕ) (i j : ι), i ∈ J' p → j ∈ J' p → r i = r j := fun p i j hi hj =>
     crep_eq_of_mem J J' (mem_ccomp_of_mem_same' J J' hi hj)
-  -- the two groupings
-  set GA : ι × ℕ → Set (ι × ℕ) := groupA J r with hGAdef
-  set GB : ι × ℕ → Set (ι × ℕ) := groupB J' r with hGBdef
-  have hGA0 : ∀ a : ι, GA (a, 0) = {p | (J p).Nonempty ∧ ∀ i ∈ J p, r i = a} := groupA_zero J r
-  have hGA1 : ∀ (a : ι) (m : ℕ), GA (a, 2 * m + 1) = if J (a, m) = ∅ then {(a, m)} else ∅ :=
-    groupA_odd J r
-  have hGA2 : ∀ (a : ι) (m : ℕ), GA (a, 2 * m + 2) = ∅ := groupA_even J r
-  have hGB0 : ∀ a : ι, GB (a, 0) = {p | (J' p).Nonempty ∧ ∀ i ∈ J' p, r i = a} := groupB_zero J' r
-  have hGB1 : ∀ (a : ι) (m : ℕ), GB (a, 2 * m + 1) = ∅ := groupB_odd J' r
-  have hGB2 : ∀ (a : ι) (m : ℕ), GB (a, 2 * m + 2) = if J' (a, m) = ∅ then {(a, m)} else ∅ :=
-    groupB_even J' r
-  -- the sets covered by the groups at the component slots
-  have hYA : ∀ a : ι, (⋃ p ∈ GA (a, 0), J p) = {i | r i = a} := by
+  have hrfib : ∀ a : ι, #{i | r i = a} < lam := by
     intro a
-    apply Set.Subset.antisymm
-    · intro i hi
-      obtain ⟨p, hp, hip⟩ := mem_biUnion_iff.mp hi
-      rw [hGA0 a] at hp
-      exact hp.2 i hip
-    · intro i hi
-      refine Set.mem_biUnion (show blockOf J hJcov i ∈ GA (a, 0) from ?_) (mem_blockOf J hJcov i)
-      rw [hGA0 a]
-      exact ⟨⟨i, mem_blockOf J hJcov i⟩,
-        fun j hj => (hrJ _ j i hj (mem_blockOf J hJcov i)).trans hi⟩
-  have hYB : ∀ a : ι, (⋃ p ∈ GB (a, 0), J' p) = {i | r i = a} := by
-    intro a
-    apply Set.Subset.antisymm
-    · intro i hi
-      obtain ⟨p, hp, hip⟩ := mem_biUnion_iff.mp hi
-      rw [hGB0 a] at hp
-      exact hp.2 i hip
-    · intro i hi
-      refine Set.mem_biUnion (show blockOf J' hJ'cov i ∈ GB (a, 0) from ?_)
-        (mem_blockOf J' hJ'cov i)
-      rw [hGB0 a]
-      exact ⟨⟨i, mem_blockOf J' hJ'cov i⟩,
-        fun j hj => (hrJ' _ j i hj (mem_blockOf J' hJ'cov i)).trans hi⟩
-  refine ⟨GA, GB, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · -- `#(GA μ) < lam`
-    rintro ⟨a, k⟩
-    have hone : (1 : Cardinal.{u}) < lam := lt_of_lt_of_le one_lt_aleph0 hreg.aleph0_le
-    rcases nat_split k with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩
-    · rw [hGA0 a]
-      refine lt_of_le_of_lt (Cardinal.mk_le_of_injective
-        (f := fun p : {p | (J p).Nonempty ∧ ∀ i ∈ J p, r i = a} =>
-          (⟨p.2.1.some, mem_ccomp_of_crep_eq J J' (p.2.2 _ p.2.1.some_mem)⟩ : ccomp J J' a))
-        ?_) (mk_ccomp_lt J J' hreg hlam0 hJdisj hJ'disj hJcov hJ'cov hJsm hJ'sm a)
-      intro p q hpq
-      have hval : p.2.1.some = q.2.1.some := congrArg Subtype.val hpq
-      refine Subtype.ext ?_
-      by_contra hne
-      exact Set.disjoint_left.mp (hJdisj _ _ hne) p.2.1.some_mem (hval ▸ q.2.1.some_mem)
-    · rw [hGA1 a m]
-      split
-      · rw [Cardinal.mk_singleton]; exact hone
-      · rw [Cardinal.mk_set_eq_zero_iff.mpr rfl]; exact hone.trans_le' (zero_le_one)
-    · rw [hGA2 a m, Cardinal.mk_set_eq_zero_iff.mpr rfl]
-      exact lt_of_lt_of_le Cardinal.aleph0_pos hreg.aleph0_le
-  · -- `#(GB μ) < lam`
-    rintro ⟨a, k⟩
-    have hone : (1 : Cardinal.{u}) < lam := lt_of_lt_of_le one_lt_aleph0 hreg.aleph0_le
-    rcases nat_split k with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩
-    · rw [hGB0 a]
-      refine lt_of_le_of_lt (Cardinal.mk_le_of_injective
-        (f := fun p : {p | (J' p).Nonempty ∧ ∀ i ∈ J' p, r i = a} =>
-          (⟨p.2.1.some, mem_ccomp_of_crep_eq J J' (p.2.2 _ p.2.1.some_mem)⟩ : ccomp J J' a))
-        ?_) (mk_ccomp_lt J J' hreg hlam0 hJdisj hJ'disj hJcov hJ'cov hJsm hJ'sm a)
-      intro p q hpq
-      have hval : p.2.1.some = q.2.1.some := congrArg Subtype.val hpq
-      refine Subtype.ext ?_
-      by_contra hne
-      exact Set.disjoint_left.mp (hJ'disj _ _ hne) p.2.1.some_mem (hval ▸ q.2.1.some_mem)
-    · rw [hGB1 a m, Cardinal.mk_set_eq_zero_iff.mpr rfl]
-      exact lt_of_lt_of_le Cardinal.aleph0_pos hreg.aleph0_le
-    · rw [hGB2 a m]
-      split
-      · rw [Cardinal.mk_singleton]; exact hone
-      · rw [Cardinal.mk_set_eq_zero_iff.mpr rfl]; exact hone.trans_le' (zero_le_one)
-  · -- disjointness of `GA`
-    rintro ⟨a, k⟩ ⟨b, l⟩ hne
-    rw [Set.disjoint_left]
-    intro p hp hq
-    rcases nat_split k with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩ <;>
-      rcases nat_split l with rfl | ⟨m', rfl⟩ | ⟨m', rfl⟩
-    · rw [hGA0 a] at hp
-      rw [hGA0 b] at hq
-      obtain ⟨i, hi⟩ := hp.1
-      exact hne (by rw [← hp.2 i hi, ← hq.2 i hi])
-    · rw [hGA0 a] at hp
-      rw [hGA1 b m'] at hq
-      obtain ⟨i, hi⟩ := hp.1
-      by_cases hJb : J (b, m') = ∅
-      · rw [if_pos hJb] at hq
-        rw [show p = (b, m') from hq, hJb] at hi
-        exact hi
-      · rw [if_neg hJb] at hq
-        exact hq
-    · rw [hGA2 b m'] at hq; exact hq
-    · rw [hGA0 b] at hq
-      rw [hGA1 a m] at hp
-      obtain ⟨i, hi⟩ := hq.1
-      by_cases hJa : J (a, m) = ∅
-      · rw [if_pos hJa] at hp
-        rw [show p = (a, m) from hp, hJa] at hi
-        exact hi
-      · rw [if_neg hJa] at hp
-        exact hp
-    · rw [hGA1 a m] at hp
-      rw [hGA1 b m'] at hq
-      by_cases hJa : J (a, m) = ∅
-      · by_cases hJb : J (b, m') = ∅
-        · rw [if_pos hJa] at hp
-          rw [if_pos hJb] at hq
-          rw [show p = (a, m) from hp] at hq
-          have h1 : a = b := congrArg Prod.fst hq
-          have h2 : m = m' := congrArg Prod.snd hq
-          exact hne (by rw [h1, h2])
-        · rw [if_neg hJb] at hq; exact hq
-      · rw [if_neg hJa] at hp; exact hp
-    · rw [hGA2 b m'] at hq; exact hq
-    · rw [hGA2 a m] at hp; exact hp
-    · rw [hGA2 a m] at hp; exact hp
-    · rw [hGA2 a m] at hp; exact hp
-  · -- disjointness of `GB`
-    rintro ⟨a, k⟩ ⟨b, l⟩ hne
-    rw [Set.disjoint_left]
-    intro p hp hq
-    rcases nat_split k with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩ <;>
-      rcases nat_split l with rfl | ⟨m', rfl⟩ | ⟨m', rfl⟩
-    · rw [hGB0 a] at hp
-      rw [hGB0 b] at hq
-      obtain ⟨i, hi⟩ := hp.1
-      exact hne (by rw [← hp.2 i hi, ← hq.2 i hi])
-    · rw [hGB1 b m'] at hq; exact hq
-    · rw [hGB0 a] at hp
-      rw [hGB2 b m'] at hq
-      obtain ⟨i, hi⟩ := hp.1
-      by_cases hJb : J' (b, m') = ∅
-      · rw [if_pos hJb] at hq
-        rw [show p = (b, m') from hq, hJb] at hi
-        exact hi
-      · rw [if_neg hJb] at hq
-        exact hq
-    · rw [hGB1 a m] at hp; exact hp
-    · rw [hGB1 a m] at hp; exact hp
-    · rw [hGB1 a m] at hp; exact hp
-    · rw [hGB0 b] at hq
-      rw [hGB2 a m] at hp
-      obtain ⟨i, hi⟩ := hq.1
-      by_cases hJa : J' (a, m) = ∅
-      · rw [if_pos hJa] at hp
-        rw [show p = (a, m) from hp, hJa] at hi
-        exact hi
-      · rw [if_neg hJa] at hp
-        exact hp
-    · rw [hGB1 b m'] at hq; exact hq
-    · rw [hGB2 a m] at hp
-      rw [hGB2 b m'] at hq
-      by_cases hJa : J' (a, m) = ∅
-      · by_cases hJb : J' (b, m') = ∅
-        · rw [if_pos hJa] at hp
-          rw [if_pos hJb] at hq
-          rw [show p = (a, m) from hp] at hq
-          have h1 : a = b := congrArg Prod.fst hq
-          have h2 : m = m' := congrArg Prod.snd hq
-          exact hne (by rw [h1, h2])
-        · rw [if_neg hJb] at hq; exact hq
-      · rw [if_neg hJa] at hp; exact hp
-  · -- `GA` covers all slots
-    apply Set.eq_univ_of_forall
-    rintro ⟨b, m⟩
-    rcases Set.eq_empty_or_nonempty (J (b, m)) with hemp | ⟨i, hi⟩
-    · refine Set.mem_iUnion.mpr ⟨(b, 2 * m + 1), ?_⟩
-      rw [hGA1 b m, if_pos hemp]
-      rfl
-    · refine Set.mem_iUnion.mpr ⟨(r i, 0), ?_⟩
-      rw [hGA0 (r i)]
-      exact ⟨⟨i, hi⟩, fun j hj => hrJ _ j i hj hi⟩
-  · -- `GB` covers all slots
-    apply Set.eq_univ_of_forall
-    rintro ⟨b, m⟩
-    rcases Set.eq_empty_or_nonempty (J' (b, m)) with hemp | ⟨i, hi⟩
-    · refine Set.mem_iUnion.mpr ⟨(b, 2 * m + 2), ?_⟩
-      rw [hGB2 b m, if_pos hemp]
-      rfl
-    · refine Set.mem_iUnion.mpr ⟨(r i, 0), ?_⟩
-      rw [hGB0 (r i)]
-      exact ⟨⟨i, hi⟩, fun j hj => hrJ' _ j i hj hi⟩
-  · -- the two groupings cover the same sets
-    rintro ⟨a, k⟩
-    rcases nat_split k with rfl | ⟨m, rfl⟩ | ⟨m, rfl⟩
-    · rw [hYA a, hYB a]
-    · rw [hGB1 a m, Set.biUnion_empty]
-      rw [hGA1 a m]
-      by_cases hJa : J (a, m) = ∅
-      · rw [if_pos hJa, Set.biUnion_singleton, hJa]
-      · rw [if_neg hJa, Set.biUnion_empty]
-    · rw [hGA2 a m, Set.biUnion_empty]
-      rw [hGB2 a m]
-      by_cases hJa : J' (a, m) = ∅
-      · rw [if_pos hJa, Set.biUnion_singleton, hJa]
-      · rw [if_neg hJa, Set.biUnion_empty]
+    refine lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset ?_)
+      (mk_ccomp_lt J J' hreg hlam0 hJdisj hJ'disj hJcov hJ'cov hJsm hJ'sm a)
+    exact fun i hi => mem_ccomp_of_crep_eq J J' hi
+  obtain ⟨hAsm, hAdisj, hAcov, hAfib, hAnil⟩ :=
+    group_spec J r hreg (Or.inl rfl) hJdisj hJcov hrJ hrfib
+  obtain ⟨hBsm, hBdisj, hBcov, hBfib, hBnil⟩ :=
+    group_spec J' r hreg (Or.inr rfl) hJ'disj hJ'cov hrJ' hrfib
+  refine ⟨group 1 J r, group 2 J' r, hAsm, hBsm, hAdisj, hBdisj, hAcov, hBcov, ?_⟩
+  rintro ⟨a, k⟩
+  by_cases hk : k = 0
+  · subst hk; rw [hAfib a, hBfib a]
+  · rw [hAnil a k hk, hBnil a k hk]
 
 end Regrouping
 
