@@ -95,6 +95,21 @@ as an `ℵ₀⁻`-monoid). Nothing is lost:
 is `lsumOf_unique`: a sum over a one-point index type is its unique entry. No distinguished
 element is needed, and the axiom does not mention `0`.
 
+**Faithfulness to Definition 2.1.** Since none of the three deviations above is word-for-word
+the paper's definition, `PaperKMonoid` transcribes Definition 2.1 literally — a `Zero`, a map
+`Σ : H^κ → H`, (A1) at one distinguished index, (A2) for every bijection `κ × κ ≃ κ` — and the
+two notions are shown to agree:
+
+* `PaperKMonoid.toKMonoid` — the paper's axioms give a `KMonoid`. The work is
+  `PaperKMonoid.sigma_perm` (this is (A3), and it is where (A1) at the distinguished index is
+  used) and `PaperKMonoid.sigma_single`, which upgrades (A1) to every index by transporting
+  along a transposition.
+* `KMonoid.toPaper` — conversely, and taking any index as the distinguished one.
+* `PaperKMonoid.toKMonoid_ksum`, `KMonoid.toPaper_sigma` and
+  `KMonoid.toPaper_toKMonoid_ksum` — the translations leave `0` and `Σ` unchanged, and
+  `PaperKMonoid.toKMonoid_sumOf` / `toKMonoid_add` express the reconstructed sums and addition
+  back in terms of `Σ`, so nothing is added by the reconstruction.
+
 **The limit well-order (the one substantive choice).** Definition 3.1 fixes a limit
 well-order on `κ` — a well-order in which every element has a successor, i.e. with no
 maximum — and speaks of `μ + 1` and of limit elements. Rather than carry an abstract
