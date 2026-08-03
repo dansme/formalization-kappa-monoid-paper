@@ -102,24 +102,6 @@ theorem dsPart_union (s t : Set ι) :
   · exact Submodule.mem_sup_left (lof_mem_dsPart R N h (m i))
   · exact Submodule.mem_sup_right (lof_mem_dsPart R N h (m i))
 
-/-- A single summand of a direct sum. -/
-noncomputable def dsPartSingletonIso (i₀ : ι) : ↥(dsPart R N {i₀}) ≃ₗ[R] N i₀ := by
-  refine LinearEquiv.ofLinear ((DirectSum.component R ι N i₀).comp (dsPart R N {i₀}).subtype)
-    (LinearMap.codRestrict _ (lof R ι N i₀)
-      (fun v => lof_mem_dsPart R N (Set.mem_singleton_iff.mpr rfl) v)) ?_ ?_
-  · refine LinearMap.ext fun v => ?_
-    show DirectSum.component R ι N i₀ (lof R ι N i₀ v) = v
-    exact DirectSum.component.lof_self R i₀ v
-  · refine LinearMap.ext fun m => ?_
-    refine Subtype.ext ?_
-    show lof R ι N i₀ ((m : ⨁ i, N i) i₀) = (m : ⨁ i, N i)
-    refine DirectSum.ext (β := N) fun j => ?_
-    by_cases hj : j = i₀
-    · subst hj
-      rw [lof_eq_of R, DirectSum.of_eq_same]
-    · rw [lof_eq_of R, DirectSum.of_eq_of_ne i₀ j _ hj]
-      exact (m.2 j hj).symm
-
 /-! ### `dsPart s` is the direct sum over `s` -/
 
 /-- The canonical map `⨁_{i ∈ s} N i → ⨁_{i} N i`. -/
@@ -175,6 +157,46 @@ theorem dsIncl_range (s : Set ι) : LinearMap.range (dsIncl R N s) = dsPart R N 
 noncomputable def dsPartIso (s : Set ι) : ↥(dsPart R N s) ≃ₗ[R] ⨁ i : s, N i.1 :=
   (LinearEquiv.ofEq _ _ (dsIncl_range R N s)).symm.trans
     (LinearEquiv.ofInjective _ (dsIncl_injective R N s)).symm
+
+/-- A direct sum all but one of whose summands is trivial *is* that summand. -/
+noncomputable def directSumEquivOfSubsingleton (i₀ : ι)
+    (h : ∀ i, i ≠ i₀ → Subsingleton (N i)) : (⨁ i, N i) ≃ₗ[R] N i₀ := by
+  classical
+  refine LinearEquiv.ofLinear (DirectSum.component R ι N i₀) (DirectSum.lof R ι N i₀) ?_ ?_
+  · apply LinearMap.ext
+    intro m
+    simp
+  · refine DirectSum.linearMap_ext R (fun i => LinearMap.ext fun m => ?_)
+    by_cases hi : i = i₀
+    · subst hi
+      simp
+    · haveI := h i hi
+      have hm : m = 0 := Subsingleton.elim m 0
+      subst hm
+      simp
+
+/-- Summands outside a set `T` that are trivial may be dropped from a direct sum. -/
+theorem dsum_restrict_iso (T : Set ι) (h : ∀ i ∉ T, Subsingleton (N i)) :
+    Nonempty ((⨁ i, N i) ≃ₗ[R] ⨁ i : T, N i.1) :=
+  ⟨((LinearEquiv.ofEq _ _ (dsPart_eq_top_of_subsingleton R N h)).trans
+    Submodule.topEquiv).symm.trans (dsPartIso R N T)⟩
+
+/-- `ULift Bool ≃ Option PUnit`, sending `true` to `none`. -/
+def uliftBoolOptionEquiv : ULift.{u} Bool ≃ Option PUnit.{u + 1} where
+  toFun p := if p.down then none else some PUnit.unit
+  invFun o := match o with | none => ⟨true⟩ | some _ => ⟨false⟩
+  left_inv := by rintro ⟨(_ | _)⟩ <;> rfl
+  right_inv := by rintro (_ | _) <;> rfl
+
+/-- A direct sum over a two-element index type is a product. -/
+noncomputable def dsumUliftBoolProdIso {P : ULift.{u} Bool → Type u}
+    [∀ p, AddCommGroup (P p)] [∀ p, Module R (P p)] :
+    (⨁ p, P p) ≃ₗ[R] P ⟨true⟩ × P ⟨false⟩ :=
+  (DirectSum.lequivCongrLeft R uliftBoolOptionEquiv).trans
+    ((DirectSum.lequivProdDirectSum R
+        (α := fun o => P (uliftBoolOptionEquiv.symm o))).trans
+      (LinearEquiv.prodCongr (LinearEquiv.refl R (P ⟨true⟩))
+        (DirectSum.lid R (P ⟨false⟩) PUnit.{u + 1})))
 
 end DsPart
 
@@ -386,24 +408,6 @@ variable {R} {κ : Cardinal.{u}} (C : ModuleClass R κ)
 
 attribute [instance] ModuleClass.addCommGroup ModuleClass.module
 
-/-- A direct sum all but one of whose summands is trivial *is* that summand. -/
-noncomputable def _root_.KappaMonoid.directSumEquivOfSubsingleton {R : Type u} [Ring R] {ι : Type u}
-    {N : ι → Type u} [∀ i, AddCommGroup (N i)] [∀ i, Module R (N i)] (i₀ : ι)
-    (h : ∀ i, i ≠ i₀ → Subsingleton (N i)) : (⨁ i, N i) ≃ₗ[R] N i₀ := by
-  classical
-  refine LinearEquiv.ofLinear (DirectSum.component R ι N i₀) (DirectSum.lof R ι N i₀) ?_ ?_
-  · apply LinearMap.ext
-    intro m
-    simp
-  · refine DirectSum.linearMap_ext R (fun i => LinearMap.ext fun m => ?_)
-    by_cases hi : i = i₀
-    · subst hi
-      simp
-    · haveI := h i hi
-      have hm : m = 0 := Subsingleton.elim m 0
-      subst hm
-      simp
-
 /-- The bare `κ`-monoid data on `V^κ(C)`: (A1) and (A2) hold because direct sums do. -/
 noncomputable def bareKMonoid (hκ : ℵ₀ ≤ κ) : @BareKMonoid κ C.carrier ⟨C.zero⟩ := by
   classical
@@ -421,7 +425,7 @@ noncomputable def bareKMonoid (hκ : ℵ₀ ≤ κ) : @BareKMonoid κ C.carrier 
       have h1 : C.rep (x i) = C.rep C.zero := congrArg C.rep (hx i hi)
       rw [h1]
       exact C.subsingleton_rep_zero
-    exact (C.dsum_iso x).some.trans (directSumEquivOfSubsingleton i₀ hsub)
+    exact (C.dsum_iso x).some.trans (directSumEquivOfSubsingleton R (fun i => C.rep (x i)) i₀ hsub)
   · -- (A2): `⨁ᵢ ⨁ⱼ ≅ ⨁_{(i,j)} ≅ ⨁_k`
     intro x π
     refine C.eq_of_iso ?_
@@ -594,12 +598,9 @@ theorem subsingleton_rep_of_eq_zero {b : C.carrier} (h : b = C.zero) :
 indexed by the domain of `e`. -/
 theorem restrict_iso {ι : Type u} (g : Idx κ → C.carrier) (e : ι ↪ Idx κ)
     (h : ∀ k, k ∉ Set.range e → Subsingleton (C.rep (g k))) :
-    Nonempty ((⨁ k, C.rep (g k)) ≃ₗ[R] ⨁ i : ι, C.rep (g (e i))) := by
-  have htop : dsPart R (fun k => C.rep (g k)) (Set.range e) = ⊤ :=
-    dsPart_eq_top_of_subsingleton R _ h
-  exact ⟨(((LinearEquiv.ofEq _ _ htop).trans Submodule.topEquiv).symm.trans
-    (dsPartIso R (fun k => C.rep (g k)) (Set.range e))).trans
-      (DirectSum.lequivCongrLeft R (Equiv.ofInjective e e.injective).symm)⟩
+    Nonempty ((⨁ k, C.rep (g k)) ≃ₗ[R] ⨁ i : ι, C.rep (g (e i))) :=
+  ⟨(dsum_restrict_iso R _ (Set.range e) h).some.trans
+    (DirectSum.lequivCongrLeft R (Equiv.ofInjective e e.injective).symm)⟩
 
 /-- The representative of a `κ`-sum of classes is the direct sum of the representatives. -/
 theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι → C.carrier) :
@@ -631,44 +632,10 @@ theorem rep_add (hκ : ℵ₀ ≤ κ) (b b' : C.carrier) :
     letI := C.instKMonoid hκ
     Nonempty (C.rep (b + b') ≃ₗ[R] C.rep b × C.rep b') := by
   letI := C.instKMonoid hκ
-  have hnt : Nontrivial (Idx κ) := by
-    rw [← Cardinal.one_lt_iff_nontrivial, mk_Idx]
-    exact lt_of_lt_of_le one_lt_aleph0 hκ
-  obtain ⟨i₀, i₁, hne⟩ := hnt.exists_pair_ne
-  set f : Idx κ → C.carrier := fun k => if k = i₀ then b else if k = i₁ then b' else 0 with hfdef
-  have hsum : b + b' = C.dsum f := by
-    rw [← C.instKMonoid_ksum hκ f]
-    exact (KMonoid.ksum_two b b' i₀ i₁ hne).symm
-  have hfi₀ : f i₀ = b := if_pos rfl
-  have hfi₁ : f i₁ = b' := by
-    show (if i₁ = i₀ then b else if i₁ = i₁ then b' else 0) = b'
-    rw [if_neg (Ne.symm hne), if_pos rfl]
-  have hf0 : ∀ k, k ∉ ({i₀} ∪ {i₁} : Set (Idx κ)) → Subsingleton (C.rep (f k)) := by
-    intro k hk
-    refine C.subsingleton_rep_of_eq_zero ?_
-    have hk₀ : ¬ (k = i₀) := fun h => hk (Or.inl h)
-    have hk₁ : ¬ (k = i₁) := fun h => hk (Or.inr h)
-    have h0 : f k = 0 := by
-      show (if k = i₀ then b else if k = i₁ then b' else 0) = 0
-      rw [if_neg hk₀, if_neg hk₁]
-    rw [h0]
-    exact C.instKMonoid_zero hκ
-  have htop : dsPart R (fun k => C.rep (f k)) {i₀} ⊔ dsPart R (fun k => C.rep (f k)) {i₁} = ⊤ := by
-    rw [← dsPart_union]
-    exact dsPart_eq_top_of_subsingleton R _ hf0
-  have hcompl : IsCompl (dsPart R (fun k => C.rep (f k)) {i₀})
-      (dsPart R (fun k => C.rep (f k)) {i₁}) :=
-    ⟨dsPart_disjoint R _ (by simp [hne]), codisjoint_iff.mpr htop⟩
-  obtain ⟨e1⟩ := C.dsum_iso f
-  have e2 : (⨁ k, C.rep (f k)) ≃ₗ[R]
-      (↥(dsPart R (fun k => C.rep (f k)) {i₀}) × ↥(dsPart R (fun k => C.rep (f k)) {i₁})) :=
-    (Submodule.prodEquivOfIsCompl _ _ hcompl).symm
-  have e3 : ↥(dsPart R (fun k => C.rep (f k)) {i₀}) ≃ₗ[R] C.rep b :=
-    (dsPartSingletonIso R _ i₀).trans (C.iso_of_eq hfi₀).some
-  have e4 : ↥(dsPart R (fun k => C.rep (f k)) {i₁}) ≃ₗ[R] C.rep b' :=
-    (dsPartSingletonIso R _ i₁).trans (C.iso_of_eq hfi₁).some
-  rw [hsum]
-  exact ⟨e1.trans (e2.trans (LinearEquiv.prodCongr e3 e4))⟩
+  have hUB : #(ULift.{u} Bool) ≤ κ := KMonoid.mk_uLift_bool_le κ C.carrier
+  rw [← sumOf_two b b' hUB]
+  obtain ⟨e1⟩ := C.rep_sumOf hκ hUB fun p : ULift.{u} Bool => if p.down then b else b'
+  exact ⟨e1.trans (dsumUliftBoolProdIso R)⟩
 
 /-- Closure under direct summands, in the form we use it: a direct summand of a module
 isomorphic to a representative is again represented by a class. -/
@@ -1923,12 +1890,6 @@ theorem exists_summand_of_projective (Q : Type u) [AddCommGroup Q] [Module R Q]
     refine Submodule.mem_sup.mpr ⟨σ (π x), ⟨π x, rfl⟩, x - σ (π x), ?_, by abel⟩
     show π (x - σ (π x)) = 0
     rw [map_sub, hσπ, sub_self]
-
-theorem dsum_restrict_iso {ι : Type u} (N : ι → Type u) [∀ i, AddCommGroup (N i)]
-    [∀ i, Module R (N i)] (T : Set ι) (h : ∀ i ∉ T, Subsingleton (N i)) :
-    Nonempty ((⨁ i, N i) ≃ₗ[R] ⨁ i : T, N i.1) :=
-  ⟨((LinearEquiv.ofEq _ _ (dsPart_eq_top_of_subsingleton R N h)).trans
-    Submodule.topEquiv).symm.trans (dsPartIso R N T)⟩
 
 /-- Direct summands of `R^{(κ)}` are projective. -/
 theorem summand_projective (P : Summand R κ) : Module.Projective R ↥P.1 :=
