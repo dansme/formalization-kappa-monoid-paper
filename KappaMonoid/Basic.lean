@@ -810,6 +810,15 @@ noncomputable def cmul (α : Cardinal.{u}) (hα : α ≤ κ) (x : H) : H :=
   have : IsEmpty (Idx (0 : Cardinal.{u})) := Cardinal.mk_eq_zero_iff.mp (mk_Idx 0)
   exact sumOf_of_isEmpty _ _
 
+/-- Lemma 2.7(1), second half. -/
+@[simp] theorem cmul_one (h1 : (1 : Cardinal.{u}) ≤ κ) (x : H) : cmul (κ := κ) 1 h1 x = x := by
+  have hsub : Subsingleton (Idx (1 : Cardinal.{u})) :=
+    Cardinal.le_one_iff_subsingleton.mp (le_of_eq (mk_Idx 1))
+  have hne : Nonempty (Idx (1 : Cardinal.{u})) := by
+    rw [← Cardinal.mk_ne_zero_iff, mk_Idx]; exact one_ne_zero
+  letI : Unique (Idx (1 : Cardinal.{u})) := uniqueOfSubsingleton hne.some
+  exact sumOf_unique _ _
+
 /-- Lemma 2.7(2). -/
 theorem cmul_sumOf_cardinal {I : Type u} (hI : #I ≤ κ) (l : I → Cardinal.{u})
     (hl : ∀ i, l i ≤ κ) (hsum : Cardinal.sum l ≤ κ) (x : H) :
@@ -864,19 +873,20 @@ theorem cmul_top_distrib (a b : H) :
   rw [hcongr]
   exact sumOf_two _ _ hUB
 
-/-- Lemma 2.8(2), the key idempotence step of the swindle: adding one more copy of `z` to
-`κ`-many copies of `z` does not change the value. -/
-theorem add_cmul_top_self (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] (z : H) :
-    z + cmul (κ := κ) κ le_rfl z = cmul (κ := κ) κ le_rfl z := by
-  have hκ := aleph0_le (κ := κ) (H := H)
-  obtain ⟨j0⟩ := nonempty_Idx hκ
-  have : Infinite (Idx κ) := infinite_Idx hκ
-  have hcompl : #(↥({j0}ᶜ : Set (Idx κ))) = κ :=
+/-- The remark after Definition 2.6: for an infinite cardinal `α`, adding one more copy of `z` to
+`α`-many copies of `z` does not change the value.  With `α = κ` this is the key idempotence step
+of the swindle proving Lemma 2.8(1). -/
+theorem add_cmul_self {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α ≤ κ) (z : H) :
+    z + cmul (κ := κ) α hα z = cmul (κ := κ) α hα z := by
+  have hidx : #(Idx α) ≤ κ := le_of_eq_of_le (mk_Idx α) hα
+  obtain ⟨j0⟩ := nonempty_Idx hα0
+  have : Infinite (Idx α) := infinite_Idx hα0
+  have hcompl : #(↥({j0}ᶜ : Set (Idx α))) = α :=
     (mk_compl_of_infinite {j0} (by
       rw [mk_singleton]
-      exact lt_of_lt_of_le one_lt_aleph0 (by rw [mk_Idx]; exact hκ))).trans (mk_Idx κ)
-  set I : ULift.{u} Bool → Set (Idx κ) := fun p => match p with
-    | ⟨true⟩ => ({j0} : Set (Idx κ))
+      exact lt_of_lt_of_le one_lt_aleph0 (by rw [mk_Idx]; exact hα0))).trans (mk_Idx α)
+  set I : ULift.{u} Bool → Set (Idx α) := fun p => match p with
+    | ⟨true⟩ => ({j0} : Set (Idx α))
     | ⟨false⟩ => {j0}ᶜ with hIdef
   have hdisj : ∀ p q : ULift.{u} Bool, p ≠ q → Disjoint (I p) (I q) := by
     rintro ⟨(_ | _)⟩ ⟨(_ | _)⟩ hpq
@@ -893,23 +903,29 @@ theorem add_cmul_top_self (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] (z : H
   have hJ := mk_uLift_bool_le κ H
   have hI : ∀ p : ULift.{u} Bool, #(I p) ≤ κ := by
     rintro ⟨(_ | _)⟩
-    · exact hcompl.le
-    · show #(({j0} : Set (Idx κ))) ≤ κ
+    · exact hcompl.trans_le hα
+    · show #(({j0} : Set (Idx α))) ≤ κ
       rw [mk_singleton]
-      exact one_le_aleph0.trans hκ
-  have hmain := sumOf_biUnion I hdisj hcover hJ (le_of_eq (mk_Idx κ)) hI (fun _ : Idx κ => z)
+      exact one_le_aleph0.trans (hα0.trans hα)
+  have hmain := sumOf_biUnion I hdisj hcover hJ hidx hI (fun _ : Idx α => z)
   have hleftcompl : sumOf (κ := κ) (hI (⟨false⟩ : ULift.{u} Bool))
-      (fun _ : I (⟨false⟩ : ULift.{u} Bool) => z) = cmul (κ := κ) κ le_rfl z := by
-    obtain ⟨Ψ⟩ := Cardinal.eq.mp (hcompl.trans (mk_Idx κ).symm)
-    exact (sumOf_equiv (le_of_eq (mk_Idx κ)) (hI (⟨false⟩ : ULift.{u} Bool)) Ψ fun _ => z).symm
+      (fun _ : I (⟨false⟩ : ULift.{u} Bool) => z) = cmul (κ := κ) α hα z := by
+    obtain ⟨Ψ⟩ := Cardinal.eq.mp (hcompl.trans (mk_Idx α).symm)
+    exact (sumOf_equiv hidx (hI (⟨false⟩ : ULift.{u} Bool)) Ψ fun _ => z).symm
   have hleft : (fun p => sumOf (κ := κ) (hI p) (fun _ : I p => z))
-      = fun p : ULift.{u} Bool => if p.down then z else cmul (κ := κ) κ le_rfl z := by
+      = fun p : ULift.{u} Bool => if p.down then z else cmul (κ := κ) α hα z := by
     funext p
     match p with
     | ⟨true⟩ => exact sumOf_unique (hI (⟨true⟩ : ULift.{u} Bool)) (fun _ => z)
     | ⟨false⟩ => exact hleftcompl
-  rw [hleft, sumOf_two z (cmul (κ := κ) κ le_rfl z) hJ] at hmain
+  rw [hleft, sumOf_two z (cmul (κ := κ) α hα z) hJ] at hmain
   exact hmain
+
+/-- Lemma 2.8(2), the key idempotence step of the swindle: adding one more copy of `z` to
+`κ`-many copies of `z` does not change the value. -/
+theorem add_cmul_top_self (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] (z : H) :
+    z + cmul (κ := κ) κ le_rfl z = cmul (κ := κ) κ le_rfl z :=
+  add_cmul_self (aleph0_le (κ := κ) (H := H)) le_rfl z
 
 /-- Lemma 2.8(1): a variant of the Eilenberg–Mazur swindle shows that every `κ`-monoid is
 reduced.
