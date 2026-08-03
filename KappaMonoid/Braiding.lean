@@ -62,6 +62,26 @@ theorem finsum_mem_eq_of_diff_eq_zero {α : Type u} {M : Type v} [AddCommMonoid 
     ∑ᶠ i ∈ T, f i = ∑ᶠ i ∈ S, f i := by
   rw [finsum_mem_split f hST hT, finsum_mem_eq_zero_of_forall_eq_zero h0, add_zero]
 
+/-- A set contained in a union splits into the parts it shares with the two pieces. -/
+theorem eq_union_inter_of_subset_union {α : Type u} {A B C : Set α} (h : A ⊆ B ∪ C) :
+    A = (B ∩ A) ∪ (A ∩ C) := by
+  refine Set.Subset.antisymm (fun j hj => ?_) ?_
+  · rcases h hj with hj' | hj'
+    · exact Or.inl ⟨hj', hj⟩
+    · exact Or.inr ⟨hj, hj'⟩
+  · rintro j (⟨-, hj⟩ | ⟨hj, -⟩) <;> exact hj
+
+/-- Variant of `eq_union_inter_of_subset_union` when the first piece is contained in `A`. -/
+theorem eq_union_inter_of_subset_union' {α : Type u} {A B C : Set α} (h : A ⊆ B ∪ C)
+    (hB : B ⊆ A) : A = B ∪ (A ∩ C) := by
+  refine Set.Subset.antisymm (fun j hj => ?_) ?_
+  · rcases h hj with hj' | hj'
+    · exact Or.inl hj'
+    · exact Or.inr ⟨hj, hj'⟩
+  · rintro j (hj | ⟨hj, -⟩)
+    · exact hB hj
+    · exact hj
+
 /-- A `finsum` over a three-element set. -/
 theorem finsum_mem_triple {α : Type u} {M : Type v} [AddCommMonoid M] {a b c : α} (f : α → M)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) :
@@ -191,94 +211,44 @@ namespace IsBraided
 
 variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u}
 
-/-- Lemma 3.6(1): a family is braided to any of its reindexings along a bijection.  We use the
-trivial witness: every index is its own `<lam`-sized (singleton) piece, sitting at the "limit"
-slot `(i, 0)`, with `v ≡ 0` and `u (i, 0) := x i`. -/
-theorem of_perm (x : ι → X) (π : ι ≃ ι) : IsBraided lam x (x ∘ π) := by
-  have hlam0 : ℵ₀ ≤ lam := (‹LMonoid lam X›).isRegular.aleph0_le
-  set I : ι × ℕ → Set ι := fun p => if p.2 = 0 then {p.1} else ∅ with hIdef
-  set J : ι × ℕ → Set ι := fun p => if p.2 = 0 then {π.symm p.1} else ∅ with hJdef
-  set u : ι × ℕ → X := fun p => if p.2 = 0 then x p.1 else 0 with hudef
-  set v : ι × ℕ → X := fun _ : ι × ℕ => (0 : X) with hvdef
-  have I_disjoint : ∀ p q : ι × ℕ, p ≠ q → Disjoint (I p) (I q) := by
-    rintro ⟨a, n⟩ ⟨b, m⟩ hpq
-    rcases eq_or_ne n 0 with hn | hn
-    · rcases eq_or_ne m 0 with hm | hm
-      · subst hn; subst hm
-        have hab : a ≠ b := fun h => hpq (by rw [h])
-        simp [hIdef, hab]
-      · simp [hIdef, hn, hm]
-    · simp [hIdef, hn]
-  have J_disjoint : ∀ p q : ι × ℕ, p ≠ q → Disjoint (J p) (J q) := by
-    rintro ⟨a, n⟩ ⟨b, m⟩ hpq
-    rcases eq_or_ne n 0 with hn | hn
-    · rcases eq_or_ne m 0 with hm | hm
-      · subst hn; subst hm
-        have hab : a ≠ b := fun h => hpq (by rw [h])
-        have hab' : π.symm a ≠ π.symm b := fun h => hab (π.symm.injective h)
-        simp [hJdef, hab']
-      · simp [hJdef, hn, hm]
-    · simp [hJdef, hn]
-  have I_cover : (⋃ p, I p) = Set.univ := by
-    apply Set.eq_univ_of_forall
-    intro a
-    exact Set.mem_iUnion.mpr ⟨(a, 0), by simp [hIdef]⟩
-  have J_cover : (⋃ p, J p) = Set.univ := by
-    apply Set.eq_univ_of_forall
-    intro a
-    exact Set.mem_iUnion.mpr ⟨(π a, 0), by simp [hJdef]⟩
-  have hempty_pos : (0 : Cardinal.{u}) < lam := Cardinal.aleph0_pos.trans_le hlam0
-  have I_small : ∀ p, #(I p) < lam := by
-    rintro ⟨a, n⟩
-    rcases eq_or_ne n 0 with hn | hn
-    · have hset : I (a, n) = ({a} : Set ι) := by simp [hIdef, hn]
-      rw [hset, Cardinal.mk_singleton]
-      exact lt_of_lt_of_le one_lt_aleph0 hlam0
-    · have hset : I (a, n) = (∅ : Set ι) := by simp [hIdef, hn]
-      rw [hset, Cardinal.mk_eq_zero]
-      exact hempty_pos
-  have J_small : ∀ p, #(J p) < lam := by
-    rintro ⟨a, n⟩
-    rcases eq_or_ne n 0 with hn | hn
-    · have hset : J (a, n) = ({π.symm a} : Set ι) := by simp [hJdef, hn]
-      rw [hset, Cardinal.mk_singleton]
-      exact lt_of_lt_of_le one_lt_aleph0 hlam0
-    · have hset : J (a, n) = (∅ : Set ι) := by simp [hJdef, hn]
-      rw [hset, Cardinal.mk_eq_zero]
-      exact hempty_pos
-  have v_limit : ∀ a : ι, v (a, 0) = 0 := fun _ => rfl
-  have hI : ∀ p, lsumOf (lam := lam) (I_small p) (fun i : I p => x i) = v p + u p := by
-    rintro ⟨a, n⟩
-    rcases eq_or_ne n 0 with hn | hn
-    · subst hn
-      letI : Unique ↥(I (a, 0)) := Set.uniqueSingleton a
-      show lsumOf (I_small (a, 0)) (fun i : I (a, 0) => x i) = 0 + x a
-      rw [lsumOf_unique (I_small (a, 0)) (fun i : I (a, 0) => x i), zero_add]
-      rfl
-    · letI : IsEmpty ↥(I (a, n)) := by
-        have hset : I (a, n) = (∅ : Set ι) := by simp [hIdef, hn]
-        rw [hset]; infer_instance
-      simp only [hvdef, hudef, if_neg hn, add_zero]
-      exact lsumOf_isEmpty (I_small (a, n)) (fun i : I (a, n) => x i)
-  have hJ : ∀ p, lsumOf (lam := lam) (J_small p) (fun j : J p => (x ∘ π) j) = v (bsucc p) + u p := by
-    rintro ⟨a, n⟩
-    rcases eq_or_ne n 0 with hn | hn
-    · subst hn
-      letI : Unique ↥(J (a, 0)) := Set.uniqueSingleton (π.symm a)
-      show lsumOf (J_small (a, 0)) (fun j : J (a, 0) => (x ∘ π) j) = 0 + x a
-      rw [lsumOf_unique (J_small (a, 0)) (fun j : J (a, 0) => (x ∘ π) j), zero_add]
-      show (x ∘ π) (π.symm a) = x a
-      simp
-    · letI : IsEmpty ↥(J (a, n)) := by
-        have hset : J (a, n) = (∅ : Set ι) := by simp [hJdef, hn]
-        rw [hset]; infer_instance
-      simp only [hvdef, hudef, if_neg hn, add_zero]
-      exact lsumOf_isEmpty (J_small (a, n)) (fun j : J (a, n) => (x ∘ π) j)
-  exact ⟨⟨I, J, I_disjoint, J_disjoint, I_cover, J_cover, I_small, J_small, u, v, v_limit, hI, hJ⟩⟩
+/-- The partition of the index type into singletons parked at the limit slots: `{f p.1}` at
+`(p.1, 0)` and nothing elsewhere, for a bijection `f`. -/
+def slot0 (f : ι → ι) (p : ι × ℕ) : Set ι := if p.2 = 0 then {f p.1} else ∅
 
-/-- Lemma 3.6(2), reflexivity. -/
-@[refl] theorem refl (x : ι → X) : IsBraided lam x x := by
-  simpa using of_perm x (Equiv.refl ι)
+@[simp] theorem slot0_zero (f : ι → ι) (a : ι) : slot0 f (a, 0) = {f a} := if_pos rfl
+
+@[simp] theorem slot0_succ (f : ι → ι) (a : ι) (n : ℕ) : slot0 f (a, n + 1) = ∅ :=
+  if_neg (Nat.succ_ne_zero n)
+
+theorem slot0_disjoint {f : ι → ι} (hf : Function.Injective f) :
+    ∀ p q : ι × ℕ, p ≠ q → Disjoint (slot0 f p) (slot0 f q) := by
+  rintro ⟨a, (_ | n)⟩ ⟨b, (_ | m)⟩ hpq
+  · rw [slot0_zero, slot0_zero, Set.disjoint_singleton]
+    exact fun h => hpq (by rw [hf h])
+  · rw [slot0_succ]; exact disjoint_bot_right
+  · rw [slot0_succ]; exact disjoint_bot_left
+  · rw [slot0_succ]; exact disjoint_bot_left
+
+theorem slot0_cover {f : ι → ι} (hf : Function.Surjective f) : (⋃ p, slot0 f p) = Set.univ := by
+  refine Set.eq_univ_of_forall fun i => Set.mem_iUnion.mpr ?_
+  obtain ⟨a, rfl⟩ := hf i
+  exact ⟨(a, 0), by rw [slot0_zero]; rfl⟩
+
+theorem slot0_small (hlam0 : ℵ₀ ≤ lam) (f : ι → ι) : ∀ p, #(slot0 f p) < lam := by
+  rintro ⟨a, (_ | n)⟩
+  · rw [slot0_zero, Cardinal.mk_singleton]; exact lt_of_lt_of_le one_lt_aleph0 hlam0
+  · rw [slot0_succ, Cardinal.mk_eq_zero]; exact Cardinal.aleph0_pos.trans_le hlam0
+
+theorem lsumOf_slot0 (hlam0 : ℵ₀ ≤ lam) (f : ι → ι) (x : ι → X) (p : ι × ℕ) :
+    lsumOf (lam := lam) (slot0_small hlam0 f p) (fun i : slot0 f p => x i)
+      = if p.2 = 0 then x (f p.1) else 0 := by
+  obtain ⟨a, (_ | n)⟩ := p
+  · letI : Unique ↥(slot0 f (a, 0)) := Set.uniqueSingleton (f a)
+    rw [lsumOf_unique (slot0_small hlam0 f (a, 0)) (fun i : slot0 f (a, 0) => x i), if_pos rfl]
+    rfl
+  · letI : IsEmpty ↥(slot0 f (a, n + 1)) := inferInstanceAs (IsEmpty (↥(∅ : Set ι)))
+    rw [lsumOf_isEmpty (slot0_small hlam0 f (a, n + 1)) (fun i => x i),
+      if_neg (Nat.succ_ne_zero n)]
 
 /-- The basic way of producing a braiding: if the two families admit indexed partitions of
 the index set into pieces of size `< λ` whose partial sums *agree piece by piece*, then they
@@ -306,6 +276,25 @@ theorem of_partition {x y : ι → X} (I J : ι × ℕ → Set ι)
      v_limit := fun _ => rfl
      hI := fun _ => (zero_add _).symm
      hJ := fun p => (heq p).symm.trans (zero_add _).symm }⟩
+
+/-- Lemma 3.6(1): a family is braided to any reindexing of itself along a bijection — take the
+partition into singletons on both sides. -/
+theorem of_perm (x : ι → X) (π : ι ≃ ι) : IsBraided lam x (x ∘ π) := by
+  have hlam0 : ℵ₀ ≤ lam := LMonoid.aleph0_le (lam := lam) (X := X)
+  refine of_partition (slot0 id) (slot0 π.symm)
+    (slot0_disjoint Function.injective_id) (slot0_disjoint π.symm.injective)
+    (slot0_cover Function.surjective_id) (slot0_cover π.symm.surjective)
+    (slot0_small hlam0 id) (slot0_small hlam0 π.symm) fun p => ?_
+  rw [lsumOf_slot0 hlam0 id x p, lsumOf_slot0 hlam0 π.symm (x ∘ π) p]
+  by_cases hp : p.2 = 0
+  · rw [if_pos hp, if_pos hp]
+    show x p.1 = x (π (π.symm p.1))
+    rw [Equiv.apply_symm_apply]
+  · rw [if_neg hp, if_neg hp]
+
+/-- Lemma 3.6(2), reflexivity. -/
+@[refl] theorem refl (x : ι → X) : IsBraided lam x x := by
+  simpa using of_perm x (Equiv.refl ι)
 
 /-- Lemma 3.6(2), symmetry.  Paper proof: shift the indices, replacing `(u, v)` by
 `u' μ = u μ + v (μ+1)`, `v' μ = 0` at limit elements and `u' μ = v (μ+1)`, `v' μ = u μ`
@@ -706,14 +695,7 @@ theorem of_aligned (d : BraidingData ℵ₀ x y) (e : BraidingData ℵ₀ y z)
   -- (F1)
   have F1 : ∀ p : ι × ℕ, ∑ᶠ j ∈ d.J (bsucc p), y j = s p + t p := by
     intro p
-    have hset : d.J (bsucc p)
-        = (e.I p ∩ d.J (bsucc p)) ∪ (d.J (bsucc p) ∩ e.I (bsucc p)) := by
-      apply Set.Subset.antisymm
-      · intro j hj
-        rcases h2 p hj with hj' | hj'
-        · exact Or.inl ⟨hj', hj⟩
-        · exact Or.inr ⟨hj, hj'⟩
-      · rintro j (⟨-, hj⟩ | ⟨hj, -⟩) <;> exact hj
+    have hset := eq_union_inter_of_subset_union (h2 p)
     have hdisj : Disjoint (e.I p ∩ d.J (bsucc p)) (d.J (bsucc p) ∩ e.I (bsucc p)) :=
       (e.I_disjoint p (bsucc p) (hnesucc p)).mono Set.inter_subset_left Set.inter_subset_right
     rw [hs p, ht p, ← finsum_mem_union hdisj ((eIfin p).inter_of_left _)
@@ -721,14 +703,7 @@ theorem of_aligned (d : BraidingData ℵ₀ x y) (e : BraidingData ℵ₀ y z)
   -- (F2)
   have F2 : ∀ p : ι × ℕ, ∑ᶠ j ∈ e.I (bsucc p), y j = t p + s (bsucc p) := by
     intro p
-    have hset : e.I (bsucc p)
-        = (d.J (bsucc p) ∩ e.I (bsucc p)) ∪ (e.I (bsucc p) ∩ d.J (bsucc (bsucc p))) := by
-      apply Set.Subset.antisymm
-      · intro j hj
-        rcases h1 (bsucc p) hj with hj' | hj'
-        · exact Or.inl ⟨hj', hj⟩
-        · exact Or.inr ⟨hj, hj'⟩
-      · rintro j (⟨-, hj⟩ | ⟨hj, -⟩) <;> exact hj
+    have hset := eq_union_inter_of_subset_union (h1 (bsucc p))
     have hdisj : Disjoint (d.J (bsucc p) ∩ e.I (bsucc p))
         (e.I (bsucc p) ∩ d.J (bsucc (bsucc p))) :=
       (d.J_disjoint (bsucc p) (bsucc (bsucc p)) (hnesucc (bsucc p))).mono
@@ -738,15 +713,7 @@ theorem of_aligned (d : BraidingData ℵ₀ x y) (e : BraidingData ℵ₀ y z)
   -- (F3)
   have F3 : ∀ a : ι, ∑ᶠ j ∈ e.I (a, 0), y j = (∑ᶠ j ∈ d.J (a, 0), y j) + s (a, 0) := by
     intro a
-    have hset : e.I (a, 0) = d.J (a, 0) ∪ (e.I (a, 0) ∩ d.J (bsucc (a, 0))) := by
-      apply Set.Subset.antisymm
-      · intro j hj
-        rcases h1 (a, 0) hj with hj' | hj'
-        · exact Or.inl hj'
-        · exact Or.inr ⟨hj, hj'⟩
-      · rintro j (hj | ⟨hj, -⟩)
-        · exact h3 a hj
-        · exact hj
+    have hset := eq_union_inter_of_subset_union' (h1 (a, 0)) (h3 a)
     have hdisj : Disjoint (d.J (a, 0)) (e.I (a, 0) ∩ d.J (bsucc (a, 0))) :=
       (d.J_disjoint (a, 0) (bsucc (a, 0)) (hnesucc (a, 0))).mono le_rfl Set.inter_subset_right
     rw [hs (a, 0), ← finsum_mem_union hdisj (dJfin (a, 0))
