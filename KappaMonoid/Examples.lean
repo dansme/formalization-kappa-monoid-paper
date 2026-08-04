@@ -119,6 +119,15 @@ noncomputable def instLMonoid (hlam : lam.IsRegular) : LMonoid lam (LCard lam) :
     letI := instLMonoid hlam
     ((0 : LCard lam) : Cardinal.{u}) = 0 := csum_isEmpty _
 
+/-- Cardinal scalar multiplication in `F_{λ⁻}` is multiplication of cardinals. -/
+theorem val_lcmul (hlam : lam.IsRegular) (α : Cardinal.{u}) (hα : α < lam) (c : LCard lam) :
+    letI := instLMonoid hlam
+    ((LMonoid.lcmul (lam := lam) α hα c : LCard lam) : Cardinal.{u})
+      = α * (c : Cardinal.{u}) := by
+  letI := instLMonoid hlam
+  show (Cardinal.sum fun _ : Idx α => ((c : LCard lam) : Cardinal.{u})) = _
+  rw [Cardinal.sum_const', mk_Idx]
+
 /-- Addition in `F_{λ⁻}` is addition of cardinals. -/
 theorem val_add (hlam : lam.IsRegular) (a b : LCard lam) :
     letI := instLMonoid hlam

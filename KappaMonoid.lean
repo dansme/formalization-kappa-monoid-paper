@@ -11,3 +11,4 @@ import KappaMonoid.Braiding
 import KappaMonoid.Universal
 import KappaMonoid.Modules
 import KappaMonoid.Examples
+import KappaMonoid.Free

@@ -466,6 +466,17 @@ theorem lsumOf_add {ι : Type u} (h : #ι < lam) (f g : ι → X) :
   funext p
   rcases p with i | i <;> rfl
 
+/-- Iterated sums may be interchanged: the `λ⁻` form of (A4). -/
+theorem lsumOf_comm {ι J : Type u} (hι : #ι < lam) (hJ : #J < lam) (x : ι → J → X) :
+    lsumOf (lam := lam) hι (fun i => lsumOf (lam := lam) hJ (x i))
+      = lsumOf (lam := lam) hJ fun j => lsumOf (lam := lam) hι fun i => x i j := by
+  have hσ1 : #((_ : ι) × J) < lam := mk_sigma_lt (isRegular' (X := X)) hι fun _ => hJ
+  have hσ2 : #((_ : J) × ι) < lam := mk_sigma_lt (isRegular' (X := X)) hJ fun _ => hι
+  rw [lsumOf_sigma hι (fun _ => hJ) x hσ1, lsumOf_sigma hJ (fun _ => hι) (fun j i => x i j) hσ2,
+    lsumOf_equiv hσ2 hσ1 ((Equiv.sigmaEquivProd ι J).trans
+      ((Equiv.prodComm ι J).trans (Equiv.sigmaEquivProd J ι).symm))]
+  congr 1
+
 /-! ### Sums over subsets -/
 
 /-- Terms with value `0` may be discarded. -/
@@ -1259,6 +1270,87 @@ def addCommMonoidOfClosed {H : Type v} [AddCommMonoid H] {S : Set H} (h0 : (0 : 
   inferInstanceAs (AddCommMonoid
     ↥({ carrier := S, add_mem' := fun {a b} ha hb => hadd a ha b hb, zero_mem' := h0 } :
       AddSubmonoid H))
+
+/-- A homomorphism of `λ⁻`-monoids: a map commuting with all `λ⁻`-sums.  It automatically
+preserves `0`, the empty sum (`IsLMonoidHom.map_zero`). -/
+def IsLMonoidHom (lam : Cardinal.{u}) {X : Type v} {Y : Type w} [LMonoid lam X] [LMonoid lam Y]
+    (f : X → Y) : Prop :=
+  ∀ {ι : Type u} (h : #ι < lam) (x : ι → X),
+    f (LMonoid.lsumOf (lam := lam) h x) = LMonoid.lsumOf (lam := lam) h (f ∘ x)
+
+namespace IsLMonoidHom
+
+variable {lam : Cardinal.{u}} {X : Type v} {Y : Type w} [LMonoid lam X] [LMonoid lam Y]
+  {f : X → Y}
+
+/-- A homomorphism preserves `0`, being the empty sum. -/
+theorem map_zero (hf : IsLMonoidHom lam f) : f 0 = 0 := by
+  have hE : #PEmpty.{u + 1} < lam := LMonoid.mk_lt_finite (X := X) _
+  have h := hf hE (PEmpty.elim : PEmpty.{u + 1} → X)
+  rwa [LMonoid.lsumOf_isEmpty hE, LMonoid.lsumOf_isEmpty hE] at h
+
+/-- A homomorphism preserves `+`, a two-term sum. -/
+theorem map_add (hf : IsLMonoidHom lam f) (a b : X) : f (a + b) = f a + f b := by
+  have hUB : #(ULift.{u} Bool) < lam := LMonoid.mk_uLift_bool_lt (X := X)
+  have h := hf hUB (fun p : ULift.{u} Bool => if p.down then a else b)
+  rw [LMonoid.lsumOf_two a b hUB] at h
+  rw [h, show (f ∘ fun p : ULift.{u} Bool => if p.down then a else b)
+      = fun p : ULift.{u} Bool => if p.down then f a else f b from
+    funext fun p => by obtain ⟨(_ | _)⟩ := p <;> rfl]
+  exact LMonoid.lsumOf_two (f a) (f b) hUB
+
+/-- A homomorphism preserves cardinal scalar multiplication, which is a sum. -/
+theorem map_lcmul (hf : IsLMonoidHom lam f) {α : Cardinal.{u}} (hα : α < lam) (x : X) :
+    f (LMonoid.lcmul (lam := lam) α hα x) = LMonoid.lcmul (lam := lam) α hα (f x) :=
+  hf _ (fun _ : Idx α => x)
+
+end IsLMonoidHom
+
+/-- A `λ⁻`-submonoid of a `λ⁻`-monoid: a subset containing `0` and closed under `λ⁻`-sums. -/
+structure IsLSubmonoid (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] (S : Set X) : Prop where
+  /-- A `λ⁻`-submonoid contains `0`. -/
+  zero_mem : (0 : X) ∈ S
+  /-- A `λ⁻`-submonoid is closed under `λ⁻`-sums. -/
+  lsumOf_mem : ∀ {ι : Type u} (h : #ι < lam) (x : ι → X), (∀ i, x i ∈ S) →
+    LMonoid.lsumOf (lam := lam) h x ∈ S
+
+namespace IsLSubmonoid
+
+variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {S : Set X}
+
+/-- A `λ⁻`-submonoid is closed under `+`, being closed under two-term sums. -/
+theorem add_mem (hS : IsLSubmonoid lam S) {a b : X} (ha : a ∈ S) (hb : b ∈ S) : a + b ∈ S := by
+  have hUB : #(ULift.{u} Bool) < lam := LMonoid.mk_uLift_bool_lt (X := X)
+  have hmem := hS.lsumOf_mem hUB (fun p : ULift.{u} Bool => if p.down then a else b)
+    (by rintro ⟨(_ | _)⟩ <;> simpa)
+  rwa [LMonoid.lsumOf_two a b hUB] at hmem
+
+/-- A `λ⁻`-submonoid of a `λ⁻`-monoid is itself a `λ⁻`-monoid. -/
+@[instance_reducible]
+noncomputable def lmonoid (hS : IsLSubmonoid lam S) : LMonoid lam ↥S :=
+  letI acm : AddCommMonoid ↥S :=
+    addCommMonoidOfClosed hS.zero_mem fun _ ha _ hb => hS.add_mem ha hb
+  { toAddCommMonoid := acm
+    isRegular := LMonoid.isRegular' (X := X)
+    lsumOf := fun {ι} h x =>
+      ⟨LMonoid.lsumOf (lam := lam) h fun i => (x i : X), hS.lsumOf_mem h _ fun i => (x i).2⟩
+    lsumOf_congr := fun h h' e x =>
+      Subtype.ext (LMonoid.lsumOf_congr h h' e fun i => (x i : X))
+    lsumOf_unique := fun h x => Subtype.ext (LMonoid.lsumOf_unique h fun i => (x i : X))
+    lsumOf_sigma := fun h hρ x hσ =>
+      Subtype.ext (LMonoid.lsumOf_sigma h hρ (fun i j => (x i j : X)) hσ)
+    add_eq_lsumOf := fun h a b => Subtype.ext (by
+      show (a : X) + (b : X) = LMonoid.lsumOf (lam := lam) h _
+      rw [LMonoid.add_eq_lsumOf (lam := lam) h (a : X) (b : X)]
+      exact congrArg _ (funext fun p => by rcases p with p | p <;> rfl)) }
+
+/-- The inclusion of a `λ⁻`-submonoid preserves `λ⁻`-sums. -/
+theorem coe_lsumOf (hS : IsLSubmonoid lam S) {ι : Type u} (h : #ι < lam) (x : ι → S) :
+    letI := hS.lmonoid
+    ((LMonoid.lsumOf (lam := lam) h x : S) : X)
+      = LMonoid.lsumOf (lam := lam) h fun i => (x i : X) := rfl
+
+end IsLSubmonoid
 
 /-- A subset of a `κ`-monoid closed under `λ⁻`-sums. -/
 structure IsLSubset (lam : Cardinal.{u}) {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
