@@ -570,6 +570,38 @@ noncomputable def ofLE {lam₁ lam₂ : Cardinal.{u}} {Y : Type v} [LMonoid lam�
     letI := ofLE (Y := Y) hlam hle
     lsumOf (lam := lam₁) h x = lsumOf (lam := lam₂) (h.trans_le hle) x := rfl
 
+/-! ### Products
+
+The Cartesian product of `λ⁻`-monoids is a `λ⁻`-monoid with coordinatewise operations; this is
+the ambient monoid `F_κ^B` of the free objects of §2.1. -/
+
+/-- Coordinatewise summation data on a product of `λ⁻`-monoids. -/
+noncomputable def piSumData (lam : Cardinal.{u}) {B : Type w} (Y : B → Type v)
+    [∀ b, LMonoid lam (Y b)] (hlam : lam.IsRegular) : SumData lam (∀ b, Y b) where
+  isRegular := hlam
+  sum h x := fun b => lsumOf (lam := lam) h fun i => x i b
+  sum_congr h h' e x := funext fun b => lsumOf_congr h h' e fun i => x i b
+  sum_unique h x := funext fun b => lsumOf_unique h fun i => x i b
+  sum_sigma h hρ x hσ := funext fun b => lsumOf_sigma h hρ (fun i j => x i j b) hσ
+
+/-- A product of `λ⁻`-monoids is a `λ⁻`-monoid, with coordinatewise summation. -/
+@[instance_reducible]
+noncomputable def pi (lam : Cardinal.{u}) {B : Type w} (Y : B → Type v)
+    [∀ b, LMonoid lam (Y b)] (hlam : lam.IsRegular) : LMonoid lam (∀ b, Y b) :=
+  (piSumData lam Y hlam).toLMonoid' fun h a b => funext fun i => by
+    show a i + b i = lsumOf (lam := lam) h fun p => Sum.elim (fun _ => a) (fun _ => b) p i
+    rw [show (fun p : PUnit.{u + 1} ⊕ PUnit.{u + 1} => Sum.elim (fun _ => a) (fun _ => b) p i)
+        = Sum.elim (fun _ => a i) (fun _ => b i) from
+      funext fun p => by rcases p with p | p <;> rfl]
+    exact add_eq_lsumOf h (a i) (b i)
+
+/-- Sums in a product of `λ⁻`-monoids are computed coordinatewise. -/
+@[simp] theorem pi_lsumOf (lam : Cardinal.{u}) {B : Type w} (Y : B → Type v)
+    [∀ b, LMonoid lam (Y b)] (hlam : lam.IsRegular) {ι : Type u} (h : #ι < lam)
+    (x : ι → ∀ b, Y b) (b : B) :
+    letI := pi lam Y hlam
+    lsumOf (lam := lam) h x b = lsumOf (lam := lam) h fun i => x i b := rfl
+
 /-! ### Cardinal scalar multiplication (Definition 2.6, Lemma 2.7)
 
 The paper states Definition 2.6 and Lemma 2.7 for `κ`-monoids, and remarks at the end of §2.4
@@ -1333,6 +1365,20 @@ noncomputable def ofLE (H : Type v) [KMonoid κ H] {α : Cardinal.{u}} (hα0 : �
     (hακ : α ≤ κ) {ι : Type u} (h : #ι ≤ α) (x : ι → H) :
     letI := ofLE H hα0 hακ
     sumOf (κ := α) h x = sumOf (κ := κ) (h.trans hακ) x := rfl
+
+/-- A product of `κ`-monoids is a `κ`-monoid, with coordinatewise summation.  This is the
+`κ`-monoid `F_κ^B` of §2.1 when each factor is `F_κ`. -/
+@[instance_reducible]
+noncomputable def pi (κ : Cardinal.{u}) {B : Type w} (Y : B → Type v) [∀ b, KMonoid κ (Y b)]
+    (hκ : ℵ₀ ≤ κ) : KMonoid κ (∀ b, Y b) where
+  toLMonoid := LMonoid.pi (Order.succ κ) Y (Cardinal.isRegular_succ hκ)
+  aleph0_le := hκ
+
+/-- Sums in a product of `κ`-monoids are computed coordinatewise. -/
+@[simp] theorem pi_sumOf (κ : Cardinal.{u}) {B : Type w} (Y : B → Type v) [∀ b, KMonoid κ (Y b)]
+    (hκ : ℵ₀ ≤ κ) {ι : Type u} (h : #ι ≤ κ) (x : ι → ∀ b, Y b) (b : B) :
+    letI := pi κ Y hκ
+    sumOf (κ := κ) h x b = sumOf (κ := κ) h fun i => x i b := rfl
 
 end KMonoid
 

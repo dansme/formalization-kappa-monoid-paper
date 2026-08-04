@@ -73,37 +73,88 @@ theorem csum_le_of_le {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) {ι : Type u} (h
     _ ≤ κ * κ := mul_le_mul' hι le_rfl
     _ = κ := Cardinal.mul_eq_self hκ
 
-/-! ## Examples 2.3(3): the cardinals bounded by `κ` -/
+/-! ## Examples 2.3(3) and its `λ⁻` analogue: the cardinals below a bound
+
+Examples 2.3(3) is the `κ`-monoid `F_κ` of cardinals `≤ κ`; §2.4 uses the same construction for
+the `λ⁻`-monoid `F_{λ⁻}` of cardinals `< λ`.  Since `α ≤ κ ↔ α < κ⁺`, these are one type, and
+`Fcard κ` is by definition `LCard κ⁺`. -/
+
+/-- `F_{λ⁻}`, the `λ⁻`-monoid of all cardinals `< λ`. -/
+abbrev LCard (lam : Cardinal.{u}) : Type (u + 1) := {α : Cardinal.{u} // α < lam}
 
 /-- `F_κ`, the `κ`-monoid of all cardinals `≤ κ` (Examples 2.3(3)). -/
-abbrev Fcard (κ : Cardinal.{u}) : Type (u + 1) := {α : Cardinal.{u} // α ≤ κ}
+abbrev Fcard (κ : Cardinal.{u}) : Type (u + 1) := LCard (Order.succ κ)
+
+namespace LCard
+
+variable {lam : Cardinal.{u}}
+
+theorem ext {a b : LCard lam} (h : (a : Cardinal.{u}) = b) : a = b := Subtype.ext h
+
+/-- The summation data on `F_{λ⁻}`: cardinal summation, which stays `< λ` by regularity. -/
+noncomputable def sumData (hlam : lam.IsRegular) : SumData lam (LCard lam) where
+  isRegular := hlam
+  sum {ι} h x :=
+    ⟨Cardinal.sum fun i => (x i : Cardinal.{u}),
+      Cardinal.sum_lt_of_isRegular hlam h fun i => (x i).2⟩
+  sum_congr _ _ e x := ext (csum_congr e fun i => (x i : Cardinal.{u}))
+  sum_unique _ x := ext (csum_unique fun i => (x i : Cardinal.{u}))
+  sum_sigma _ _ x _ := ext (csum_sigma fun i j => (x i j : Cardinal.{u}))
+
+/-- The cardinals `< λ` form a `λ⁻`-monoid (the free `λ⁻`-monoid on one generator, §2.4).
+Its neutral element is the cardinal `0` and its addition is addition of cardinals; both are
+*derived* from `Σ` by Lemma 2.5, see `val_zero` and `val_add`. -/
+@[instance_reducible]
+noncomputable def instLMonoid (hlam : lam.IsRegular) : LMonoid lam (LCard lam) :=
+  (sumData hlam).toLMonoid
+
+/-- The `λ⁻`-sum on `F_{λ⁻}` is cardinal summation. -/
+@[simp] theorem val_lsumOf (hlam : lam.IsRegular) {ι : Type u} (h : #ι < lam) (x : ι → LCard lam) :
+    letI := instLMonoid hlam
+    ((LMonoid.lsumOf (lam := lam) h x : LCard lam) : Cardinal.{u})
+      = Cardinal.sum fun i => (x i : Cardinal.{u}) := rfl
+
+/-- The neutral element of `F_{λ⁻}` is the cardinal `0`. -/
+@[simp] theorem val_zero (hlam : lam.IsRegular) :
+    letI := instLMonoid hlam
+    ((0 : LCard lam) : Cardinal.{u}) = 0 := csum_isEmpty _
+
+/-- Addition in `F_{λ⁻}` is addition of cardinals. -/
+theorem val_add (hlam : lam.IsRegular) (a b : LCard lam) :
+    letI := instLMonoid hlam
+    ((a + b : LCard lam) : Cardinal.{u}) = (a : Cardinal.{u}) + b := by
+  letI := instLMonoid hlam
+  show Cardinal.sum (fun p : PUnit.{u + 1} ⊕ PUnit.{u + 1} =>
+      ((Sum.elim (fun _ => a) (fun _ => b) p : LCard lam) : Cardinal.{u})) = _
+  rw [show (fun p : PUnit.{u + 1} ⊕ PUnit.{u + 1} =>
+        ((Sum.elim (fun _ => a) (fun _ => b) p : LCard lam) : Cardinal.{u}))
+      = Sum.elim (fun _ => (a : Cardinal.{u})) (fun _ => (b : Cardinal.{u})) from
+    funext fun p => by rcases p with p | p <;> rfl]
+  exact csum_pair _ _
+
+end LCard
 
 namespace Fcard
 
 variable {κ : Cardinal.{u}}
 
-instance : Zero (Fcard κ) := ⟨⟨0, zero_le⟩⟩
+/-- The elements of `F_κ` are the cardinals `≤ κ`, as in the paper. -/
+theorem lt_iff_le {α : Cardinal.{u}} : α < Order.succ κ ↔ α ≤ κ := Order.lt_succ_iff
 
-@[simp] theorem val_zero : ((0 : Fcard κ) : Cardinal.{u}) = 0 := rfl
+/-- The element of `F_κ` given by a cardinal `α ≤ κ`. -/
+def mk (α : Cardinal.{u}) (h : α ≤ κ) : Fcard κ := ⟨α, lt_iff_le.mpr h⟩
+
+@[simp] theorem val_mk (α : Cardinal.{u}) (h : α ≤ κ) : ((mk α h : Fcard κ) : Cardinal.{u}) = α :=
+  rfl
+
+theorem le (a : Fcard κ) : (a : Cardinal.{u}) ≤ κ := lt_iff_le.mp a.2
 
 theorem ext {a b : Fcard κ} (h : (a : Cardinal.{u}) = b) : a = b := Subtype.ext h
-
-/-- The summation data on `F_κ`: cardinal summation, which stays `≤ κ` by `csum_le_of_le`. -/
-noncomputable def sumData (hκ : ℵ₀ ≤ κ) : SumData (Order.succ κ) (Fcard κ) where
-  isRegular := Cardinal.isRegular_succ hκ
-  sum {ι} h x :=
-    ⟨Cardinal.sum fun i => (x i : Cardinal.{u}),
-      csum_le_of_le hκ (KMonoid.le_of_lt_succ h) fun i => (x i).2⟩
-  sum_congr _ _ e x := ext (csum_congr e fun i => (x i : Cardinal.{u}))
-  sum_unique _ x := ext (csum_unique fun i => (x i : Cardinal.{u}))
-  sum_sigma _ _ x _ := ext (csum_sigma fun i j => (x i j : Cardinal.{u}))
-
-theorem sumData_zero (hκ : ℵ₀ ≤ κ) : (sumData hκ).zero = 0 := ext (csum_isEmpty _)
 
 /-- **Examples 2.3(3)**: the cardinals `≤ κ` form a `κ`-monoid. -/
 @[instance_reducible]
 noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ (Fcard κ) where
-  toLMonoid := (sumData hκ).toLMonoidOfZero (sumData_zero hκ)
+  toLMonoid := LCard.instLMonoid (Cardinal.isRegular_succ hκ)
   aleph0_le := hκ
 
 /-- The `κ`-sum on `F_κ` is cardinal summation. -/
@@ -112,22 +163,16 @@ noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ (Fcard κ) wher
     ((KMonoid.sumOf (κ := κ) h x : Fcard κ) : Cardinal.{u})
       = Cardinal.sum fun i => (x i : Cardinal.{u}) := rfl
 
+/-- The neutral element of `F_κ` is the cardinal `0`. -/
+@[simp] theorem instKMonoid_zero (hκ : ℵ₀ ≤ κ) :
+    letI := instKMonoid hκ
+    ((0 : Fcard κ) : Cardinal.{u}) = 0 := LCard.val_zero _
+
 /-- Addition on `F_κ` is addition of cardinals. -/
 theorem instKMonoid_add (hκ : ℵ₀ ≤ κ) (a b : Fcard κ) :
     letI := instKMonoid hκ
-    ((a + b : Fcard κ) : Cardinal.{u}) = (a : Cardinal.{u}) + b := by
-  letI := instKMonoid hκ
-  have hu : #PUnit.{u + 1} ≤ κ := KMonoid.mk_le_of_finite (H := Fcard κ) _
-  have hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) ≤ κ := KMonoid.mk_sum_le (H := Fcard κ) hu hu
-  rw [LMonoid.add_eq_lsumOf (lam := Order.succ κ) (KMonoid.lt_succ hPP) a b]
-  show Cardinal.sum (fun p : PUnit.{u + 1} ⊕ PUnit.{u + 1} =>
-      ((Sum.elim (fun _ => a) (fun _ => b) p : Fcard κ) : Cardinal.{u}))
-    = (a : Cardinal.{u}) + b
-  rw [show (fun p : PUnit.{u + 1} ⊕ PUnit.{u + 1} =>
-        ((Sum.elim (fun _ => a) (fun _ => b) p : Fcard κ) : Cardinal.{u}))
-      = Sum.elim (fun _ => (a : Cardinal.{u})) (fun _ => (b : Cardinal.{u})) from
-    funext fun p => by rcases p with p | p <;> rfl]
-  exact csum_pair _ _
+    ((a + b : Fcard κ) : Cardinal.{u}) = (a : Cardinal.{u}) + b :=
+  LCard.val_add _ a b
 
 end Fcard
 
