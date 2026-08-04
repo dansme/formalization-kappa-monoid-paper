@@ -1060,6 +1060,21 @@ theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type u) [LMo
   exact ⟨UnivExt lam κ X, inst, UnivExt.of i₀, UnivExt.of_injective hlam hlk hred i₀, hbraided,
     hbraided.isUniversalKExtension hlk⟩
 
+/-- **Theorem 3.11** for `λ > ℵ₀`, exactly as printed in the paper: there the hypothesis added
+to `theorem_3_11` is automatic, since a `λ⁻`-monoid with `ℵ₀ < λ` is reduced by
+`LMonoid.isConical` (the analogue of Lemma 2.8(1) for `λ⁻`-monoids).
+
+So the deviation from the paper is confined to `λ = ℵ₀`, where a `λ⁻`-monoid is an arbitrary
+commutative monoid and the hypothesis is genuinely necessary — see
+`isConical_of_isUniversalKExtension` and the counterexample `ℤ` below. -/
+theorem theorem_3_11_of_aleph0_lt (hlam : lam.IsRegular) (hlk : lam ≤ κ) (hlam0 : ℵ₀ < lam)
+    (X : Type u) [LMonoid lam X] :
+    ∃ (Hh : Type u) (_ : KMonoid κ Hh) (f : X → Hh),
+      Function.Injective f ∧
+      IsBraidedOver lam κ X Hh hlk f ∧
+      IsUniversalKExtension lam κ X Hh hlk f :=
+  theorem_3_11 hlam hlk X (LMonoid.isConical hlam0)
+
 /-- Conversely, a `λ⁻`-monoid admitting a universal `κ`-extension into which it embeds must
 be reduced; so the hypothesis added in `theorem_3_11` cannot be dropped. -/
 theorem isConical_of_isUniversalKExtension {X : Type v} {Hh : Type w}
