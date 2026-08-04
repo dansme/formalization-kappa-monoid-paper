@@ -316,6 +316,23 @@ noncomputable def toLMonoidOfZero [Zero X] (h0 : S.zero = 0) : LMonoid lam X :=
 
 end SumData
 
+/-! ## Reducedness -/
+
+/-- A commutative monoid is *reduced* (or *conical*) if `a + b = 0` forces `a = b = 0`. -/
+def IsConical (X : Type v) [AddCommMonoid X] : Prop :=
+  ∀ a b : X, a + b = 0 → a = 0 ∧ b = 0
+
+/-- A cardinal sum over a two-point index type. -/
+theorem csum_pair' (α β : Cardinal.{u}) :
+    Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α) fun _ : PUnit.{u + 1} => β) = α + β := by
+  have hone : ∀ γ : Cardinal.{u}, (Cardinal.sum fun _ : PUnit.{u + 1} => #γ.out) = γ := fun γ => by
+    rw [Cardinal.sum_const', Cardinal.mk_eq_one PUnit.{u + 1}, one_mul, Cardinal.mk_out]
+  have h1 : Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α) fun _ : PUnit.{u + 1} => β)
+      = #((_ : PUnit.{u + 1}) × α.out ⊕ (_ : PUnit.{u + 1}) × β.out) :=
+    Cardinal.mk_congr (Equiv.sumSigmaDistrib _)
+  rw [h1, Cardinal.mk_sum, Cardinal.mk_sigma, Cardinal.mk_sigma, hone, hone,
+    Cardinal.lift_id, Cardinal.lift_id]
+
 namespace LMonoid
 
 variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
@@ -553,6 +570,184 @@ noncomputable def ofLE {lam₁ lam₂ : Cardinal.{u}} {Y : Type v} [LMonoid lam�
     letI := ofLE (Y := Y) hlam hle
     lsumOf (lam := lam₁) h x = lsumOf (lam := lam₂) (h.trans_le hle) x := rfl
 
+/-! ### Cardinal scalar multiplication (Definition 2.6, Lemma 2.7)
+
+The paper states Definition 2.6 and Lemma 2.7 for `κ`-monoids, and remarks at the end of §2.4
+that the analogues hold for `λ⁻`-monoids with all cardinals taken `< λ`.  They are proved here
+in that generality; `KMonoid.cmul` and its lemmas are the special case `λ = κ⁺`. -/
+
+/-- **Definition 2.6** for `λ⁻`-monoids: `lcmul α x` is the sum of `α` many copies of `x`. -/
+noncomputable def lcmul (α : Cardinal.{u}) (hα : α < lam) (x : X) : X :=
+  lsumOf (lam := lam) (lt_of_eq_of_lt (mk_Idx α) hα) fun _ : Idx α => x
+
+theorem lcmul_congr {α β : Cardinal.{u}} (h : α = β) (hα : α < lam) (hβ : β < lam) (x : X) :
+    lcmul (lam := lam) α hα x = lcmul (lam := lam) β hβ x := by subst h; rfl
+
+/-- **Lemma 2.7(1)**, first half. -/
+@[simp] theorem lcmul_zero_cardinal (h0 : (0 : Cardinal.{u}) < lam) (x : X) :
+    lcmul (lam := lam) 0 h0 x = 0 := by
+  have : IsEmpty (Idx (0 : Cardinal.{u})) := Cardinal.mk_eq_zero_iff.mp (mk_Idx 0)
+  exact lsumOf_isEmpty _ _
+
+/-- **Lemma 2.7(1)**, second half. -/
+@[simp] theorem lcmul_one (h1 : (1 : Cardinal.{u}) < lam) (x : X) :
+    lcmul (lam := lam) 1 h1 x = x := by
+  have hsub : Subsingleton (Idx (1 : Cardinal.{u})) :=
+    Cardinal.le_one_iff_subsingleton.mp (le_of_eq (mk_Idx 1))
+  have hne : Nonempty (Idx (1 : Cardinal.{u})) := by
+    rw [← Cardinal.mk_ne_zero_iff, mk_Idx]; exact one_ne_zero
+  letI : Unique (Idx (1 : Cardinal.{u})) := uniqueOfSubsingleton hne.some
+  exact lsumOf_unique _ _
+
+/-- `α` many copies of `0` sum to `0`. -/
+@[simp] theorem lcmul_zero (α : Cardinal.{u}) (hα : α < lam) :
+    lcmul (lam := lam) (X := X) α hα 0 = 0 := lsumOf_zero _
+
+/-- **Lemma 2.7(2)**. -/
+theorem lcmul_lsumOf_cardinal {I : Type u} (hI : #I < lam) (l : I → Cardinal.{u})
+    (hl : ∀ i, l i < lam) (hsum : Cardinal.sum l < lam) (x : X) :
+    lcmul (lam := lam) (Cardinal.sum l) hsum x
+      = lsumOf (lam := lam) hI fun i => lcmul (lam := lam) (l i) (hl i) x := by
+  have hρ : ∀ i, #(Idx (l i)) < lam := fun i => lt_of_eq_of_lt (mk_Idx (l i)) (hl i)
+  have hmk : #((i : I) × Idx (l i)) = Cardinal.sum l := by
+    rw [mk_sigma]; exact congrArg _ (funext fun i => mk_Idx (l i))
+  have hσ : #((i : I) × Idx (l i)) < lam := lt_of_eq_of_lt hmk hsum
+  obtain ⟨Ψ⟩ := Cardinal.eq.mp (hmk.trans (mk_Idx (Cardinal.sum l)).symm)
+  calc lcmul (lam := lam) (Cardinal.sum l) hsum x
+      = lsumOf (lam := lam) hσ (fun _ : (i : I) × Idx (l i) => x) :=
+        lsumOf_equiv (lt_of_eq_of_lt (mk_Idx (Cardinal.sum l)) hsum) hσ Ψ (fun _ => x)
+    _ = lsumOf (lam := lam) hI (fun i => lcmul (lam := lam) (l i) (hl i) x) :=
+        (lsumOf_sigma hI hρ (fun i (_ : Idx (l i)) => x) hσ).symm
+
+/-- **Lemma 2.7(3)**. -/
+theorem lcmul_lsumOf {I : Type u} (hI : #I < lam) (α : Cardinal.{u}) (hα : α < lam) (x : I → X) :
+    lcmul (lam := lam) α hα (lsumOf (lam := lam) hI x)
+      = lsumOf (lam := lam) hI fun i => lcmul (lam := lam) α hα (x i) := by
+  have hα' : #(Idx α) < lam := lt_of_eq_of_lt (mk_Idx α) hα
+  have hσ1 : #((_ : Idx α) × I) < lam := mk_sigma_lt (isRegular' (X := X)) hα' fun _ => hI
+  have hσ2 : #((_ : I) × Idx α) < lam := mk_sigma_lt (isRegular' (X := X)) hI fun _ => hα'
+  have stepA : lcmul (lam := lam) α hα (lsumOf (lam := lam) hI x)
+      = lsumOf (lam := lam) hσ1 (fun p : (_ : Idx α) × I => x p.2) :=
+    lsumOf_sigma hα' (fun _ => hI) (fun (_ : Idx α) (i : I) => x i) hσ1
+  have stepB : lsumOf (lam := lam) hI (fun i => lcmul (lam := lam) α hα (x i))
+      = lsumOf (lam := lam) hσ2 (fun q : (_ : I) × Idx α => x q.1) :=
+    lsumOf_sigma hI (fun _ => hα') (fun (i : I) (_ : Idx α) => x i) hσ2
+  have stepC : lsumOf (lam := lam) hσ2 (fun q : (_ : I) × Idx α => x q.1)
+      = lsumOf (lam := lam) hσ1 (fun p : (_ : Idx α) × I => x p.2) :=
+    lsumOf_equiv hσ2 hσ1 ((Equiv.sigmaEquivProd (Idx α) I).trans
+      ((Equiv.prodComm (Idx α) I).trans (Equiv.sigmaEquivProd I (Idx α)).symm)) _
+  rw [stepA, stepB, stepC]
+
+/-- **Lemma 2.7(2)** for a two-term sum of cardinals. -/
+theorem lcmul_add {α β : Cardinal.{u}} (hα : α < lam) (hβ : β < lam) (hαβ : α + β < lam) (x : X) :
+    lcmul (lam := lam) (α + β) hαβ x
+      = lcmul (lam := lam) α hα x + lcmul (lam := lam) β hβ x := by
+  have hu : #PUnit.{u + 1} < lam := mk_lt_finite (X := X) _
+  have hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam := mk_sum_lt (isRegular' (X := X)) hu hu
+  have hcast : ∀ p : PUnit.{u + 1} ⊕ PUnit.{u + 1},
+      Sum.elim (fun _ : PUnit.{u + 1} => α) (fun _ : PUnit.{u + 1} => β) p < lam := by
+    rintro (p | p)
+    · exact hα
+    · exact hβ
+  have hsum := csum_pair' α β
+  calc lcmul (lam := lam) (α + β) hαβ x
+      = lcmul (lam := lam) (Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α)
+          fun _ : PUnit.{u + 1} => β)) (lt_of_eq_of_lt hsum hαβ) x := lcmul_congr hsum.symm _ _ x
+    _ = lsumOf (lam := lam) hPP (fun p => lcmul (lam := lam) _ (hcast p) x) :=
+        lcmul_lsumOf_cardinal hPP _ hcast (lt_of_eq_of_lt hsum hαβ) x
+    _ = lcmul (lam := lam) α hα x + lcmul (lam := lam) β hβ x := by
+        rw [show (fun p => lcmul (lam := lam) _ (hcast p) x)
+            = Sum.elim (fun _ : PUnit.{u + 1} => lcmul (lam := lam) α hα x)
+              (fun _ : PUnit.{u + 1} => lcmul (lam := lam) β hβ x) from
+          funext fun p => by rcases p with p | p <;> rfl,
+          lsumOf_sumType hu hu hPP, lsumOf_unique, lsumOf_unique]
+
+/-- Iterated scaling: `α` copies of `β` copies of `x` is `α * β` copies of `x`. -/
+theorem lcmul_lcmul {α β : Cardinal.{u}} (hα : α < lam) (hβ : β < lam) (hαβ : α * β < lam)
+    (x : X) :
+    lcmul (lam := lam) α hα (lcmul (lam := lam) β hβ x) = lcmul (lam := lam) (α * β) hαβ x := by
+  have hα' : #(Idx α) < lam := lt_of_eq_of_lt (mk_Idx α) hα
+  have hβ' : #(Idx β) < lam := lt_of_eq_of_lt (mk_Idx β) hβ
+  have hmk : #((_ : Idx α) × Idx β) = α * β := by
+    rw [Cardinal.mk_congr (Equiv.sigmaEquivProd (Idx α) (Idx β)), Cardinal.mk_prod, mk_Idx,
+      mk_Idx, Cardinal.lift_id, Cardinal.lift_id]
+  have hσ : #((_ : Idx α) × Idx β) < lam := lt_of_eq_of_lt hmk hαβ
+  obtain ⟨Ψ⟩ := Cardinal.eq.mp (hmk.trans (mk_Idx (α * β)).symm)
+  calc lcmul (lam := lam) α hα (lcmul (lam := lam) β hβ x)
+      = lsumOf (lam := lam) hσ (fun _ : (_ : Idx α) × Idx β => x) :=
+        lsumOf_sigma hα' (fun _ => hβ') (fun (_ : Idx α) (_ : Idx β) => x) hσ
+    _ = lcmul (lam := lam) (α * β) hαβ x :=
+        (lsumOf_equiv (lt_of_eq_of_lt (mk_Idx (α * β)) hαβ) hσ Ψ fun _ => x).symm
+
+/-- The remark after **Definition 2.6**: for an infinite `α < λ`, adding one more copy of `x` to
+`α` many copies of `x` does not change the value.  Immediate from `lcmul_add` and `1 + α = α`. -/
+theorem add_lcmul_self {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α < lam) (x : X) :
+    x + lcmul (lam := lam) α hα x = lcmul (lam := lam) α hα x := by
+  have h1 : (1 : Cardinal.{u}) < lam := lt_of_lt_of_le one_lt_aleph0 (aleph0_le (X := X))
+  have hsum : (1 : Cardinal.{u}) + α = α := Cardinal.add_eq_right hα0 (one_le_aleph0.trans hα0)
+  calc x + lcmul (lam := lam) α hα x
+      = lcmul (lam := lam) 1 h1 x + lcmul (lam := lam) α hα x := by rw [lcmul_one]
+    _ = lcmul (lam := lam) (1 + α) (lt_of_eq_of_lt hsum hα) x := (lcmul_add h1 hα _ x).symm
+    _ = lcmul (lam := lam) α hα x := lcmul_congr hsum _ _ x
+
+/-- Scaling distributes over `+` (a special case of **Lemma 2.7(3)**). -/
+theorem lcmul_distrib {α : Cardinal.{u}} (hα : α < lam) (a b : X) :
+    lcmul (lam := lam) α hα (a + b)
+      = lcmul (lam := lam) α hα a + lcmul (lam := lam) α hα b := by
+  have hUB : #(ULift.{u} Bool) < lam := mk_uLift_bool_lt (X := X)
+  rw [← lsumOf_two a b hUB,
+    lcmul_lsumOf hUB α hα (fun p : ULift.{u} Bool => if p.down then a else b),
+    show (fun p : ULift.{u} Bool => lcmul (lam := lam) α hα (if p.down then a else b))
+        = fun p : ULift.{u} Bool =>
+          if p.down then lcmul (lam := lam) α hα a else lcmul (lam := lam) α hα b from
+      funext fun p => by cases p.down <;> rfl]
+  exact lsumOf_two _ _ hUB
+
+/-! ### Reducedness (Lemma 2.8) -/
+
+/-- **Lemma 2.8(1)** for `λ⁻`-monoids: a `λ⁻`-monoid with `ℵ₀ < λ` is reduced.
+
+The paper's Eilenberg–Mazur swindle, run with `ℵ₀` in place of `κ`: if `x + y = 0` then
+`x = x + ℵ₀·0 = x + ℵ₀(x+y) = (x + ℵ₀x) + ℵ₀y = ℵ₀x + ℵ₀y = ℵ₀(x+y) = 0`.
+
+The hypothesis `ℵ₀ < λ` cannot be dropped: an `ℵ₀⁻`-monoid is an arbitrary commutative
+monoid (`LMonoid.ofAddCommMonoid`), and `ℤ` is not reduced. -/
+theorem isConical (h : ℵ₀ < lam) : IsConical X := by
+  have key : ∀ x y : X, x + y = 0 → x = 0 := by
+    intro x y hxy
+    have hcz : lcmul (lam := lam) ℵ₀ h (0 : X) = 0 := lcmul_zero _ _
+    calc x = x + (0 : X) := (add_zero x).symm
+      _ = x + lcmul (lam := lam) ℵ₀ h 0 := by rw [hcz]
+      _ = x + lcmul (lam := lam) ℵ₀ h (x + y) := by rw [hxy]
+      _ = x + (lcmul (lam := lam) ℵ₀ h x + lcmul (lam := lam) ℵ₀ h y) := by rw [lcmul_distrib]
+      _ = (x + lcmul (lam := lam) ℵ₀ h x) + lcmul (lam := lam) ℵ₀ h y := (add_assoc _ _ _).symm
+      _ = lcmul (lam := lam) ℵ₀ h x + lcmul (lam := lam) ℵ₀ h y := by
+          rw [add_lcmul_self le_rfl h x]
+      _ = lcmul (lam := lam) ℵ₀ h (x + y) := (lcmul_distrib h x y).symm
+      _ = 0 := by rw [hxy, hcz]
+  exact fun x y hxy => ⟨key x y hxy, key y x (by rw [add_comm]; exact hxy)⟩
+
+/-- Scaling by an infinite cardinal is idempotent (since `α * α = α`). -/
+theorem lcmul_idem {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α < lam) (x : X) :
+    lcmul (lam := lam) α hα (lcmul (lam := lam) α hα x) = lcmul (lam := lam) α hα x := by
+  rw [lcmul_lcmul hα hα (lt_of_eq_of_lt (Cardinal.mul_eq_self hα0) hα) x]
+  exact lcmul_congr (Cardinal.mul_eq_self hα0) _ _ x
+
+/-- **Lemma 2.8(2)** for `λ⁻`-monoids. -/
+theorem add_lcmul_eq {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α < lam) {t₁ t₂ t₃ : X}
+    (h : t₁ + t₂ = lcmul (lam := lam) α hα t₃) :
+    t₁ + lcmul (lam := lam) α hα t₃ = lcmul (lam := lam) α hα t₃ := by
+  have hstep : lcmul (lam := lam) α hα (t₁ + t₂) = lcmul (lam := lam) α hα t₃ := by
+    rw [h]; exact lcmul_idem hα0 hα t₃
+  calc t₁ + lcmul (lam := lam) α hα t₃
+      = t₁ + lcmul (lam := lam) α hα (t₁ + t₂) := by rw [← hstep]
+    _ = t₁ + (lcmul (lam := lam) α hα t₁ + lcmul (lam := lam) α hα t₂) := by rw [lcmul_distrib]
+    _ = (t₁ + lcmul (lam := lam) α hα t₁) + lcmul (lam := lam) α hα t₂ := (add_assoc _ _ _).symm
+    _ = lcmul (lam := lam) α hα t₁ + lcmul (lam := lam) α hα t₂ := by
+        rw [add_lcmul_self hα0 hα t₁]
+    _ = lcmul (lam := lam) α hα (t₁ + t₂) := by rw [lcmul_distrib]
+    _ = lcmul (lam := lam) α hα t₃ := hstep
+
 end LMonoid
 
 
@@ -788,180 +983,80 @@ theorem ksum_extend (g : Idx κ ↪ Idx κ) (x : Idx κ → H) :
 
 end KMonoid
 
-/-! ## Reducedness -/
-
-/-- A commutative monoid is *reduced* (or *conical*) if `a + b = 0` forces `a = b = 0`. -/
-def IsConical (X : Type v) [AddCommMonoid X] : Prop :=
-  ∀ a b : X, a + b = 0 → a = 0 ∧ b = 0
-
 namespace KMonoid
 
-/-! ### Cardinal scalar multiplication (Definition 2.6, Lemma 2.7) -/
+/-! ### Cardinal scalar multiplication (Definition 2.6, Lemma 2.7)
+
+Definition 2.6, Lemma 2.7 and Lemma 2.8 are proved for `λ⁻`-monoids in `LMonoid`; what follows
+is the special case `λ = κ⁺`, in which `α < κ⁺` reads `α ≤ κ`. -/
 
 section Cmul
 
 variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
 
+/-- A cardinal is `≤ κ` exactly when it may index a `κ`-sum. -/
+theorem lt_succ_of_le {α κ : Cardinal.{u}} (h : α ≤ κ) : α < Order.succ κ := Order.lt_succ_iff.mpr h
+
+/-- `ℵ₀` may index a `κ`-sum. -/
+theorem aleph0_lt_succ (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] : ℵ₀ < Order.succ κ :=
+  lt_succ_of_le (aleph0_le (κ := κ) (H := H))
+
 /-- `cmul α x` is the sum of `α` many copies of `x` (Definition 2.6). -/
 noncomputable def cmul (α : Cardinal.{u}) (hα : α ≤ κ) (x : H) : H :=
-  sumOf (κ := κ) (le_of_eq_of_le (mk_Idx α) hα) fun _ : Idx α => x
+  LMonoid.lcmul (lam := Order.succ κ) α (lt_succ_of_le hα) x
 
-@[simp] theorem cmul_zero_cardinal (x : H) : cmul (κ := κ) 0 zero_le x = 0 := by
-  have : IsEmpty (Idx (0 : Cardinal.{u})) := Cardinal.mk_eq_zero_iff.mp (mk_Idx 0)
-  exact sumOf_of_isEmpty _ _
+theorem cmul_eq_lcmul (α : Cardinal.{u}) (hα : α ≤ κ) (x : H) :
+    cmul (κ := κ) α hα x = LMonoid.lcmul (lam := Order.succ κ) α (lt_succ_of_le hα) x := rfl
+
+@[simp] theorem cmul_zero_cardinal (x : H) : cmul (κ := κ) 0 zero_le x = 0 :=
+  LMonoid.lcmul_zero_cardinal (lam := Order.succ κ) _ x
 
 /-- Lemma 2.7(1), second half. -/
-@[simp] theorem cmul_one (h1 : (1 : Cardinal.{u}) ≤ κ) (x : H) : cmul (κ := κ) 1 h1 x = x := by
-  have hsub : Subsingleton (Idx (1 : Cardinal.{u})) :=
-    Cardinal.le_one_iff_subsingleton.mp (le_of_eq (mk_Idx 1))
-  have hne : Nonempty (Idx (1 : Cardinal.{u})) := by
-    rw [← Cardinal.mk_ne_zero_iff, mk_Idx]; exact one_ne_zero
-  letI : Unique (Idx (1 : Cardinal.{u})) := uniqueOfSubsingleton hne.some
-  exact sumOf_unique _ _
+@[simp] theorem cmul_one (h1 : (1 : Cardinal.{u}) ≤ κ) (x : H) : cmul (κ := κ) 1 h1 x = x :=
+  LMonoid.lcmul_one (lam := Order.succ κ) _ x
+
+theorem cmul_congr {α β : Cardinal.{u}} (h : α = β) (hα : α ≤ κ) (hβ : β ≤ κ) (x : H) :
+    cmul (κ := κ) α hα x = cmul (κ := κ) β hβ x :=
+  LMonoid.lcmul_congr (lam := Order.succ κ) h _ _ x
 
 /-- Lemma 2.7(2). -/
 theorem cmul_sumOf_cardinal {I : Type u} (hI : #I ≤ κ) (l : I → Cardinal.{u})
     (hl : ∀ i, l i ≤ κ) (hsum : Cardinal.sum l ≤ κ) (x : H) :
-    cmul (κ := κ) (Cardinal.sum l) hsum x = sumOf (κ := κ) hI fun i => cmul (κ := κ) (l i) (hl i) x := by
-  have hρ : ∀ i, #(Idx (l i)) ≤ κ := fun i => le_of_eq_of_le (mk_Idx (l i)) (hl i)
-  have hmk : #((i : I) × Idx (l i)) = Cardinal.sum l := by
-    rw [mk_sigma]; exact congrArg _ (funext fun i => mk_Idx (l i))
-  have hσ : #((i : I) × Idx (l i)) ≤ κ := le_of_eq_of_le hmk hsum
-  obtain ⟨Ψ⟩ := Cardinal.eq.mp (hmk.trans (mk_Idx (Cardinal.sum l)).symm)
-  calc cmul (κ := κ) (Cardinal.sum l) hsum x
-      = sumOf (κ := κ) hσ (fun _ : (i : I) × Idx (l i) => x) :=
-        sumOf_equiv (le_of_eq_of_le (mk_Idx (Cardinal.sum l)) hsum) hσ Ψ (fun _ => x)
-    _ = sumOf (κ := κ) hI (fun i => cmul (κ := κ) (l i) (hl i) x) :=
-        (sumOf_sigma hI hρ hσ fun i (_ : Idx (l i)) => x).symm
+    cmul (κ := κ) (Cardinal.sum l) hsum x
+      = sumOf (κ := κ) hI fun i => cmul (κ := κ) (l i) (hl i) x :=
+  LMonoid.lcmul_lsumOf_cardinal (lam := Order.succ κ) (lt_succ hI) l
+    (fun i => lt_succ_of_le (hl i)) (lt_succ_of_le hsum) x
 
 /-- Lemma 2.7(3). -/
 theorem cmul_sumOf {I : Type u} (hI : #I ≤ κ) (α : Cardinal.{u}) (hα : α ≤ κ) (x : I → H) :
     cmul (κ := κ) α hα (sumOf (κ := κ) hI x)
-      = sumOf (κ := κ) hI fun i => cmul (κ := κ) α hα (x i) := by
-  have hα' : #(Idx α) ≤ κ := le_of_eq_of_le (mk_Idx α) hα
-  have hσ1 : #((_ : Idx α) × I) ≤ κ := mk_sigma_le (H := H) hα' fun _ => hI
-  have hσ2 : #((_ : I) × Idx α) ≤ κ := mk_sigma_le (H := H) hI fun _ => hα'
-  have stepA : cmul (κ := κ) α hα (sumOf (κ := κ) hI x)
-      = sumOf (κ := κ) hσ1 (fun p : (_ : Idx α) × I => x p.2) :=
-    sumOf_sigma hα' (fun _ => hI) hσ1 fun (_ : Idx α) (i : I) => x i
-  have stepB : sumOf (κ := κ) hI (fun i => cmul (κ := κ) α hα (x i))
-      = sumOf (κ := κ) hσ2 (fun q : (_ : I) × Idx α => x q.1) :=
-    sumOf_sigma hI (fun _ => hα') hσ2 fun (i : I) (_ : Idx α) => x i
-  have stepC : sumOf (κ := κ) hσ2 (fun q : (_ : I) × Idx α => x q.1)
-      = sumOf (κ := κ) hσ1 (fun p : (_ : Idx α) × I => x p.2) :=
-    sumOf_equiv hσ2 hσ1 ((Equiv.sigmaEquivProd (Idx α) I).trans
-      ((Equiv.prodComm (Idx α) I).trans (Equiv.sigmaEquivProd I (Idx α)).symm)) _
-  rw [stepA, stepB, stepC]
-
-theorem cmul_congr {α β : Cardinal.{u}} (h : α = β) (hα : α ≤ κ) (hβ : β ≤ κ) (x : H) :
-    cmul (κ := κ) α hα x = cmul (κ := κ) β hβ x := by subst h; rfl
-
-/-- A cardinal sum over a two-point index type. -/
-theorem csum_pair' (α β : Cardinal.{u}) :
-    Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α) fun _ : PUnit.{u + 1} => β) = α + β := by
-  have hone : ∀ γ : Cardinal.{u}, (Cardinal.sum fun _ : PUnit.{u + 1} => #γ.out) = γ := fun γ => by
-    rw [Cardinal.sum_const', Cardinal.mk_eq_one PUnit.{u + 1}, one_mul, Cardinal.mk_out]
-  have h1 : Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α) fun _ : PUnit.{u + 1} => β)
-      = #((_ : PUnit.{u + 1}) × α.out ⊕ (_ : PUnit.{u + 1}) × β.out) :=
-    Cardinal.mk_congr (Equiv.sumSigmaDistrib _)
-  rw [h1, Cardinal.mk_sum, Cardinal.mk_sigma, Cardinal.mk_sigma, hone, hone,
-    Cardinal.lift_id, Cardinal.lift_id]
-
+      = sumOf (κ := κ) hI fun i => cmul (κ := κ) α hα (x i) :=
+  LMonoid.lcmul_lsumOf (lam := Order.succ κ) (lt_succ hI) α (lt_succ_of_le hα) x
 
 /-- Lemma 2.7(2) for a two-term sum of cardinals. -/
 theorem cmul_add {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hαβ : α + β ≤ κ) (x : H) :
-    cmul (κ := κ) (α + β) hαβ x = cmul (κ := κ) α hα x + cmul (κ := κ) β hβ x := by
-  have hu : #PUnit.{u + 1} ≤ κ := mk_le_of_finite (H := H) _
-  have hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) ≤ κ := mk_sum_le (H := H) hu hu
-  have hcast : ∀ p : PUnit.{u + 1} ⊕ PUnit.{u + 1},
-      Sum.elim (fun _ : PUnit.{u + 1} => α) (fun _ : PUnit.{u + 1} => β) p ≤ κ := by
-    rintro (p | p)
-    · exact hα
-    · exact hβ
-  have hsum := csum_pair' α β
-  calc cmul (κ := κ) (α + β) hαβ x
-      = cmul (κ := κ) (Cardinal.sum (Sum.elim (fun _ : PUnit.{u + 1} => α)
-          fun _ : PUnit.{u + 1} => β)) (le_of_eq_of_le hsum hαβ) x := cmul_congr hsum.symm _ _ x
-    _ = sumOf (κ := κ) hPP (fun p => cmul (κ := κ) _ (hcast p) x) :=
-        cmul_sumOf_cardinal hPP _ hcast (le_of_eq_of_le hsum hαβ) x
-    _ = cmul (κ := κ) α hα x + cmul (κ := κ) β hβ x := by
-        rw [show (fun p => cmul (κ := κ) _ (hcast p) x)
-            = Sum.elim (fun _ : PUnit.{u + 1} => cmul (κ := κ) α hα x)
-              (fun _ : PUnit.{u + 1} => cmul (κ := κ) β hβ x) from
-          funext fun p => by rcases p with p | p <;> rfl]
-        show LMonoid.lsumOf (lam := Order.succ κ) (lt_succ hPP) (Sum.elim _ _) = _
-        rw [LMonoid.lsumOf_sumType (lam := Order.succ κ) (lt_succ hu) (lt_succ hu) (lt_succ hPP)]
-        show sumOf (κ := κ) hu (fun _ : PUnit.{u + 1} => cmul (κ := κ) α hα x)
-            + sumOf (κ := κ) hu (fun _ : PUnit.{u + 1} => cmul (κ := κ) β hβ x) = _
-        rw [sumOf_unique, sumOf_unique]
+    cmul (κ := κ) (α + β) hαβ x = cmul (κ := κ) α hα x + cmul (κ := κ) β hβ x :=
+  LMonoid.lcmul_add (lam := Order.succ κ) (lt_succ_of_le hα) (lt_succ_of_le hβ)
+    (lt_succ_of_le hαβ) x
 
 /-! ### Reducedness (Lemma 2.8) -/
 
 /-- `κ`-many copies of `0` sum to `0`. -/
 theorem cmul_top_zero (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] :
-    cmul (κ := κ) κ le_rfl (0 : H) = 0 := sumOf_zero _
+    cmul (κ := κ) κ le_rfl (0 : H) = 0 :=
+  LMonoid.lcmul_zero (lam := Order.succ κ) (X := H) _ _
 
 /-- Scaling by `κ` distributes over `+`. -/
 theorem cmul_top_distrib (a b : H) :
-    cmul (κ := κ) κ le_rfl (a + b) = cmul (κ := κ) κ le_rfl a + cmul (κ := κ) κ le_rfl b := by
-  have hUB := mk_uLift_bool_le κ H
-  rw [← sumOf_two a b hUB,
-    cmul_sumOf hUB κ le_rfl (fun p : ULift.{u} Bool => if p.down then a else b)]
-  have hcongr : (fun p : ULift.{u} Bool => cmul (κ := κ) κ le_rfl (if p.down then a else b))
-      = fun p : ULift.{u} Bool =>
-        if p.down then cmul (κ := κ) κ le_rfl a else cmul (κ := κ) κ le_rfl b := by
-    funext p
-    cases p.down <;> rfl
-  rw [hcongr]
-  exact sumOf_two _ _ hUB
+    cmul (κ := κ) κ le_rfl (a + b) = cmul (κ := κ) κ le_rfl a + cmul (κ := κ) κ le_rfl b :=
+  LMonoid.lcmul_distrib (lam := Order.succ κ) _ a b
 
 /-- The remark after Definition 2.6: for an infinite cardinal `α`, adding one more copy of `z` to
 `α`-many copies of `z` does not change the value.  With `α = κ` this is the key idempotence step
 of the swindle proving Lemma 2.8(1). -/
 theorem add_cmul_self {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α ≤ κ) (z : H) :
-    z + cmul (κ := κ) α hα z = cmul (κ := κ) α hα z := by
-  have hidx : #(Idx α) ≤ κ := le_of_eq_of_le (mk_Idx α) hα
-  obtain ⟨j0⟩ := nonempty_Idx hα0
-  have : Infinite (Idx α) := infinite_Idx hα0
-  have hcompl : #(↥({j0}ᶜ : Set (Idx α))) = α :=
-    (mk_compl_of_infinite {j0} (by
-      rw [mk_singleton]
-      exact lt_of_lt_of_le one_lt_aleph0 (by rw [mk_Idx]; exact hα0))).trans (mk_Idx α)
-  set I : ULift.{u} Bool → Set (Idx α) := fun p => match p with
-    | ⟨true⟩ => ({j0} : Set (Idx α))
-    | ⟨false⟩ => {j0}ᶜ with hIdef
-  have hdisj : ∀ p q : ULift.{u} Bool, p ≠ q → Disjoint (I p) (I q) := by
-    rintro ⟨(_ | _)⟩ ⟨(_ | _)⟩ hpq
-    · exact absurd rfl hpq
-    · exact disjoint_compl_left
-    · exact disjoint_compl_right
-    · exact absurd rfl hpq
-  have hcover : (⋃ p, I p) = Set.univ := by
-    apply Set.eq_univ_of_forall
-    intro a
-    by_cases ha : a = j0
-    · exact Set.mem_iUnion.mpr ⟨⟨true⟩, ha⟩
-    · exact Set.mem_iUnion.mpr ⟨⟨false⟩, ha⟩
-  have hJ := mk_uLift_bool_le κ H
-  have hI : ∀ p : ULift.{u} Bool, #(I p) ≤ κ := by
-    rintro ⟨(_ | _)⟩
-    · exact hcompl.trans_le hα
-    · show #(({j0} : Set (Idx α))) ≤ κ
-      rw [mk_singleton]
-      exact one_le_aleph0.trans (hα0.trans hα)
-  have hmain := sumOf_biUnion I hdisj hcover hJ hidx hI (fun _ : Idx α => z)
-  have hleftcompl : sumOf (κ := κ) (hI (⟨false⟩ : ULift.{u} Bool))
-      (fun _ : I (⟨false⟩ : ULift.{u} Bool) => z) = cmul (κ := κ) α hα z := by
-    obtain ⟨Ψ⟩ := Cardinal.eq.mp (hcompl.trans (mk_Idx α).symm)
-    exact (sumOf_equiv hidx (hI (⟨false⟩ : ULift.{u} Bool)) Ψ fun _ => z).symm
-  have hleft : (fun p => sumOf (κ := κ) (hI p) (fun _ : I p => z))
-      = fun p : ULift.{u} Bool => if p.down then z else cmul (κ := κ) α hα z := by
-    funext p
-    match p with
-    | ⟨true⟩ => exact sumOf_unique (hI (⟨true⟩ : ULift.{u} Bool)) (fun _ => z)
-    | ⟨false⟩ => exact hleftcompl
-  rw [hleft, sumOf_two z (cmul (κ := κ) α hα z) hJ] at hmain
-  exact hmain
+    z + cmul (κ := κ) α hα z = cmul (κ := κ) α hα z :=
+  LMonoid.add_lcmul_self (lam := Order.succ κ) hα0 _ z
 
 /-- Lemma 2.8(2), the key idempotence step of the swindle: adding one more copy of `z` to
 `κ`-many copies of `z` does not change the value. -/
@@ -970,49 +1065,20 @@ theorem add_cmul_top_self (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] (z : H
   add_cmul_self (aleph0_le (κ := κ) (H := H)) le_rfl z
 
 /-- Lemma 2.8(1): a variant of the Eilenberg–Mazur swindle shows that every `κ`-monoid is
-reduced.
-
-Paper proof: if `x + y = 0` then
-`x = x + κ·0 = x + κ(x+y) = (x + κx) + κy = κx + κy = κ(x+y) = 0`. -/
-theorem isConical (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] : IsConical H := by
-  have key : ∀ x y : H, x + y = 0 → x = 0 := by
-    intro x y hxy
-    have hcz := cmul_top_zero κ H
-    calc x = x + (0 : H) := (add_zero x).symm
-      _ = x + cmul (κ := κ) κ le_rfl 0 := by rw [hcz]
-      _ = x + cmul (κ := κ) κ le_rfl (x + y) := by rw [hxy]
-      _ = x + (cmul (κ := κ) κ le_rfl x + cmul (κ := κ) κ le_rfl y) := by rw [cmul_top_distrib]
-      _ = (x + cmul (κ := κ) κ le_rfl x) + cmul (κ := κ) κ le_rfl y := (add_assoc _ _ _).symm
-      _ = cmul (κ := κ) κ le_rfl x + cmul (κ := κ) κ le_rfl y := by rw [add_cmul_top_self κ H x]
-      _ = cmul (κ := κ) κ le_rfl (x + y) := (cmul_top_distrib x y).symm
-      _ = 0 := by rw [hxy, hcz]
-  exact fun x y hxy => ⟨key x y hxy, key y x (by rw [add_comm]; exact hxy)⟩
+reduced.  The swindle is run at the `λ⁻` level in `LMonoid.isConical`; here `ℵ₀ ≤ κ < κ⁺`
+supplies its hypothesis. -/
+theorem isConical (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] : IsConical H :=
+  LMonoid.isConical (lam := Order.succ κ) (aleph0_lt_succ κ H)
 
 /-- Applying `cmul κ` twice is the same as applying it once (since `κ * κ = κ`). -/
 theorem cmul_top_idem (z : H) :
-    cmul (κ := κ) κ le_rfl (cmul (κ := κ) κ le_rfl z) = cmul (κ := κ) κ le_rfl z := by
-  have hκ := aleph0_le (κ := κ) (H := H)
-  have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
-  have hσm : #((_ : Idx κ) × Idx κ) = κ := by
-    rw [Cardinal.mk_congr (Equiv.sigmaEquivProd (Idx κ) (Idx κ)), Cardinal.mk_prod]
-    simp [Cardinal.mul_eq_self hκ]
-  obtain ⟨Ψ⟩ := Cardinal.eq.mp (hσm.trans (mk_Idx κ).symm)
-  calc cmul (κ := κ) κ le_rfl (cmul (κ := κ) κ le_rfl z)
-      = sumOf (κ := κ) (le_of_eq hσm) (fun _ : (_ : Idx κ) × Idx κ => z) :=
-        sumOf_sigma hidx (fun _ => hidx) (le_of_eq hσm) fun (_ _ : Idx κ) => z
-    _ = cmul (κ := κ) κ le_rfl z := (sumOf_equiv hidx (le_of_eq hσm) Ψ fun _ => z).symm
+    cmul (κ := κ) κ le_rfl (cmul (κ := κ) κ le_rfl z) = cmul (κ := κ) κ le_rfl z :=
+  LMonoid.lcmul_idem (lam := Order.succ κ) (aleph0_le (κ := κ) (H := H)) _ z
 
 /-- Lemma 2.8(2). -/
 theorem add_cmul_top_eq {t₁ t₂ t₃ : H} (h : t₁ + t₂ = cmul (κ := κ) κ le_rfl t₃) :
-    t₁ + cmul (κ := κ) κ le_rfl t₃ = cmul (κ := κ) κ le_rfl t₃ := by
-  have hstep : cmul (κ := κ) κ le_rfl (t₁ + t₂) = cmul (κ := κ) κ le_rfl t₃ := by
-    rw [h]; exact cmul_top_idem t₃
-  calc t₁ + cmul (κ := κ) κ le_rfl t₃ = t₁ + cmul (κ := κ) κ le_rfl (t₁ + t₂) := by rw [← hstep]
-    _ = t₁ + (cmul (κ := κ) κ le_rfl t₁ + cmul (κ := κ) κ le_rfl t₂) := by rw [cmul_top_distrib]
-    _ = (t₁ + cmul (κ := κ) κ le_rfl t₁) + cmul (κ := κ) κ le_rfl t₂ := (add_assoc _ _ _).symm
-    _ = cmul (κ := κ) κ le_rfl t₁ + cmul (κ := κ) κ le_rfl t₂ := by rw [add_cmul_top_self κ H t₁]
-    _ = cmul (κ := κ) κ le_rfl (t₁ + t₂) := by rw [cmul_top_distrib]
-    _ = cmul (κ := κ) κ le_rfl t₃ := hstep
+    t₁ + cmul (κ := κ) κ le_rfl t₃ = cmul (κ := κ) κ le_rfl t₃ :=
+  LMonoid.add_lcmul_eq (lam := Order.succ κ) (aleph0_le (κ := κ) (H := H)) _ h
 
 end Cmul
 
