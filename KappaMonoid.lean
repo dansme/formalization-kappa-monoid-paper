@@ -15,3 +15,4 @@ import KappaMonoid.Free
 import KappaMonoid.OrderUnit
 import KappaMonoid.Axioms
 import KappaMonoid.Cyclic
+import KappaMonoid.ProjOrderUnit
