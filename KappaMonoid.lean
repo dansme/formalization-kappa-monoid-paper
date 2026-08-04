@@ -14,3 +14,4 @@ import KappaMonoid.Examples
 import KappaMonoid.Free
 import KappaMonoid.OrderUnit
 import KappaMonoid.Axioms
+import KappaMonoid.Cyclic
