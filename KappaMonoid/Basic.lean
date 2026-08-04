@@ -1218,10 +1218,40 @@ theorem isKSubmonoid_zero : IsKSubmonoid κ ({0} : Set H) where
     rw [show x = fun _ => (0 : H) from funext fun i => hx i, ksum_zero]
     rfl
 
+/-- The image of a `κ`-homomorphism is a `κ`-submonoid. -/
+theorem isKSubmonoid_range {K : Type w} [KMonoid κ K] {g : H → K} (hg : IsKHom κ g) :
+    IsKSubmonoid κ (Set.range g) where
+  zero_mem := ⟨0, hg.1⟩
+  ksum_mem := by
+    classical
+    intro x hx
+    choose y hy using hx
+    exact ⟨ksum (κ := κ) y, (hg.2 y).trans (congrArg _ (funext hy))⟩
+
+/-- A surjective `κ`-homomorphism carries generating sets to generating sets. -/
+theorem KGenerates.map {K : Type w} [KMonoid κ K] {g : H → K} (hg : IsKHom κ g)
+    (hsurj : Function.Surjective g) {S : Set H} (hS : KGenerates κ S) :
+    KGenerates κ (g '' S) := by
+  have hT : IsKSubmonoid κ (g ⁻¹' kclosure κ (g '' S)) :=
+    { zero_mem := by
+        show g 0 ∈ kclosure κ (g '' S)
+        rw [hg.1]
+        exact (isKSubmonoid_kclosure κ (g '' S)).zero_mem
+      ksum_mem := fun x hx => by
+        show g (ksum (κ := κ) x) ∈ kclosure κ (g '' S)
+        rw [hg.2 x]
+        exact (isKSubmonoid_kclosure κ (g '' S)).ksum_mem _ hx }
+  have hsub : kclosure κ S ⊆ g ⁻¹' kclosure κ (g '' S) :=
+    kclosure_le (fun s hs => subset_kclosure ⟨s, hs, rfl⟩) hT
+  refine Set.eq_univ_of_forall fun y => ?_
+  obtain ⟨x, rfl⟩ := hsurj y
+  exact hsub (kGenerates_iff.mp hS x)
+
 /-- **Definition 2.10(1)**: `H` is `α`-*generated* as a `κ`-monoid.  The paper defines this by the
 existence of a surjective homomorphism `F_κ(B) → H` from the free `κ`-monoid on a basis `B` of
 cardinality `α`, and observes that it is equivalent to the existence of a family of at most `α`
-generators; that is the form used here. -/
+generators; that is the form used here.  The two are identified in
+`KappaMonoid.isAlphaGenerated_iff`, once `F_κ(B)` is available. -/
 def IsAlphaGenerated (κ α : Cardinal.{u}) (H : Type v) [KMonoid κ H] : Prop :=
   ∃ (ι : Type u) (g : ι → H), #ι ≤ α ∧ KGenerates κ (Set.range g)
 
