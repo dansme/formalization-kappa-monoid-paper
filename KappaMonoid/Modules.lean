@@ -396,17 +396,27 @@ structure ModuleClass (κ : Cardinal.{u}) where
     letI := fun i => addCommGroup (f i); letI := fun i => module (f i)
     letI := addCommGroup (dsum f); letI := module (dsum f)
     Nonempty (rep (dsum f) ≃ₗ[R] (⨁ i, rep (f i)))
-  /-- Closure under direct summands. -/
-  exists_of_isCompl : ∀ (a : carrier),
-    letI := addCommGroup a; letI := module a
-    ∀ N K : Submodule R (rep a), IsCompl N K →
-      ∃ b, letI := addCommGroup b; letI := module b; Nonempty (rep b ≃ₗ[R] N)
 
 namespace ModuleClass
 
 variable {R} {κ : Cardinal.{u}} (C : ModuleClass R κ)
 
 attribute [instance] ModuleClass.addCommGroup ModuleClass.module
+
+/-- **Closure under direct summands.**
+
+Definition 2.4 asks only for closure under isomorphism and `κ`-indexed direct sums, which is all
+`V^κ(C)` needs in order to be a `κ`-monoid; that is what `ModuleClass` records.  Section 4 needs
+the class to be closed under direct summands as well, but §2.3's class of *free* modules is not —
+a direct summand of a free module is projective, not free.  Closure under summands is therefore a
+separate property rather than a field of `ModuleClass`.
+
+It is a class so that it threads through the transfinite recursion of Theorem 4.3 by instance
+resolution instead of by hand. -/
+class IsSummandClosed : Prop where
+  /-- A direct summand of a representative is again represented by a class. -/
+  exists_of_isCompl : ∀ (a : C.carrier) (N K : Submodule R (C.rep a)), IsCompl N K →
+    ∃ b, Nonempty (C.rep b ≃ₗ[R] ↥N)
 
 /-- The bare `κ`-monoid data on `V^κ(C)`: (A1) and (A2) hold because direct sums do. -/
 noncomputable def bareKMonoid (hκ : ℵ₀ ≤ κ) : @BareKMonoid κ C.carrier ⟨C.zero⟩ := by
@@ -639,19 +649,20 @@ theorem rep_add (hκ : ℵ₀ ≤ κ) (b b' : C.carrier) :
 
 /-- Closure under direct summands, in the form we use it: a direct summand of a module
 isomorphic to a representative is again represented by a class. -/
-theorem exists_class_of_summand {W : Type u} [AddCommGroup W] [Module R W] (A : C.carrier)
-    (φ : C.rep A ≃ₗ[R] W) {N K : Submodule R W} (h : IsCompl N K) :
+theorem exists_class_of_summand [C.IsSummandClosed] {W : Type u} [AddCommGroup W] [Module R W]
+    (A : C.carrier) (φ : C.rep A ≃ₗ[R] W) {N K : Submodule R W} (h : IsCompl N K) :
     ∃ b : C.carrier, Nonempty (C.rep b ≃ₗ[R] ↥N) := by
   have h' := ((Submodule.orderIsoMapComap (φ : C.rep A ≃ₗ[R] W)).symm).isCompl h
   rw [Submodule.orderIsoMapComap_symm_apply, Submodule.orderIsoMapComap_symm_apply] at h'
-  obtain ⟨b, hb⟩ := C.exists_of_isCompl A _ _ h'
+  obtain ⟨b, hb⟩ := ModuleClass.IsSummandClosed.exists_of_isCompl A _ _ h'
   have hcm : N.comap (φ : C.rep A →ₗ[R] W) = N.map (φ.symm : W →ₗ[R] C.rep A) :=
     Submodule.comap_equiv_eq_map_symm φ N
   exact ⟨b, ⟨hb.some.trans ((LinearEquiv.ofEq _ _ hcm).trans (φ.symm.submoduleMap N).symm)⟩⟩
 
 /-- A relative direct summand is represented by a class. -/
-theorem exists_class_of_relCompl {M : Type u} [AddCommGroup M] [Module R M] (A : C.carrier)
-    {Y Z E : Submodule R M} (hd : Disjoint Y Z) (hs : Y ⊔ Z = E) (φ : C.rep A ≃ₗ[R] ↥E) :
+theorem exists_class_of_relCompl [C.IsSummandClosed] {M : Type u} [AddCommGroup M] [Module R M]
+    (A : C.carrier) {Y Z E : Submodule R M} (hd : Disjoint Y Z) (hs : Y ⊔ Z = E)
+    (φ : C.rep A ≃ₗ[R] ↥E) :
     ∃ b : C.carrier, Nonempty (C.rep b ≃ₗ[R] ↥Y) := by
   obtain ⟨b, hb⟩ := C.exists_class_of_summand A φ (isCompl_comap_subtype hd hs)
   exact ⟨b, ⟨hb.some.trans (Submodule.comapSubtypeEquivOfLe (hs ▸ le_sup_left))⟩⟩
@@ -884,6 +895,11 @@ structure StepProps (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
     sumOf (κ := κ) (st.Ismall.le.trans B.hlk) (fun i : st.Iset => B.a₁ i.1) = vc + st.uc
   hJ : letI := C.instKMonoid B.hκ
     sumOf (κ := κ) (st.Jsmall.le.trans B.hlk) (fun j : st.Jset => B.a₂ j.1) = st.tc + st.uc
+
+/-! From here on the class must be closed under direct summands: the recursion splits off
+complements at every step.  See `ModuleClass.IsSummandClosed`. -/
+
+variable [C.IsSummandClosed]
 
 /-- **The recursion step of Theorem 4.3.**  Given that `Told ⊕ ⨁_{i ∈ Uidx} A i` is the
 internal sum `⨁_{j ∈ Jidx} B j`, we find fresh blocks `I_α`, `J_α` of size `< λ` and modules
@@ -1531,7 +1547,8 @@ The recursion step uses `λ⁻`-smallness of `T α` to find `I α`, then (M2) to
 `S α`, then `λ⁻`-smallness of `S α` to find `J α`, then (M2) again to split off `T (α+1)`;
 `min I'` is always adjoined to `I α` to ensure that the partitions exhaust `κ`.  (M1)
 translates the internal decompositions into the required isomorphisms. -/
-theorem exists_braided_of_iso (C : ModuleClass R κ) (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u})
+theorem exists_braided_of_iso (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
+    (lam : Cardinal.{u})
     (hlam : lam.IsRegular) (hlk : lam ≤ κ)
     (S : Set C.carrier)
     (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
@@ -1557,7 +1574,8 @@ theorem exists_braided_of_iso (C : ModuleClass R κ) (hκ : ℵ₀ ≤ κ) (lam 
 /-- **Theorem 4.3** (module-theoretic core), in the language of Section 3.  The hypothesis
 `Σᵢ [A i] = Σⱼ [B j]` in `V^κ(C)` is the same thing as an isomorphism
 `⨁ᵢ A i ≅ ⨁ⱼ B j` (`ModuleClass.iso_of_dsum_eq`), so this is `exists_braided_of_iso`. -/
-theorem theorem_4_3_core (C : ModuleClass R κ) (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u})
+theorem theorem_4_3_core (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
+    (lam : Cardinal.{u})
     (hlam : lam.IsRegular) (hlk : lam ≤ κ)
     (S : Set C.carrier)
     -- `S` consists of `λ⁻`-small modules …
@@ -1583,7 +1601,8 @@ theorem theorem_4_3_core (C : ModuleClass R κ) (hκ : ℵ₀ ≤ κ) (lam : Car
 
 /-- **Theorem 4.3**, in the language of Section 3: the `κ`-submonoid of `V^κ(C)` generated by
 `V^{λ⁻}(Cλ⁻)` is `λ⁻`-braided over `V^{λ⁻}(Cλ⁻)`. -/
-theorem theorem_4_3 (C : ModuleClass R κ) (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u})
+theorem theorem_4_3 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
+    (lam : Cardinal.{u})
     (hlam : lam.IsRegular) (hlk : lam ≤ κ) (S : Set C.carrier)
     (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
     (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
@@ -1623,7 +1642,8 @@ theorem theorem_4_3 (C : ModuleClass R κ) (hκ : ℵ₀ ≤ κ) (lam : Cardinal
 /-- **Corollary 4.4(2)** / the "in particular" of Theorem 4.3: if every module in `C` is a
 direct sum of modules in `Cλ⁻`, then all of `V^κ(C)` is `λ⁻`-braided over
 `V^{λ⁻}(Cλ⁻)`, hence is its universal `κ`-extension. -/
-theorem corollary_4_4 (C : ModuleClass R κ) (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u})
+theorem corollary_4_4 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
+    (lam : Cardinal.{u})
     (hlam : lam.IsRegular) (hlk : lam ≤ κ) (S : Set C.carrier)
     (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
     (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
@@ -1808,48 +1828,56 @@ noncomputable def projClass (hκ : ℵ₀ ≤ κ) : ModuleClass R κ where
         (dsSub R (fun _ : Idx κ => freeMod R κ) fun i => (f i).out.1)
     exact ⟨e1.trans (e2.symm.trans
       (dsSubIso R (fun _ : Idx κ => freeMod R κ) fun i => (f i).out.1))⟩
-  exists_of_isCompl := by
-    intro a N K hNK
-    obtain ⟨Qa, hQa⟩ := a.out.2
-    have hNle : Submodule.map a.out.1.subtype N ≤ a.out.1 := Submodule.map_subtype_le _ N
-    have hKle : Submodule.map a.out.1.subtype K ≤ a.out.1 := Submodule.map_subtype_le _ K
-    have hsup : Submodule.map a.out.1.subtype N ⊔ Submodule.map a.out.1.subtype K
-        = a.out.1 := by
-      rw [← Submodule.map_sup, hNK.sup_eq_top, Submodule.map_top, Submodule.range_subtype]
-    have hdisj : Disjoint (Submodule.map a.out.1.subtype N)
-        (Submodule.map a.out.1.subtype K ⊔ Qa) := by
-      rw [Submodule.disjoint_def]
-      intro x hxN hx
-      obtain ⟨k, hk, q, hq, hkq⟩ := Submodule.mem_sup.mp hx
-      have hqP : q ∈ a.out.1 := by
-        have hxP : x ∈ a.out.1 := hNle hxN
-        have : q = x - k := by rw [← hkq]; abel
-        rw [this]
-        exact Submodule.sub_mem _ hxP (hKle hk)
-      have hq0 : q = 0 := Submodule.disjoint_def.mp hQa.disjoint q hqP hq
-      have hxk : x = k := by rw [← hkq, hq0, add_zero]
-      -- now `x` lies in both images, so it comes from `N ⊓ K = ⊥`
-      obtain ⟨n, hn, hnx⟩ := hxN
-      obtain ⟨k', hk', hk'x⟩ := (hxk ▸ hk : x ∈ Submodule.map a.out.1.subtype K)
-      have hnk : n = k' := Subtype.ext (by rw [show (n : freeMod R κ) = x from hnx,
-        show (k' : freeMod R κ) = x from hk'x])
-      have : n ∈ N ⊓ K := ⟨hn, hnk ▸ hk'⟩
-      rw [hNK.inf_eq_bot] at this
-      rw [← hnx, (Submodule.mem_bot R).mp this]
-      rfl
-    have hcompl : IsCompl (Submodule.map a.out.1.subtype N)
-        (Submodule.map a.out.1.subtype K ⊔ Qa) := by
-      refine ⟨hdisj, ?_⟩
-      rw [codisjoint_iff, ← sup_assoc, hsup, ← codisjoint_iff]
-      exact hQa.codisjoint
-    refine ⟨⟦⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩⟧, ?_⟩
-    have e1 : ↥(((⟦(⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩ : Summand R κ)⟧ :
-          Quotient (summandSetoid R κ)).out).1) ≃ₗ[R] ↥(Submodule.map a.out.1.subtype N) :=
-      (Quotient.mk_out (s := summandSetoid R κ)
-        ⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩).some
-    have e2 : ↥N ≃ₗ[R] ↥(Submodule.map a.out.1.subtype N) :=
-      Submodule.equivMapOfInjective a.out.1.subtype a.out.1.injective_subtype N
-    exact ⟨e1.trans e2.symm⟩
+
+/-- A direct summand of a summand of `R^{(κ)}` is again a summand of `R^{(κ)}`. -/
+theorem exists_class_of_summand_projClass (a : Quotient (summandSetoid R κ))
+    (N K : Submodule R ↥(a.out.1)) (hNK : IsCompl N K) :
+    ∃ b : Quotient (summandSetoid R κ), Nonempty (↥(b.out.1) ≃ₗ[R] ↥N) := by
+  obtain ⟨Qa, hQa⟩ := a.out.2
+  have hNle : Submodule.map a.out.1.subtype N ≤ a.out.1 := Submodule.map_subtype_le _ N
+  have hKle : Submodule.map a.out.1.subtype K ≤ a.out.1 := Submodule.map_subtype_le _ K
+  have hsup : Submodule.map a.out.1.subtype N ⊔ Submodule.map a.out.1.subtype K
+      = a.out.1 := by
+    rw [← Submodule.map_sup, hNK.sup_eq_top, Submodule.map_top, Submodule.range_subtype]
+  have hdisj : Disjoint (Submodule.map a.out.1.subtype N)
+      (Submodule.map a.out.1.subtype K ⊔ Qa) := by
+    rw [Submodule.disjoint_def]
+    intro x hxN hx
+    obtain ⟨k, hk, q, hq, hkq⟩ := Submodule.mem_sup.mp hx
+    have hqP : q ∈ a.out.1 := by
+      have hxP : x ∈ a.out.1 := hNle hxN
+      have : q = x - k := by rw [← hkq]; abel
+      rw [this]
+      exact Submodule.sub_mem _ hxP (hKle hk)
+    have hq0 : q = 0 := Submodule.disjoint_def.mp hQa.disjoint q hqP hq
+    have hxk : x = k := by rw [← hkq, hq0, add_zero]
+    -- now `x` lies in both images, so it comes from `N ⊓ K = ⊥`
+    obtain ⟨n, hn, hnx⟩ := hxN
+    obtain ⟨k', hk', hk'x⟩ := (hxk ▸ hk : x ∈ Submodule.map a.out.1.subtype K)
+    have hnk : n = k' := Subtype.ext (by rw [show (n : freeMod R κ) = x from hnx,
+      show (k' : freeMod R κ) = x from hk'x])
+    have : n ∈ N ⊓ K := ⟨hn, hnk ▸ hk'⟩
+    rw [hNK.inf_eq_bot] at this
+    rw [← hnx, (Submodule.mem_bot R).mp this]
+    rfl
+  have hcompl : IsCompl (Submodule.map a.out.1.subtype N)
+      (Submodule.map a.out.1.subtype K ⊔ Qa) := by
+    refine ⟨hdisj, ?_⟩
+    rw [codisjoint_iff, ← sup_assoc, hsup, ← codisjoint_iff]
+    exact hQa.codisjoint
+  refine ⟨⟦⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩⟧, ?_⟩
+  have e1 : ↥(((⟦(⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩ : Summand R κ)⟧ :
+        Quotient (summandSetoid R κ)).out).1) ≃ₗ[R] ↥(Submodule.map a.out.1.subtype N) :=
+    (Quotient.mk_out (s := summandSetoid R κ)
+      ⟨Submodule.map a.out.1.subtype N, ⟨_, hcompl⟩⟩).some
+  have e2 : ↥N ≃ₗ[R] ↥(Submodule.map a.out.1.subtype N) :=
+    Submodule.equivMapOfInjective a.out.1.subtype a.out.1.injective_subtype N
+  exact ⟨e1.trans e2.symm⟩
+
+/-- **`V^κ(R)` is closed under direct summands.**  This is the property §4 needs and the class
+of free modules of §2.3 lacks. -/
+instance instIsSummandClosed (hκ : ℵ₀ ≤ κ) : (projClass R κ hκ).IsSummandClosed where
+  exists_of_isCompl := exists_class_of_summand_projClass R κ
 
 /-- A projective module generated by at most `κ` elements is a direct summand of `R^{(κ)}`. -/
 theorem exists_summand_of_projective (Q : Type u) [AddCommGroup Q] [Module R Q]
