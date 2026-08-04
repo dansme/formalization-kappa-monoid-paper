@@ -1,5 +1,9 @@
 # Completing Section 2
 
+**Status (as of the commits on `simplify`): steps 1–6, 8 and the axioms file are done and
+`sorry`-free; steps 7, 9 and the Definition 2.10 payoff of step 5 remain.  See the README for
+what that leaves missing from §2.**
+
 A sequential work plan for finishing the formalisation of §2 of Nazemian–Smertnig,
 *A monoid-theoretical approach to infinite direct-sum decompositions of modules*.
 
