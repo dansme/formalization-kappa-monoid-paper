@@ -1319,6 +1319,21 @@ theorem toLMonoidOfLE_lsumOf {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : 
     letI := toLMonoidOfLE H hlam hlk
     LMonoid.lsumOf (lam := lam) h x = sumOf (κ := κ) (h.le.trans hlk) x := rfl
 
+/-- The first bullet after Lemma 2.5: restricting `Σ` to families indexed by a type of
+cardinality `≤ α` makes a `κ`-monoid an `α`-monoid, for every infinite `α ≤ κ`. -/
+@[instance_reducible]
+noncomputable def ofLE (H : Type v) [KMonoid κ H] {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α)
+    (hακ : α ≤ κ) : KMonoid α H where
+  toLMonoid :=
+    LMonoid.ofLE (lam₂ := Order.succ κ) (Cardinal.isRegular_succ hα0) (Order.succ_le_succ hακ)
+  aleph0_le := hα0
+
+/-- The `α`-sums induced on a `κ`-monoid by `ofLE` are its `κ`-sums. -/
+@[simp] theorem ofLE_sumOf (H : Type v) [KMonoid κ H] {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α)
+    (hακ : α ≤ κ) {ι : Type u} (h : #ι ≤ α) (x : ι → H) :
+    letI := ofLE H hα0 hακ
+    sumOf (κ := α) h x = sumOf (κ := κ) (h.trans hακ) x := rfl
+
 end KMonoid
 
 
@@ -1850,24 +1865,26 @@ noncomputable def ofAddCommMonoid (M : Type v) [inst : AddCommMonoid M] : LMonoi
     rw [finsum_eq_sum_of_fintype, Fintype.sum_sum_type]
     simp
 
-/-- For `λ = ℵ₀` the summation of any `λ⁻`-monoid structure is the ordinary finite sum. -/
-theorem lsumOf_aleph0_eq_finsum {ι : Type u} [Fintype ι] (h : #ι < ℵ₀) {X : Type v}
-    [LMonoid ℵ₀ X] (x : ι → X) : lsumOf (lam := ℵ₀) h x = ∑ i, x i := by
+/-- Sums over a finite index type are ordinary finite sums.  This is the bullet after Lemma 2.5
+saying that `Σⁿ(x₁,…,xₙ) = x₁ + ⋯ + xₙ` for finite `n`, the binary operation being `Σ²`. -/
+theorem lsumOf_eq_sum {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u} [Fintype ι]
+    (h : #ι < lam) (x : ι → X) :
+    lsumOf (lam := lam) h x = ∑ i, x i := by
   revert h x
   refine Fintype.induction_empty_option
     (P := fun (ι : Type u) [Fintype ι] =>
-      ∀ (h : #ι < ℵ₀) (x : ι → X), lsumOf (lam := ℵ₀) h x = ∑ i, x i) ?_ ?_ ?_ ι
+      ∀ (h : #ι < lam) (x : ι → X), lsumOf (lam := lam) h x = ∑ i, x i) ?_ ?_ ?_ ι
   · intro α β _ e ih h x
     let _ : Fintype α := Fintype.ofEquiv β e.symm
-    have hα : #α < ℵ₀ := by rw [Cardinal.mk_congr e]; exact h
+    have hα : #α < lam := by rw [Cardinal.mk_congr e]; exact h
     rw [lsumOf_equiv h hα e x, ih hα (x ∘ e)]
     exact Equiv.sum_comp e x
   · intro h x
     simp
   · intro α _ ih h x
-    have hα : #α < ℵ₀ := lt_of_le_of_lt (Cardinal.mk_le_of_injective (Option.some_injective α)) h
-    have hu : #PUnit.{u + 1} < ℵ₀ := mk_lt_finite (X := X) _
-    have hsum : #(α ⊕ PUnit.{u + 1}) < ℵ₀ := mk_sum_lt (isRegular' (X := X)) hα hu
+    have hα : #α < lam := lt_of_le_of_lt (Cardinal.mk_le_of_injective (Option.some_injective α)) h
+    have hu : #PUnit.{u + 1} < lam := mk_lt_finite (X := X) _
+    have hsum : #(α ⊕ PUnit.{u + 1}) < lam := mk_sum_lt (isRegular' (X := X)) hα hu
     rw [lsumOf_equiv h hsum (Equiv.optionEquivSumPUnit α).symm x,
       show x ∘ (Equiv.optionEquivSumPUnit α).symm
         = Sum.elim (fun a => x (some a)) (fun _ => x none) by
@@ -1875,6 +1892,17 @@ theorem lsumOf_aleph0_eq_finsum {ι : Type u} [Fintype ι] (h : #ι < ℵ₀) {X
       lsumOf_sumType hα hu hsum, ih hα (fun a => x (some a)), lsumOf_unique,
       Fintype.sum_option]
     exact add_comm _ _
+
+/-- For `λ = ℵ₀` the summation of any `λ⁻`-monoid structure is the ordinary finite sum. -/
+theorem lsumOf_aleph0_eq_finsum {ι : Type u} [Fintype ι] (h : #ι < ℵ₀) {X : Type v}
+    [LMonoid ℵ₀ X] (x : ι → X) : lsumOf (lam := ℵ₀) h x = ∑ i, x i :=
+  lsumOf_eq_sum h x
+
+/-- A `κ`-sum over a finite index type is the ordinary finite sum. -/
+theorem _root_.KappaMonoid.KMonoid.sumOf_eq_sum {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
+    {ι : Type u} [Fintype ι] (h : #ι ≤ κ) (x : ι → H) :
+    KMonoid.sumOf (κ := κ) h x = ∑ i, x i :=
+  lsumOf_eq_sum _ x
 
 /-- For `λ = ℵ₀`, a sum over a small subset is the `finsum` over that subset. -/
 theorem lsumOf_eq_finsum {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {S : Set ι} (h : #S < ℵ₀)
