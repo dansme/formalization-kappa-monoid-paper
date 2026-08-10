@@ -192,6 +192,44 @@ theorem mult_dsum {J : Type u} (A : J → Type u) [∀ j, AddCommGroup (A j)] [�
   rw [mult, ← hA3, multOf_sigma]
   rfl
 
+/-- Splitting a family of simple modules by isomorphism class. -/
+noncomputable def classEquiv {J : Type u} (A : J → Type u) [∀ j, AddCommGroup (A j)]
+    [∀ j, Module R (A j)] (hA : ∀ j, IsSimpleModule R (A j)) :
+    J ≃ Σ i : Fin n, {j : J // Nonempty (A j ≃ₗ[R] L.S i)} where
+  toFun j := ⟨L.classOf (hA j), ⟨j, L.classOf_spec (hA j)⟩⟩
+  invFun p := p.2.1
+  left_inv j := rfl
+  right_inv := by
+    rintro ⟨i, ⟨j, hj⟩⟩
+    have : L.classOf (hA j) = i := L.distinct _ _ ⟨(L.classOf_spec (hA j)).some.symm.trans hj.some⟩
+    subst this
+    rfl
+
+/-- The normal form of a direct sum of simple modules: group the summands by class, and replace
+each by the chosen representative of its class. -/
+noncomputable def normalForm {K : Type u} (C : K → Type u) [∀ k, AddCommGroup (C k)]
+    [∀ k, Module R (C k)] (hC : ∀ k, IsSimpleModule R (C k)) :
+    (⨁ k, C k) ≃ₗ[R] ⨁ i : Fin n, ⨁ _ : {k : K // Nonempty (C k ≃ₗ[R] L.S i)}, L.S i := by
+  classical
+  exact ((DirectSum.lequivCongrLeft R (classEquiv L C hC)).trans
+    (DirectSum.sigmaLcurryEquiv (R := R) (ι := Fin n)
+      (α := fun i => {k : K // Nonempty (C k ≃ₗ[R] L.S i)}) (δ := fun i f => C f.1))).trans
+    (DirectSum.congrLinearEquiv fun i => DirectSum.congrLinearEquiv fun f => f.2.some)
+
+/-- **Multiplicities determine the module**: two direct sums of simple modules with the same
+multiplicities are isomorphic.  Both are brought to the same normal form. -/
+noncomputable def equivOfMultOf_eq {J J' : Type u} {A : J → Type u} {B : J' → Type u}
+    [∀ j, AddCommGroup (A j)] [∀ j, Module R (A j)]
+    [∀ j, AddCommGroup (B j)] [∀ j, Module R (B j)]
+    (hA : ∀ j, IsSimpleModule R (A j)) (hB : ∀ j, IsSimpleModule R (B j))
+    (h : ∀ i, multOf L A i = multOf L B i) : (⨁ j, A j) ≃ₗ[R] (⨁ j, B j) := by
+  classical
+  have hfib : ∀ i : Fin n, Nonempty ({j : J // Nonempty (A j ≃ₗ[R] L.S i)}
+      ≃ {j : J' // Nonempty (B j ≃ₗ[R] L.S i)}) := fun i => Cardinal.eq.mp (h i)
+  exact (normalForm L A hA).trans
+    ((DirectSum.congrLinearEquiv fun i =>
+      DirectSum.lequivCongrLeft R (hfib i).some).trans (normalForm L B hB).symm)
+
 end Additive
 
 end KappaMonoid
