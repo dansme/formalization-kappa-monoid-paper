@@ -16,3 +16,4 @@ import KappaMonoid.OrderUnit
 import KappaMonoid.Axioms
 import KappaMonoid.Cyclic
 import KappaMonoid.ProjOrderUnit
+import KappaMonoid.FreeModules
