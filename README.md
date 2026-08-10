@@ -23,10 +23,11 @@ Theorem 3.11 (universal `κ`-extensions) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-b
 | `KappaMonoid/Braiding.lean` | §3: `BraidingData`, `IsBraided`, Lemmas 3.2/3.4/3.6/3.7/3.8, `braidingSetoid`, `IsBraidedOver` (Def. 3.1(2)) |
 | `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** |
 | `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5–4.7 |
-| `KappaMonoid/Axioms.lean` | The four classical results assumed rather than proved — see below |
+| `KappaMonoid/Axioms.lean` | The five classical results assumed rather than proved — see below |
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
-proved, `sorry`-free, subject only to the four assumed classical results below.
+proved, `sorry`-free, subject only to the four §2 axioms below (A1–A4; A5 is used nowhere in the
+checked build).
 
 ### Scaffolds
 
@@ -37,17 +38,17 @@ yet proved. Neither is imported by `KappaMonoid.lean`, so `lake build` stays gre
 | File | Contents | Plan |
 |---|---|---|
 | `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1), Lemma 3.13, **Prop. 3.14(1)(2)** (universal extensions of Diophantine monoids), Example 3.15, and the `ℝ̃≥0` example of Examples 3.3(2)/3.12 | `SECTION3-PLAN.md` |
-| `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, **Cor. 4.7(2)** and the braided-implies-isomorphic lemma behind it, the half of Cor. 4.7(1) needing no realisation theorem, and Example 4.8(1) (KRSA ascent) | `SECTION4-PLAN.md` |
+| `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, **Cor. 4.7(2)** and the braided-implies-isomorphic lemma behind it, **Cor. 4.7(1)** in both directions, and Example 4.8(1) (KRSA ascent) | `SECTION4-PLAN.md` |
 
 Corollary 4.7(2) is the notable one: it is reachable with what is already proved — Corollary
-4.5(2) plus uniqueness of universal `κ`-extensions — and needs no new axiom. Corollary 4.6, by
-contrast, is Corollary 4.5(3) together with six results quoted from the literature, and is left as
-a documented stub in `Modules.lean`; Corollary 4.7(1) needs Bergman–Dicks realisation, which
-`Section4.lean` carries as an explicit hypothesis rather than as a fifth axiom.
+4.5(2) plus uniqueness of universal `κ`-extensions — and needs no axiom at all. Corollary 4.7(1)
+rests on Bergman–Dicks realisation, assumed as axiom A5 below. Corollary 4.6 is Corollary 4.5(3)
+together with six results quoted from the literature, none of them monoid-theoretic and none in
+Mathlib, so it stays a documented stub in `Modules.lean`.
 
 ## The assumed results
 
-Four classical theorems are taken as axioms in `KappaMonoid/Axioms.lean`, each with the
+Five classical theorems are taken as axioms in `KappaMonoid/Axioms.lean`, each with the
 standard proof sketch it stands for:
 
 | Axiom | Statement | Used by |
@@ -56,6 +57,7 @@ standard proof sketch it stands for:
 | `leavittData` (A2) | Leavitt's realisation of the cyclic monoids `C_{m,n}` | `prop_2_16` |
 | `cyclicMonoidClassification` (A4) | every cyclic monoid is `ℕ₀` or `C_{m,n}` | `prop_2_16` |
 | `mk_multiplicity_eq` (A3) | uniqueness of the multiplicities of simple modules, infinite multiplicities included | `prop_2_17_one` |
+| `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` (scaffold) |
 
 A1 is stated in the *generation* form rather than the two-bases form because the complement
 appearing in Example 2.13 is merely projective, not free, so there is no second basis to compare
@@ -68,6 +70,10 @@ force an isomorphism — is proved, not assumed.  **Everything else — includin
 Theorems 3.11 and 4.3, Proposition 2.9, Lemmas 2.14 and 2.15, and even
 `Projective.isOrderUnit_unitClass` — depends only on `propext`, `Classical.choice` and
 `Quot.sound`.**
+
+A5 is used by nothing in the `lake build` target: it exists for Corollary 4.7(1), which currently
+lives in the `Section4.lean` scaffold. When that corollary is proved and promoted to
+`Modules.lean`, it will be the only result in the build reporting `bergmanDicksData`.
 
 ## The hypothesis added to Theorem 3.11
 
