@@ -2,9 +2,8 @@
 
 *Realization to hereditary rings for two-generated `ℵ₀`-monoids.*
 
-Section 5 was omitted from the formalisation by request, and there is no scaffold file for it yet.
-This plan says what formalising it would take, in the order it should be done. The Lean signatures
-below have been type-checked against the current tree.
+Companion to `KappaMonoid/Section5.lean`, which contains the `sorry`-ed statements — 30 of them,
+all type-checked. Work through the steps in the order given; each is independently checkable.
 
 ## Read this first
 
@@ -22,9 +21,8 @@ of its own.
 
 Same as `SECTION3-PLAN.md` and `SECTION4-PLAN.md`:
 
-- `lake build` stays green and `sorry`-free at every commit. Put §5 in a new
-  `KappaMonoid/Section5.lean`, **not** imported by `KappaMonoid.lean`; build it with
-  `lake build KappaMonoid.Section5`. It will `import KappaMonoid.Section4`.
+- `lake build` stays green and `sorry`-free at every commit. `KappaMonoid/Section5.lean` is
+  **not** imported by `KappaMonoid.lean`; build it with `lake build KappaMonoid.Section5`.
 - After a manifest bump run `lake exe cache get` first.
 - Instance-resolution traps: a plain `def` is not reducible, so state results at
   `(projClass R κ hκ).carrier` rather than at an abbreviation; double coercions `↥↑m` defeat
@@ -54,20 +52,18 @@ noncomputable def eval (x₁ x₂ : H) (F : Form) : H := ecmul F.1 x₁ + ecmul 
 def Form.IsInfinite (F : Form) : Prop := F.1 = ⊤ ∨ F.2 = ⊤
 ```
 
-These four compile as written (`Cardinal.ofENat_le_aleph0` is in Mathlib, and
-`simp [ecmul]` proves `ecmul ⊤ x = cmul ℵ₀ x`). Then add:
+All of this is in the scaffold already, along with `familyOfForm`, `HasFiniteForm`,
+`HasInfiniteForm`, `NoMixedForms` and `BraidedForms`. Two encoding notes:
 
-- `familyOfForm : Form → (ℕ → H)`, the family with `α` copies of `x₁` followed by `β` copies of
-  `x₂` — the paper's `(y_k)_{k ∈ ℵ₀}`. Only well-defined up to reindexing, which is fine:
-  `lsumOf_comm` (Basic.lean) says the sum does not see the order.
-- `eval_familyOfForm : lsumOf _ (familyOfForm x₁ x₂ F) = eval x₁ x₂ F`.
-- `IsFormOf x₁ x₂ F y : Prop := eval x₁ x₂ F = y`, and the key predicate the section turns on:
-  **`y` has both a finite and an infinite form**.
-- `Braided F G : Prop`, two forms braided over `add (x₁ + x₂)` — `braidingSetoid` from
-  `Braiding.lean` applied to `familyOfForm F` and `familyOfForm G`.
+- **The index type is `Nats := ULift.{u} ℕ`, not `ℕ`.** `BraidingData` indexes by a type in the
+  cardinal's universe, and `#ℕ : Cardinal.{0}` will not unify with `Cardinal.{u}`. Everything in
+  the section indexes by `Nats`.
+- `familyOfForm` puts the `α` copies of `x₁` first, the `β` copies of `x₂` next, and `0`
+  afterwards. Order is irrelevant to the sum (`lsumOf_comm`, Basic.lean), so this is a choice of
+  representative, not a loss.
 
-`Braided` being an equivalence relation (used constantly, e.g. "by transitivity and symmetry it
-suffices to consider `β = 0`") comes free from `braidingSetoid`.
+Only `sumOf_familyOfForm` is left open at this step: the family sums to the element its form
+represents. `BraidedForms` being an equivalence relation comes free from `braidingSetoid`.
 
 ## Step 2 — Lemma 5.1 (`l:twogen-braided`)
 
@@ -119,33 +115,34 @@ State it with the two indices symmetric — the paper's `1 ≤ i ≠ j ≤ 2` is
 hypothesis quantified over both orderings rather than as `Fin 2` bookkeeping, which would cost
 more than it saves.
 
-## Step 5 — Proposition 5.4 (`traceideal`) — needs a decision
+## Step 5 — trace ideals and Proposition 5.4 (7 sorries)
 
-For projective `P`, `Tr(P) := Σ_{f ∈ Hom(P,R)} im f`. **Mathlib has no trace ideal** — there is no
-`traceIdeal`, and `Module.trace` is the trace of an endomorphism, unrelated. The definition itself
-is one line:
+**Mathlib has no trace ideal** — there is no `traceIdeal`, and `Module.trace` is the trace of an
+endomorphism, unrelated. The scaffold defines it and states the three facts to prove. These are
+being **formalised, not assumed**: unlike Bergman–Dicks (A5) or Leavitt (A2) they are elementary,
+so assuming them would be assuming the inconvenient rather than the out-of-reach.
 
 ```lean
-noncomputable def traceIdeal (R P : Type u) [Ring R] [AddCommGroup P] [Module R P] : Ideal R :=
-  ⨆ f : P →ₗ[R] R, LinearMap.range f
+noncomputable def traceIdeal : Ideal R := ⨆ f : P →ₗ[R] R, LinearMap.range f
 ```
 
-but the proposition rests on two standard facts about it that would have to be proved:
+The three lemmas, with their proofs — all short given `Module.projective_def`:
 
-1. `Tr(P)` is idempotent;
-2. `Tr(P)` is the least ideal `I` with `P = P I`.
+1. `smul_traceIdeal_eq : Tr(P) • ⊤ = ⊤` for projective `P`. `Module.projective_def` gives
+   `s : P →ₗ[R] P →₀ R` splitting `Finsupp.linearCombination R id`, so
+   `x = Σ_{p ∈ supp (s x)} (s x) p • p`. Each coefficient map `x ↦ (s x) p` is the functional
+   `Finsupp.lapply p ∘ₗ s`, hence lands in `Tr(P)`; so `x ∈ Tr(P) • ⊤`.
+2. `traceIdeal_le_of_smul_eq : I • ⊤ = ⊤ → Tr(P) ≤ I`. For any `f : P →ₗ[R] R`,
+   `im f = f (I • ⊤) = I * im f ⊆ I`.
+3. `traceIdeal_mul_self : Tr(P) * Tr(P) = Tr(P)`. From 1, `im f = f (Tr(P) • ⊤) = Tr(P) * im f`,
+   so `Tr(P) ≤ Tr(P) * Tr(P)`; the reverse is `Ideal.mul_le_left`.
 
-Both are short in the literature (see the paper's citations to Pavel–Puninski and Whitehead) and
-neither is deep, but together with the four-way equivalence they are a self-contained piece of
-module theory — call it a day's work, not an hour's.
+`Ideal` multiplication is available for noncommutative rings, so (3) states as written.
 
-> **Ask before axiomatising.** The cheap route is to assume (1) and (2) as an axiom, but I would
-> not: unlike Bergman–Dicks (A5) or Leavitt (A2), these are *elementary* and provable in Mathlib
-> as it stands, so assuming them would be assuming something merely inconvenient rather than
-> something out of reach. Prove them. If the budget says otherwise, that is a maintainer call.
-
-Note that the proof of (iii) ⇒ (iv) uses Lemma 2.14 (`eq_cmul_top_of_add`), already proved, and
-the final claim uses Lemma 5.1.
+Proposition 5.4 itself is then the four-way equivalence plus its hereditary addendum. Note that
+`ModuleClass` has no constructor taking a module to its class — only `rep` going the other way —
+so `prop_5_4` is stated for carrier elements `p₁ p₂` with modules `rep p₁`, `rep p₂`. (iii) ⇒ (iv)
+is Lemma 2.14 (`eq_cmul_top_of_add`, proved) and the final claim uses Lemma 5.1.
 
 ## Step 6 — Corollary 5.5 (`hereditarycase`), three parts
 
@@ -154,9 +151,13 @@ each giving an equivalence between realizability and an explicit relation condit
 bookkeeping on top of Theorem 5.3, plus Proposition 5.4 for part (3)'s trace formulation.
 
 Two of the parts assert **"the converse is not true"** with the same witness: `H := ℕ₀² ∪ {∞}`,
-the trivial `ℵ₀`-extension of `ℕ₀²` with `x₁ = (1,0)`, `x₂ = (0,1)`. That is Example 2.3(1), which
-is *already formalised* in `KappaMonoid/Examples.lean` — so both counterexamples are cheap and
-worth doing early as a sanity check on the step 1 encoding.
+the trivial `ℵ₀`-extension of `ℕ₀²` with `x₁ = (1,0)`, `x₂ = (0,1)`. That is Example 2.3(1),
+already formalised as `TrivExt.instKMonoid` in `KappaMonoid/Examples.lean`, so the scaffold builds
+`H` outright and leaves only `cex_incomparable`, `cex_absorb` and `cex_unique_infinite` open.
+
+**Do these first.** They are the cheapest `sorry`s in the file and they exercise `addOf`, `ecmul`,
+`eval` and `Form.IsInfinite` end to end — a real check on the step 1 encoding before the expensive
+proofs are built on top of it.
 
 ## Dependency order
 
@@ -170,6 +171,11 @@ step 1 (forms) ──> step 2 (Lem 5.1) ──> step 3 (Lem 5.2) ──> step 4 
 ```
 
 Step 5 is independent of steps 1–4 and can be done in parallel; it only meets the rest at 5.5(3).
+
+## Status
+
+30 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
+stays green and `sorry`-free because the file is not imported by `KappaMonoid.lean`.
 
 ## One thing to fix in the paper
 

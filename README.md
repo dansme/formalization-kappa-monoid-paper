@@ -1,7 +1,6 @@
 # A Lean 4 formalisation of Nazemian–Smertnig, *A monoid-theoretical approach to infinite direct-sum decompositions of modules*
 
-Sections 2–4 of the paper. Section 5 is omitted, as requested; `SECTION5-PLAN.md` records what
-formalising it would take.
+Sections 2–5 of the paper.
 
 ## Status
 
@@ -32,14 +31,15 @@ checked build).
 
 ### Scaffolds
 
-Two further files carry `sorry`-ed but type-checked statements for the parts of §§3–4 that are not
-yet proved. Neither is imported by `KappaMonoid.lean`, so `lake build` stays green and
+Three further files carry `sorry`-ed but type-checked statements for the parts of §§3–5 that are
+not yet proved. None is imported by `KappaMonoid.lean`, so `lake build` stays green and
 `sorry`-free; build them individually.
 
 | File | Contents | Plan |
 |---|---|---|
 | `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1), Lemma 3.13, **Prop. 3.14(1)(2)** (universal extensions of Diophantine monoids), Example 3.15, and the `ℝ̃≥0` example of Examples 3.3(2)/3.12 | `SECTION3-PLAN.md` |
 | `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, **Cor. 4.7(2)** and the braided-implies-isomorphic lemma behind it, **Cor. 4.7(1)** in both directions, and Example 4.8(1) (KRSA ascent) | `SECTION4-PLAN.md` |
+| `KappaMonoid/Section5.lean` | §5: forms `α X₁ + β X₂` over `ℕ∞`, Lemmas 5.1–5.2, **Thm. 5.3** (which two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring), trace ideals and Prop. 5.4, Cor. 5.5 and its `ℕ₀² ∪ {∞}` counterexample | `SECTION5-PLAN.md` |
 
 Corollary 4.7(2) is the notable one: it is reachable with what is already proved — Corollary
 4.5(2) plus uniqueness of universal `κ`-extensions — and needs no axiom at all. Corollary 4.7(1)
