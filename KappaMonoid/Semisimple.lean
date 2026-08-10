@@ -232,4 +232,70 @@ noncomputable def equivOfMultOf_eq {J J' : Type u} {A : J → Type u} {B : J' �
 
 end Additive
 
+
+/-! ## The multiplicity map on `V^κ(R)`
+
+For a summand of `R^{(κ)}` the multiplicities are bounded by `κ`, so they define a map into
+`F_κ^n`.  Injectivity is `equivOfMultOf_eq`, and the homomorphism property is `mult_dsum`.
+-/
+
+section MultMap
+
+variable {R : Type u} [Ring R] [IsSemisimpleRing R] {κ : Cardinal.{u}} {n : ℕ}
+  (L : SimpleList R n)
+
+/-- A simple module is not a subsingleton. -/
+theorem not_subsingleton_of_simple {M : Type u} [AddCommGroup M] [Module R M]
+    (h : IsSimpleModule R M) : ¬ Subsingleton M := by
+  haveI := h
+  haveI := IsSimpleModule.nontrivial (R := R) (M := M)
+  exact not_subsingleton M
+
+/-- A module isomorphic to a summand of `R^{(κ)}` decomposes into at most `κ` simple modules.
+Stated for a plain type `N` rather than for `↥P.1`, so that the module structures on the pieces
+of the decomposition are the canonical ones. -/
+theorem mk_decompSet_le_of_equiv (hκ : ℵ₀ ≤ κ) (P : Summand R κ) (N : Type u) [AddCommGroup N]
+    [Module R N] (e : ↥P.1 ≃ₗ[R] N) : #(decompSet R N) ≤ κ := by
+  obtain ⟨T, hT, hsub⟩ := exists_small_support R κ hκ P
+    (fun m : decompSet R N => ((m : Submodule R N) : Type u)) (e.trans (decompEquiv R N))
+  have huniv : T = Set.univ :=
+    Set.eq_univ_of_forall fun m => by
+      by_contra hm
+      exact not_subsingleton_of_simple (decomp_simple R N m) (hsub m hm)
+  rw [huniv, Cardinal.mk_univ] at hT
+  exact hT
+
+/-- Every summand of `R^{(κ)}` decomposes into at most `κ` simple modules. -/
+theorem mk_decompSet_le (hκ : ℵ₀ ≤ κ) (P : Summand R κ) : #(decompSet R ↥P.1) ≤ κ :=
+  mk_decompSet_le_of_equiv hκ P ↥P.1 (LinearEquiv.refl R _)
+
+/-- Multiplicities of a summand of `R^{(κ)}` are at most `κ`. -/
+theorem mult_le (hκ : ℵ₀ ≤ κ) (P : Summand R κ) (i : Fin n) :
+    mult (M := ↥P.1) L i ≤ κ :=
+  le_trans (Cardinal.mk_subtype_le _) (mk_decompSet_le hκ P)
+
+/-- **The multiplicity map** `V^κ(R) → F_κ^n`. -/
+noncomputable def multMap (hκ : ℵ₀ ≤ κ) (a : (projClass R κ hκ).carrier) : Fin n → Fcard κ :=
+  fun i => Fcard.mk (mult (M := (projClass R κ hκ).rep a) L i) (mult_le L hκ a.out i)
+
+@[simp] theorem val_multMap (hκ : ℵ₀ ≤ κ) (a : (projClass R κ hκ).carrier) (i : Fin n) :
+    ((multMap L hκ a i : Fcard κ) : Cardinal.{u})
+      = mult (M := (projClass R κ hκ).rep a) L i := rfl
+
+/-- **The multiplicity map is injective**: multiplicities determine the module. -/
+theorem multMap_injective (hκ : ℵ₀ ≤ κ) : Function.Injective (multMap L hκ) := by
+  intro a b h
+  refine (projClass R κ hκ).eq_of_iso ?_
+  have hmult : ∀ i, mult (M := (projClass R κ hκ).rep a) L i
+      = mult (M := (projClass R κ hκ).rep b) L i := by
+    intro i
+    have := congrArg (fun g : Fin n → Fcard κ => ((g i : Fcard κ) : Cardinal.{u})) h
+    rwa [val_multMap, val_multMap] at this
+  exact ((decompEquiv R ((projClass R κ hκ).rep a)).trans
+    (equivOfMultOf_eq L (decomp_simple R ((projClass R κ hκ).rep a))
+      (decomp_simple R ((projClass R κ hκ).rep b)) hmult)).trans
+    (decompEquiv R ((projClass R κ hκ).rep b)).symm
+
+end MultMap
+
 end KappaMonoid
