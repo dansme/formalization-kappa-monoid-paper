@@ -282,6 +282,40 @@ noncomputable def multMap (hκ : ℵ₀ ≤ κ) (a : (projClass R κ hκ).carrie
     ((multMap L hκ a i : Fcard κ) : Cardinal.{u})
       = mult (M := (projClass R κ hκ).rep a) L i := rfl
 
+/-- A subsingleton module has no simple summands, so all its multiplicities vanish. -/
+theorem mult_of_subsingleton {M : Type u} [AddCommGroup M] [Module R M] [Subsingleton M]
+    (i : Fin n) : mult (M := M) L i = 0 := by
+  haveI : IsEmpty (decompSet R M) :=
+    ⟨fun m => not_subsingleton_of_simple (decomp_simple R M m)
+      ⟨fun a b => Subtype.ext (Subsingleton.elim _ _)⟩⟩
+  haveI : IsEmpty {m : decompSet R M // Nonempty (((m : Submodule R M) : Type u) ≃ₗ[R] L.S i)} :=
+    ⟨fun p => IsEmpty.false p.1⟩
+  exact Cardinal.mk_eq_zero _
+
+/-- **The multiplicity map is a `κ`-homomorphism.** -/
+theorem isKHom_multMap (hκ : ℵ₀ ≤ κ) :
+    letI := (projClass R κ hκ).instKMonoid hκ
+    letI := Fcard.instKMonoid hκ
+    letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+    KMonoid.IsKHom κ (multMap L hκ) := by
+  letI := (projClass R κ hκ).instKMonoid hκ
+  letI := Fcard.instKMonoid hκ
+  letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+  constructor
+  · -- the zero class has a subsingleton representative
+    funext i
+    apply Subtype.ext
+    haveI := (projClass R κ hκ).subsingleton_rep_zero
+    rw [val_multMap]
+    exact (mult_of_subsingleton L i).trans (Fcard.instKMonoid_zero hκ).symm
+  · intro x
+    funext i
+    apply Subtype.ext
+    have hiso := (projClass R κ hκ).rep_sumOf hκ (le_of_eq (mk_Idx κ)) x
+    rw [val_multMap, KMonoid.sumOf_Idx (κ := κ)] at *
+    rw [mult_congr L hiso.some i, mult_dsum L (fun j => (projClass R κ hκ).rep (x j)) i]
+    rfl
+
 /-- **The multiplicity map is injective**: multiplicities determine the module. -/
 theorem multMap_injective (hκ : ℵ₀ ≤ κ) : Function.Injective (multMap L hκ) := by
   intro a b h
