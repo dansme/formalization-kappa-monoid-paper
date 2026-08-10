@@ -154,4 +154,44 @@ theorem mult_of_simple {n : ℕ} (L : SimpleList R n) (hM : IsSimpleModule R M) 
 
 end Decomp
 
+/-! ## Additivity
+
+Over a semisimple *ring* every module is semisimple, so the chosen decompositions of a family
+concatenate to a decomposition of its direct sum, and multiplicities add. -/
+
+section Additive
+
+variable {R : Type u} [Ring R] [IsSemisimpleRing R] {n : ℕ} (L : SimpleList R n)
+
+/-- A subtype of a sigma type is the sigma of the subtypes. -/
+theorem multOf_sigma {J : Type u} {D : J → Type u} (A : (Σ j, D j) → Type u)
+    [∀ p, AddCommGroup (A p)] [∀ p, Module R (A p)] (i : Fin n) :
+    multOf L A i = Cardinal.sum fun j => multOf L (fun d : D j => A ⟨j, d⟩) i := by
+  simp only [multOf]
+  rw [← Cardinal.mk_sigma]
+  exact Cardinal.mk_congr
+    { toFun := fun p => ⟨p.1.1, ⟨p.1.2, p.2⟩⟩
+      invFun := fun p => ⟨⟨p.1, p.2.1⟩, p.2.2⟩
+      left_inv := fun ⟨⟨_, _⟩, _⟩ => rfl
+      right_inv := fun ⟨_, ⟨_, _⟩⟩ => rfl }
+
+/-- **Multiplicities are additive over direct sums.** -/
+theorem mult_dsum {J : Type u} (A : J → Type u) [∀ j, AddCommGroup (A j)] [∀ j, Module R (A j)]
+    (i : Fin n) :
+    mult (M := ⨁ j, A j) L i = Cardinal.sum fun j => mult (M := A j) L i := by
+  classical
+  -- the decompositions of the summands concatenate to one of the direct sum
+  have e : (⨁ p : (Σ j, decompSet R (A j)), ((p.2 : Submodule R (A p.1)) : Type u))
+      ≃ₗ[R] (⨁ m : decompSet R (⨁ j, A j), ((m : Submodule R (⨁ j, A j)) : Type u)) :=
+    ((DirectSum.sigmaLcurryEquiv (R := R) (ι := J) (α := fun j => decompSet R (A j))
+        (δ := fun j m => ((m : Submodule R (A j)) : Type u))).trans
+      (DirectSum.congrLinearEquiv fun j => (decompEquiv R (A j)).symm)).trans
+      (decompEquiv R (⨁ j, A j))
+  have hA3 := multOf_eq L (fun p : (Σ j, decompSet R (A j)) => decomp_simple R (A p.1) p.2)
+    (decomp_simple R (⨁ j, A j)) e i
+  rw [mult, ← hA3, multOf_sigma]
+  rfl
+
+end Additive
+
 end KappaMonoid
