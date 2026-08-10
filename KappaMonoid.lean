@@ -19,3 +19,4 @@ import KappaMonoid.ProjOrderUnit
 import KappaMonoid.FreeModules
 import KappaMonoid.FreeUnit
 import KappaMonoid.Realisation
+import KappaMonoid.Semisimple
