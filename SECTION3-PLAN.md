@@ -132,39 +132,59 @@ Order of work:
    are braided because `λ = ℵ₁ ≠ ℵ₀`, so `isBraided_iff_of_ne_aleph0` reduces it to matching
    partial sums, which can be read off coordinatewise in `F_κ^n`.
 4. `prop_3_14_two` — the `λ = ℵ₀` case, and the one that genuinely differs: the extension is
-   `H + ℵ₀H`, not the solution set of the same system over `F_{ℵ₀}`. The scaffold states only the
-   easy inclusion (`H + ℵ₀H` consists of solutions); **the statement of the converse, and of the
-   universal property, is yours to write** — it needs `H` to be given as the *finite* solutions,
-   and the paper's description "replace every nonzero component by `ℵ₀`" is `alephPart`.
+   `H + ℵ₀H`, not the solution set of the same system over `F_{ℵ₀}`. Now stated in full:
+   `finSolutions` is `H ⊆ ℕ₀^n` (the solutions with all components finite), `alephPart` is the
+   paper's "replace every nonzero component by `ℵ₀`", and `alephExt` is `H + ℵ₀H`. Prove in the
+   order `addSubmonoid_finSolutions` → `alephExt_subset_solutions` → `isKSubmonoid_alephExt` →
+   `prop_3_14_two`. The interesting one is `isKSubmonoid_alephExt`: in each component a countable
+   sum either has finitely many nonzero contributions, and is again of that shape, or infinitely
+   many, and the component is `ℵ₀` and is absorbed into the `ℵ₀H` part.
 
 Prop. 3.14 is the largest item and the one where the statement, not the proof, carries most of
 the risk. Do not start proving until `isKSubmonoid_solutions` and `mem_solutions_of_incl` have
 convinced you the definitions are right.
 
-## Step 5 — Examples 3.12, and the `ℝ≥0` / `ℚ≥0` half of Examples 3.3
+## Step 5 — Examples 3.3(2): the `ℝ≥0` example
 
-Not scaffolded, deliberately. These need a bespoke `κ`-monoid: the paper's
-`H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, where a family sums to the ordinary series sum if it is finitely
-supported with all entries in `ℝ≥0`, and to the *tilde* copy of that sum otherwise. Constructing
-it means giving a `SumData ℵ₁ H` and checking the three axioms, of which associativity over a
-double family is the fiddly one — the tilde marking has to be shown to depend only on whether the
-total family is finitely supported, not on how it is grouped.
+Scaffold: `RTilde`, `RTilde.val`, `RTilde.rsum`, `RTilde.sumData`, `RTilde.instKMonoid`,
+`isBraided_nnreal_iff`, `isBraidedOver_rtilde`, `not_isBraidedOver_rtilde_self`.
 
-Encode the carrier as `ℝ≥0 ⊕ ℝ>0 ⊕ Unit` or as `WithTop (ℝ≥0 × Bool)` with the `Bool` recording
-the tilde and `(0, true)` identified away — the second is more compact but the quotient has to be
-handled explicitly. Decide that before writing anything.
+The carrier encoding is settled: an inductive with `ofReal`, `tilde` (over *positive* reals only)
+and `top`. The tilde copy omitting `0` is what avoids a quotient, and gives exactly one `0` and
+one `∞` by construction. The summation `rsum` is also settled: sum the underlying values as a
+`tsum` in `ℝ≥0∞` — unconditional there, and order-independent, which is what the paper's "sum of
+the convergent series" means for nonnegative terms — then mark the result with a tilde unless the
+family is finitely supported with every entry plain.
 
-Once `H` exists, `IsBraidedOver ℵ₀ ℵ₀ ℝ≥0 H` is the analogue of step 1 with "same series sum and
-both supports infinite" in place of "both supports infinite", and `ℚ≥0` is the same construction
-restricted, with the observation that irrationals admit only infinitely-supported representations
-(so only one copy of them appears).
+What is left is the three `SumData` axioms and the braiding classification.
+
+* `sum_congr` is immediate: `tsum`, finiteness of support and plainness are all invariant under
+  reindexing.
+* `sum_unique` is a case check on the single entry.
+* `sum_sigma` is the fiddly one, and is where all the work is. `tsum` over a sigma is
+  `ENNReal.tsum_sigma`, so the *values* match; the content is that the *marking* matches, i.e.
+  that the double family is finitely supported with all entries plain iff the family of row-sums
+  is. Left to right is easy. Right to left needs: a row whose sum is plain and nonzero must
+  itself be finitely supported and plain, which is exactly the definition of `rsum` read
+  backwards. Do this as a standalone lemma about `rsum` before touching `sum_sigma`.
+
+`isBraided_nnreal_iff` is the analogue of step 1 with "same series sum, and supports both finite
+or both infinite" in place of "both supports infinite"; the infinite case reuses the same
+alternating construction, with the domination step supplied by the tail of a convergent series of
+positive terms rather than by entries being `≥ 1`. `isBraidedOver_rtilde` then packages it, and
+`not_isBraidedOver_rtilde_self` repeats the paper's argument inside `{0} ∪ ℝ̃>0`.
+
+`ℚ≥0` is the same construction restricted, with the observation that irrationals admit only
+infinitely-supported representations, so only one copy of them appears. It is not scaffolded; do
+it only if you want Examples 3.12 complete, and expect it to be a light edit of `RTilde` rather
+than new mathematics.
 
 ## Step 6 — Example 3.15 and Remark 3.16
 
 Example 3.15 (`H = {(n,n)} ⊆ ℕ₀²`, whose universal `ℵ₀`-extension is *not* the solution set of the
-same equations over `F_{ℵ₀}`) is a concrete instance of the gap between Prop. 3.14(1) and (2), and
-is worth having as a `example` once step 4 is done: it is the sharpness witness for the two parts
-being different statements.
+same equations over `F_{ℵ₀}`) is the sharpness witness for 3.14(1) and (2) being different
+statements. `example_3_15` in the scaffold is a placeholder `True`: state it properly once step 4
+is done, when `finSolutions` and `alephExt` are available to phrase it with.
 
 Remark 3.16 (saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids, citing
 the literature) is a pointer, not a theorem. Either skip it or record it in the README.

@@ -199,28 +199,80 @@ theorem prop_3_14_one (hκ : Order.succ ℵ₀ ≤ κ) :
         sys.mem_solutions_of_incl hκ0 x.2⟩) := by
   sorry
 
-/-- `ℵ₀·H`: replace every nonzero component of an element of `H` by `ℵ₀`. -/
-noncomputable def alephPart (x : Fin n → Fcard ℵ₀) : Fin n → Fcard ℵ₀ :=
+/-- `ℵ₀·H` componentwise: replace every nonzero component by `ℵ₀`, leaving zeroes alone.  This is
+the paper's explicit description of the elements of `ℵ₀H`. -/
+noncomputable def alephPart {n : ℕ} (x : Fin n → Fcard ℵ₀) : Fin n → Fcard ℵ₀ :=
   fun i => if ((x i : Fcard ℵ₀) : Cardinal.{u}) = 0 then Fcard.mk 0 (zero_le' : (0 : Cardinal.{u}) ≤ ℵ₀)
     else Fcard.mk ℵ₀ le_rfl
 
-/-- **Proposition 3.14(2)**: for a monoid `H ⊆ ℕ₀^n` cut out by a system, the universal
-`ℵ₀`-extension is `H + ℵ₀H ⊆ F_{ℵ₀}^n`.
+/-- `H`, the solutions all of whose components are finite: the monoid `H ⊆ ℕ₀^n` of
+Proposition 3.14(2), viewed inside `F_{ℵ₀}^n`. -/
+noncomputable def LinSystem.finSolutions : Set (Fin n → Fcard ℵ₀) :=
+  {x ∈ sys.solutions (le_refl ℵ₀) | ∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀}
 
-Here `H` is the set of solutions all of whose components are finite, and the extension is the set
-of sums `h + ℵ₀h'` with `h`, `h'` solutions. -/
-theorem prop_3_14_two :
-    letI := Fcard.instKMonoid (le_refl ℵ₀)
+/-- `H + ℵ₀H`, the candidate universal `ℵ₀`-extension of Proposition 3.14(2). -/
+noncomputable def LinSystem.alephExt : Set (Fin n → Fcard ℵ₀) :=
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  {z | ∃ h ∈ sys.finSolutions, ∃ h' ∈ sys.finSolutions, z = h + alephPart h'}
+
+/-- `H` is a submonoid: finite solutions are closed under `+`. -/
+theorem LinSystem.addSubmonoid_finSolutions :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
-    ∀ x : Fin n → Fcard ℵ₀,
-      x ∈ {z | ∃ h ∈ sys.solutions (le_refl ℵ₀), ∃ h' ∈ sys.solutions (le_refl ℵ₀),
-            (∀ i, ((h i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) ∧
-            (∀ i, ((h' i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) ∧
-            z = h + alephPart h'} →
-      x ∈ sys.solutions (le_refl ℵ₀) := by
+    (0 : Fin n → Fcard ℵ₀) ∈ sys.finSolutions ∧
+      ∀ a ∈ sys.finSolutions, ∀ b ∈ sys.finSolutions, a + b ∈ sys.finSolutions := by
   sorry
 
+/-- `H + ℵ₀H` is an `ℵ₀`-submonoid of `F_{ℵ₀}^n`.
+
+The point is closure under countable sums: a countable sum of elements `h_k + ℵ₀h'_k` has, in
+each component, either finitely many nonzero contributions — in which case the sum is again of
+that shape — or infinitely many, in which case the component is `ℵ₀` and is absorbed into the
+`ℵ₀H` part. -/
+theorem LinSystem.isKSubmonoid_alephExt :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+    KMonoid.IsKSubmonoid ℵ₀ sys.alephExt := by
+  sorry
+
+/-- Every element of `H + ℵ₀H` is a solution of the system: the easy inclusion. -/
+theorem LinSystem.alephExt_subset_solutions :
+    sys.alephExt ⊆ sys.solutions (le_refl (ℵ₀ : Cardinal.{u})) := by
+  sorry
+
+/-- **Proposition 3.14(2)**: for a monoid `H ⊆ ℕ₀^n` cut out by a homogeneous system, the
+universal `ℵ₀`-extension is `H + ℵ₀H ⊆ F_{ℵ₀}^n`.
+
+Both `λ` and `κ` are `ℵ₀` here: an `ℵ₀⁻`-monoid is an ordinary commutative monoid, which is what
+`H ⊆ ℕ₀^n` is.
+
+Paper proof: `H + ℵ₀H` is `ℵ₀⁻`-braided over `H`.  Given two families in `H` with the same sum in
+`F_{ℵ₀}^n`, either both are finitely supported — and then Lemma 3.4(1) applies — or both have
+components that blow up to `ℵ₀`, and the braiding is built componentwise as in Examples 3.3(1).
+Note this is genuinely *not* the solution set of the same system over `F_{ℵ₀}`, which is what
+distinguishes (2) from (1); Example 3.15 is the witness. -/
+theorem prop_3_14_two :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+    letI : AddCommMonoid ↥sys.finSolutions :=
+      addCommMonoidOfClosed sys.addSubmonoid_finSolutions.1
+        (fun a ha b hb => sys.addSubmonoid_finSolutions.2 a ha b hb)
+    letI := LMonoid.ofAddCommMonoid ↥sys.finSolutions
+    letI := sys.isKSubmonoid_alephExt.kmonoid
+    IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (le_refl ℵ₀)
+      (fun h => ⟨(h : Fin n → Fcard ℵ₀), ⟨(h : Fin n → Fcard ℵ₀), h.2, 0,
+        sys.addSubmonoid_finSolutions.1, by sorry⟩⟩) := by
+  sorry
+
+/-- **Example 3.15**: `H = {(m, m) : m ∈ ℕ₀} ⊆ ℕ₀²` shows that Proposition 3.14(1) and (2) really
+are different statements — the universal `ℵ₀`-extension of `H` is *not* the solution set of
+`x₁ = x₂` over `F_{ℵ₀}`, because that set contains `(ℵ₀, ℵ₀)` reached only as an infinite sum. -/
+theorem example_3_15 : True := by
+  trivial
+
 end Diophantine
+
 
 
 end KappaMonoid
