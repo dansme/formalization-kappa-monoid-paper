@@ -28,7 +28,22 @@ Theorem 3.11 (universal `κ`-extensions) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-b
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
 proved, `sorry`-free, subject only to the four assumed classical results below.
 
-Also left out beyond §5: the worked universal extensions of §3.2 (Prop. 3.14).
+### Scaffolds
+
+Two further files carry `sorry`-ed but type-checked statements for the parts of §§3–4 that are not
+yet proved. Neither is imported by `KappaMonoid.lean`, so `lake build` stays green and
+`sorry`-free; build them individually.
+
+| File | Contents | Plan |
+|---|---|---|
+| `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1), Lemma 3.13, **Prop. 3.14(1)(2)** (universal extensions of Diophantine monoids), Example 3.15, and the `ℝ̃≥0` example of Examples 3.3(2)/3.12 | `SECTION3-PLAN.md` |
+| `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, **Cor. 4.7(2)** and the braided-implies-isomorphic lemma behind it, the half of Cor. 4.7(1) needing no realisation theorem, and Example 4.8(1) (KRSA ascent) | `SECTION4-PLAN.md` |
+
+Corollary 4.7(2) is the notable one: it is reachable with what is already proved — Corollary
+4.5(2) plus uniqueness of universal `κ`-extensions — and needs no new axiom. Corollary 4.6, by
+contrast, is Corollary 4.5(3) together with six results quoted from the literature, and is left as
+a documented stub in `Modules.lean`; Corollary 4.7(1) needs Bergman–Dicks realisation, which
+`Section4.lean` carries as an explicit hypothesis rather than as a fifth axiom.
 
 ## The assumed results
 
