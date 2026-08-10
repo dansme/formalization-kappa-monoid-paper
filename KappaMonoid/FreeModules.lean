@@ -78,6 +78,9 @@ theorem mk_sigma_basis_le (hκ : ℵ₀ ≤ κ) (f : Idx κ → Carrier R κ) :
 noncomputable def sumSet (hκ : ℵ₀ ≤ κ) (f : Idx κ → Carrier R κ) : Set (Idx κ) :=
   Set.range (emb (mk_sigma_basis_le R κ hκ f))
 
+theorem sumSet_def (hκ : ℵ₀ ≤ κ) (f : Idx κ → Carrier R κ) :
+    sumSet R κ hκ f = Set.range (emb (mk_sigma_basis_le R κ hκ f)) := rfl
+
 /-- `R^{(⨿ᵢ sᵢ)}` is the direct sum of the `R^{(sᵢ)}`. -/
 noncomputable def sumSetIso (hκ : ℵ₀ ≤ κ) (f : Idx κ → Carrier R κ) :
     ofSet R κ (sumSet R κ hκ f) ≃ₗ[R] ⨁ i : Idx κ, ofSet R κ (basis (f i)) :=

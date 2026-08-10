@@ -101,6 +101,9 @@ noncomputable def unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) : (freeClass R κ hκ)
 
 variable {R κ}
 
+theorem mkC_eq_mkC_iff (hκ : ℵ₀ ≤ κ) {s t : Set (Idx κ)} :
+    mkC R κ hκ s = mkC R κ hκ t ↔ Nonempty (ofSet R κ s ≃ₗ[R] ofSet R κ t) := mk_eq_mk
+
 theorem mkC_eq_mkC_of_mk_eq (hκ : ℵ₀ ≤ κ) {s t : Set (Idx κ)} (h : #s = #t) :
     mkC R κ hκ s = mkC R κ hκ t := mk_eq_mk_of_mk_eq h
 
