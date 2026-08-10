@@ -1,7 +1,7 @@
 # Completing Section 2
 
-**Status (commits on `simplify`): everything in this plan is done and `sorry`-free except
-Proposition 2.17.** Steps 1–8 and 10, the Definition 2.10 payoff of step 5, Example 2.13, the
+**Status (commits on `simplify`): everything in this plan is done and `sorry`-free except the
+surjectivity half of Proposition 2.17.** Steps 1–8 and 10, the Definition 2.10 payoff of step 5, Example 2.13, the
 `ModuleClass` split, `V^κ(𝓕^κ)` and Proposition 2.16 are all proved.  See the README for what
 Proposition 2.17 still needs.
 
