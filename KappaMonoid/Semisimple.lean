@@ -454,18 +454,39 @@ section Exists
 
 variable (K : Type u) [Field K] (n : ℕ)
 
-/-- The `i`-th coordinate of `Fin n → K`, as a module over it. -/
-noncomputable def coordModule (i : Fin n) : Module (Fin n → K) K :=
-  ((Pi.evalRingHom (fun _ : Fin n => K) i).toModule)
+/-- The `i`-th coordinate of `Fin n → K`.  This is a copy of `K` for each `i`, kept as a separate
+type so that the `n` different module structures do not collide in instance resolution. -/
+def Coord (i : Fin n) : Type u := K
+
+instance (i : Fin n) : Field (Coord K n i) := inferInstanceAs (Field K)
+
+/-- `Fin n → K` acts on the `i`-th coordinate through the `i`-th projection. -/
+noncomputable instance (i : Fin n) : Module (Fin n → K) (Coord K n i) :=
+  (Pi.evalRingHom (fun _ : Fin n => K) i).toModule
+
+/-- `Coord K n i` is a copy of `K`; `toK` is the identification. -/
+def Coord.toK {i : Fin n} (x : Coord K n i) : K := x
+
+/-- The identification the other way. -/
+def Coord.ofK {i : Fin n} (x : K) : Coord K n i := x
+
+theorem Coord.ext {i : Fin n} {a b : Coord K n i} (h : Coord.toK K n a = Coord.toK K n b) :
+    a = b := h
+
+@[simp] theorem Coord.toK_smul (i : Fin n) (r : Fin n → K) (x : Coord K n i) :
+    Coord.toK K n (r • x) = r i * Coord.toK K n x := rfl
+
+@[simp] theorem Coord.toK_one (i : Fin n) : Coord.toK K n (1 : Coord K n i) = 1 := rfl
+
+@[simp] theorem Coord.toK_zero (i : Fin n) : Coord.toK K n (0 : Coord K n i) = 0 := rfl
 
 /-- A simple quotient of a direct sum of simple modules is one of the summands. -/
-theorem exists_equiv_of_surjective_dsum {R : Type u} [Ring R] {ι : Type u} (A : ι → Type u)
+theorem exists_equiv_of_surjective_dsum {R : Type u} [Ring R] {ι : Type*} (A : ι → Type u)
     [∀ i, AddCommGroup (A i)] [∀ i, Module R (A i)] (hA : ∀ i, IsSimpleModule R (A i))
     {M : Type u} [AddCommGroup M] [Module R M] (hM : IsSimpleModule R M)
     (φ : (⨁ i, A i) →ₗ[R] M) (hφ : Function.Surjective φ) :
     ∃ i, Nonempty (A i ≃ₗ[R] M) := by
   classical
-  -- some component of `φ` is nonzero
   have hne : ∃ i, φ.comp (lof R ι A i) ≠ 0 := by
     by_contra hcon
     simp only [not_exists, ne_eq, not_not] at hcon
@@ -483,7 +504,6 @@ theorem exists_equiv_of_surjective_dsum {R : Type u} [Ring R] {ι : Type u} (A :
     rw [hzero z, hzero w]
   obtain ⟨i, hi⟩ := hne
   refine ⟨i, ⟨?_⟩⟩
-  -- a nonzero map between simple modules is an isomorphism
   haveI := hA i
   haveI := hM
   set ψ := φ.comp (lof R ι A i) with hψ
@@ -496,6 +516,83 @@ theorem exists_equiv_of_surjective_dsum {R : Type u} [Ring R] {ι : Type u} (A :
     · exact absurd (LinearMap.range_eq_bot.mp h) hi
     · exact h
   exact LinearEquiv.ofBijective ψ ⟨LinearMap.ker_eq_bot.mp hker, LinearMap.range_eq_top.mp hran⟩
+
+/-- Each coordinate is a simple module: an `R`-submodule of `K` is closed under multiplication by
+every element of `K`, because the projection is surjective. -/
+instance isSimpleModule_coord (i : Fin n) : IsSimpleModule (Fin n → K) (Coord K n i) := by
+  haveI : IsSimpleOrder (Submodule (Fin n → K) (Coord K n i)) :=
+    { exists_pair_ne := ⟨⊥, ⊤, bot_ne_top⟩
+      eq_bot_or_eq_top := fun N => by
+        by_cases h : ∀ x ∈ N, x = 0
+        · exact Or.inl (Submodule.eq_bot_iff N |>.mpr h)
+        · rw [not_forall] at h
+          obtain ⟨x, hx⟩ := h
+          rw [Classical.not_imp] at hx
+          obtain ⟨hxN, hx0⟩ := hx
+          refine Or.inr (le_antisymm le_top fun y _ => ?_)
+          have hx0' : Coord.toK K n x ≠ 0 := fun hc => hx0 (Coord.ext K n (by simpa using hc))
+          have hmem := N.smul_mem
+            (fun _ : Fin n => Coord.toK K n y * (Coord.toK K n x)⁻¹) hxN
+          rwa [show ((fun _ : Fin n => Coord.toK K n y * (Coord.toK K n x)⁻¹) • x
+              : Coord K n i) = y from Coord.ext K n (by
+            rw [Coord.toK_smul]
+            field_simp)] at hmem }
+  exact ⟨⟩
+
+/-- Distinct coordinates are non-isomorphic: `Pi.single i 1` acts as the identity on the `i`-th
+coordinate and as zero on the others. -/
+theorem coord_distinct (i j : Fin n) (h : Nonempty (Coord K n i ≃ₗ[Fin n → K] Coord K n j)) :
+    i = j := by
+  by_contra hij
+  obtain ⟨e⟩ := h
+  have hsmul := e.map_smul (Pi.single i (1 : K)) (1 : Coord K n i)
+  have hL : (Pi.single i (1 : K) : Fin n → K) • (1 : Coord K n i) = (1 : Coord K n i) :=
+    Coord.ext K n (by rw [Coord.toK_smul, Coord.toK_one, Pi.single_eq_same, one_mul])
+  have hR : (Pi.single i (1 : K) : Fin n → K) • e 1 = 0 :=
+    Coord.ext K n (by
+      rw [Coord.toK_smul, Coord.toK_zero, Pi.single_eq_of_ne (Ne.symm hij), zero_mul])
+  rw [hL, hR] at hsmul
+  exact one_ne_zero (α := Coord K n i) (e.injective (by rw [hsmul, map_zero]))
+
+/-- `Fin n → K` is the direct sum of its coordinates, as a module over itself. -/
+noncomputable def piEquivDsum : (Fin n → K) ≃ₗ[Fin n → K] ⨁ i : Fin n, Coord K n i :=
+  LinearEquiv.symm ((DirectSum.linearEquivFunOnFintype (Fin n → K) (Fin n)
+      (fun i => Coord K n i)).trans
+    { toFun := fun x => x
+      map_add' := fun _ _ => rfl
+      map_smul' := fun _ _ => rfl
+      invFun := fun x => x
+      left_inv := fun _ => rfl
+      right_inv := fun _ => rfl })
+
+/-- Every simple `Fin n → K`-module is one of the coordinates: it is a cyclic quotient of the
+ring, which is the direct sum of the coordinates. -/
+theorem coord_complete (T : Type u) [AddCommGroup T] [Module (Fin n → K) T]
+    (hT : IsSimpleModule (Fin n → K) T) : ∃ i, Nonempty (T ≃ₗ[Fin n → K] Coord K n i) := by
+  haveI := hT
+  obtain ⟨t, ht⟩ := exists_generator_of_simple (R := Fin n → K) hT
+  set ψ : (Fin n → K) →ₗ[Fin n → K] T :=
+    { toFun := fun r => r • t
+      map_add' := fun _ _ => add_smul _ _ _
+      map_smul' := fun _ _ => mul_smul _ _ _ } with hψ
+  have hsurj : Function.Surjective ψ := fun y => by
+    obtain ⟨r, hr⟩ :=
+      Submodule.mem_span_singleton.mp (ht ▸ Submodule.mem_top : y ∈ Submodule.span _ {t})
+    exact ⟨r, hr⟩
+  obtain ⟨i, ⟨e⟩⟩ := exists_equiv_of_surjective_dsum (R := Fin n → K) (fun i => Coord K n i)
+    (fun i => isSimpleModule_coord K n i) hT (ψ.comp (piEquivDsum K n).symm.toLinearMap)
+    (fun y => by
+      obtain ⟨r, hr⟩ := hsurj y
+      exact ⟨piEquivDsum K n r, by simpa using hr⟩)
+  exact ⟨i, ⟨e.symm⟩⟩
+
+/-- **Proposition 2.17(2)**: for every `n` there is a semisimple ring with exactly `n` isomorphism
+classes of simple modules, namely `Fin n → K` for any field `K`. -/
+noncomputable def simpleListPi : SimpleList (Fin n → K) n where
+  S := fun i => Coord K n i
+  simple := fun i => isSimpleModule_coord K n i
+  distinct := fun i j h => coord_distinct K n i j h
+  complete := fun T _ _ hT => coord_complete K n T hT
 
 end Exists
 
