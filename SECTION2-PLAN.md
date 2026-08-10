@@ -1,17 +1,15 @@
 # Completing Section 2
 
-**Status (commits on `simplify`): everything in this plan is done and `sorry`-free except
-Proposition 2.17(2)**, the existence of a semisimple ring with exactly `n` simple classes. Steps 1–8 and 10, the Definition 2.10 payoff of step 5, Example 2.13, the
-`ModuleClass` split, `V^κ(𝓕^κ)` and Proposition 2.16 are all proved.  See the README for what
-Proposition 2.17 still needs.
+**Status: this plan is complete.** Every step is done and `sorry`-free, as is all of §2 of the
+paper, subject only to the four assumed classical results in `KappaMonoid/Axioms.lean`.
 
-**Two corrections to step 9, found while implementing it.** (i) `ModuleClass` could not express
+**Three corrections to step 9, found while implementing it.** (i) `ModuleClass` could not express
 `V^κ(𝓕^κ)`, because it carried a summand-closure field that §4 needs and free modules do not
 satisfy; that field is now the class `ModuleClass.IsSummandClosed`, and `ModuleClass` is
 Definition 2.4 exactly.  (ii) Ranks in `V^κ(𝓕^κ)` are indexed by subsets of `Idx κ`, not by
 cardinals, because `ModuleClass.carrier` must live in `Type u` while the cardinals `≤ κ` live in
-`Type (u+1)`.  A fourth axiom, the classification of cyclic monoids, was needed to match a cyclic
-monoid against Leavitt's `CyclicRel`.
+`Type (u+1)`.  (iii) A fourth axiom, the classification of cyclic monoids, was needed to match a
+cyclic monoid against Leavitt's `CyclicRel`.
 
 A sequential work plan for finishing the formalisation of §2 of Nazemian–Smertnig,
 *A monoid-theoretical approach to infinite direct-sum decompositions of modules*.

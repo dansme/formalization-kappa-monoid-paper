@@ -19,28 +19,14 @@ Theorem 3.11 (universal `κ`-extensions) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-b
 | `KappaMonoid/FreeModules.lean` | §2.3: `V^κ(𝓕^κ)`, the class of free modules, as a Definition 2.4 `ModuleClass` |
 | `KappaMonoid/FreeUnit.lean` | §2.3: ranks in `V^κ(𝓕^κ)`; `[R]` is a cyclic faithful order-unit |
 | `KappaMonoid/Realisation.lean` | §2.3: **Proposition 2.16**, cyclic `κ`-monoids are realised by rings of free modules |
-| `KappaMonoid/Semisimple.lean` | §2.3: multiplicities of semisimple modules and **Proposition 2.17(1)**, `V^κ(R) ≅ F_κ^n` |
+| `KappaMonoid/Semisimple.lean` | §2.3: multiplicities of semisimple modules and **Proposition 2.17**, `V^κ(R) ≅ F_κ^n` for semisimple `R`, and such rings exist for every `n` |
 | `KappaMonoid/Braiding.lean` | §3: `BraidingData`, `IsBraided`, Lemmas 3.2/3.4/3.6/3.7/3.8, `braidingSetoid`, `IsBraidedOver` (Def. 3.1(2)) |
 | `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** |
 | `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5–4.7 |
 | `KappaMonoid/Axioms.lean` | The four classical results assumed rather than proved — see below |
 
-Still missing from §2, and nothing else depends on it:
-
-* **Proposition 2.17(2)** only — that for every `n` some semisimple ring *has* exactly `n`
-  isomorphism classes of simple modules.  Part (1), the substance, is proved
-  (`prop_2_17_one`).
-
-  What (2) needs is the concrete construction for `R = Fin n → K` with `K` a field: `R` is
-  semisimple by Mathlib's instance for finite products, its `i`-th coordinate is `K` acted on
-  through `Pi.evalRingHom` (`coordModule`), each such is a simple `R`-module, they are pairwise
-  non-isomorphic, and they are *all* the simple modules — for which
-  `exists_equiv_of_surjective_dsum` (proved) is the key step, since `R` is the direct sum of its
-  coordinates and every simple module is a cyclic quotient of `R`.  The remaining work is an
-  `R`-linear identification `(Fin n → K) ≃ₗ ⨁ i, K`, which has to be built by hand because the
-  `n` coordinates carry *different* module structures.
-* The clause of Example 2.13 identifying the `size` filtration of `V^κ(R)` with `V^α(R)`.  The
-  substance of Example 2.13 — that `[R]` is a faithful order-unit — is proved.
+**Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
+proved, `sorry`-free, subject only to the four assumed classical results below.
 
 Also left out beyond §5: the worked universal extensions of §3.2 (Prop. 3.14).
 
@@ -61,7 +47,7 @@ appearing in Example 2.13 is merely projective, not free, so there is no second 
 against; the familiar two-bases statement is derived from it as `mk_eq_mk_of_infinite`.
 
 The assumptions are contained.  `#print axioms prop_2_16` reports exactly A1, A2 and A4;
-`prop_2_17_one` reports exactly A3; Example 2.13's `isFaithful_unitClass` reports exactly A1.
+`prop_2_17` reports exactly A3; Example 2.13's `isFaithful_unitClass` reports exactly A1.
 Note that `multMap_injective` needs *no* axiom: the converse of A3 — that equal multiplicities
 force an isomorphism — is proved, not assumed.  **Everything else — including
 Theorems 3.11 and 4.3, Proposition 2.9, Lemmas 2.14 and 2.15, and even

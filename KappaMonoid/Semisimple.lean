@@ -594,6 +594,18 @@ noncomputable def simpleListPi : SimpleList (Fin n → K) n where
   distinct := fun i j h => coord_distinct K n i j h
   complete := fun T _ _ hT => coord_complete K n T hT
 
+/-- **Proposition 2.17**: for every `n` there is a semisimple ring `R` with `V^κ(R) ≅ F_κ^n`,
+namely `Fin n → K` for any field `K`.  Together with `prop_2_17_one` this says that the
+`κ`-monoids realised by semisimple rings are exactly the `F_κ^n`. -/
+theorem prop_2_17 (κ : Cardinal.{u}) (hκ : ℵ₀ ≤ κ) :
+    letI := (projClass (Fin n → K) κ hκ).instKMonoid hκ
+    letI := Fcard.instKMonoid hκ
+    letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+    ∃ φ : (projClass (Fin n → K) κ hκ).carrier → (Fin n → Fcard κ),
+      KMonoid.IsKHom κ φ ∧ Function.Bijective φ :=
+  ⟨multMap (simpleListPi K n) hκ, (prop_2_17_one (simpleListPi K n) hκ).1,
+    (prop_2_17_one (simpleListPi K n) hκ).2⟩
+
 end Exists
 
 end KappaMonoid
