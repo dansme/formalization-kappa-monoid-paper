@@ -1136,6 +1136,23 @@ def IsKHom (κ : Cardinal.{u}) {H : Type v} {K : Type w} [KMonoid κ H] [KMonoid
     (f : H → K) : Prop :=
   f 0 = 0 ∧ ∀ x : Idx κ → H, f (ksum (κ := κ) x) = ksum (κ := κ) (f ∘ x)
 
+/-- A `κ`-homomorphism commutes with sums over arbitrary small index types, not just `Idx κ`:
+pad along an embedding into `Idx κ` and use that `f 0 = 0`. -/
+theorem IsKHom.map_sumOf {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom κ f)
+    {ι : Type u} (h : #ι ≤ κ) (x : ι → H) :
+    f (sumOf (κ := κ) h x) = sumOf (κ := κ) h (f ∘ x) := by
+  classical
+  have hext : f ∘ Function.extend (emb h) x 0 = Function.extend (emb h) (f ∘ x) 0 := by
+    funext k
+    by_cases hk : ∃ i, emb h i = k
+    · obtain ⟨i, rfl⟩ := hk
+      rw [Function.comp_apply, (emb h).injective.extend_apply, (emb h).injective.extend_apply]
+      rfl
+    · rw [Function.comp_apply, Function.extend_apply' _ _ _ hk,
+        Function.extend_apply' _ _ _ hk]
+      exact hf.1
+  rw [sumOf_eq_extend h (emb h) x, hf.2, hext, ← sumOf_eq_extend h (emb h) (f ∘ x)]
+
 /-- A `κ`-submonoid of a `κ`-monoid. -/
 structure IsKSubmonoid (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Prop where
   zero_mem : (0 : H) ∈ S

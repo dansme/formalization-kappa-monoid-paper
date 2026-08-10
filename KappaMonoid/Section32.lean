@@ -76,21 +76,102 @@ section Free
 
 variable {lam κ : Cardinal.{u}} {B : Type u}
 
+/-- A `λ⁻`-homomorphism into a `κ`-monoid is the same thing as an `LMonoid lam`-homomorphism for
+the induced structure: `toLMonoidOfLE`'s `λ⁻`-sums *are* the `κ`-sums, by definition. -/
+theorem isLMonoidHom_of_isLHom {X : Type v} {K : Type w} [LMonoid lam X] [KMonoid κ K]
+    (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → K} (hf : LMonoid.IsLHom hlk f) :
+    letI := KMonoid.toLMonoidOfLE K hlam hlk
+    IsLMonoidHom lam f :=
+  fun h x => hf.2 h x
+
+/-- Conversely, an `LMonoid lam`-homomorphism into a `κ`-monoid is a `λ⁻`-homomorphism. -/
+theorem isLHom_of_isLMonoidHom {X : Type v} {K : Type w} [LMonoid lam X] [KMonoid κ K]
+    (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → K}
+    (hf : letI := KMonoid.toLMonoidOfLE K hlam hlk; IsLMonoidHom lam f) :
+    LMonoid.IsLHom hlk f := by
+  letI := KMonoid.toLMonoidOfLE K hlam hlk
+  exact ⟨hf.map_zero, fun h x => hf h x⟩
+
 /-- The inclusion `F_{λ⁻}(B) ↪ F_κ(B)`. -/
 def freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) (x : ↥(FreeL lam B)) :
     ↥(FreeK κ B) :=
   ⟨fun b => ⟨((x : B → LCard lam) b : Cardinal.{u}),
-      lt_of_lt_of_le ((x : B → LCard lam) b).2 (le_trans hlk (Order.le_succ κ))⟩, by
-    sorry⟩
+      lt_of_lt_of_le ((x : B → LCard lam) b).2 (le_trans hlk (Order.le_succ κ))⟩,
+    lt_of_lt_of_le x.2 (le_trans hlk (Order.le_succ κ))⟩
+
+@[simp] theorem val_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ)
+    (x : ↥(FreeL lam B)) (b : B) :
+    (((freeIncl hlam hκ hlk x : ↥(FreeK κ B)) : B → Fcard κ) b : Cardinal.{u})
+      = ((x : B → LCard lam) b : Cardinal.{u}) := rfl
+
+/-- `freeIncl` carries the generator `ι(b)` of `F_{λ⁻}(B)` to the generator `ι(b)` of
+`F_κ(B)`. -/
+theorem freeIncl_iota (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) (b : B) :
+    letI : Fact lam.IsRegular := ⟨hlam⟩
+    letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+    freeIncl hlam hκ hlk (iota (lam := lam) b) = iota (lam := Order.succ κ) b := by
+  letI : Fact lam.IsRegular := ⟨hlam⟩
+  letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+  refine Subtype.ext (funext fun b' => Subtype.ext ?_)
+  rw [val_freeIncl, coe_iota, coe_iota]
+  by_cases h : b' = b
+  · rw [h, val_iotaFun_self, val_iotaFun_self]
+  · rw [val_iotaFun_of_ne (lam := lam) h, val_iotaFun_of_ne (lam := Order.succ κ) h]
+
+/-- `freeIncl` is a `λ⁻`-homomorphism: on both sides a coordinate is the same cardinal sum. -/
+theorem isLHom_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) :
+    letI : Fact lam.IsRegular := ⟨hlam⟩
+    letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+    letI := instKMonoidFreeK κ hκ B
+    LMonoid.IsLHom hlk (freeIncl (B := B) hlam hκ hlk) := by
+  letI : Fact lam.IsRegular := ⟨hlam⟩
+  letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+  letI := instKMonoidFreeK κ hκ B
+  refine ⟨Subtype.ext (funext fun b => Subtype.ext ?_), fun {ι} h x => ?_⟩
+  · rw [val_freeIncl]
+    show ((0 : LCard lam) : Cardinal.{u}) = ((0 : Fcard κ) : Cardinal.{u})
+    rw [LCard.val_zero hlam, LCard.val_zero (Cardinal.isRegular_succ hκ)]
+  · exact Subtype.ext (funext fun b => Subtype.ext rfl)
 
 /-- **Lemma 3.13(1)**: the free `κ`-monoid on `B` is the universal `κ`-extension of the free
-`λ⁻`-monoid on `B`. -/
+`λ⁻`-monoid on `B`.
+
+Both universal properties are Proposition 2.9, at `λ` and at `κ⁺` respectively; the extension of
+`φ : F_{λ⁻}(B) → K` is `lift (φ ∘ ι)`, and both halves of the universal property are `hom_ext` —
+at level `λ` for the extension identity, at level `κ⁺` for uniqueness. -/
 theorem lemma_3_13_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) :
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     letI := instKMonoidFreeK κ hκ B
     IsUniversalKExtension lam κ ↥(FreeL lam B) ↥(FreeK κ B) hlk (freeIncl hlam hκ hlk) := by
-  sorry
+  letI : Fact lam.IsRegular := ⟨hlam⟩
+  letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+  letI := instKMonoidFreeK κ hκ B
+  refine ⟨isLHom_freeIncl hlam hκ hlk, fun K _ φ hφ => ?_⟩
+  -- the extension is the lift of `φ ∘ ι`, taken at level `κ⁺`
+  set ψ : ↥(FreeK κ B) → K :=
+    lift (lam := Order.succ κ) (X := K) (fun b => φ (iota (lam := lam) b)) with hψ
+  have hψiota : ∀ b : B, ψ (iota (lam := Order.succ κ) b) = φ (iota (lam := lam) b) :=
+    fun b => by rw [hψ, lift_iota]
+  refine ⟨ψ, ⟨isKHom_of_isLMonoidHom hκ (isLMonoidHom_lift _), ?_⟩, ?_⟩
+  · -- `ψ ∘ freeIncl = φ`: both are `λ⁻`-homomorphisms agreeing on the generators
+    letI := KMonoid.toLMonoidOfLE K hlam hlk
+    have hcomp : IsLMonoidHom lam (fun x => ψ (freeIncl hlam hκ hlk x)) := by
+      intro ι h x
+      show ψ (freeIncl hlam hκ hlk (LMonoid.lsumOf (lam := lam) h x)) = _
+      rw [(isLHom_freeIncl (B := B) hlam hκ hlk).2 h x]
+      exact isLMonoidHom_lift _ (KMonoid.lt_succ (h.le.trans hlk)) _
+    have key := hom_ext (lam := lam) (X := K)
+      (g₁ := fun x => ψ (freeIncl hlam hκ hlk x)) (g₂ := φ) hcomp
+      (isLMonoidHom_of_isLHom hlam hlk hφ)
+      (fun b => by rw [freeIncl_iota hlam hκ hlk b, hψiota b])
+    exact fun x => congrFun key x
+  · -- uniqueness: a `κ`-homomorphism out of `F_κ(B)` is determined on the generators
+    rintro ψ' ⟨hhom', hext'⟩
+    refine hom_ext (lam := Order.succ κ) (X := K) (g₁ := ψ') (g₂ := ψ)
+      (fun {ι} h x => KMonoid.IsKHom.map_sumOf hhom' (KMonoid.le_of_lt_succ h) x)
+      (isLMonoidHom_lift _) fun b => ?_
+    rw [hψiota b, ← freeIncl_iota hlam hκ hlk b, hext']
 
 end Free
 
