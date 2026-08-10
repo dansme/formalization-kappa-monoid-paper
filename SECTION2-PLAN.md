@@ -1,15 +1,17 @@
 # Completing Section 2
 
-**Status (commits on `simplify`): steps 1–8, 10 and the axioms file are done and `sorry`-free,
-as is the Definition 2.10 payoff of step 5.  Only step 9 (Propositions 2.16 and 2.17) remains.**
+**Status (commits on `simplify`): everything in this plan is done and `sorry`-free except
+Proposition 2.17.** Steps 1–8 and 10, the Definition 2.10 payoff of step 5, Example 2.13, the
+`ModuleClass` split, `V^κ(𝓕^κ)` and Proposition 2.16 are all proved.  See the README for what
+Proposition 2.17 still needs.
 
-**Correction to step 9 discovered while implementing it:** `ModuleClass` cannot express
-`V^κ(𝓕^κ)`, because it carries a summand-closure field (`exists_of_isCompl`) that §4 needs and
-free modules do not satisfy.  Proposition 2.16 therefore needs `V^κ(𝓕^κ)` built either by
-splitting `ModuleClass` into Definition 2.4's base structure plus summand closure, or — probably
-cheaper, and it leaves Theorem 4.3 untouched — as a bespoke `κ`-monoid on rank classes.  It also
-needs the elementary classification of cyclic monoids as `ℕ₀` or `C_{m,n}` to match against
-`CyclicRel`.
+**Two corrections to step 9, found while implementing it.** (i) `ModuleClass` could not express
+`V^κ(𝓕^κ)`, because it carried a summand-closure field that §4 needs and free modules do not
+satisfy; that field is now the class `ModuleClass.IsSummandClosed`, and `ModuleClass` is
+Definition 2.4 exactly.  (ii) Ranks in `V^κ(𝓕^κ)` are indexed by subsets of `Idx κ`, not by
+cardinals, because `ModuleClass.carrier` must live in `Type u` while the cardinals `≤ κ` live in
+`Type (u+1)`.  A fourth axiom, the classification of cyclic monoids, was needed to match a cyclic
+monoid against Leavitt's `CyclicRel`.
 
 A sequential work plan for finishing the formalisation of §2 of Nazemian–Smertnig,
 *A monoid-theoretical approach to infinite direct-sum decompositions of modules*.
