@@ -162,10 +162,25 @@ want to reason with a *given* well-order you must transport across the normal fo
 
 **Classes of modules.** There is no type of all `R`-modules, so `ModuleClass R κ` bundles a
 type `carrier` of isomorphism classes, chosen representatives `rep a`, the requirement that
-distinct classes are non-isomorphic, and closure under `κ`-indexed direct sums and direct
-summands. `V^κ(C)` is `carrier`, and `ModuleClass.instKMonoid` verifies (A1) and (A2) from
+distinct classes are non-isomorphic, and closure under `κ`-indexed direct sums. That is exactly
+Definition 2.4. `V^κ(C)` is `carrier`, and `ModuleClass.instKMonoid` verifies (A1) and (A2) from
 the corresponding isomorphisms of direct sums. `V^{λ⁻}(Cλ⁻)` is the subset
 `lambdaSmallPart`, made into an `LMonoid` via `IsLSubset.lmonoid`.
+
+**Closure under summands is separate.** Section 4 additionally needs the class to be closed
+under direct summands, but §2.3's class of *free* modules is not — a summand of a free module is
+projective, not free — so `V^κ(𝓕^κ)` could not be a `ModuleClass` if that were a field. It is
+therefore the class `ModuleClass.IsSummandClosed`, which `V^κ(R)` supplies and `V^κ(𝓕^κ)` does
+not. Being a class it threads through the recursion of Theorem 4.3 by instance resolution: one
+`variable [C.IsSummandClosed]` before `exists_step` covers everything downstream, and only the
+four public §4 theorems carry it explicitly.
+
+**Ranks by subsets, not cardinals.** The classes of `V^κ(𝓕^κ)` are indexed by subsets of
+`Idx κ` rather than by the cardinals `≤ κ`, because `ModuleClass.carrier` must live in `Type u`
+whereas `Cardinal.{u}` lives in `Type (u+1)`. The same constraint is why the `n` coordinates of
+`Fin n → K` in Proposition 2.17(2) are a per-index type synonym `Coord K n i`: they carry `n`
+different module structures over one ring, which instance resolution cannot separate if the
+types coincide.
 
 **Theorem 4.3, two forms.** `theorem_4_3_core` is the mathematical content — given
 `⨁_{i∈κ} A i ≅ ⨁_{j∈κ} B j` with all summands `λ⁻`-small, the families of classes are
