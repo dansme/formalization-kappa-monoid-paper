@@ -47,15 +47,334 @@ theorem isBraided_nat_of_finite_support {ι : Type u} (x y : ι → ℕ)
     (hsum : ∑ᶠ i, x i = ∑ᶠ i, y i) :
     letI := LMonoid.ofAddCommMonoid ℕ
     IsBraided ℵ₀ x y := by
-  sorry
+  letI := LMonoid.ofAddCommMonoid ℕ
+  have hx' : #(Function.support x) < ℵ₀ := Cardinal.lt_aleph0_iff_set_finite.mpr hx
+  have hy' : #(Function.support y) < ℵ₀ := Cardinal.lt_aleph0_iff_set_finite.mpr hy
+  refine isBraided_of_small_support x y hx' hy' ?_
+  rw [LMonoid.lsumOf_eq_finsum hx' x, LMonoid.lsumOf_eq_finsum hy' y,
+    finsum_mem_support, finsum_mem_support]
+  exact hsum
+
+/-! ### Helper lemmas for the infinite-support case
+
+Building the braiding of two infinite-support families in `ℕ₀` is a genuine construction: we
+alternately grow finite intervals `[c, M)` of `ℕ` along each family, choosing `M` large enough
+(using that the family has infinitely many nonzero entries) to make the partial sum dominate
+whatever deficit was left over from the other family's previous interval. -/
+
+/-- If `S : Set ℕ` is infinite and `f` is `≥ 1` on `S`, then starting from any `c`, some interval
+`[c, M)` has `f`-sum at least any prescribed target `d`. -/
+theorem exists_ico_dominates {S : Set ℕ} (hS : S.Infinite) (f : ℕ → ℕ)
+    (hf : ∀ i ∈ S, 1 ≤ f i) (c d : ℕ) :
+    ∃ M, c < M ∧ d ≤ ∑ i ∈ Finset.Ico c M, f i := by
+  classical
+  have hnth_ge : ∀ n, n ≤ Nat.nth (· ∈ S) n := fun n => (Nat.nth_strictMono hS).id_le n
+  set M := Nat.nth (· ∈ S) (c + d) + 1 with hM
+  refine ⟨M, by have := hnth_ge (c + d); omega, ?_⟩
+  set T : Finset ℕ := (Finset.range (d + 1)).image (fun j => Nat.nth (· ∈ S) (c + j)) with hT
+  have hinj : Set.InjOn (fun j => Nat.nth (· ∈ S) (c + j)) (Finset.range (d + 1)) := by
+    intro a _ b _ hab
+    have := (Nat.nth_strictMono hS).injective hab
+    omega
+  have hTcard : T.card = d + 1 := by
+    rw [hT, Finset.card_image_of_injOn hinj, Finset.card_range]
+  have hTsub : T ⊆ Finset.Ico c M := by
+    intro i hi
+    simp only [hT, Finset.mem_image, Finset.mem_range] at hi
+    obtain ⟨j, hj, rfl⟩ := hi
+    have h1 := hnth_ge (c + j)
+    have h2 : Nat.nth (· ∈ S) (c + j) ≤ Nat.nth (· ∈ S) (c + d) :=
+      (Nat.nth_strictMono hS).monotone (by omega)
+    simp only [Finset.mem_Ico, hM]
+    omega
+  have hTval : ∀ i ∈ T, 1 ≤ f i := by
+    intro i hi
+    simp only [hT, Finset.mem_image, Finset.mem_range] at hi
+    obtain ⟨j, hj, rfl⟩ := hi
+    exact hf _ (Nat.nth_mem_of_infinite hS _)
+  calc d ≤ d + 1 := Nat.le_succ d
+    _ = T.card := hTcard.symm
+    _ = ∑ _i ∈ T, 1 := by rw [Finset.sum_const, smul_eq_mul, mul_one]
+    _ ≤ ∑ i ∈ T, f i := Finset.sum_le_sum hTval
+    _ ≤ ∑ i ∈ Finset.Ico c M, f i :=
+        Finset.sum_le_sum_of_subset_of_nonneg hTsub (fun i _ _ => Nat.zero_le _)
+
+/-- A strictly monotone `b : ℕ → ℕ` with `b 0 = 0` partitions `ℕ` into the intervals
+`[b k, b (k+1))`. -/
+theorem iUnion_Ico_eq_univ_of_strictMono {b : ℕ → ℕ} (hb0 : b 0 = 0) (hb : StrictMono b) :
+    (⋃ k, Set.Ico (b k) (b (k + 1))) = Set.univ := by
+  classical
+  apply Set.eq_univ_of_forall
+  intro n
+  have hbge : ∀ k, k ≤ b k := fun k => hb.id_le k
+  have hex : ∃ k, n < b (k + 1) := ⟨n, lt_of_lt_of_le (Nat.lt_succ_self n) (hbge (n + 1))⟩
+  refine Set.mem_iUnion.mpr ⟨Nat.find hex, ?_⟩
+  have hk : n < b (Nat.find hex + 1) := Nat.find_spec hex
+  rcases Nat.eq_zero_or_pos (Nat.find hex) with hk0 | hkpos
+  · exact Set.mem_Ico.mpr ⟨by rw [hk0, hb0]; exact Nat.zero_le n, hk⟩
+  · have hnotk : ¬ n < b ((Nat.find hex - 1) + 1) :=
+      Nat.find_min hex (Nat.sub_lt hkpos one_pos)
+    rw [Nat.sub_add_cancel hkpos] at hnotk
+    exact Set.mem_Ico.mpr ⟨not_lt.mp hnotk, hk⟩
+
+/-- Two intervals `[b k, b (k+1))`, `[b k', b (k'+1))` cut out by a strictly monotone `b` and
+distinct `k ≠ k'` are disjoint. -/
+theorem ico_pairwise_disjoint {b : ℕ → ℕ} (hb : StrictMono b) {k k' : ℕ} (hne : k ≠ k') :
+    Disjoint (Set.Ico (b k) (b (k + 1))) (Set.Ico (b k') (b (k' + 1))) := by
+  wlog hlt : k < k' generalizing k k'
+  · exact (this hne.symm (by omega)).symm
+  rw [Set.disjoint_left]
+  intro i hi hi'
+  simp only [Set.mem_Ico] at hi hi'
+  have : b (k + 1) ≤ b k' := hb.monotone (by omega)
+  omega
+
+/-- The recursive state driving the construction: `(bI, bJ, v)` where `bI` and `bJ` are the
+current right-hand endpoints of the intervals built so far along `x` and along `y`, and `v` is
+the current deficit carried over to the next interval along `x`.  At each step we grow `bI` far
+enough along `support x` to dominate `v`, producing a new deficit `u` for `y`, then grow `bJ` far
+enough along `support y` to dominate `u`, producing the next `v`. -/
+noncomputable def natBraidState (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) : ℕ → ℕ × ℕ × ℕ
+  | 0 => (0, 0, 0)
+  | (k + 1) =>
+      let s := natBraidState x y hx hy k
+      let bI' := (exists_ico_dominates hx x
+        (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.1 s.2.2).choose
+      let u := (∑ i ∈ Finset.Ico s.1 bI', x i) - s.2.2
+      let bJ' := (exists_ico_dominates hy y
+        (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.2.1 u).choose
+      (bI', bJ', (∑ i ∈ Finset.Ico s.2.1 bJ', y i) - u)
+
+theorem natBraidState_succ (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) :
+    natBraidState x y hx hy (k + 1) =
+      let s := natBraidState x y hx hy k
+      let bI' := (exists_ico_dominates hx x
+        (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.1 s.2.2).choose
+      let u := (∑ i ∈ Finset.Ico s.1 bI', x i) - s.2.2
+      let bJ' := (exists_ico_dominates hy y
+        (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.2.1 u).choose
+      (bI', bJ', (∑ i ∈ Finset.Ico s.2.1 bJ', y i) - u) := rfl
+
+/-- The `x`-boundary sequence. -/
+noncomputable def natBraidBI (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) : ℕ := (natBraidState x y hx hy k).1
+
+/-- The `y`-boundary sequence. -/
+noncomputable def natBraidBJ (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) : ℕ := (natBraidState x y hx hy k).2.1
+
+/-- The deficit sequence, playing the role of `v` in `BraidingData`. -/
+noncomputable def natBraidV (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) : ℕ := (natBraidState x y hx hy k).2.2
+
+/-- The deficit sequence, playing the role of `u` in `BraidingData`. -/
+noncomputable def natBraidU (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) : ℕ :=
+  (∑ i ∈ Finset.Ico (natBraidBI x y hx hy k) (natBraidBI x y hx hy (k + 1)), x i)
+    - natBraidV x y hx hy k
+
+theorem natBraidBI_zero (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) : natBraidBI x y hx hy 0 = 0 := rfl
+
+theorem natBraidBJ_zero (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) : natBraidBJ x y hx hy 0 = 0 := rfl
+
+theorem natBraidV_zero (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) : natBraidV x y hx hy 0 = 0 := rfl
+
+/-- The defining property of `bI (k+1)`: it dominates the deficit `v k` along `support x`. -/
+theorem natBraidBI_succ_spec (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) :
+    natBraidBI x y hx hy k < natBraidBI x y hx hy (k + 1) ∧
+      natBraidV x y hx hy k ≤
+        ∑ i ∈ Finset.Ico (natBraidBI x y hx hy k) (natBraidBI x y hx hy (k + 1)), x i :=
+  (exists_ico_dominates hx x (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi))
+    (natBraidBI x y hx hy k) (natBraidV x y hx hy k)).choose_spec
+
+/-- The defining property of `bJ (k+1)`: it dominates the deficit `u k` along `support y`. -/
+theorem natBraidBJ_succ_spec (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) :
+    natBraidBJ x y hx hy k < natBraidBJ x y hx hy (k + 1) ∧
+      natBraidU x y hx hy k ≤
+        ∑ i ∈ Finset.Ico (natBraidBJ x y hx hy k) (natBraidBJ x y hx hy (k + 1)), y i :=
+  (exists_ico_dominates hy y (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi))
+    (natBraidBJ x y hx hy k) (natBraidU x y hx hy k)).choose_spec
+
+theorem natBraidBI_lt_succ (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) :
+    natBraidBI x y hx hy k < natBraidBI x y hx hy (k + 1) :=
+  (natBraidBI_succ_spec x y hx hy k).1
+
+theorem natBraidBJ_lt_succ (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) :
+    natBraidBJ x y hx hy k < natBraidBJ x y hx hy (k + 1) :=
+  (natBraidBJ_succ_spec x y hx hy k).1
+
+/-- The defining equation for `x`: the sum over the `k`-th `x`-interval equals the incoming
+deficit `v k` plus the outgoing deficit `u k`. -/
+theorem natBraidBI_sum_eq (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) :
+    ∑ i ∈ Finset.Ico (natBraidBI x y hx hy k) (natBraidBI x y hx hy (k + 1)), x i =
+      natBraidV x y hx hy k + natBraidU x y hx hy k := by
+  have h := (natBraidBI_succ_spec x y hx hy k).2
+  unfold natBraidU
+  omega
+
+/-- The defining equation for `y`: the sum over the `k`-th `y`-interval equals the next incoming
+deficit `v (k+1)` plus the outgoing deficit `u k`. -/
+theorem natBraidBJ_sum_eq (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
+    (hy : (Function.support y).Infinite) (k : ℕ) :
+    ∑ i ∈ Finset.Ico (natBraidBJ x y hx hy k) (natBraidBJ x y hx hy (k + 1)), y i =
+      natBraidV x y hx hy (k + 1) + natBraidU x y hx hy k := by
+  have h := (natBraidBJ_succ_spec x y hx hy k).2
+  have hv : natBraidV x y hx hy (k + 1) =
+      (∑ i ∈ Finset.Ico (natBraidBJ x y hx hy k) (natBraidBJ x y hx hy (k + 1)), y i)
+        - natBraidU x y hx hy k := rfl
+  omega
 
 /-- **Examples 3.3(1)**, the substantive half: two families in `ℕ₀` with infinite support are
-`ℵ₀⁻`-braided. -/
-theorem isBraided_nat_of_infinite_support {ι : Type u} (x y : ι → ℕ)
+`ℵ₀⁻`-braided, provided the (necessarily infinite, since it contains an infinite support) index
+type `ι` has cardinality at most `ℵ₀`.  (Without this hypothesis the statement is false: e.g. a
+family that is `≡ 1` on an uncountable index type cannot be braided with one supported only on a
+countable subset, since `BraidingData`'s pieces have size `< ℵ₀`, so only countably many of them
+can be nonempty, and each nonzero entry of the first family needs its own piece.)
+
+We build the `BraidingData` directly over `ι`: transport a bijection `φ : ℕ ≃ ι` (which exists
+since `ι` is infinite of cardinality `≤ ℵ₀`), run the `ℕ`-arithmetic construction on
+`x ∘ φ, y ∘ φ : ℕ → ℕ`, and place all of the pieces at the single basepoint `a₀ := φ 0`, moving
+the resulting intervals of `ℕ` back into subsets of `ι` via images under `φ`.  (We deliberately
+avoid `IsBraided.reindex`, whose two index types live in the *same* universe `u`: here one side is
+the genuinely `Type 0`-valued `ℕ`, which need not match the ambient `ι : Type u`.) -/
+theorem isBraided_nat_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀) (x y : ι → ℕ)
     (hx : (Function.support x).Infinite) (hy : (Function.support y).Infinite) :
     letI := LMonoid.ofAddCommMonoid ℕ
     IsBraided ℵ₀ x y := by
-  sorry
+  letI := LMonoid.ofAddCommMonoid ℕ
+  classical
+  have hιInf : Infinite ι := by
+    rcases finite_or_infinite ι with hfin | hinf
+    · haveI := hfin
+      exact absurd (Set.toFinite (Function.support x)) hx
+    · exact hinf
+  have hUL : #(ULift.{u} ℕ) = ℵ₀ := by
+    rw [Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0]
+  have h1 : #(ULift.{u} ℕ) ≤ #ι := by rw [hUL]; exact Cardinal.infinite_iff.mp hιInf
+  have h2 : #ι ≤ #(ULift.{u} ℕ) := by rw [hUL]; exact hι
+  have hmk : #(ULift.{u} ℕ) = #ι := le_antisymm h1 h2
+  obtain ⟨e0⟩ := Cardinal.eq.mp hmk
+  -- `e0 : ULift.{u} ℕ ≃ ι`; compose with `Equiv.ulift : ULift.{u} ℕ ≃ ℕ` to get a plain bijection
+  -- `φ : ℕ ≃ ι` (this is fine as a *term*: `Equiv.trans` does not require matching universes,
+  -- only the theorem `IsBraided.reindex` does — so we avoid calling it and instead build the
+  -- `BraidingData` for `x y : ι → ℕ` directly, using images under `φ`).
+  set φ : ℕ ≃ ι := Equiv.ulift.symm.trans e0 with hφ
+  set x3 : ℕ → ℕ := x ∘ φ with hx3def
+  set y3 : ℕ → ℕ := y ∘ φ with hy3def
+  have hx3 : (Function.support x3).Infinite := by
+    rw [hx3def, Function.support_comp_eq_preimage]
+    intro hfin
+    apply hx
+    rw [← Set.image_preimage_eq (Function.support x) φ.surjective]
+    exact hfin.image _
+  have hy3 : (Function.support y3).Infinite := by
+    rw [hy3def, Function.support_comp_eq_preimage]
+    intro hfin
+    apply hy
+    rw [← Set.image_preimage_eq (Function.support y) φ.surjective]
+    exact hfin.image _
+  have hbI : StrictMono (natBraidBI x3 y3 hx3 hy3) :=
+    strictMono_nat_of_lt_succ (natBraidBI_lt_succ x3 y3 hx3 hy3)
+  have hbJ : StrictMono (natBraidBJ x3 y3 hx3 hy3) :=
+    strictMono_nat_of_lt_succ (natBraidBJ_lt_succ x3 y3 hx3 hy3)
+  set a₀ : ι := φ 0 with ha₀def
+  set I : ι × ℕ → Set ι := fun p =>
+    if p.1 = a₀ then
+      φ '' Set.Ico (natBraidBI x3 y3 hx3 hy3 p.2) (natBraidBI x3 y3 hx3 hy3 (p.2 + 1))
+    else ∅ with hIdef
+  set J : ι × ℕ → Set ι := fun p =>
+    if p.1 = a₀ then
+      φ '' Set.Ico (natBraidBJ x3 y3 hx3 hy3 p.2) (natBraidBJ x3 y3 hx3 hy3 (p.2 + 1))
+    else ∅ with hJdef
+  refine ⟨BraidingData.mk_finsum I J
+    (fun p => by
+      rw [hIdef]; dsimp only
+      split
+      · exact (Set.finite_Ico _ _).image _
+      · exact Set.finite_empty)
+    (fun p => by
+      rw [hJdef]; dsimp only
+      split
+      · exact (Set.finite_Ico _ _).image _
+      · exact Set.finite_empty)
+    (fun p q hpq => by
+      rw [hIdef]; dsimp only
+      by_cases hp : p.1 = a₀ <;> by_cases hq : q.1 = a₀
+      · rw [if_pos hp, if_pos hq]
+        exact Set.disjoint_image_of_injective φ.injective
+          (ico_pairwise_disjoint hbI (fun he => hpq (Prod.ext (hp.trans hq.symm) he)))
+      · rw [if_pos hp, if_neg hq]; exact disjoint_bot_right
+      · rw [if_neg hp, if_pos hq]; exact disjoint_bot_left
+      · rw [if_neg hp, if_neg hq]; exact disjoint_bot_left)
+    (fun p q hpq => by
+      rw [hJdef]; dsimp only
+      by_cases hp : p.1 = a₀ <;> by_cases hq : q.1 = a₀
+      · rw [if_pos hp, if_pos hq]
+        exact Set.disjoint_image_of_injective φ.injective
+          (ico_pairwise_disjoint hbJ (fun he => hpq (Prod.ext (hp.trans hq.symm) he)))
+      · rw [if_pos hp, if_neg hq]; exact disjoint_bot_right
+      · rw [if_neg hp, if_pos hq]; exact disjoint_bot_left
+      · rw [if_neg hp, if_neg hq]; exact disjoint_bot_left)
+    (Set.eq_univ_of_forall fun i => by
+      have hcov := iUnion_Ico_eq_univ_of_strictMono (natBraidBI_zero x3 y3 hx3 hy3) hbI
+      have hi : φ.symm i ∈
+          (⋃ k, Set.Ico (natBraidBI x3 y3 hx3 hy3 k) (natBraidBI x3 y3 hx3 hy3 (k + 1))) := by
+        rw [hcov]; trivial
+      obtain ⟨k, hk⟩ := Set.mem_iUnion.mp hi
+      refine Set.mem_iUnion.mpr ⟨(a₀, k), ?_⟩
+      rw [hIdef]; dsimp only
+      rw [if_pos rfl]
+      exact ⟨φ.symm i, hk, φ.apply_symm_apply i⟩)
+    (Set.eq_univ_of_forall fun i => by
+      have hcov := iUnion_Ico_eq_univ_of_strictMono (natBraidBJ_zero x3 y3 hx3 hy3) hbJ
+      have hi : φ.symm i ∈
+          (⋃ k, Set.Ico (natBraidBJ x3 y3 hx3 hy3 k) (natBraidBJ x3 y3 hx3 hy3 (k + 1))) := by
+        rw [hcov]; trivial
+      obtain ⟨k, hk⟩ := Set.mem_iUnion.mp hi
+      refine Set.mem_iUnion.mpr ⟨(a₀, k), ?_⟩
+      rw [hJdef]; dsimp only
+      rw [if_pos rfl]
+      exact ⟨φ.symm i, hk, φ.apply_symm_apply i⟩)
+    (fun p => if p.1 = a₀ then natBraidU x3 y3 hx3 hy3 p.2 else 0)
+    (fun p => if p.1 = a₀ then natBraidV x3 y3 hx3 hy3 p.2 else 0)
+    (fun a => by
+      by_cases h : a = a₀
+      · simp [h, natBraidV_zero]
+      · simp [h])
+    (fun p => by
+      by_cases hp : p.1 = a₀
+      · simp only [hIdef, if_pos hp]
+        rw [finsum_mem_image φ.injective.injOn,
+          show (Set.Ico (natBraidBI x3 y3 hx3 hy3 p.2) (natBraidBI x3 y3 hx3 hy3 (p.2 + 1))
+                : Set ℕ)
+            = (↑(Finset.Ico (natBraidBI x3 y3 hx3 hy3 p.2) (natBraidBI x3 y3 hx3 hy3 (p.2 + 1)))
+              : Set ℕ)
+            from (Finset.coe_Ico _ _).symm, finsum_mem_coe_finset]
+        exact natBraidBI_sum_eq x3 y3 hx3 hy3 p.2
+      · simp [hIdef, if_neg hp])
+    (fun p => by
+      by_cases hp : p.1 = a₀
+      · simp only [bsucc, hJdef]
+        simp only [if_pos hp]
+        rw [finsum_mem_image φ.injective.injOn,
+          show (Set.Ico (natBraidBJ x3 y3 hx3 hy3 p.2) (natBraidBJ x3 y3 hx3 hy3 (p.2 + 1))
+              : Set ℕ)
+            = (↑(Finset.Ico (natBraidBJ x3 y3 hx3 hy3 p.2) (natBraidBJ x3 y3 hx3 hy3 (p.2 + 1)))
+              : Set ℕ)
+            from (Finset.coe_Ico _ _).symm, finsum_mem_coe_finset]
+        exact natBraidBJ_sum_eq x3 y3 hx3 hy3 p.2
+      · simp only [bsucc, hJdef]
+        simp [if_neg hp])⟩
 
 /-- **Examples 3.3(1)**: the trivial `ℵ₀`-extension `ℕ₀ ∪ {∞}` is `ℵ₀⁻`-braided over `ℕ₀`, hence
 (by Theorem 3.11(2)) *is* the universal `ℵ₀`-extension of `ℕ₀`.  This is the first entry of
