@@ -1,6 +1,7 @@
 # A Lean 4 formalisation of Nazemian–Smertnig, *A monoid-theoretical approach to infinite direct-sum decompositions of modules*
 
-Sections 2–4 of the paper. Section 5 is omitted, as requested.
+Sections 2–4 of the paper. Section 5 is omitted, as requested; `SECTION5-PLAN.md` records what
+formalising it would take.
 
 ## Status
 
