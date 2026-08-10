@@ -444,4 +444,59 @@ theorem prop_2_17_one (hκ : ℵ₀ ≤ κ) :
 
 end MultMap
 
+
+/-! ## Proposition 2.17(2): semisimple rings with a prescribed number of simple classes
+
+For a field `K`, the ring `Fin n → K` is semisimple and its simple modules are exactly the `n`
+coordinates: `K` with `(Fin n → K)` acting through the `i`-th projection. -/
+
+section Exists
+
+variable (K : Type u) [Field K] (n : ℕ)
+
+/-- The `i`-th coordinate of `Fin n → K`, as a module over it. -/
+noncomputable def coordModule (i : Fin n) : Module (Fin n → K) K :=
+  ((Pi.evalRingHom (fun _ : Fin n => K) i).toModule)
+
+/-- A simple quotient of a direct sum of simple modules is one of the summands. -/
+theorem exists_equiv_of_surjective_dsum {R : Type u} [Ring R] {ι : Type u} (A : ι → Type u)
+    [∀ i, AddCommGroup (A i)] [∀ i, Module R (A i)] (hA : ∀ i, IsSimpleModule R (A i))
+    {M : Type u} [AddCommGroup M] [Module R M] (hM : IsSimpleModule R M)
+    (φ : (⨁ i, A i) →ₗ[R] M) (hφ : Function.Surjective φ) :
+    ∃ i, Nonempty (A i ≃ₗ[R] M) := by
+  classical
+  -- some component of `φ` is nonzero
+  have hne : ∃ i, φ.comp (lof R ι A i) ≠ 0 := by
+    by_contra hcon
+    simp only [not_exists, ne_eq, not_not] at hcon
+    haveI := hM
+    obtain ⟨x, y, hxy⟩ := (IsSimpleModule.nontrivial (R := R) (M := M)).exists_pair_ne
+    obtain ⟨z, rfl⟩ := hφ x
+    obtain ⟨w, rfl⟩ := hφ y
+    refine hxy ?_
+    have hzero : ∀ v : ⨁ i, A i, φ v = 0 := by
+      intro v
+      rw [← DirectSum.sum_support_of v, map_sum]
+      refine Finset.sum_eq_zero fun k _ => ?_
+      rw [← lof_eq_of R]
+      exact congrArg (fun ψ : A k →ₗ[R] M => ψ (v k)) (hcon k)
+    rw [hzero z, hzero w]
+  obtain ⟨i, hi⟩ := hne
+  refine ⟨i, ⟨?_⟩⟩
+  -- a nonzero map between simple modules is an isomorphism
+  haveI := hA i
+  haveI := hM
+  set ψ := φ.comp (lof R ι A i) with hψ
+  have hker : LinearMap.ker ψ = ⊥ := by
+    rcases (hA i).eq_bot_or_eq_top (LinearMap.ker ψ) with h | h
+    · exact h
+    · exact absurd (LinearMap.ker_eq_top.mp h) hi
+  have hran : LinearMap.range ψ = ⊤ := by
+    rcases hM.eq_bot_or_eq_top (LinearMap.range ψ) with h | h
+    · exact absurd (LinearMap.range_eq_bot.mp h) hi
+    · exact h
+  exact LinearEquiv.ofBijective ψ ⟨LinearMap.ker_eq_bot.mp hker, LinearMap.range_eq_top.mp hran⟩
+
+end Exists
+
 end KappaMonoid
