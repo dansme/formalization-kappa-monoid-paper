@@ -1528,18 +1528,37 @@ theorem LinSystem.alephExt_subset_solutions :
   exact (sys.isKSubmonoid_solutions (le_refl ℵ₀)).add_mem hh.1
     (sys.mem_solutions_alephPart hh'.1)
 
+/-- **`H` is saturated in `ℕ₀^n`**: the hypothesis Proposition 3.14(2) needs, spelled out for `H`
+sitting inside `F_{ℵ₀}^n` as `finSolutions` — a *finite* summand of an element of `H` lying in `H`
+has its complement in `H`.
+
+The paper asserts this for every `H` cut out by equations, inequalities and congruences, citing
+cancellativity of `ℕ₀^n` (the remark before Prop. 3.14).  For equations and congruences that is
+right, but **it fails for inequalities**, and with it Proposition 3.14(2): see
+`not_saturated_of_ineq` below. -/
+def LinSystem.IsSaturatedFin : Prop :=
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  ∀ s ∈ sys.finSolutions, ∀ t ∈ sys.finSolutions, ∀ h : Fin n → Fcard ℵ₀,
+    (∀ i, ((h i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) → s = t + h → h ∈ sys.finSolutions
+
 /-- **Proposition 3.14(2)**: for a monoid `H ⊆ ℕ₀^n` cut out by a homogeneous system, the
 universal `ℵ₀`-extension is `H + ℵ₀H ⊆ F_{ℵ₀}^n`.
 
 Both `λ` and `κ` are `ℵ₀` here: an `ℵ₀⁻`-monoid is an ordinary commutative monoid, which is what
 `H ⊆ ℕ₀^n` is.
 
-Paper proof: `H + ℵ₀H` is `ℵ₀⁻`-braided over `H`.  Given two families in `H` with the same sum in
-`F_{ℵ₀}^n`, either both are finitely supported — and then Lemma 3.4(1) applies — or both have
-components that blow up to `ℵ₀`, and the braiding is built componentwise as in Examples 3.3(1).
-Note this is genuinely *not* the solution set of the same system over `F_{ℵ₀}`, which is what
-distinguishes (2) from (1); Example 3.15 is the witness. -/
-theorem prop_3_14_two :
+Paper proof: `H` is saturated in `ℕ₀^n`, so Lemma 3.13(2) applies with `λ = ℵ₀` and it is enough
+that `⟨H⟩_{ℵ₀} = H + ℵ₀H`, which is `isKSubmonoid_alephExt` in one direction and the finite-`J`
+argument inside `ksum_mem_alephExt` in the other.  Note this is genuinely *not* the solution set of
+the same system over `F_{ℵ₀}`, which is what distinguishes (2) from (1); Example 3.15 is the
+witness.
+
+**Deviation from the paper.** The saturation of `H` is added as a hypothesis, because the paper's
+remark that it is automatic is false for systems involving inequalities — see
+`LinSystem.IsSaturatedFin` and `not_saturated_of_ineq`.  It *is* automatic for systems of equations
+and congruences, which is the case the paper's applications use. -/
+theorem prop_3_14_two (hsat : sys.IsSaturatedFin) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     letI : AddCommMonoid ↥sys.finSolutions :=
@@ -1551,6 +1570,89 @@ theorem prop_3_14_two :
       (fun h => ⟨(h : Fin n → Fcard ℵ₀), ⟨(h : Fin n → Fcard ℵ₀), h.2, 0,
         sys.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
   sorry
+
+/-! ### The saturation hypothesis in Proposition 3.14(2) cannot be dropped
+
+The paper's remark before Proposition 3.14 asserts that a submonoid of `ℕ₀^n` defined by
+homogeneous equations, inequalities and congruences is saturated, by cancellativity of `ℕ₀^n`.
+For equations `A(s) = B(s)` and congruences `A(s) ∈ dℕ₀` that argument is correct — cancel the
+`t`-part — but for an inequality it breaks down, and the conclusion is false. -/
+
+/-- The system in two unknowns consisting of the single inequality `x₁ ≤ 2x₂`. -/
+def ineqSystem : LinSystem 2 where
+  eqs := ∅
+  ineqs := {(fun i => if i = 0 then 1 else 0, fun i => if i = 0 then 0 else 2)}
+  congrs := ∅
+
+theorem two_le_aleph0 : (2 : Cardinal.{u}) ≤ ℵ₀ := by
+  have h : ((2 : ℕ) : Cardinal.{u}) < ℵ₀ := Cardinal.natCast_lt_aleph0
+  exact_mod_cast h.le
+
+/-- **The paper's saturation remark fails for inequalities.**  For the single inequality
+`x₁ ≤ 2x₂` the monoid `H = {(a, b) ∈ ℕ₀² : a ≤ 2b}` is *not* saturated in `ℕ₀²`:
+`(2,1) = (0,1) + (2,0)` with `(2,1)`, `(0,1) ∈ H`, but `(2,0) ∉ H`.
+
+This also refutes Proposition 3.14(2) as printed, whose proof begins by asserting the saturation.
+Explicitly, for this `H` take `x_k = (2,1)` for all `k` and `y_0 = (0,1)`, `y_k = (2,1)` for
+`k ≥ 1`.  Both families have `ℵ₀`-sum `(ℵ₀, ℵ₀) ∈ H + ℵ₀H`, but they are not `ℵ₀⁻`-braided over
+`H`: summing the two braiding equations over the initial segment `n ≤ N` of the `ω`-block whose
+`J`-pieces contain the index `0` of `y` telescopes to `Σ_B y = Σ_A x + v(a₀, N+1)` with
+`A`, `B` the finite index sets used, so with `p := #B - #A ≥ 1` one gets `v(a₀,N+1) = (2p-2, p)`;
+the `I`-equation at `(a₀, N+1)` then forces `u(a₀,N+1) = (2m-2p+2, m-p)` for `m` the size of that
+`I`-piece, and `2m-2p+2 ≤ 2(m-p)` is false.  So `H + ℵ₀H` is not `ℵ₀⁻`-braided over `H`, hence by
+`isBraidedOver_of_isUniversalKExtension` not its universal `ℵ₀`-extension either.  (Only the
+failure of saturation is formalised here; the braiding computation is the argument just given.) -/
+theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSystem := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  intro hsat
+  -- the entries `2`, `1`, `0` of `F_{ℵ₀}`
+  set two : Fcard ℵ₀ := Fcard.mk 2 two_le_aleph0 with htwo
+  set one : Fcard ℵ₀ := Fcard.mk 1 Cardinal.one_lt_aleph0.le with hone
+  set nil : Fcard ℵ₀ := Fcard.mk 0 (zero_le : (0 : Cardinal.{u}) ≤ ℵ₀) with hnil
+  -- the value of a linear form in two unknowns
+  have hlin : ∀ (a : Fin 2 → ℕ) (x : Fin 2 → Fcard ℵ₀),
+      ((linEval (le_refl (ℵ₀ : Cardinal.{u})) a x : Fcard ℵ₀) : Cardinal.{u})
+        = (a 0 : Cardinal.{u}) * ((x 0 : Fcard ℵ₀) : Cardinal.{u})
+          + (a 1 : Cardinal.{u}) * ((x 1 : Fcard ℵ₀) : Cardinal.{u}) := by
+    intro a x
+    show ((∑ i, (a i) • x i : Fcard ℵ₀) : Cardinal.{u}) = _
+    rw [← fcardVal_apply (le_refl (ℵ₀ : Cardinal.{u})), map_sum, Fin.sum_univ_two]
+    simp only [fcardVal_apply, map_nsmul, nsmul_eq_mul]
+  -- the single inequality, with its witness spelled out
+  have hmem : ∀ (x : Fin 2 → Fcard ℵ₀) (c : Fcard ℵ₀),
+      (∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) →
+      ((x 0 : Fcard ℵ₀) : Cardinal.{u}) + ((c : Fcard ℵ₀) : Cardinal.{u})
+        = 2 * ((x 1 : Fcard ℵ₀) : Cardinal.{u}) →
+      x ∈ ineqSystem.finSolutions := by
+    intro x c hfin hc
+    refine ⟨⟨fun p hp => absurd hp (Set.notMem_empty p), fun p hp => ?_,
+      fun p hp => absurd hp (Set.notMem_empty p)⟩, hfin⟩
+    obtain rfl : p = (fun i => if i = 0 then 1 else 0, fun i => if i = 0 then 0 else 2) := hp
+    refine ⟨c, Fcard.ext ?_⟩
+    rw [Fcard.instKMonoid_add, hlin, hlin]
+    simpa using hc
+  have hsmem : (fun i => if i = 0 then two else one) ∈ ineqSystem.finSolutions := by
+    refine hmem _ nil (fun i => ?_) ?_
+    · by_cases hi : i = 0 <;> simp [hi, htwo, hone, Cardinal.one_lt_aleph0]
+    · simp [htwo, hone, hnil]
+  have htmem : (fun i => if i = 0 then nil else one) ∈ ineqSystem.finSolutions := by
+    refine hmem _ two (fun i => ?_) ?_
+    · by_cases hi : i = 0 <;>
+        simp [hi, hnil, hone, Cardinal.aleph0_pos, Cardinal.one_lt_aleph0]
+    · simp [htwo, hone, hnil]
+  have hnot : (fun i => if i = 0 then two else nil) ∉ ineqSystem.finSolutions := by
+    intro hmem'
+    obtain ⟨c, hc⟩ := hmem'.1.2.1 _ rfl
+    have hval := congrArg (fun z : Fcard ℵ₀ => (z : Cardinal.{u})) hc
+    rw [Fcard.instKMonoid_add, hlin, hlin] at hval
+    simp only [htwo, hnil] at hval
+    norm_num at hval
+  refine hnot (hsat _ hsmem _ htmem _ (fun i => ?_) (funext fun i => ?_))
+  · by_cases hi : i = 0 <;> simp [hi, htwo, hnil, Cardinal.aleph0_pos]
+  · refine Fcard.ext ?_
+    by_cases hi : i = 0 <;>
+      simp [hi, htwo, hone, hnil, Fcard.instKMonoid_add (le_refl (ℵ₀ : Cardinal.{u}))]
 
 /-- **Example 3.15**: `H = {(m, m) : m ∈ ℕ₀} ⊆ ℕ₀²` shows that Proposition 3.14(1) and (2) really
 are different statements — the universal `ℵ₀`-extension of `H` is *not* the solution set of
