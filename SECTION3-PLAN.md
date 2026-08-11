@@ -41,6 +41,7 @@ scoped separately.
 
 | Prop. 3.14(1) | `isBraidedOver_pi_fcard`, `solutions_subset_kclosure`, `prop_3_14_one` |
 | Prop. 3.14(2) | `isBraidedOver_pi_lcard`, `alephPart_eq_ksum`, `prop_3_14_two` (with an added hypothesis, see below) |
+| Saturation for systems of equations and congruences | `linEvalNat`, `val_linEval_eq_linEvalNat`, `isSaturatedFin_of_ineqs_empty`, `prop_3_14_two_of_ineqs_empty` |
 | The counterexample to Prop. 3.14(2) as printed | `ineqSystem`, `not_isSaturatedFin_ineqSystem` |
 
 And, in `Universal.lean`:
@@ -55,13 +56,9 @@ And, in `Universal.lean`:
 
 1. **Example 3.15** — `example_3_15` is still the placeholder `True`.
 2. **Examples 3.3(2) and the `ℝ≥0`, `ℚ≥0` entries of Examples 3.12** — not started; see Step E.
-3. Optionally, two things the counterexample below leaves informal, and one convenience lemma:
-   * the *braiding* half of the counterexample to Prop. 3.14(2) (only the failure of saturation is
-     formalised);
-   * `IsSaturatedFin` for systems without inequalities, which would make `prop_3_14_two` apply
-     without a hypothesis in the case the paper's applications use. What is needed is
-     cancellativity of finite cardinals: from `a + c = b + c` with all of `a`, `b`, `c` finite,
-     conclude `a = b` — then the paper's argument goes through for equations and congruences.
+3. Optionally, the *braiding* half of the counterexample to Prop. 3.14(2) — only the failure of
+   saturation is formalised (`not_isSaturatedFin_ineqSystem`); the braiding computation is in its
+   docstring.
 
 ---
 
@@ -126,7 +123,8 @@ reindexing is `ULift`). Three ingredients made this possible and are worth remem
 The paper's remark that `H` is automatically saturated is false for systems with inequalities, and
 Prop. 3.14(2) fails with it — see the README section "The hypothesis added to
 Proposition 3.14(2)" and `not_isSaturatedFin_ineqSystem`. `prop_3_14_two` takes saturation as the
-hypothesis `IsSaturatedFin`.
+hypothesis `IsSaturatedFin`; for systems without inequalities `isSaturatedFin_of_ineqs_empty`
+discharges it, so `prop_3_14_two_of_ineqs_empty` needs nothing but `sys.ineqs = ∅`.
 
 ## Step 1 — Example 3.15 and Remark 3.16
 
