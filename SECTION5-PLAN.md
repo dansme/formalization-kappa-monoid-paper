@@ -9,7 +9,7 @@ independently checkable.
 
 **The §4 blocker is gone.** Corollary 4.7(1) is proved (both directions, with axiom A5 for
 (i) ⇒ (ii)), so Lemma 5.1 and Theorem 5.3 have their input. Steps 1 and 6's counterexample are
-done; 17 `sorry`s remain.
+done, as are Lemma 5.2(1)(2); 15 `sorry`s remain.
 
 **§5 is the most expensive section per result.** Unlike §§2–4, its proofs are explicit
 combinatorial constructions — Lemma 5.2(3) writes down three interleaved partitions of `ℕ` by
@@ -82,12 +82,17 @@ non-cyclicity hypothesis, and is where `H` being non-cyclic first bites.
 
 ## Step 3 — Lemma 5.2 (`easyfactlemma1`), five parts
 
-- **(1)** an infinite and a finite form cannot be braided. The paper says "clear". It is: in a
-  braiding, the finite form's family has cofinitely many zero terms, so cofinitely many blocks
-  contribute `0`, while the infinite form's family has infinitely many non-zero terms. Reducedness
-  (`LMonoid.isConical`, already proved) closes it.
-- **(2)** two finite forms of an element are braided over `add (x₁ + x₂)`. Also easy: both sums
-  lie in `add (x₁ + x₂)` by construction, so the one-block partition works.
+- **(1) — done**, and it needed a **correction**: the scaffold omitted the non-degeneracy
+  hypotheses, and with `x₁ = 0` the infinite form `(ℵ₀, 0)` has the identically zero family, which
+  *is* braided with the finite form `(0, 0)`. `lemma_5_2_one` now takes `x₁ ≠ 0`, `x₂ ≠ 0`, which
+  `ne_zero_of_not_cyclic` supplies from §5's standing hypotheses (a zero generator could be
+  dropped, making `H` cyclic). The proof is not the paper's cofinite-blocks argument but
+  `IsBraided.mk_support_lt` (the converse of Lemma 3.4(1), already proved): a partner of a
+  finite-support family has finite support, and an infinite form's family has infinite support.
+- **(2) — done**, from `isBraided_of_small_sets` (`Universal.lean`): both families are supported on
+  the finitely many slots of their forms and have the same sum there. `coe_lsumOf_slots` is the
+  bookkeeping — the coercion of a submonoid sum is the sum in `H` (`IsLSubset.coe_lsumOf` is `rfl`),
+  and dropping the slots off which the family vanishes is `sumOf_eq_sumOf_subset`.
 - **(3)** the substantial one. `x_i ∈ add x_j` and no element has both a finite and an infinite
   form ⟹ `α X_i + ℵ₀ X_j` and `β X_i + ℵ₀ X_j` are braided, for all `α, β ≤ ℵ₀`. The paper gives
   the partitions explicitly — `I₀ = {0,…,α-1}`, `I_k = {α + n(k-1), …}`, `J_k = {nk, …}` with
@@ -96,10 +101,16 @@ non-cyclicity hypothesis, and is where `H` being non-cyclic first bites.
   `m x_j = (m'+1) x_i + n' x_j` before building its partitions.
 - **(4)** `x_i ∉ add x_j`, no mixed forms, `m X_i + ℵ₀ X_j` braided with `n X_i + ℵ₀ X_j` ⟹
   `m x_i + k x_j = n x_i + k' x_j` for some finite `k, k'`.
-- **(5)** `H` braided over `add (x₁ + x₂)` ⟹ (`x_i ∈ add x_j` ↔ `ℵ₀ (x₁ + x₂) = ℵ₀ x_j`). Uses
-  Lemma 2.14, `eq_cmul_top_of_add` in `OrderUnit.lean`, which is proved.
+- **(5)** `H` braided over `add (x₁ + x₂)` ⟹ (`x_i ∈ add x_j` ↔ `ℵ₀ (x₁ + x₂) = ℵ₀ x_j`). The
+  forward direction is elementary: from `x₁ + z = n x₂` scale by `ℵ₀` (`cmul_top_distrib`,
+  `ℵ₀·n = ℵ₀`, `α + α = α`), with the case `n = 0` closed by reducedness. The backward direction is
+  where the work is, and the paper's "we conclude that there exist positive integers `m`, `n`" hides
+  a block induction: braid the constant families `(x₂)` and `(x₁+x₂)` (same `ℵ₀`-sum by hypothesis),
+  take the least level `k` in some block whose `I`-piece is nonempty, use reducedness to see that
+  `u`, `v` vanish below it, so `v (a,k)` is a *finite multiple of* `x₂`, and read
+  `x₁ ≼ m(x₁+x₂) = v(a,k) + u(a,k) ≼ (r + #J(a,k)) x₂` off the two braiding equations.
 
-Do (1), (2), (5) first — they are cheap and (5) is used by both later steps.
+Do (5) next: it is used by both later steps.
 
 ## Step 4 — Theorem 5.3 (`hereditarycasecor`)
 
@@ -180,9 +191,9 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 17 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
 stays green and `sorry`-free because the file is not imported by `KappaMonoid.lean`.
 
-Closed so far: `sumOf_familyOfForm` (step 1) and the whole counterexample block (step 6), with no
-axiom. New reusable infrastructure, in the core files: `KMonoid.cmul_eq_sumOf`,
-`KMonoid.sumOf_indicator`, `KMonoid.sumOf_sumType` (`Basic.lean`), `TrivExt.coe_nsmul`,
+Closed so far: `sumOf_familyOfForm` (step 1), Lemma 5.2(1)(2) (step 3) and the whole counterexample
+block (step 6), with no axiom. New reusable infrastructure, in the core files: `KMonoid.cmul_eq_sumOf`,
+`KMonoid.sumOf_indicator`, `KMonoid.sumOf_eq_sumOf_subset`, `KMonoid.sumOf_sumType` (`Basic.lean`), `TrivExt.coe_nsmul`,
 `TrivExt.cmul_top_eq_top` (`Examples.lean`), `KMonoid.self_mem_addOf` (`Section4.lean`).
 
 ## One thing to fix in the paper

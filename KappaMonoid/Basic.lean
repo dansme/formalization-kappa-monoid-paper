@@ -1094,21 +1094,29 @@ theorem cmul_eq_sumOf {ι : Type u} (hι : #ι ≤ κ) (x : H) :
   obtain ⟨e⟩ := Cardinal.eq.mp (mk_Idx (#ι))
   exact (sumOf_equiv hι (le_of_eq_of_le (mk_Idx (#ι)) hι) e (fun _ : ι => x)).symm
 
-/-- A family taking the value `x` on `S` and `0` off it sums to `#S · x`. -/
-theorem sumOf_indicator {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (x : H) (f : ι → H)
-    (hin : ∀ i ∈ S, f i = x) (hout : ∀ i ∉ S, f i = 0) :
-    sumOf (κ := κ) hι f = cmul (κ := κ) #S hS x := by
+/-- Indices outside a subset off which the family vanishes may be dropped from a sum. -/
+theorem sumOf_eq_sumOf_subset {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (f : ι → H)
+    (hout : ∀ i ∉ S, f i = 0) :
+    sumOf (κ := κ) hι f = sumOf (κ := κ) hS (fun i : S => f i) := by
   classical
-  have hfun : f = Function.extend (Function.Embedding.subtype (· ∈ S)) (fun _ : S => x) 0 := by
+  have hfun : f = Function.extend (Function.Embedding.subtype (· ∈ S)) (fun i : S => f i) 0 := by
     funext i
     by_cases hi : i ∈ S
     · have hval : (Function.Embedding.subtype (· ∈ S)) ⟨i, hi⟩ = i := rfl
       rw [← hval, (Function.Embedding.subtype (· ∈ S)).injective.extend_apply]
-      exact hin i hi
-    · rw [Function.extend_apply' (fun _ : S => x) (0 : ι → H) i
+      rfl
+    · rw [Function.extend_apply' (fun i : S => f i) (0 : ι → H) i
         (by rintro ⟨t, ht⟩; exact hi (ht ▸ t.2))]
       exact hout i hi
-  rw [hfun, sumOf_extend hS hι _ (fun _ : S => x), cmul_eq_sumOf]
+  conv_lhs => rw [hfun]
+  exact sumOf_extend hS hι _ (fun i : S => f i)
+
+/-- A family taking the value `x` on `S` and `0` off it sums to `#S · x`. -/
+theorem sumOf_indicator {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (x : H) (f : ι → H)
+    (hin : ∀ i ∈ S, f i = x) (hout : ∀ i ∉ S, f i = 0) :
+    sumOf (κ := κ) hι f = cmul (κ := κ) #S hS x := by
+  rw [sumOf_eq_sumOf_subset hι hS f hout, cmul_eq_sumOf]
+  exact congrArg _ (funext fun i => hin i i.2)
 
 /-- Cardinal scalar multiplication by a natural number is the `nsmul` of the additive monoid. -/
 theorem cmul_natCast (x : H) : ∀ n : ℕ,

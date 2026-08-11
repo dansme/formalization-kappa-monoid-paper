@@ -132,6 +132,56 @@ theorem sumOf_familyOfForm (x₁ x₂ : H) (F : Form) :
     KMonoid.sumOf_sumType mk_nats_le_aleph0 mk_nats_le_aleph0 mk_formIdx_le_aleph0,
     hslot F.1 x₁, hslot F.2 x₂, eval]
 
+/-! ### The slots of a form
+
+Where a form's family can be nonzero.  A finite form uses finitely many slots; an infinite form
+uses infinitely many, and — provided the generator involved is nonzero — its family really has
+infinite support.  This is the only content of Lemma 5.2(1). -/
+
+/-- The slots a form's family may use. -/
+def slots (F : Form) : Set FormIdx.{u} :=
+  (Sum.inl '' {n : Nats.{u} | ((n.down : ℕ) : ℕ∞) < F.1}) ∪
+    (Sum.inr '' {n : Nats.{u} | ((n.down : ℕ) : ℕ∞) < F.2})
+
+theorem familyOfForm_eq_zero_of_notMem_slots (x₁ x₂ : H) {F : Form} {i : FormIdx.{u}}
+    (hi : i ∉ slots.{u} F) : familyOfForm x₁ x₂ F i = 0 := by
+  rcases i with n | n
+  · have hn : ¬ (((n.down : ℕ) : ℕ∞) < F.1) := fun h => hi (Or.inl ⟨n, h, rfl⟩)
+    show (if ((n.down : ℕ) : ℕ∞) < F.1 then x₁ else 0) = 0
+    rw [if_neg hn]
+  · have hn : ¬ (((n.down : ℕ) : ℕ∞) < F.2) := fun h => hi (Or.inr ⟨n, h, rfl⟩)
+    show (if ((n.down : ℕ) : ℕ∞) < F.2 then x₂ else 0) = 0
+    rw [if_neg hn]
+
+/-- A finite form uses only finitely many slots. -/
+theorem mk_slots_lt {F : Form} (hF : F.IsFinite) : #(slots.{u} F) < (ℵ₀ : Cardinal.{u}) := by
+  rw [Cardinal.lt_aleph0_iff_set_finite]
+  have hfin : ∀ a : ℕ∞, a ≠ ⊤ → {n : Nats.{u} | ((n.down : ℕ) : ℕ∞) < a}.Finite := by
+    intro a ha
+    rw [← Cardinal.lt_aleph0_iff_set_finite, mk_slots a, Cardinal.ofENat_lt_aleph0]
+    exact Ne.lt_top ha
+  exact ((hfin F.1 hF.1).image _).union ((hfin F.2 hF.2).image _)
+
+/-- An infinite form's family has infinite support, as soon as both generators are nonzero. -/
+theorem infinite_support_familyOfForm (x₁ x₂ : H) {F : Form} (hF : F.IsInfinite)
+    (h₁ : x₁ ≠ 0) (h₂ : x₂ ≠ 0) :
+    (Function.support (familyOfForm x₁ x₂ F)).Infinite := by
+  rcases hF with h | h
+  · refine Set.infinite_of_injective_forall_mem
+      (f := fun n : Nats.{u} => (Sum.inl n : FormIdx.{u})) (fun a b hab => by simpa using hab) ?_
+    intro n
+    show familyOfForm x₁ x₂ F (Sum.inl n) ≠ 0
+    show (if ((n.down : ℕ) : ℕ∞) < F.1 then x₁ else 0) ≠ 0
+    rw [if_pos (h ▸ WithTop.coe_lt_top (n.down : ℕ))]
+    exact h₁
+  · refine Set.infinite_of_injective_forall_mem
+      (f := fun n : Nats.{u} => (Sum.inr n : FormIdx.{u})) (fun a b hab => by simpa using hab) ?_
+    intro n
+    show familyOfForm x₁ x₂ F (Sum.inr n) ≠ 0
+    show (if ((n.down : ℕ) : ℕ∞) < F.2 then x₂ else 0) ≠ 0
+    rw [if_pos (h ▸ WithTop.coe_lt_top (n.down : ℕ))]
+    exact h₂
+
 /-- `y` **has a finite form**. -/
 def HasFiniteForm (x₁ x₂ y : H) : Prop := ∃ F : Form, F.IsFinite ∧ eval x₁ x₂ F = y
 
@@ -193,25 +243,127 @@ section Lemma52
 
 variable (x₁ x₂ : H)
 
+/-- In the setting of §5 the generators are nonzero: a zero generator could be dropped, making `H`
+cyclic.  This is what supplies the non-degeneracy hypotheses of Lemma 5.2(1). -/
+theorem ne_zero_of_not_cyclic (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
+    (hnc : ∀ x : H, ¬ KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x} : Set H)) :
+    x₁ ≠ 0 ∧ x₂ ≠ 0 := by
+  have key : ∀ a b : H, a = 0 → KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({a, b} : Set H) →
+      KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({b} : Set H) := by
+    intro a b ha hab
+    refine Set.eq_univ_of_univ_subset ?_
+    rw [← hab]
+    refine KMonoid.kclosure_le (fun y hy => ?_) (KMonoid.isKSubmonoid_kclosure _ _)
+    rcases hy with rfl | hy
+    · rw [ha]
+      exact (KMonoid.isKSubmonoid_kclosure (ℵ₀ : Cardinal.{u}) ({b} : Set H)).zero_mem
+    · exact KMonoid.subset_kclosure hy
+  refine ⟨fun h => hnc x₂ (key x₁ x₂ h hgen), fun h => hnc x₁ (key x₂ x₁ h ?_)⟩
+  rwa [Set.pair_comm]
+
+/-- `add (x₁ + x₂)` is reduced: it is a submonoid of a `κ`-monoid, and those are reduced by
+Lemma 2.8(1). -/
+theorem isConical_addOf :
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    IsConical ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) := by
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  exact LMonoid.isConical_of_injective (lam := (ℵ₀ : Cardinal.{u})) (κ := (ℵ₀ : Cardinal.{u}))
+    (fun y : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) => (y : H)) Subtype.val_injective rfl
+    (fun _ _ => rfl)
+
+/-- Inside `add (x₁ + x₂)` a form's family has the same support as in `H`. -/
+theorem support_subtype_familyOfForm (F : Form)
+    (hF : ∀ i, familyOfForm x₁ x₂ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    Function.support (fun i => (⟨familyOfForm x₁ x₂ F i, hF i⟩ :
+        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) = Function.support (familyOfForm x₁ x₂ F) := by
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  ext i
+  exact ⟨fun hi hz => hi (Subtype.ext hz), fun hi hz => hi (congrArg Subtype.val hz)⟩
+
+/-- The support of a form's family is contained in its slots. -/
+theorem support_subset_slots (F : Form) :
+    Function.support (familyOfForm x₁ x₂ F) ⊆ slots.{u} F := by
+  intro i hi
+  by_contra hni
+  exact hi (familyOfForm_eq_zero_of_notMem_slots x₁ x₂ hni)
+
+/-- The `add (x₁ + x₂)`-valued family of a *finite* form has support of size `< ℵ₀`. -/
+theorem mk_support_subtype_lt {F : Form} (hF : F.IsFinite)
+    (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    #(Function.support (fun i => (⟨familyOfForm x₁ x₂ F i, hFm i⟩ :
+        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))) < (ℵ₀ : Cardinal.{u}) := by
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  rw [support_subtype_familyOfForm x₁ x₂ F hFm]
+  exact lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset (support_subset_slots x₁ x₂ F))
+    (mk_slots_lt hF)
+
 /-- **Lemma 5.2(1)**: an infinite and a finite form cannot be braided.
 
-In a braiding, the finite form's family is zero cofinitely often, so cofinitely many blocks
-contribute `0`; reducedness (`KMonoid.isConical`, proved) then kills the infinite side. -/
+**This corrects the scaffold**, which omitted the non-degeneracy hypotheses: with `x₁ = 0` the
+infinite form `(ℵ₀, 0)` has the identically zero family, which *is* braided with the finite form
+`(0, 0)`.  In §5 the hypotheses come free from non-cyclicity — see `ne_zero_of_not_cyclic`.
+
+Proof: the finite form's family has finite support, so by the converse of Lemma 3.4(1)
+(`IsBraided.mk_support_lt`, which needs reducedness of `add (x₁ + x₂)`) a braided partner has
+finite support too; but an infinite form's family has infinite support. -/
 theorem lemma_5_2_one (F G : Form) (hF : F.IsInfinite) (hG : G.IsFinite)
+    (h₁ : x₁ ≠ 0) (h₂ : x₂ ≠ 0)
     (hFm : ∀ n, familyOfForm x₁ x₂ F n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hGm : ∀ n, familyOfForm x₁ x₂ G n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
     ¬ BraidedForms x₁ x₂ F G hFm hGm := by
-  sorry
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  intro hbr
+  have hbr' : IsBraided (ℵ₀ : Cardinal.{u})
+      (fun i => (⟨familyOfForm x₁ x₂ F i, hFm i⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
+      (fun i => (⟨familyOfForm x₁ x₂ G i, hGm i⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) := hbr
+  have hsuppF := hbr'.symm.mk_support_lt (isConical_addOf x₁ x₂)
+    (mk_support_subtype_lt x₁ x₂ hG hGm)
+  rw [support_subtype_familyOfForm x₁ x₂ F hFm] at hsuppF
+  exact infinite_support_familyOfForm x₁ x₂ hF h₁ h₂
+    (Cardinal.lt_aleph0_iff_set_finite.mp hsuppF)
+
+/-- The sum of a finite form's family over its slots is the element the form represents. -/
+theorem coe_lsumOf_slots {F : Form} (hF : F.IsFinite)
+    (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    ((LMonoid.lsumOf (lam := (ℵ₀ : Cardinal.{u})) (mk_slots_lt hF)
+        (fun i : slots.{u} F => (⟨familyOfForm x₁ x₂ F i, hFm i⟩ :
+          ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) :
+        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H) = eval x₁ x₂ F := by
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  -- the coercion of a submonoid sum *is* the sum in `H` (`IsLSubset.coe_lsumOf` is `rfl`)
+  show KMonoid.sumOf (κ := ℵ₀) ((mk_slots_lt hF).le.trans le_rfl)
+      (fun i : slots.{u} F => familyOfForm x₁ x₂ F i) = eval x₁ x₂ F
+  rw [← KMonoid.sumOf_eq_sumOf_subset mk_formIdx_le_aleph0 ((mk_slots_lt hF).le.trans le_rfl)
+    (familyOfForm x₁ x₂ F) fun i hi => familyOfForm_eq_zero_of_notMem_slots x₁ x₂ hi]
+  exact sumOf_familyOfForm x₁ x₂ F
 
 /-- **Lemma 5.2(2)**: two finite forms of the same element are braided over `add (x₁ + x₂)`.
 
-Both sums lie in `add (x₁ + x₂)` by construction, so a single block suffices. -/
+Both families are supported on finitely many slots and have the same sum there, which is
+`isBraided_of_small_sets`. -/
 theorem lemma_5_2_two (F G : Form) (hF : F.IsFinite) (hG : G.IsFinite)
     (heq : eval x₁ x₂ F = eval x₁ x₂ G)
     (hFm : ∀ n, familyOfForm x₁ x₂ F n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hGm : ∀ n, familyOfForm x₁ x₂ G n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
     BraidedForms x₁ x₂ F G hFm hGm := by
-  sorry
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  exact isBraided_of_small_sets (mk_slots_lt hF) (mk_slots_lt hG)
+    (fun i hi => Subtype.ext (familyOfForm_eq_zero_of_notMem_slots x₁ x₂ hi))
+    (fun i hi => Subtype.ext (familyOfForm_eq_zero_of_notMem_slots x₁ x₂ hi))
+    (Subtype.ext (by rw [coe_lsumOf_slots x₁ x₂ hF hFm, coe_lsumOf_slots x₁ x₂ hG hGm]; exact heq))
 
 /-- **Lemma 5.2(3)**: if `x₁ ∈ add x₂` and no element has both a finite and an infinite form, then
 `α X₁ + ℵ₀ X₂` and `β X₁ + ℵ₀ X₂` are braided, for all `α, β ≤ ℵ₀`.
