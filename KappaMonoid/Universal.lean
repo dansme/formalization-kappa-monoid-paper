@@ -617,6 +617,19 @@ theorem IsBraided.map_lmonoidHom {X : Type v} {Y : Type w} [LMonoid lam X] [LMon
              rw [← hg.map_add, ← d.hJ p, hg (d.J_small p) fun j : d.J p => y j]
              rfl }⟩
 
+/-- For `λ = ℵ₀` a homomorphism of `λ⁻`-monoids is nothing but an additive map: every `λ⁻`-sum is
+a finite sum, and additive maps preserve those.  (In particular the two `ℵ₀⁻`-monoid structures
+that a commutative monoid can carry — the canonical one and one induced from a `κ`-monoid — have
+the same homomorphisms.) -/
+theorem isLMonoidHom_aleph0_of_add {X : Type v} {Y : Type w} [LMonoid (ℵ₀ : Cardinal.{u}) X]
+    [LMonoid (ℵ₀ : Cardinal.{u}) Y] {g : X → Y} (h0 : g 0 = 0)
+    (hadd : ∀ a b, g (a + b) = g a + g b) : IsLMonoidHom ℵ₀ g := by
+  intro ι h x
+  haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+  haveI : Fintype ι := Fintype.ofFinite ι
+  rw [LMonoid.lsumOf_aleph0_eq_finsum h x, LMonoid.lsumOf_aleph0_eq_finsum h (g ∘ x)]
+  exact map_sum ({ toFun := g, map_zero' := h0, map_add' := hadd } : X →+ Y) x Finset.univ
+
 /-- Braidedness over the base transports along an isomorphism of the base: if `H` is
 `λ⁻`-braided over `X₁` and `g : X₂ → X₁` is an isomorphism of `λ⁻`-monoids, then `H` is
 `λ⁻`-braided over `X₂` along `f ∘ g`. -/
