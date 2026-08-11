@@ -972,6 +972,80 @@ theorem isUniversalKExtension_rtilde :
   letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
   exact isBraidedOver_rtilde.isUniversalKExtension le_rfl
 
+/-! ### `H` is not `ℵ₀⁻`-braided over itself
+
+The paper's last remark in Examples 3.3(2): repeat the argument that defeated `ℝ≥0 ∪ {∞}`, with
+`{0} ∪ ℝ̃>0` in place of `ℝ≥0`.  A single tilded `2̃` and a tilded geometric family have the same
+`ℵ₀`-sum `2̃`, but one has finite and the other infinite support, so they are not braided. -/
+
+theorem tilde_ne_zero (a : ℝ≥0) (ha : a ≠ 0) : tilde a ha ≠ 0 := by
+  intro hc
+  exact val_ne_zero (tilded_tilde a ha) (by rw [hc, val_zero])
+
+/-- **Examples 3.3(2)**, last claim: `H` is not `ℵ₀⁻`-braided over itself — there are two families
+in `H` with the same `ℵ₀`-sum that are not `ℵ₀⁻`-braided. -/
+theorem not_isBraidedOver_rtilde_self :
+    letI : KMonoid (ℵ₀ : Cardinal.{0}) RTilde := instKMonoid
+    letI := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{0}))
+    ¬ IsBraidedOver (ℵ₀ : Cardinal.{0}) ℵ₀ RTilde RTilde le_rfl id := by
+  letI : KMonoid (ℵ₀ : Cardinal.{0}) RTilde := instKMonoid
+  letI := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{0}))
+  intro hbr
+  classical
+  -- a countable index type
+  have hUL : #(ULift.{0} ℕ) = #(Idx (ℵ₀ : Cardinal.{0})) := by
+    rw [Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0, mk_Idx]
+  obtain ⟨e0⟩ := Cardinal.eq.mp hUL
+  set e : ℕ ≃ Idx (ℵ₀ : Cardinal.{0}) := Equiv.ulift.symm.trans e0 with hedef
+  obtain ⟨i₀⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{0}))
+  have h2 : (2 : ℝ≥0) ≠ 0 := two_ne_zero
+  -- the single tilded `2̃`, and the tilded geometric family
+  set X : Idx (ℵ₀ : Cardinal.{0}) → RTilde :=
+    fun i => if i = i₀ then tilde 2 h2 else 0 with hXdef
+  set Y : Idx (ℵ₀ : Cardinal.{0}) → RTilde :=
+    fun i => tilde (geom (e.symm i)) (geom_ne_zero _) with hYdef
+  -- both have `ℵ₀`-sum `2̃`
+  have hXsum : KMonoid.ksum (κ := (ℵ₀ : Cardinal.{0})) X = tilde 2 h2 := by
+    rw [hXdef, KMonoid.ksum_single i₀ _ fun i hi => if_neg hi, if_pos rfl]
+  have hYsum : KMonoid.ksum (κ := (ℵ₀ : Cardinal.{0})) Y = tilde 2 h2 := by
+    have hks : (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{0})) Y) = sigma Y := rfl
+    have hval : (∑' i, (Y i).val) = 2 := by
+      rw [hYdef]
+      show (∑' i, ((geom (e.symm i) : ℝ≥0) : ℝ≥0∞)) = 2
+      rw [show (∑' i, ((geom (e.symm i) : ℝ≥0) : ℝ≥0∞)) = esum (geom ∘ e.symm) from rfl,
+        esum_comp_equiv e.symm geom, esum_geom]
+    rw [hks]
+    refine ext ?_ ?_
+    · rw [val_sigma, hval, val_tilde]
+      norm_num
+    · rw [tilded_tilde]
+      cases hs : (sigma Y).tilded with
+      | false =>
+          rcases (tilded_sigma_eq_false_iff Y).mp hs with hc | hc
+          · rw [hval] at hc
+            exact absurd hc (by norm_num)
+          · exact absurd (hc.1 i₀) (by rw [hYdef, tilded_tilde]; simp)
+      | true => rfl
+  -- so they are braided over `H`, which contradicts their support behaviour
+  have hbraid := hbr.braided X Y (by exact hXsum.trans hYsum.symm)
+  have hXfin : #(Function.support X) < (ℵ₀ : Cardinal.{0}) := by
+    refine Cardinal.lt_aleph0_iff_set_finite.mpr (Set.Finite.subset (Set.finite_singleton i₀) ?_)
+    intro i hi
+    simp only [Set.mem_singleton_iff]
+    by_contra hne
+    exact hi (by rw [hXdef]; exact if_neg hne)
+  have hYinf : ¬ #(Function.support Y) < (ℵ₀ : Cardinal.{0}) := by
+    intro hc
+    have hfin := Cardinal.lt_aleph0_iff_set_finite.mp hc
+    have huniv : Function.support Y = Set.univ :=
+      Set.eq_univ_of_forall fun i => by
+        rw [hYdef]
+        exact tilde_ne_zero _ _
+    rw [huniv] at hfin
+    haveI : Infinite (Idx (ℵ₀ : Cardinal.{0})) := infinite_Idx le_rfl
+    exact Set.infinite_univ hfin
+  exact hYinf (hbraid.mk_support_lt (lam := (ℵ₀ : Cardinal.{0})) isConical hXfin)
+
 end RTilde
 
 end KappaMonoid
