@@ -107,6 +107,71 @@ theorem addOfCard_isLSubset {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : l
 
 end KMonoid
 
+/-! ## `ℵ₀⁻`-small classes are finitely generated
+
+The one module-theoretic input Corollary 4.7(1) needs beyond what `Modules.lean` has.  Both
+directions of the corollary want to move between *finitely generated* projective modules — which is
+what Bergman–Dicks realises and what `EveryProjectiveIsSumOfFG` produces — and the `ℵ₀⁻`-small
+classes of `V^κ(R)`, which is the base Corollary 4.5(3) braids over.  Example 4.2(2) gives one
+direction (finitely generated ⟹ `ℵ₀⁻`-small); this is the converse for a class of `V^κ(R)`.
+
+The argument: `ℵ₀⁻`-smallness applied to the inclusion of the representative into `R^{(κ)}` confines
+it to finitely many coordinates, so it lies in the span `N` of the corresponding finitely many
+standard generators; the projection of `R^{(κ)}` onto the representative is then already surjective
+on `N`, and a quotient of a finitely generated module is finitely generated. -/
+
+section FgSmall
+
+variable (R : Type u) [Ring R] (κ : Cardinal.{u})
+
+open DirectSum
+
+/-- An element of `R^{(κ)}` whose coordinates vanish off `s` lies in the span of the standard
+generators indexed by `s`. -/
+theorem mem_span_freeGen_of_component_eq_zero {x : freeMod R κ} {s : Set (Idx κ)}
+    (h : ∀ i ∉ s, (DirectSum.component R (Idx κ) (fun _ => R) i) x = 0) :
+    x ∈ Submodule.span R (freeGen R κ '' s) := by
+  classical
+  rw [← DFinsupp.sum_single (f := x)]
+  refine Submodule.sum_mem _ fun i hi => ?_
+  have hmem : i ∈ s := by
+    by_contra hns
+    exact (DFinsupp.mem_support_iff.mp hi) (h i hns)
+  have hsingle : (DFinsupp.single i (x i) : freeMod R κ) = (x i) • freeGen R κ i := by
+    show (DirectSum.lof R (Idx κ) (fun _ => R) i) (x i) = _
+    rw [freeGen, ← LinearMap.map_smul]
+    simp
+  rw [hsingle]
+  exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨i, hmem, rfl⟩)
+
+/-- **An `ℵ₀⁻`-small summand of `R^{(κ)}` is finitely generated.** -/
+theorem finite_of_isLambdaSmall_aleph0 (P : Summand R κ) (h : IsLambdaSmall R ℵ₀ ↥P.1) :
+    Module.Finite R ↥P.1 := by
+  classical
+  -- `ℵ₀⁻`-smallness of the inclusion confines `P` to finitely many coordinates
+  obtain ⟨s, hs, hzero⟩ := h (fun _ : Idx κ => R) (fun _ => inferInstance) (fun _ => inferInstance)
+    P.1.subtype
+  have hsfin : s.Finite := Cardinal.lt_aleph0_iff_set_finite.mp hs
+  -- the span of the corresponding generators is finitely generated and contains `P`
+  set N : Submodule R (freeMod R κ) := Submodule.span R (freeGen R κ '' s) with hNdef
+  have hNfin : Module.Finite R ↥N := by
+    rw [hNdef, show freeGen R κ '' s = ((hsfin.image (freeGen R κ)).toFinset : Set (freeMod R κ)) by
+      rw [Set.Finite.coe_toFinset]]
+    exact Module.Finite.span_finset R _
+  have hPN : ∀ y : ↥P.1, (y : freeMod R κ) ∈ N :=
+    fun y => mem_span_freeGen_of_component_eq_zero R κ fun i hi => hzero y i hi
+  -- the projection of `R^{(κ)}` onto `P` is already surjective on that span
+  set q : freeMod R κ →ₗ[R] ↥P.1 :=
+    Submodule.projectionOnto P.1 (Summand.compl R κ P) (Summand.isCompl R κ P) with hqdef
+  have hq : ∀ y : ↥P.1, q (y : freeMod R κ) = y := fun y =>
+    congrFun (congrArg (fun f : ↥P.1 →ₗ[R] ↥P.1 => (f : ↥P.1 → ↥P.1))
+      (Submodule.projectionOnto_comp_subtype (p := P.1) (q := Summand.compl R κ P)
+        (h := Summand.isCompl R κ P))) y
+  refine Module.Finite.of_surjective (q.comp N.subtype) fun y => ?_
+  exact ⟨⟨(y : freeMod R κ), hPN y⟩, hq y⟩
+
+end FgSmall
+
 /-! ## Corollary 4.6
 
 Each of the six conditions — weakly semihereditary, one-sided semihereditary, exchange,
