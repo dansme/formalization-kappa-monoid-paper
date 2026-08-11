@@ -593,6 +593,33 @@ theorem isUniversalKExtension_unique {X : Type v} {H₁ H₂ : Type w}
   rintro e ⟨hehom, hecomm, -⟩
   exact hu12 e ⟨hehom, hecomm⟩
 
+/-- Braidedness transports along an isomorphism of extensions: if `H₁` is `λ⁻`-braided over `X`
+and `e : H₁ → H₂` is a bijective `κ`-homomorphism commuting with the two structure maps, then
+`H₂` is `λ⁻`-braided over `X` as well. -/
+theorem IsBraidedOver.of_iso {X : Type v} {H₁ H₂ : Type w} [LMonoid lam X] [KMonoid κ H₁]
+    [KMonoid κ H₂] (hlk : lam ≤ κ) {f₁ : X → H₁} {f₂ : X → H₂}
+    (hbr : IsBraidedOver lam κ X H₁ hlk f₁) {e : H₁ → H₂} (he : IsKHom κ e)
+    (hbij : Function.Bijective e) (hcomm : ∀ x, e (f₁ x) = f₂ x) :
+    IsBraidedOver lam κ X H₂ hlk f₂ where
+  isLHom := by
+    refine ⟨by rw [← hcomm 0, hbr.isLHom.1, he.1], fun {ι} h x => ?_⟩
+    rw [← hcomm (lsumOf (lam := lam) h x), hbr.isLHom.2 h x,
+      he.map_sumOf (h.le.trans hlk) (f₁ ∘ x)]
+    exact congrArg _ (funext fun i => hcomm (x i))
+  injective := fun a b hab => hbr.injective (hbij.1 (by rw [hcomm a, hcomm b]; exact hab))
+  generates := fun h => by
+    obtain ⟨h₁, rfl⟩ := hbij.2 h
+    obtain ⟨x, hx⟩ := hbr.generates h₁
+    refine ⟨x, ?_⟩
+    rw [hx, he.2 (fun i => f₁ (x i))]
+    exact congrArg _ (funext fun i => hcomm (x i))
+  braided := fun x y hxy => by
+    refine hbr.braided x y (hbij.1 ?_)
+    rw [he.2 (fun i => f₁ (x i)), he.2 (fun i => f₁ (y i)),
+      show (e ∘ fun i => f₁ (x i)) = (fun i => f₂ (x i)) from funext fun i => hcomm (x i),
+      show (e ∘ fun i => f₁ (y i)) = (fun i => f₂ (y i)) from funext fun i => hcomm (y i)]
+    exact hxy
+
 /-- Being `λ⁻`-braided over `X` implies being the universal `κ`-extension of `X`
 (the second half of Theorem 3.11(2)); it is immediate from Proposition 3.9. -/
 theorem IsBraidedOver.isUniversalKExtension {X : Type v} {H : Type w}
@@ -606,11 +633,11 @@ theorem IsBraidedOver.isUniversalKExtension {X : Type v} {H : Type w}
 
 section Construction
 
-variable (lam κ) (X : Type u) [LMonoid lam X]
+variable (lam κ) (X : Type v) [LMonoid lam X]
 
 /-- The underlying type of the universal `κ`-extension: `κ`-indexed families over `X`
 modulo `λ⁻`-braiding (Theorem 3.11(1)). -/
-def UnivExt : Type u := Quotient (braidingSetoid lam κ X)
+def UnivExt : Type (max u v) := Quotient (braidingSetoid lam κ X)
 
 namespace UnivExt
 
@@ -898,7 +925,7 @@ Paper-style proof: in a braiding of `(x,0,0,…)` and `(y,0,0,…)`, reducedness
 `u μ = v μ = 0` for all but at most one index, and the remaining equations give `x = y`.
 (Neither the regularity of `λ` nor `λ ≤ κ` is used; the two hypotheses are kept for
 uniformity with the rest of the section.) -/
-theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ κ) {X : Type u}
+theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ κ) {X : Type v}
     [LMonoid lam X] (hred : IsConical X) (i₀ : Idx κ) :
     Function.Injective (UnivExt.of (lam := lam) (κ := κ) (X := X) i₀) := by
   classical
@@ -998,9 +1025,9 @@ Let `λ ≤ κ` with `λ` regular and let `X` be a *reduced* `λ⁻`-monoid.  Th
 
 1. `Ĥ` is `λ⁻`-braided over `X`, and
 2. `Ĥ` is the universal `κ`-extension of `X`. -/
-theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type u) [LMonoid lam X]
+theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type v) [LMonoid lam X]
     (hred : IsConical X) :
-    ∃ (Hh : Type u) (_ : KMonoid κ Hh) (f : X → Hh),
+    ∃ (Hh : Type (max u v)) (_ : KMonoid κ Hh) (f : X → Hh),
       Function.Injective f ∧
       IsBraidedOver lam κ X Hh hlk f ∧
       IsUniversalKExtension lam κ X Hh hlk f := by
@@ -1068,12 +1095,32 @@ So the deviation from the paper is confined to `λ = ℵ₀`, where a `λ⁻`-mo
 commutative monoid and the hypothesis is genuinely necessary — see
 `isConical_of_isUniversalKExtension` and the counterexample `ℤ` below. -/
 theorem theorem_3_11_of_aleph0_lt (hlam : lam.IsRegular) (hlk : lam ≤ κ) (hlam0 : ℵ₀ < lam)
-    (X : Type u) [LMonoid lam X] :
-    ∃ (Hh : Type u) (_ : KMonoid κ Hh) (f : X → Hh),
+    (X : Type v) [LMonoid lam X] :
+    ∃ (Hh : Type (max u v)) (_ : KMonoid κ Hh) (f : X → Hh),
       Function.Injective f ∧
       IsBraidedOver lam κ X Hh hlk f ∧
       IsUniversalKExtension lam κ X Hh hlk f :=
   theorem_3_11 hlam hlk X (LMonoid.isConical hlam0)
+
+/-- **Theorem 3.11 as an equivalence**: a universal `κ`-extension of a reduced `λ⁻`-monoid `X` is
+`λ⁻`-braided over `X`.  Together with `IsBraidedOver.isUniversalKExtension` this is the paper's
+remark after Definition 3.10 that "`Ĥ` is `λ⁻`-braided over `H`" and "`Ĥ` is the universal
+`κ`-extension of `H`" are two descriptions of the same thing.
+
+Proof: `theorem_3_11` produces *some* extension that is both braided and universal, uniqueness of
+universal extensions identifies it with the given one, and braidedness transports along that
+isomorphism (`IsBraidedOver.of_iso`).
+
+The universe `Type (max u v)` is where `theorem_3_11` puts its extension, and uniqueness compares
+two extensions in the same universe; for `X : Type u` this is no restriction, and for
+`X : Type (u+1)` — the case of `F_κ` and its powers — it reads `Type (u+1)`. -/
+theorem isBraidedOver_of_isUniversalKExtension (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+    {X : Type v} [LMonoid lam X] (hred : IsConical X) {H : Type (max u v)} [KMonoid κ H]
+    {f : X → H} (hu : IsUniversalKExtension lam κ X H hlk f) :
+    IsBraidedOver lam κ X H hlk f := by
+  obtain ⟨Hh, _, g, _, hgbr, hgu⟩ := theorem_3_11 hlam hlk X hred
+  obtain ⟨e, ⟨hehom, hecomm, hebij⟩, -⟩ := isUniversalKExtension_unique hlk hgu hu
+  exact hgbr.of_iso hlk hehom hebij hecomm
 
 /-- Conversely, a `λ⁻`-monoid admitting a universal `κ`-extension into which it embeds must
 be reduced; so the hypothesis added in `theorem_3_11` cannot be dropped. -/
