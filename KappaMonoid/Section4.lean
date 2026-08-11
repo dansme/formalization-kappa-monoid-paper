@@ -51,17 +51,58 @@ def addOfCard {lam : Cardinal.{u}} (hlam : lam ≤ κ) (x : H) : Set H :=
 `IsLSubset ℵ₀`, which is exactly closure under sums over index types of cardinality `< ℵ₀`, so
 that the subtype picks up an `LMonoid ℵ₀` instance through `IsLSubset.lmonoid`. -/
 theorem addOf_isLSubset (hκ : ℵ₀ ≤ κ) (x : H) : IsLSubset ℵ₀ hκ (addOf (κ := κ) x) := by
-  sorry
+  classical
+  constructor
+  · -- `0 = 0 + 0` is a summand of `0 · x`
+    refine ⟨0, 0, ?_⟩
+    rw [add_zero]
+    exact ((cmul_congr (Nat.cast_zero (R := Cardinal.{u})) _
+      (zero_le (a := κ)) x).trans (cmul_zero_cardinal x)).symm
+  · -- add the witnesses: `Σ y i + Σ z i = Σ (n i) · x = (Σ n i) · x`
+    intro ι hι y hy
+    choose z n hzn using hy
+    have hidx : #ι ≤ κ := hι.le.trans hκ
+    have hlt : Cardinal.sum (fun i => ((n i : ℕ) : Cardinal.{u})) < ℵ₀ :=
+      Cardinal.sum_lt_of_isRegular Cardinal.isRegular_aleph0 hι fun _ => Cardinal.natCast_lt_aleph0
+    obtain ⟨m, hm⟩ := Cardinal.lt_aleph0.mp hlt
+    have hmκ : ((m : ℕ) : Cardinal.{u}) ≤ κ :=
+      le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ
+    refine ⟨sumOf (κ := κ) hidx z, m, ?_⟩
+    rw [← sumOf_add hidx y z, funext hzn,
+      ← cmul_sumOf_cardinal hidx (fun i => ((n i : ℕ) : Cardinal.{u}))
+        (fun _ => le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ) (le_trans hlt.le hκ) x]
+    exact cmul_congr hm _ hmκ x
 
 /-- `add x` is divisor-closed: a summand of an element of `add x` is again in `add x`. -/
 theorem addOf_isSaturated (x : H) :
     ∀ a ∈ addOf (κ := κ) x, ∀ b c : H, a = b + c → b ∈ addOf (κ := κ) x := by
-  sorry
+  rintro a ⟨z, n, hzn⟩ b c rfl
+  exact ⟨c + z, n, by rw [← add_assoc]; exact hzn⟩
 
 /-- `add_λ x` is a `λ⁻`-submonoid of `H`. -/
 theorem addOfCard_isLSubset {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (x : H) :
     IsLSubset lam hlk (addOfCard hlk x) := by
-  sorry
+  classical
+  constructor
+  · exact ⟨cmul (κ := κ) lam hlk x, zero_add _⟩
+  · intro ι hι y hy
+    choose z hz using hy
+    have hidx : #ι ≤ κ := hι.le.trans hlk
+    rcases isEmpty_or_nonempty ι with hemp | hne
+    · -- an empty sum is `0`, which is a summand of `λ · x`
+      haveI := hemp
+      refine ⟨cmul (κ := κ) lam hlk x, ?_⟩
+      rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty _ y, zero_add]
+    · -- otherwise `#ι · λ = λ`, so the witnesses again add up to `λ · x`
+      have hmk : #ι * lam = lam :=
+        Cardinal.mul_eq_right hlam.aleph0_le hι.le (Cardinal.mk_ne_zero_iff.mpr hne)
+      have hsum : Cardinal.sum (fun _ : ι => lam) = lam :=
+        (Cardinal.sum_const' ι lam).trans hmk
+      refine ⟨sumOf (κ := κ) hidx z, ?_⟩
+      rw [← sumOf_add hidx y z, funext hz,
+        ← cmul_sumOf_cardinal hidx (fun _ : ι => lam) (fun _ => hlk)
+          (le_of_eq_of_le hsum hlk) x]
+      exact cmul_congr hsum _ hlk x
 
 end KMonoid
 
@@ -103,8 +144,9 @@ theorem isKIso_of_braidedOver_same {lam : Cardinal.{u}} {S : Type u} [LMonoid la
     {H₁ H₂ : Type u} [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ κ)
     {f : S → H₁} {g : S → H₂}
     (hbr₁ : IsBraidedOver lam κ S H₁ hlk f) (hbr₂ : IsBraidedOver lam κ S H₂ hlk g) :
-    ∃ e : H₁ → H₂, KMonoid.IsKHom κ e ∧ (∀ s, e (f s) = g s) ∧ Function.Bijective e := by
-  sorry
+    ∃ e : H₁ → H₂, KMonoid.IsKHom κ e ∧ (∀ s, e (f s) = g s) ∧ Function.Bijective e :=
+  (isUniversalKExtension_unique hlk (hbr₁.isUniversalKExtension hlk)
+    (hbr₂.isUniversalKExtension hlk)).exists
 
 /-- **Corollary 4.7(2)**: for a ring `R` and a `κ`-monoid `H`, if `H` is `ℵ₁⁻`-braided over a
 `λ⁻`-monoid `S` and `V^{ℵ₀}(R)` is too — which is Corollary 4.5(2) — then `V^κ(R) ≅ H`.
