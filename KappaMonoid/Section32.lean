@@ -1958,6 +1958,16 @@ homogeneous equations, inequalities and congruences is saturated, by cancellativ
 For equations `A(s) = B(s)` and congruences `A(s) ∈ dℕ₀` that argument is correct — cancel the
 `t`-part — but for an inequality it breaks down, and the conclusion is false. -/
 
+/-- A linear form in two unknowns, evaluated on cardinals. -/
+theorem val_linEval_two (a : Fin 2 → ℕ) (x : Fin 2 → Fcard ℵ₀) :
+    ((linEval (le_refl (ℵ₀ : Cardinal.{u})) a x : Fcard ℵ₀) : Cardinal.{u})
+      = (a 0 : Cardinal.{u}) * ((x 0 : Fcard ℵ₀) : Cardinal.{u})
+        + (a 1 : Cardinal.{u}) * ((x 1 : Fcard ℵ₀) : Cardinal.{u}) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  show ((∑ i, (a i) • x i : Fcard ℵ₀) : Cardinal.{u}) = _
+  rw [← fcardVal_apply (le_refl (ℵ₀ : Cardinal.{u})), map_sum, Fin.sum_univ_two]
+  simp only [fcardVal_apply, map_nsmul, nsmul_eq_mul]
+
 /-- The system in two unknowns consisting of the single inequality `x₁ ≤ 2x₂`. -/
 def ineqSystem : LinSystem 2 where
   eqs := ∅
@@ -1990,15 +2000,6 @@ theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSyst
   set two : Fcard ℵ₀ := Fcard.mk 2 two_le_aleph0 with htwo
   set one : Fcard ℵ₀ := Fcard.mk 1 Cardinal.one_lt_aleph0.le with hone
   set nil : Fcard ℵ₀ := Fcard.mk 0 (zero_le : (0 : Cardinal.{u}) ≤ ℵ₀) with hnil
-  -- the value of a linear form in two unknowns
-  have hlin : ∀ (a : Fin 2 → ℕ) (x : Fin 2 → Fcard ℵ₀),
-      ((linEval (le_refl (ℵ₀ : Cardinal.{u})) a x : Fcard ℵ₀) : Cardinal.{u})
-        = (a 0 : Cardinal.{u}) * ((x 0 : Fcard ℵ₀) : Cardinal.{u})
-          + (a 1 : Cardinal.{u}) * ((x 1 : Fcard ℵ₀) : Cardinal.{u}) := by
-    intro a x
-    show ((∑ i, (a i) • x i : Fcard ℵ₀) : Cardinal.{u}) = _
-    rw [← fcardVal_apply (le_refl (ℵ₀ : Cardinal.{u})), map_sum, Fin.sum_univ_two]
-    simp only [fcardVal_apply, map_nsmul, nsmul_eq_mul]
   -- the single inequality, with its witness spelled out
   have hmem : ∀ (x : Fin 2 → Fcard ℵ₀) (c : Fcard ℵ₀),
       (∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) →
@@ -2010,7 +2011,7 @@ theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSyst
       fun p hp => absurd hp (Set.notMem_empty p)⟩, hfin⟩
     obtain rfl : p = (fun i => if i = 0 then 1 else 0, fun i => if i = 0 then 0 else 2) := hp
     refine ⟨c, Fcard.ext ?_⟩
-    rw [Fcard.instKMonoid_add, hlin, hlin]
+    rw [Fcard.instKMonoid_add, val_linEval_two, val_linEval_two]
     simpa using hc
   have hsmem : (fun i => if i = 0 then two else one) ∈ ineqSystem.finSolutions := by
     refine hmem _ nil (fun i => ?_) ?_
@@ -2025,7 +2026,7 @@ theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSyst
     intro hmem'
     obtain ⟨c, hc⟩ := hmem'.1.2.1 _ rfl
     have hval := congrArg (fun z : Fcard ℵ₀ => (z : Cardinal.{u})) hc
-    rw [Fcard.instKMonoid_add, hlin, hlin] at hval
+    rw [Fcard.instKMonoid_add, val_linEval_two, val_linEval_two] at hval
     simp only [htwo, hnil] at hval
     norm_num at hval
   refine hnot (hsat _ hsmem _ htmem _ (fun i => ?_) (funext fun i => ?_))
@@ -2034,11 +2035,158 @@ theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSyst
     by_cases hi : i = 0 <;>
       simp [hi, htwo, hone, hnil, Fcard.instKMonoid_add (le_refl (ℵ₀ : Cardinal.{u}))]
 
-/-- **Example 3.15**: `H = {(m, m) : m ∈ ℕ₀} ⊆ ℕ₀²` shows that Proposition 3.14(1) and (2) really
-are different statements — the universal `ℵ₀`-extension of `H` is *not* the solution set of
-`x₁ = x₂` over `F_{ℵ₀}`, because that set contains `(ℵ₀, ℵ₀)` reached only as an infinite sum. -/
-theorem example_3_15 : True := by
-  trivial
+/-! ### Example 3.15: at `κ = ℵ₀` the extension is not cut out by the same system
+
+`H = {(n,n)} ⊆ ℕ₀²` is the solution set of `x₁ = x₂` and also of `2x₁ = x₁ + x₂`.  Over `F_{ℵ₀}`
+the two systems part company: the first still cuts out the diagonal — which *is* the universal
+`ℵ₀`-extension `Ĥ = H ∪ {(ℵ₀,ℵ₀)} ≅ F_{ℵ₀}` — while the second also admits every `(ℵ₀, n)`.  So
+the conclusion of Proposition 3.14(1) genuinely fails at `κ = ℵ₀`, which is what (2) replaces it
+with (Herbera–Příhoda, Example 2.8). -/
+
+/-- The system `x₁ = x₂` in two unknowns. -/
+def diagSystem : LinSystem 2 where
+  eqs := {(fun i => if i = 0 then 1 else 0, fun i => if i = 0 then 0 else 1)}
+  ineqs := ∅
+  congrs := ∅
+
+/-- The system `2x₁ = x₁ + x₂` in two unknowns: the same solutions as `diagSystem` over `ℕ₀²`,
+but not over `F_{ℵ₀}²`. -/
+def doubleSystem : LinSystem 2 where
+  eqs := {(fun i => if i = 0 then 2 else 0, fun _ => 1)}
+  ineqs := ∅
+  congrs := ∅
+
+theorem mem_diagSystem_solutions (x : Fin 2 → Fcard ℵ₀) :
+    x ∈ diagSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) ↔
+      ((x 0 : Fcard ℵ₀) : Cardinal.{u}) = ((x 1 : Fcard ℵ₀) : Cardinal.{u}) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  constructor
+  · intro h
+    have h1 := congrArg (fun c : Fcard ℵ₀ => (c : Cardinal.{u})) (h.1 _ rfl)
+    rw [val_linEval_two, val_linEval_two] at h1
+    simpa using h1
+  · intro h
+    refine ⟨fun p hp => ?_, fun p hp => absurd hp (Set.notMem_empty p),
+      fun p hp => absurd hp (Set.notMem_empty p)⟩
+    obtain rfl : p = (fun i => if i = 0 then 1 else 0, fun i => if i = 0 then 0 else 1) := hp
+    refine Fcard.ext ?_
+    rw [val_linEval_two, val_linEval_two]
+    simpa using h
+
+theorem mem_doubleSystem_solutions (x : Fin 2 → Fcard ℵ₀) :
+    x ∈ doubleSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) ↔
+      2 * ((x 0 : Fcard ℵ₀) : Cardinal.{u})
+        = ((x 0 : Fcard ℵ₀) : Cardinal.{u}) + ((x 1 : Fcard ℵ₀) : Cardinal.{u}) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  constructor
+  · intro h
+    have h1 := congrArg (fun c : Fcard ℵ₀ => (c : Cardinal.{u})) (h.1 _ rfl)
+    rw [val_linEval_two, val_linEval_two] at h1
+    simpa using h1
+  · intro h
+    refine ⟨fun p hp => ?_, fun p hp => absurd hp (Set.notMem_empty p),
+      fun p hp => absurd hp (Set.notMem_empty p)⟩
+    obtain rfl : p = (fun i => if i = 0 then 2 else 0, fun _ => 1) := hp
+    refine Fcard.ext ?_
+    rw [val_linEval_two, val_linEval_two]
+    simpa using h
+
+/-- Over `ℕ₀²` the two systems cut out the same monoid: on a family with a finite first component
+`2x₁ = x₁ + x₂` cancels to `x₁ = x₂`. -/
+theorem finSolutions_diagSystem :
+    (diagSystem.finSolutions : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u})))
+      = doubleSystem.finSolutions := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  refine Set.ext fun x => ?_
+  constructor
+  · rintro ⟨hx, hfin⟩
+    refine ⟨(mem_doubleSystem_solutions x).mpr ?_, hfin⟩
+    rw [two_mul, (mem_diagSystem_solutions x).mp hx]
+  · rintro ⟨hx, hfin⟩
+    refine ⟨(mem_diagSystem_solutions x).mpr ?_, hfin⟩
+    have h := (mem_doubleSystem_solutions x).mp hx
+    rw [two_mul] at h
+    exact Cardinal.eq_of_add_eq_add_left h (hfin 0)
+
+/-- `H + ℵ₀H` depends only on `H`. -/
+theorem alephExt_congr {sys₁ sys₂ : LinSystem n}
+    (h : (sys₁.finSolutions : Set (Fin n → Fcard (ℵ₀ : Cardinal.{u})))
+      = (sys₂.finSolutions : Set (Fin n → Fcard (ℵ₀ : Cardinal.{u})))) :
+    (sys₁.alephExt : Set (Fin n → Fcard (ℵ₀ : Cardinal.{u})))
+      = (sys₂.alephExt : Set (Fin n → Fcard (ℵ₀ : Cardinal.{u}))) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  refine Set.ext fun z => ?_
+  constructor <;> rintro ⟨a, ha, b, hb, rfl⟩
+  · exact ⟨a, (Set.ext_iff.mp h a).mp ha, b, (Set.ext_iff.mp h b).mp hb, rfl⟩
+  · exact ⟨a, (Set.ext_iff.mp h a).mpr ha, b, (Set.ext_iff.mp h b).mpr hb, rfl⟩
+
+/-- **Example 3.15**: the systems `x₁ = x₂` and `2x₁ = x₁ + x₂` cut out the same `H ⊆ ℕ₀²`, hence
+have the same universal `ℵ₀`-extension `H + ℵ₀H`; that extension is the solution set of the first
+system over `F_{ℵ₀}`, but *not* of the second.  So the conclusion of Proposition 3.14(1) — the
+extension is cut out by the same system — fails for `κ = ℵ₀`. -/
+theorem example_3_15 :
+    (diagSystem.finSolutions : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u})))
+        = doubleSystem.finSolutions ∧
+      (diagSystem.alephExt : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u}))) = doubleSystem.alephExt ∧
+      (diagSystem.alephExt : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u})))
+        = diagSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) ∧
+      (doubleSystem.alephExt : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u})))
+        ≠ doubleSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  -- `(ℵ₀, 1)`: a solution of the second system that is not one of the first
+  set w : Fin 2 → Fcard ℵ₀ :=
+    fun i => if i = 0 then Fcard.mk ℵ₀ le_rfl else Fcard.mk 1 Cardinal.one_lt_aleph0.le with hw
+  have hw0 : ((w 0 : Fcard ℵ₀) : Cardinal.{u}) = ℵ₀ := rfl
+  have hw1 : ((w 1 : Fcard ℵ₀) : Cardinal.{u}) = 1 := rfl
+  have hwmem : w ∈ doubleSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) := by
+    refine (mem_doubleSystem_solutions w).mpr ?_
+    rw [hw0, hw1, Cardinal.add_one_eq le_rfl, two_mul, Cardinal.aleph0_add_aleph0]
+  have hwnot : w ∉ diagSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) := by
+    intro hmem
+    have h := (mem_diagSystem_solutions w).mp hmem
+    rw [hw0, hw1] at h
+    exact Cardinal.one_lt_aleph0.ne' h
+  -- `H + ℵ₀H` is the solution set of `x₁ = x₂`: a diagonal pair is either finite, or `(ℵ₀,ℵ₀)`
+  have hdiag : diagSystem.alephExt = diagSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) := by
+    refine Set.Subset.antisymm diagSystem.alephExt_subset_solutions fun x hx => ?_
+    have hval := (mem_diagSystem_solutions x).mp hx
+    by_cases hfin : ((x 0 : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀
+    · -- a finite solution is already in `H`
+      refine ⟨x, ⟨hx, fun i => ?_⟩, 0, ⟨(mem_diagSystem_solutions 0).mpr rfl, fun i => ?_⟩, ?_⟩
+      · rcases Fin.exists_fin_two.mp ⟨i, rfl⟩ with h | h
+        · rw [h]; exact hfin
+        · rw [h, ← hval]; exact hfin
+      · show ((0 : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀
+        rw [Fcard.instKMonoid_zero]
+        exact Cardinal.aleph0_pos
+      · rw [alephPart_zero, add_zero]
+    · -- otherwise both components are `ℵ₀`, and `x = 0 + ℵ₀·(1,1)`
+      have h0 : ((x 0 : Fcard ℵ₀) : Cardinal.{u}) = ℵ₀ := le_antisymm (Fcard.le _) (not_lt.mp hfin)
+      have h1 : ((x 1 : Fcard ℵ₀) : Cardinal.{u}) = ℵ₀ := hval ▸ h0
+      refine ⟨0, ⟨(mem_diagSystem_solutions 0).mpr rfl, fun i => ?_⟩,
+        (fun _ => Fcard.mk 1 Cardinal.one_lt_aleph0.le),
+        ⟨(mem_diagSystem_solutions _).mpr rfl, fun i => Cardinal.one_lt_aleph0⟩, ?_⟩
+      · show ((0 : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀
+        rw [Fcard.instKMonoid_zero]
+        exact Cardinal.aleph0_pos
+      · refine funext fun i => Fcard.ext ?_
+        show ((x i : Fcard ℵ₀) : Cardinal.{u})
+          = (((0 : Fin 2 → Fcard ℵ₀) i
+              + alephPart (fun _ => Fcard.mk 1 Cardinal.one_lt_aleph0.le) i : Fcard ℵ₀)
+            : Cardinal.{u})
+        rw [Fcard.instKMonoid_add]
+        show _ = ((0 : Fcard ℵ₀) : Cardinal.{u}) + _
+        rw [Fcard.instKMonoid_zero, zero_add, val_alephPart, Fcard.val_mk,
+          if_neg (one_ne_zero : (1 : Cardinal.{u}) ≠ 0)]
+        rcases Fin.exists_fin_two.mp ⟨i, rfl⟩ with h | h
+        · rw [h, h0]
+        · rw [h, h1]
+  refine ⟨finSolutions_diagSystem, alephExt_congr finSolutions_diagSystem, hdiag, ?_⟩
+  intro hcon
+  rw [← alephExt_congr finSolutions_diagSystem, hdiag] at hcon
+  exact hwnot (hcon ▸ hwmem)
 
 end Diophantine
 
