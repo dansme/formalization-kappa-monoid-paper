@@ -593,6 +593,55 @@ theorem isUniversalKExtension_unique {X : Type v} {H₁ H₂ : Type w}
   rintro e ⟨hehom, hecomm, -⟩
   exact hu12 e ⟨hehom, hecomm⟩
 
+/-- A homomorphism of `λ⁻`-monoids carries braided families to braided families: keep the
+partitions and push `u` and `v` forward. -/
+theorem IsBraided.map_lmonoidHom {X : Type v} {Y : Type w} [LMonoid lam X] [LMonoid lam Y]
+    {g : X → Y} (hg : IsLMonoidHom lam g) {ι : Type u} {x y : ι → X}
+    (h : IsBraided lam x y) : IsBraided lam (fun i => g (x i)) (fun i => g (y i)) := by
+  obtain ⟨d⟩ := h
+  exact ⟨{ I := d.I
+           J := d.J
+           I_disjoint := d.I_disjoint
+           J_disjoint := d.J_disjoint
+           I_cover := d.I_cover
+           J_cover := d.J_cover
+           I_small := d.I_small
+           J_small := d.J_small
+           u := fun p => g (d.u p)
+           v := fun p => g (d.v p)
+           v_limit := fun a => by rw [d.v_limit a, hg.map_zero]
+           hI := fun p => by
+             rw [← hg.map_add, ← d.hI p, hg (d.I_small p) fun i : d.I p => x i]
+             rfl
+           hJ := fun p => by
+             rw [← hg.map_add, ← d.hJ p, hg (d.J_small p) fun j : d.J p => y j]
+             rfl }⟩
+
+/-- Braidedness over the base transports along an isomorphism of the base: if `H` is
+`λ⁻`-braided over `X₁` and `g : X₂ → X₁` is an isomorphism of `λ⁻`-monoids, then `H` is
+`λ⁻`-braided over `X₂` along `f ∘ g`. -/
+theorem IsBraidedOver.of_base_iso {X₁ X₂ : Type v} {H : Type w} [LMonoid lam X₁]
+    [LMonoid lam X₂] [KMonoid κ H] (hlk : lam ≤ κ) {f : X₁ → H}
+    (hbr : IsBraidedOver lam κ X₁ H hlk f) {g : X₂ → X₁} {g' : X₁ → X₂}
+    (hg : IsLMonoidHom lam g) (hg' : IsLMonoidHom lam g')
+    (hgg' : ∀ x, g' (g x) = x) (hg'g : ∀ x, g (g' x) = x) :
+    IsBraidedOver lam κ X₂ H hlk (fun x => f (g x)) where
+  isLHom := by
+    refine ⟨show f (g 0) = 0 by rw [hg.map_zero, hbr.isLHom.1], fun {ι} h x => ?_⟩
+    show f (g (lsumOf (lam := lam) h x)) = _
+    rw [hg h x, hbr.isLHom.2 h (g ∘ x)]
+    rfl
+  injective := fun a b hab => by
+    rw [← hgg' a, ← hgg' b, hbr.injective hab]
+  generates := fun h => by
+    obtain ⟨x, hx⟩ := hbr.generates h
+    refine ⟨fun i => g' (x i), ?_⟩
+    rw [hx]
+    exact congrArg _ (funext fun i => by rw [hg'g (x i)])
+  braided := fun x y hxy => by
+    have h := (hbr.braided (fun i => g (x i)) (fun i => g (y i)) hxy).map_lmonoidHom hg'
+    simpa only [hgg'] using h
+
 /-- Braidedness transports along an isomorphism of extensions: if `H₁` is `λ⁻`-braided over `X`
 and `e : H₁ → H₂` is a bijective `κ`-homomorphism commuting with the two structure maps, then
 `H₂` is `λ⁻`-braided over `X` as well. -/
