@@ -5,8 +5,8 @@ Sections 2–5 of the paper.
 ## Status
 
 Complete and `sorry`-free: `lake build` checks every definition and every theorem, including
-Theorem 3.11 (universal `κ`-extensions) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over
-`V^{λ⁻}(C_{λ⁻})`).
+Theorem 3.11 (universal `κ`-extensions), Proposition 3.14 (universal extensions of Diophantine
+monoids) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`).
 
 | File | Contents |
 |---|---|
@@ -21,7 +21,8 @@ Theorem 3.11 (universal `κ`-extensions) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-b
 | `KappaMonoid/Realisation.lean` | §2.3: **Proposition 2.16**, cyclic `κ`-monoids are realised by rings of free modules |
 | `KappaMonoid/Semisimple.lean` | §2.3: multiplicities of semisimple modules and **Proposition 2.17**, `V^κ(R) ≅ F_κ^n` for semisimple `R`, and such rings exist for every `n` |
 | `KappaMonoid/Braiding.lean` | §3: `BraidingData`, `IsBraided`, Lemmas 3.2/3.4/3.6/3.7/3.8, `braidingSetoid`, `IsBraidedOver` (Def. 3.1(2)) |
-| `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** |
+| `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** and its converse (`isBraidedOver_of_isUniversalKExtension`: universal ⟹ braided over), transport of braidedness along isomorphisms |
+| `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1) and Examples 3.12 for `ℕ₀`, **Lemma 3.13**(1) and (2), **Proposition 3.14**(1) and (2) (universal extensions of Diophantine monoids), and the counterexample showing that (2) needs the saturation hypothesis |
 | `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5–4.7 |
 | `KappaMonoid/Axioms.lean` | The five classical results assumed rather than proved — see below |
 
@@ -29,15 +30,19 @@ Theorem 3.11 (universal `κ`-extensions) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-b
 proved, `sorry`-free, subject only to the four §2 axioms below (A1–A4; A5 is used nowhere in the
 checked build).
 
+**Section 3 is complete** except for Examples 3.3(2)/3.12 over `ℝ≥0` and `ℚ≥0` (not started) and
+Example 3.15 (a placeholder); see `SECTION3-PLAN.md`. Proposition 3.14(2) carries one added
+hypothesis — the saturation of `H`, which the paper claims is automatic but is not; see
+"The hypothesis added to Proposition 3.14(2)" below.
+
 ### Scaffolds
 
-Three further files carry the parts of §§3–5 that are not yet fully proved: every statement
-type-checks, and the proofs are filled in as far as they go. None is imported by
+Two further files carry the parts of §§4–5 that are not yet fully proved: every statement
+type-checks, and the proofs are filled in as far as they go. Neither is imported by
 `KappaMonoid.lean`, so `lake build` stays green and `sorry`-free; build them individually.
 
 | File | Contents | Plan |
 |---|---|---|
-| `KappaMonoid/Section32.lean` | §3.2, **mostly proved**: Examples 3.3(1) and the first entry of Examples 3.12 (`ℕ̂₀ ≅ ℕ₀ ∪ {∞}`), Lemma 3.13(1) and (2), and all of Prop. 3.14 except its two main statements — the two remaining `sorry`s, both blocked on the same missing lemma (see the plan's Step A) | `SECTION3-PLAN.md` |
 | `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, **Cor. 4.7(2)** and the braided-implies-isomorphic lemma behind it, **Cor. 4.7(1)** in both directions, and Example 4.8(1) (KRSA ascent) | `SECTION4-PLAN.md` |
 | `KappaMonoid/Section5.lean` | §5: forms `α X₁ + β X₂` over `ℕ∞`, Lemmas 5.1–5.2, **Thm. 5.3** (which two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring), trace ideals and Prop. 5.4, Cor. 5.5 and its `ℕ₀² ∪ {∞}` counterexample | `SECTION5-PLAN.md` |
 
@@ -102,6 +107,28 @@ So the deviation from the paper is confined to `λ = ℵ₀`, which is (per Lemm
 interesting case. Example 2.3(1) already flags reducedness as necessary in exactly this
 situation, so this looks like an omission in transcription rather than an error in the
 mathematics.
+
+## The hypothesis added to Proposition 3.14(2)
+
+The remark before Proposition 3.14 asserts that a submonoid of `ℕ₀^n` defined by homogeneous
+linear equations, inequalities and congruences is saturated, by cancellativity of `ℕ₀^n`. For
+equations and congruences that is right — cancel the `t`-part — but for inequalities it is false,
+and Proposition 3.14(2), whose proof opens by invoking it, fails with it. Take
+`H = {(a,b) ∈ ℕ₀² : a ≤ 2b}`, cut out by the single inequality `x₁ ≤ 2x₂`. Then
+
+* `(2,1) = (0,1) + (2,0)` with `(2,1)`, `(0,1) ∈ H` and `(2,0) ∉ H`, so `H` is not saturated
+  (`not_isSaturatedFin_ineqSystem`);
+* the families `x_k = (2,1)` and `y_0 = (0,1)`, `y_k = (2,1)` for `k ≥ 1` have the same
+  `ℵ₀`-sum `(ℵ₀, ℵ₀) ∈ H + ℵ₀H` but are not `ℵ₀⁻`-braided over `H`: telescoping the braiding
+  equations along the `ω`-block carrying `y`'s index `0` forces a deficit `v = (2p-2, p)` with
+  `p ≥ 1`, and then the next `u` would have to be `(2m-2p+2, m-p)`, which is never in `H`. So by
+  `isBraidedOver_of_isUniversalKExtension`, `H + ℵ₀H` is *not* the universal `ℵ₀`-extension of
+  this `H`.
+
+`prop_3_14_two` therefore takes the saturation of `H` as a hypothesis (`IsSaturatedFin`), which is
+exactly what Lemma 3.13(2) needs and what holds for systems of equations and congruences. Only the
+failure of saturation is formalised; the braiding computation is recorded in the docstring of
+`not_isSaturatedFin_ineqSystem`.
 
 ## Encoding decisions
 
