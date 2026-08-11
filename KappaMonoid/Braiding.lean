@@ -1744,6 +1744,41 @@ theorem isBraided_iff_of_ne_aleph0 (hlam : lam ≠ ℵ₀) (x y : ι → X) :
   · rintro ⟨I, J, hI, hJ, hIdisj, hJdisj, hIcov, hJcov, heq⟩
     exact IsBraided.of_partition I J hIdisj hJdisj hIcov hJcov hI hJ heq
 
+/-! ### Braiding partitions cut out by intervals of `ℕ`
+
+Two generic facts used whenever a braiding is built by alternately growing intervals along two
+families indexed by `ℕ` (Examples 3.3(1) for `ℕ₀`, Examples 3.3(2) for `ℝ≥0`). -/
+
+/-- A strictly monotone `b : ℕ → ℕ` with `b 0 = 0` partitions `ℕ` into the intervals
+`[b k, b (k+1))`. -/
+theorem iUnion_Ico_eq_univ_of_strictMono {b : ℕ → ℕ} (hb0 : b 0 = 0) (hb : StrictMono b) :
+    (⋃ k, Set.Ico (b k) (b (k + 1))) = Set.univ := by
+  classical
+  apply Set.eq_univ_of_forall
+  intro n
+  have hbge : ∀ k, k ≤ b k := fun k => hb.id_le k
+  have hex : ∃ k, n < b (k + 1) := ⟨n, lt_of_lt_of_le (Nat.lt_succ_self n) (hbge (n + 1))⟩
+  refine Set.mem_iUnion.mpr ⟨Nat.find hex, ?_⟩
+  have hk : n < b (Nat.find hex + 1) := Nat.find_spec hex
+  rcases Nat.eq_zero_or_pos (Nat.find hex) with hk0 | hkpos
+  · exact Set.mem_Ico.mpr ⟨by rw [hk0, hb0]; exact Nat.zero_le n, hk⟩
+  · have hnotk : ¬ n < b ((Nat.find hex - 1) + 1) :=
+      Nat.find_min hex (Nat.sub_lt hkpos one_pos)
+    rw [Nat.sub_add_cancel hkpos] at hnotk
+    exact Set.mem_Ico.mpr ⟨not_lt.mp hnotk, hk⟩
+
+/-- Two intervals `[b k, b (k+1))`, `[b k', b (k'+1))` cut out by a strictly monotone `b` and
+distinct `k ≠ k'` are disjoint. -/
+theorem ico_pairwise_disjoint {b : ℕ → ℕ} (hb : StrictMono b) {k k' : ℕ} (hne : k ≠ k') :
+    Disjoint (Set.Ico (b k) (b (k + 1))) (Set.Ico (b k') (b (k' + 1))) := by
+  wlog hlt : k < k' generalizing k k'
+  · exact (this hne.symm (by omega)).symm
+  rw [Set.disjoint_left]
+  intro i hi hi'
+  simp only [Set.mem_Ico] at hi hi'
+  have : b (k + 1) ≤ b k' := hb.monotone (by omega)
+  omega
+
 /-! ### The converse of Lemma 3.4(1): braidedness preserves smallness of support
 
 Reducedness makes a vanishing sum vanish termwise, and that turns the braiding equations into a

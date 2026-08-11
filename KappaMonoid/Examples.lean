@@ -472,8 +472,9 @@ namespace ENNRealExample
 
 open ENNReal
 
-/-- `Σ` on `ℝ≥0∞`: the sum of the family as a series. -/
-noncomputable def sumData : SumData (Order.succ ℵ₀) ENNReal where
+/-- `Σ` on `ℝ≥0∞`: the sum of the family as a series.  Universe-polymorphic in the index types,
+since `tsum` is available for a family indexed by any type. -/
+noncomputable def sumData : SumData (Order.succ (ℵ₀ : Cardinal.{u})) ENNReal where
   isRegular := Cardinal.isRegular_succ le_rfl
   sum _ x := ∑' i, x i
   sum_congr _ _ e x := e.tsum_eq x
@@ -483,22 +484,23 @@ noncomputable def sumData : SumData (Order.succ ℵ₀) ENNReal where
     exact Fintype.sum_unique x
   sum_sigma _ _ x _ := (ENNReal.tsum_sigma x).symm
 
-theorem sumData_add (h : #(PUnit.{1} ⊕ PUnit.{1}) < Order.succ ℵ₀) (a b : ENNReal) :
+theorem sumData_add (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < Order.succ (ℵ₀ : Cardinal.{u}))
+    (a b : ENNReal) :
     a + b = sumData.sum h (Sum.elim (fun _ => a) (fun _ => b)) := by
-  show a + b = ∑' p : PUnit.{1} ⊕ PUnit.{1}, Sum.elim (fun _ => a) (fun _ => b) p
+  show a + b = ∑' p : PUnit.{u + 1} ⊕ PUnit.{u + 1}, Sum.elim (fun _ => a) (fun _ => b) p
   rw [tsum_fintype, Fintype.sum_sum_type]
   simp
 
 /-- **Examples 2.3(2)**: `ℝ≥0∞` is an `ℵ₀`-monoid, with its usual addition. -/
 @[instance_reducible]
-noncomputable def instKMonoid : KMonoid ℵ₀ ENNReal where
+noncomputable def instKMonoid : KMonoid (ℵ₀ : Cardinal.{u}) ENNReal where
   toLMonoid := sumData.toLMonoid' sumData_add
   aleph0_le := le_rfl
 
 /-- The `ℵ₀`-sum on `ℝ≥0∞` is the sum of the series. -/
-@[simp] theorem instKMonoid_sumOf {ι : Type} (h : #ι ≤ ℵ₀) (x : ι → ENNReal) :
+@[simp] theorem instKMonoid_sumOf {ι : Type u} (h : #ι ≤ (ℵ₀ : Cardinal.{u})) (x : ι → ENNReal) :
     letI := instKMonoid
-    KMonoid.sumOf (κ := ℵ₀) h x = ∑' i, x i := rfl
+    KMonoid.sumOf (κ := (ℵ₀ : Cardinal.{u})) h x = ∑' i, x i := rfl
 
 /-- The operation differs from the trivial `ℵ₀`-extension of `ℝ≥0` (Examples 2.3(1)): a family
 with infinite support can have a finite sum. -/
