@@ -1002,6 +1002,12 @@ theorem alephPart_add {n : ℕ} (x y : Fin n → Fcard ℵ₀) :
   letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   exact funext fun i => alephOne_isAdd.2 (x i) (y i)
 
+theorem alephPart_zero {n : ℕ} :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    alephPart (0 : Fin n → Fcard ℵ₀) = 0 := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  exact funext fun _ => alephOne_isAdd.1
+
 /-- The value of `alephPart`: `0` where `x` vanishes and `ℵ₀` elsewhere. -/
 theorem val_alephPart {n : ℕ} (x : Fin n → Fcard ℵ₀) (i : Fin n) :
     ((alephPart x i : Fcard ℵ₀) : Cardinal.{u})
@@ -1227,10 +1233,9 @@ theorem LinSystem.isKSubmonoid_alephExt :
   letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   classical
-  have hap0 : alephPart (0 : Fin n → Fcard ℵ₀) = 0 := funext fun _ => alephOne_isAdd.1
   refine ⟨⟨0, sys.addSubmonoid_finSolutions.1, 0, sys.addSubmonoid_finSolutions.1, ?_⟩,
     fun z hz => ?_⟩
-  · rw [hap0, add_zero]
+  · rw [alephPart_zero, add_zero]
   · choose p hp q hq hzk using hz
     have hsplit : KMonoid.ksum (κ := ℵ₀) z
         = KMonoid.ksum (κ := ℵ₀) p + KMonoid.ksum (κ := ℵ₀) fun k => alephPart (q k) := by
@@ -1275,7 +1280,7 @@ theorem prop_3_14_two :
     letI := sys.isKSubmonoid_alephExt.kmonoid
     IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (le_refl ℵ₀)
       (fun h => ⟨(h : Fin n → Fcard ℵ₀), ⟨(h : Fin n → Fcard ℵ₀), h.2, 0,
-        sys.addSubmonoid_finSolutions.1, by sorry⟩⟩) := by
+        sys.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
   sorry
 
 /-- **Example 3.15**: `H = {(m, m) : m ∈ ℕ₀} ⊆ ℕ₀²` shows that Proposition 3.14(1) and (2) really

@@ -31,13 +31,13 @@ checked build).
 
 ### Scaffolds
 
-Three further files carry `sorry`-ed but type-checked statements for the parts of §§3–5 that are
-not yet proved. None is imported by `KappaMonoid.lean`, so `lake build` stays green and
-`sorry`-free; build them individually.
+Three further files carry the parts of §§3–5 that are not yet fully proved: every statement
+type-checks, and the proofs are filled in as far as they go. None is imported by
+`KappaMonoid.lean`, so `lake build` stays green and `sorry`-free; build them individually.
 
 | File | Contents | Plan |
 |---|---|---|
-| `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1), Lemma 3.13, **Prop. 3.14(1)(2)** (universal extensions of Diophantine monoids), Example 3.15, and the `ℝ̃≥0` example of Examples 3.3(2)/3.12 | `SECTION3-PLAN.md` |
+| `KappaMonoid/Section32.lean` | §3.2, **mostly proved**: Examples 3.3(1) and the first entry of Examples 3.12 (`ℕ̂₀ ≅ ℕ₀ ∪ {∞}`), Lemma 3.13(1) and (2), and all of Prop. 3.14 except its two main statements — the two remaining `sorry`s, both blocked on the same missing lemma (see the plan's Step A) | `SECTION3-PLAN.md` |
 | `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, **Cor. 4.7(2)** and the braided-implies-isomorphic lemma behind it, **Cor. 4.7(1)** in both directions, and Example 4.8(1) (KRSA ascent) | `SECTION4-PLAN.md` |
 | `KappaMonoid/Section5.lean` | §5: forms `α X₁ + β X₂` over `ℕ∞`, Lemmas 5.1–5.2, **Thm. 5.3** (which two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring), trace ideals and Prop. 5.4, Cor. 5.5 and its `ℕ₀² ∪ {∞}` counterexample | `SECTION5-PLAN.md` |
 

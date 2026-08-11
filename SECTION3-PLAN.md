@@ -2,9 +2,9 @@
 
 A work plan for the part of §3 of Nazemian–Smertnig that is not yet formalised.
 
-Baseline: branch `simplify`. `lake build` is green and `sorry`-free; the scaffold
-`KappaMonoid/Section32.lean` is deliberately **not** imported by `KappaMonoid.lean`, so it does
-not affect that. Build it on its own with `lake build KappaMonoid.Section32`.
+Baseline: branch `simplify`. `lake build` is green and `sorry`-free; `KappaMonoid/Section32.lean`
+is deliberately **not** imported by `KappaMonoid.lean`, so it does not affect that. Build it on
+its own with `lake build KappaMonoid.Section32`.
 
 Paper source: `kappa_monoids.tex` / `kappa_monoids.pdf`.
 
@@ -22,6 +22,16 @@ Paper source: `kappa_monoids.tex` / `kappa_monoids.pdf`.
 | Prop. 3.9 (extension along a braiding) | `extend_lhom` |
 | Def. 3.10, Theorem 3.11 | `IsUniversalKExtension`, `theorem_3_11`, `theorem_3_11_of_aleph0_lt` |
 
+And, in `Section32.lean`:
+
+| Paper | Where |
+|---|---|
+| Examples 3.3(1) (braiding in `ℕ₀`, both cases) | `isBraided_nat_of_finite_support`, `isBraided_nat_of_infinite_support` |
+| Examples 3.12, first entry (`ℕ̂₀ ≅ ℕ₀ ∪ {∞}`) | `isBraidedOver_withTop_nat`, `isUniversalKExtension_withTop_nat` |
+| Lemma 3.13(1) (free objects) | `freeIncl`, `lemma_3_13_free` |
+| Lemma 3.13(2) (saturated submonoids, both cases) | `IsSaturated`, `lemma_3_13_sub` |
+| Prop. 3.14, all the definitional work | `LinSystem`, `linEval`, `solutions`, `isKSubmonoid_solutions`, `mem_solutions_map`, `mem_solutions_of_incl`, `finSolutions`, `alephPart`, `alephExt`, `addSubmonoid_finSolutions`, `alephExt_subset_solutions`, `isKSubmonoid_alephExt` |
+
 **Lemma 3.4(2)(3) and Lemma 3.5 are deliberately absent.** The `ι × ℕ` normal form for braiding
 partitions *is* their content: a braiding breaks into a disjoint union of countable ones and
 conversely, and the relation does not depend on the chosen limit well-order. Restating them
@@ -32,11 +42,10 @@ scoped separately.
 
 ## What is missing
 
-1. **Examples 3.3** — braiding in `ℕ₀`, `ℝ≥0`, `ℚ≥0`.
-2. **§3.2 in full** — Examples 3.12, Lemma 3.13, Prop. 3.14, Example 3.15, Remark 3.16.
-
-`KappaMonoid/Section32.lean` fixes the statements for the tractable part of both. Everything in
-it is `sorry`; the statements elaborate, so they are known to be well-formed.
+Exactly two `sorry`s remain in `Section32.lean`: `prop_3_14_one` and `prop_3_14_two`. Both are
+blocked on **one** missing ingredient, described in the next section. Beyond that, §3 is missing
+Examples 3.3(2) — the `ℝ≥0` and `ℚ≥0` entries of Examples 3.12 — which is independent of
+everything else and not scaffolded any more than sketched below.
 
 ---
 
@@ -57,143 +66,130 @@ Same as the rest of the development:
    instance search — state lemmas at the type instance search expects; and a double coercion like
    `↥↑m` can defeat synthesis outright — state such lemmas over a plain type variable and
    specialise.
+6. When a `letI`-in-statement instance argument cannot be inferred from the goal, pass it
+   explicitly (`Fcard.instKMonoid_add (le_refl (ℵ₀ : Cardinal.{u}))`); and `rw` will not unfold
+   `KMonoid.ksum` to `KMonoid.sumOf`, so convert with `KMonoid.sumOf_Idx` (or `show`) before
+   rewriting with the `sumOf` lemmas.
 
 ---
 
-## Step 1 — Examples 3.3(1): braiding in `ℕ₀`
+## Step A (the blocker) — "universal ⟹ braided", i.e. Theorem 3.11 as an equivalence
 
-Scaffold: `isBraided_nat_of_finite_support`, `isBraided_nat_of_infinite_support`,
-`isBraidedOver_withTop_nat`.
+Both halves of Prop. 3.14 follow the paper by applying **Lemma 3.13(2)** (`lemma_3_13_sub`, now
+proved) to a *known ambient braided extension*:
 
-The finite-support case is `isBraided_of_small_support` after matching `∑ᶠ` with `lsumOf`
-(`LMonoid.lsumOf_eq_finsum` is the bridge).
+* 3.14(1): `X = F_{ℵ₀}^n`, `Ĥ = F_κ^n`, `λ = ℵ₁`, `S =` the `ℵ₀`-solutions;
+* 3.14(2): `X = ℕ₀^n`, `Ĥ = F_{ℵ₀}^n`, `λ = ℵ₀`, `S = H`, which is saturated.
 
-The infinite-support case is the real content and is the paper's inductive construction. In the
-`ι × ℕ` normal form you must produce a `BraidingData ℵ₀ x y`: partitions `I`, `J : ι × ℕ → Set ι`
-into finite pieces, and families `u`, `v`. Build them by recursion on the second coordinate,
-alternating: having consumed initial segments of both supports, take the next block of `x` large
-enough that its sum is `≥` the current deficit, then the next block of `y` likewise. Every entry
-of an infinitely-supported family in `ℕ₀` is eventually `≥ 1` infinitely often, which is what
-makes the domination step always possible. Expect this to be the longest step; it is a
-self-contained combinatorial argument with no dependencies.
+`lemma_3_13_sub` takes `IsBraidedOver lam κ X Ĥ hlk f` as its hypothesis — but what
+`lemma_3_13_free` supplies for these `X ⊆ Ĥ` is `IsUniversalKExtension`, and the development has
+no way back:
 
-`isBraidedOver_withTop_nat` then packages it: `IsBraidedOver` also needs that `ℕ₀` generates
-`ℕ₀ ∪ {∞}` as an `ℵ₀`-monoid and that equal sums imply braided, both of which fall out of the two
-classification lemmas plus the description of `TrivExt`'s summation.
+* the paper gets it from Theorem 3.11 plus uniqueness ("universal ⟹ braided", the remark after
+  Def. 3.10 that the two notions are equivalent);
+* `theorem_3_11` is stated for `X : Type u`, with `lam κ : Cardinal.{u}`. But `Fcard κ` is
+  `Type (u+1)`, so `F_κ^n : Type (u+1)` and the theorem does not apply to it.
 
-**Payoff.** With Theorem 3.11(2) this gives the first entry of Examples 3.12: `ℕ̂₀ ≅ ℕ₀ ∪ {∞}`.
+So the missing ingredient is:
 
-## Step 2 — Lemma 3.13(1): free objects
+1. **Generalise the `UnivExt` construction to `X : Type v`.** In `Universal.lean`, the section
+   `Construction` opens with `variable (lam κ) (X : Type u)`; `UnivExt lam κ X` is
+   `Quotient (braidingSetoid lam κ X)` on `Idx κ → X`, which lives in `Type (max u v)` for
+   `X : Type v`. `braidingSetoid` is already stated for `X : Type v`, and every proof in the
+   section only ever indexes by `Idx κ : Type u`, so this should be a mechanical change of the
+   `variable` line plus the universe annotation on `UnivExt` and on `theorem_3_11`'s existential.
+2. **Transport lemmas.** `IsBraidedOver` along an isomorphism of the *extension*
+   (`e : H₁ ≃ H₂` a `κ`-homomorphism with `e ∘ f₁ = f₂` — this is what
+   `isUniversalKExtension_unique` hands you), and along an isomorphism of the *base*
+   (`g : X₁ ≃ X₂` a `λ⁻`-isomorphism; `BraidingData` transports by applying `g` to `u` and `v`).
+3. **`isBraidedOver_of_isUniversalKExtension`**: given `IsConical X` and a universal `κ`-extension
+   `H` of `X` in `Type (max u v)`, `H` is `λ⁻`-braided over `X` — Theorem 3.11 produces a braided
+   `Ĥ`, uniqueness gives `Ĥ ≅ H` over `X`, and (2) transports braidedness.
 
-Scaffold: `freeIncl`, `lemma_3_13_free`.
+This is worth doing for its own sake: it is the paper's stated equivalence between `λ⁻`-braided
+`κ`-overmonoids and universal `κ`-extensions, and it is the only thing standing between the
+existing §3.2 machinery and Prop. 3.14.
 
-`freeIncl`'s `sorry` is the support bound: a set of size `< λ` has size `≤ κ` (`hlk` plus
-`Order.lt_succ_iff`). The theorem is then a matter of matching two universal properties: the
-`λ⁻`-universal property of `F_{λ⁻}(B)` (`exists_unique_lift`) against the `κ`-universal property
-of `F_κ(B)` (the same lemma at `λ = κ⁺`). Given `φ : F_{λ⁻}(B) → K` a `λ⁻`-homomorphism into a
-`κ`-monoid, the extension is `lift (φ ∘ ι)`, and uniqueness is `hom_ext`. This step is short and
-is the right one to do first if you want a quick win.
+**Do not try to prove the two braidings by hand instead.** Both are genuinely `n`-component
+constructions:
 
-## Step 3 — Lemma 3.13(2): saturated submonoids
+* for 3.14(1), two families in `F_{ℵ₀}^n` with equal `κ`-sums must be split into *countable*
+  pieces with equal partial sums *in all `n` components at once*, and the components can blow up
+  at different cardinalities, which forces a transfinite construction;
+* for 3.14(2) the pieces are finite and the index set countable, so it is the `ℕ₀` argument of
+  `isBraided_nat_of_infinite_support` with the deficit `v` a *vector*; the domination step then
+  has to consume all remaining nonzero entries in the components whose total is finite while
+  growing the blocks in the others.
 
-Scaffold: `IsSaturated`, `lemma_3_13_sub`.
+Either is a project the size of Step 1 was, and the first is larger. Step A is cheaper and gives
+both.
 
-Reduce to showing `⟨S⟩_κ` is `λ⁻`-braided over `S`, then apply
-`IsBraidedOver.isUniversalKExtension`. The braiding families `u`, `v` come from a braiding in
-`Ĥ`; the work is to see they lie in `S`.
+## Step B — Prop. 3.14(1) after Step A
 
-* `λ ≠ ℵ₀`: `isBraided_iff_of_ne_aleph0` lets you take `v ≡ 0`, so each `u_μ` is a partial sum of
-  elements of `S` and hence in `S`.
-* `λ = ℵ₀`, `S` saturated: induct along the block. At `(a, 0)` (the limit elements of the normal
-  form) `v = 0` and `u` is a partial sum, so both are in `S`. For the step, `u_{μ} + v_{μ}` and
-  `u_{μ} + v_{μ+1}` are partial sums of the two families, hence in `S`, and saturatedness moves
-  `u_{μ}` and then `v_{μ+1}` into `S`.
+With `IsBraidedOver ℵ₁ κ (F_{ℵ₀}^n) (F_κ^n)` in hand:
 
-The `ι × ℕ` form makes this induction an ordinary `Nat.rec` on the second coordinate, which is
-the main reason to expect it to be easier here than on paper.
+1. `lemma_3_13_sub` (the `λ ≠ ℵ₀` branch) gives that `⟨H⟩_κ ⊆ F_κ^n` is the universal
+   `κ`-extension of `H`, for `H` the `ℵ₀`-solution set.
+2. What remains is the paper's generation statement: `⟨H⟩_κ =` the `κ`-solution set. One
+   inclusion is `mem_solutions_map`; the other is the decomposition
+   `α = β + Σ_{ℵ₀ ≤ λ ≤ κ} λ γ^{(λ)}`. Only *finitely many* levels are needed: take
+   `Λ = {α_i : α_i ≥ ℵ₀}` (at most `n` cardinals), `β_i = min(α_i, ℵ₀)` and
+   `γ^{(λ)}_i = ℵ₀` if `α_i ≥ λ`, else `0`. Each `γ^{(λ)}` and `β` is a solution by
+   `mem_solutions_map`: both maps are additive on `F_κ` (for `λ` infinite, `a + b ≥ λ` iff
+   `max(a,b) ≥ λ`), which is exactly the paper's observation that the construction does not look
+   at the coefficients. The index set of the `κ`-sum can be taken to be
+   `Option (Fin n × Idx κ)`, padding along `Idx λ ↪ Idx κ` for each level.
+3. Finally transport `IsUniversalKExtension` from `↥⟨H⟩_κ` to `↥(solutions κ)` along the equality
+   of the two sets.
 
-## Step 4 — Proposition 3.14
+## Step C — Prop. 3.14(2) after Step A
 
-Scaffold: `LinSystem`, `linEval`, `LinSystem.solutions`, `isKSubmonoid_solutions`,
-`fcardIncl`, `mem_solutions_of_incl`, `prop_3_14_one`, `prop_3_14_two`.
+Same shape, and shorter, because everything else is done: `H = finSolutions` is saturated in
+`ℕ₀^n` (cancellativity — this still has to be proved, it is the paper's remark before
+Prop. 3.14), `alephExt = ⟨H⟩_{ℵ₀}` needs `isKSubmonoid_alephExt` (proved) for one inclusion and
+the paper's finite-`J` argument for the other — which is precisely the argument already carried
+out inside `ksum_mem_alephExt`, so extract it rather than redo it.
 
-Order of work:
+## Step D — Example 3.15 and Remark 3.16
 
-1. `isKSubmonoid_solutions` — each of the three conditions is preserved by `κ`-sums. Equations
-   and inequalities need that `linEval` commutes with `κ`-sums, which is Lemma 2.7(2)/(3) plus
-   `KMonoid.pi_sumOf`; congruences need that a `κ`-sum of multiples of `d` is a multiple of `d`,
-   using `cmul_sumOf_cardinal`.
-2. `mem_solutions_of_incl` — the inclusion `F_{ℵ₀} ↪ F_κ` preserves each condition. Note this is
-   *not* automatic for inequalities: `AddLe` is an existential, and the witness has to be
-   transported. Cardinal arithmetic below `ℵ₀` is absolute, so the witness can be taken to be the
-   image of the old one.
-3. `prop_3_14_one` — show the `κ`-solutions are `ℵ₁⁻`-braided over the `ℵ₀`-solutions, then apply
-   `IsBraidedOver.isUniversalKExtension`. Two families of `ℵ₀`-solutions with the same `κ`-sum
-   are braided because `λ = ℵ₁ ≠ ℵ₀`, so `isBraided_iff_of_ne_aleph0` reduces it to matching
-   partial sums, which can be read off coordinatewise in `F_κ^n`.
-4. `prop_3_14_two` — the `λ = ℵ₀` case, and the one that genuinely differs: the extension is
-   `H + ℵ₀H`, not the solution set of the same system over `F_{ℵ₀}`. Now stated in full:
-   `finSolutions` is `H ⊆ ℕ₀^n` (the solutions with all components finite), `alephPart` is the
-   paper's "replace every nonzero component by `ℵ₀`", and `alephExt` is `H + ℵ₀H`. Prove in the
-   order `addSubmonoid_finSolutions` → `alephExt_subset_solutions` → `isKSubmonoid_alephExt` →
-   `prop_3_14_two`. The interesting one is `isKSubmonoid_alephExt`: in each component a countable
-   sum either has finitely many nonzero contributions, and is again of that shape, or infinitely
-   many, and the component is `ℵ₀` and is absorbed into the `ℵ₀H` part.
-
-Prop. 3.14 is the largest item and the one where the statement, not the proof, carries most of
-the risk. Do not start proving until `isKSubmonoid_solutions` and `mem_solutions_of_incl` have
-convinced you the definitions are right.
-
-## Step 5 — Examples 3.3(2): the `ℝ≥0` example
-
-Scaffold: `RTilde`, `RTilde.val`, `RTilde.rsum`, `RTilde.sumData`, `RTilde.instKMonoid`,
-`isBraided_nnreal_iff`, `isBraidedOver_rtilde`, `not_isBraidedOver_rtilde_self`.
-
-The carrier encoding is settled: an inductive with `ofReal`, `tilde` (over *positive* reals only)
-and `top`. The tilde copy omitting `0` is what avoids a quotient, and gives exactly one `0` and
-one `∞` by construction. The summation `rsum` is also settled: sum the underlying values as a
-`tsum` in `ℝ≥0∞` — unconditional there, and order-independent, which is what the paper's "sum of
-the convergent series" means for nonnegative terms — then mark the result with a tilde unless the
-family is finitely supported with every entry plain.
-
-What is left is the three `SumData` axioms and the braiding classification.
-
-* `sum_congr` is immediate: `tsum`, finiteness of support and plainness are all invariant under
-  reindexing.
-* `sum_unique` is a case check on the single entry.
-* `sum_sigma` is the fiddly one, and is where all the work is. `tsum` over a sigma is
-  `ENNReal.tsum_sigma`, so the *values* match; the content is that the *marking* matches, i.e.
-  that the double family is finitely supported with all entries plain iff the family of row-sums
-  is. Left to right is easy. Right to left needs: a row whose sum is plain and nonzero must
-  itself be finitely supported and plain, which is exactly the definition of `rsum` read
-  backwards. Do this as a standalone lemma about `rsum` before touching `sum_sigma`.
-
-`isBraided_nnreal_iff` is the analogue of step 1 with "same series sum, and supports both finite
-or both infinite" in place of "both supports infinite"; the infinite case reuses the same
-alternating construction, with the domination step supplied by the tail of a convergent series of
-positive terms rather than by entries being `≥ 1`. `isBraidedOver_rtilde` then packages it, and
-`not_isBraidedOver_rtilde_self` repeats the paper's argument inside `{0} ∪ ℝ̃>0`.
-
-`ℚ≥0` is the same construction restricted, with the observation that irrationals admit only
-infinitely-supported representations, so only one copy of them appears. It is not scaffolded; do
-it only if you want Examples 3.12 complete, and expect it to be a light edit of `RTilde` rather
-than new mathematics.
-
-## Step 6 — Example 3.15 and Remark 3.16
-
-Example 3.15 (`H = {(n,n)} ⊆ ℕ₀²`, whose universal `ℵ₀`-extension is *not* the solution set of the
-same equations over `F_{ℵ₀}`) is the sharpness witness for 3.14(1) and (2) being different
-statements. `example_3_15` in the scaffold is a placeholder `True`: state it properly once step 4
-is done, when `finSolutions` and `alephExt` are available to phrase it with.
+Example 3.15 (`H = {(n,n)} ⊆ ℕ₀²`, whose universal `ℵ₀`-extension is *not* the solution set of
+the same equations over `F_{ℵ₀}`) is the sharpness witness for 3.14(1) and (2) being different
+statements. `example_3_15` in the scaffold is a placeholder `True`; state it properly with
+`finSolutions` and `alephExt` once Step C is done.
 
 Remark 3.16 (saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids, citing
 the literature) is a pointer, not a theorem. Either skip it or record it in the README.
 
+## Step E — Examples 3.3(2): the `ℝ≥0` example
+
+Not scaffolded. Independent of everything above; nothing else depends on it.
+
+The carrier encoding that works: an inductive `RTilde` with `ofReal`, `tilde` (over *positive*
+reals only) and `top`. The tilde copy omitting `0` avoids a quotient and gives exactly one `0`
+and one `∞` by construction. The summation: sum the underlying values as a `tsum` in `ℝ≥0∞` —
+unconditional there, and order-independent, which is what the paper's "sum of the convergent
+series" means for nonnegative terms — then mark the result with a tilde unless the family is
+finitely supported with every entry plain.
+
+The three `SumData` axioms: `sum_congr` is immediate (`tsum`, finiteness of support and plainness
+are all invariant under reindexing); `sum_unique` is a case check on the single entry; `sum_sigma`
+is where the work is. `tsum` over a sigma is `ENNReal.tsum_sigma`, so the *values* match; the
+content is that the *marking* matches, i.e. that the double family is finitely supported with all
+entries plain iff the family of row-sums is. Left to right is easy; right to left needs that a row
+whose sum is plain and nonzero must itself be finitely supported and plain, which is the
+definition of the summation read backwards. Prove that as a standalone lemma first.
+
+The braiding classification is the analogue of Examples 3.3(1) with "same series sum, and supports
+both finite or both infinite" in place of "both supports infinite"; the infinite case reuses the
+alternating construction of `natBraidState`, with the domination step supplied by the tail of a
+convergent series of positive terms rather than by entries being `≥ 1`. Then
+`isBraidedOver_rtilde` packages it, and the paper's argument that `{0} ∪ ℝ̃>0` is *not*
+`ℵ₀⁻`-braided over itself is a short direct computation.
+
+`ℚ≥0` is the same construction restricted, with the observation that irrationals admit only
+infinitely-supported representations, so only one copy of them appears. Do it only if you want
+Examples 3.12 complete, and expect a light edit of `RTilde` rather than new mathematics.
+
 ## Suggested order
 
-Step 2 (short, self-contained) → step 4.1–4.2 (fixes the §3.2 definitions) → step 1 (long but
-independent) → step 3 → step 4.3–4.4 → step 5 → step 6.
-
-Steps 1 and 2 are independent of everything else and can be done in either order. Step 3 depends
-on nothing but the existing §3 API. Step 5 is the only one that needs a new `κ`-monoid built from
-scratch, and nothing else depends on it.
+Step A → Step B → Step C → Step D. Step E any time.
