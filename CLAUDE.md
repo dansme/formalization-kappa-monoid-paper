@@ -96,21 +96,32 @@ re-deriving them.
    universes (`example_3_15` had three).
 6. **`(u := u)` is never valid** for a universe parameter. Use a type ascription:
    `letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid`.
-7. **Transport lemmas need their functions explicitly.** `IsLMonoidHom` and `IsLHom` are plain
-   `def`s, so unifying `IsLMonoidHom lam ?g` against the unfolded `∀`-statement will not solve for
-   `?g`; supply `(g := …)`, `(g' := …)`.
-8. **Do not case-split inside a projection of an opaque carrier.** A three-branch `dite` whose
+7. **`IsLMonoidHom`/`IsLHom` are plain `def`s**, so an expected type gets unfolded to a `∀` and
+   unification will not solve for the function. Three consequences, all of which have bitten:
+   give a transport lemma's maps as **explicit** arguments rather than implicit ones; always ascribe
+   the type when `have`-ing such a hypothesis (`have h : IsLMonoidHom lam f := …`); and when the
+   *conclusion* determines the maps (`hom_ext`, `of_base_iso`), state the expected type of the
+   `have` — named arguments alone are not enough, because the arguments get elaborated before the
+   metavariables are assigned.
+8. **Universal properties do not cross universes.** `IsUniversalKExtension`'s `universal` field
+   quantifies over test objects `K : Type w` in the *same* universe as the extension, so
+   `isUniversalKExtension_unique` compares two extensions in one universe only. This is why
+   Example 4.8(1) cannot say `V^κ(C) ≅ F_κ(B)`: `F_κ(B)` lives in `Type (u+1)` (it is built from
+   cardinals) and `V^κ(C)` in `Type u`. Deliver the universal property instead, or lift. By
+   contrast the *bases* of a braiding or a universal extension may live in different universes —
+   both `of_base_iso` lemmas allow it.
+9. **Do not case-split inside a projection of an opaque carrier.** A three-branch `dite` whose
    branches carry dependent proofs makes every `val`/`flag` lemma fight the motive, because the
    carrier `def` cannot be unfolded at `implicit` transparency. Compute the components separately
    (`RTilde.sigmaFlag`) so the constructor application is a single term and the projections are
    `rfl`.
-9. **Term-mode proofs of `letI`-in-statement results fail.** Use tactic mode and repeat the
+10. **Term-mode proofs of `letI`-in-statement results fail.** Use tactic mode and repeat the
    `letI`s.
-10. **Cardinality of unions**: `Cardinal.mk_iUnion_le_sum_mk` then
+11. **Cardinality of unions**: `Cardinal.mk_iUnion_le_sum_mk` then
     `Cardinal.sum_lt_of_isRegular` gives `< λ` for a `< λ`-indexed union of `< λ` sets — this works
     uniformly at `λ = ℵ₀`, where a bound like `#Bad * ℵ₀` does not. For plain finiteness,
     `Set.Finite.biUnion`.
-11. **`tsum` is cross-universe friendly**: `Equiv.tsum_eq` and the `ENNReal.tsum_*` lemmas accept
+12. **`tsum` is cross-universe friendly**: `Equiv.tsum_eq` and the `ENNReal.tsum_*` lemmas accept
     index types in different universes, which is what lets an `ℕ`-indexed construction be
     transported to `ι : Type u`.
 
@@ -126,7 +137,8 @@ re-deriving them.
 | `Section32.lean` | §3.2: Lemma 3.13, Prop. 3.14, Example 3.15 |
 | `Reals.lean` | Examples 3.3(2)(3): braiding in `ℝ≥0`, the monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, the `ℚ≥0` variant |
 | `Modules.lean` | §4 |
-| `Section4.lean`, `Section5.lean` | scaffolds, not imported |
+| `Section4.lean` | §4 scaffold, not imported: Corollary 4.7(1) is what is left |
+| `Section5.lean` | §5 scaffold, not imported |
 
 Before writing a new construction, check whether the analogous one exists: the `ℕ₀` and `ℝ≥0`
 braidings, the `Fcard`/`RTilde` `SumData`s, and the `TrivExt` extension are all templates.

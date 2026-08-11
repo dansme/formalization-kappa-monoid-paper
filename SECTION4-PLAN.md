@@ -33,45 +33,20 @@ Section 4 is formalised through Corollary 4.5, in `KappaMonoid/Modules.lean`:
 Two documented stubs remain there — `corollary_4_6 : True := trivial` and
 `corollary_4_7 : True := trivial`.  The statements below are meant to replace them.
 
-## Step 1 — `add x` and `add_λ x` (3 sorries)
+## Steps 1–3 — done
 
-`KMonoid.addOf` and `KMonoid.addOfCard` are defined; the three closure lemmas are open.
+`addOf_isLSubset`, `addOf_isSaturated`, `addOfCard_isLSubset`,
+`isKIso_of_braidedOver_same` and `corollary_4_7_two` are proved, with no axiom.
 
-- `addOf_isLSubset`: `0 ∈ add x` via `n = 0` and `z = 0` (`cmul_zero`); closure under finite sums
-  by adding the witnesses and using `cmul_add_cmul` on `(m + n : ℕ)`.  Stated as `IsLSubset ℵ₀`
-  rather than as a bare submonoid so that `IsLSubset.lmonoid` gives the subtype the `LMonoid ℵ₀`
-  instance that steps 2 and 4 need.
-- `addOf_isSaturated`: if `a + z = n • x` and `a = b + c`, then `b + (c + z) = n • x`.
-  Associativity only.
-- `addOfCard_isLSubset`: the `λ⁻`-sum of a family `(y i)` of summands of `λ x` is again a summand
-  of `λ x`, because `λ · λ = λ` for infinite `λ` — use `lcmul_lcmul` and `Cardinal.mul_eq_self`.
-  This is the one that needs real work; `IsLSubset` has the `lsumOf`-closure field, so the
-  witness is `lsumOf` of the witnesses.
+Notes worth keeping:
 
-Do this step first: everything downstream mentions `addOf`.
-
-## Step 2 — `isKIso_of_braidedOver_same` (1 sorry)
-
-**The key lemma, and the reason this file exists.**  Two `κ`-monoids braided over the same
-`λ⁻`-monoid are isomorphic over it.
-
-Proof: `IsBraidedOver.isUniversalKExtension` (Theorem 3.11(2), already proved) applied to each
-side, then `isUniversalKExtension_unique`.  Both are in `Modules.lean`/`Braiding.lean`; this
-should be a handful of lines.  **No new axiom, no external input.**
-
-Everything in step 3 is a corollary of this, so get it right first.
-
-## Step 3 — Corollary 4.7(2) (1 sorry)
-
-`corollary_4_7_two` is step 2 specialised: `H` is braided over `S` by hypothesis, and
-`V^κ(R)` is braided over `S` by `corollary_4_5` — this is Corollary 4.5(2), already proved.
-Apply `isKIso_of_braidedOver_same`.
-
-To recover the paper's exact statement, instantiate `S := add_{ℵ₀} x` using
-`addOfCard_isLSubset` from step 1 for the `LMonoid ℵ₀` instance on the subtype.
-
-**Corollary 4.7(2) is reachable today with no external input.**  It is the highest-value item in
-this file — do steps 1–3 and stop if time is short.
+- `addOf_isLSubset` adds the witnesses and reads the total coefficient off `cmul_sumOf_cardinal`;
+  the coefficient is a natural number because a finite sum of finite cardinals is finite
+  (`Cardinal.sum_lt_of_isRegular` then `Cardinal.lt_aleph0`). `addOfCard_isLSubset` is the same
+  with the constant coefficient `λ`, using `#ι · λ = λ` for a nonempty index type of size `< λ`;
+  the empty case is the zero of the submonoid, not the general argument.
+- `isKIso_of_braidedOver_same` is two lines: both sides are universal `κ`-extensions of `S`
+  (Theorem 3.11(2)) and those are unique up to a unique isomorphism.
 
 ## Step 4 — Corollary 4.7(1) (2 sorries)
 
@@ -113,37 +88,57 @@ None of the six is in Mathlib, and none is a monoid-theoretic statement.  **The 
 `Modules.lean` is the correct treatment** — leave it.  `EveryProjectiveIsSumOfFG` exists so the
 six implications can be stated the day that module theory lands.
 
-## Step 6 — Example 4.8(1), KRSA ascent (1 sorry)
+## Step 6 — Example 4.8(1) — done, with a corrected statement
 
-`krsa_ascent`: if `V^{λ⁻}(C_{λ⁻})` is a free `λ⁻`-monoid on `B` and every module in `C` is a
-direct sum of `λ⁻`-small ones, then `V^κ(C)` is the free `κ`-monoid on `B`.
+`krsa_ascent` and `krsa_ascent_free` are proved (no axiom), now that Lemma 3.13(1) exists —
+`Section4.lean` imports `Section32.lean` for it.
 
-Chain: Theorem 4.3 gives `λ⁻`-braidedness (this is the `hbr` hypothesis, discharged by
-`theorem_4_3` in an application); Lemma 3.13(1) — `lemma_3_13_free` in the §3 scaffold — says the
-universal `κ`-extension of `F_{λ⁻}(B)` is `F_κ(B)`; step 2 identifies the two.
+**The scaffold statement was not expressible.** It asked for `V^κ(C) ≅ F_κ(B)`. But `F_κ(B)` is cut
+out of `B → F_κ` and so lives in `Type (u+1)`, while `V^κ(C)` lives in `Type u`; the `universal`
+field of `IsUniversalKExtension` quantifies over test objects `K : Type w` in the *same* universe as
+the extension, so `isUniversalKExtension_unique` compares two extensions in one universe only. Two
+ways out, should the isomorphism itself ever be wanted:
 
-**Blocked on `SECTION3-PLAN.md` step 2** (`lemma_3_13_free`).  Do §3 first, or carry 3.13(1) as a
-hypothesis here.
+1. make `universal` quantify over `K` in a fresh universe — `extend_lhom` already works for a `K` in
+   any universe, so this is a change to the definition and to Theorem 3.11's statement, not to its
+   proof; or
+2. compare `ULift`s.
 
-This is the one worked example of §4 that needs no literature at all — the rest of Examples 4.8
-(direct summands of infinite direct sums; the `V(R) ≅ ℕ₀ / ℚ≥0 / ℝ≥0` computations; Dedekind
-domains via Steinitz) are either open questions or specialisations of the §3 examples.  The
-`ℕ₀ ∪ {∞}`, `ℝ̃≥0` and Diophantine computations they cite are exactly Examples 3.3 and
-Proposition 3.14, already scaffolded in `KappaMonoid/Section32.lean`.
+What is proved instead is the universe-correct content: `krsa_ascent` gives that `V^κ(C)` *is* the
+universal `κ`-extension of `F_{λ⁻}(B)` (transport `hbr`'s universal property along the isomorphism
+of bases), and `krsa_ascent_free` turns that into the `B`-indexed universal property of the free
+`κ`-monoid — every map `B → K` extends uniquely along the generators — which is what "`V^κ(C)` is
+the free `κ`-monoid on `B`" means. The `λ⁻`-level input is `Free.exists_unique_lift`, whose target
+universe is free.
 
 ## Dependency order
 
+Only step 4 is left:
+
 ```
-step 1 (addOf lemmas)  ──┐
-step 2 (braided ⇒ iso) ──┼──> step 3 (Cor 4.7(2))   ← no external input
-                         └──> step 4 (Cor 4.7(1))   ← uses axiom A5
-SECTION3-PLAN step 2   ─────> step 6 (KRSA ascent)
+step 4 (Cor 4.7(1))   ← uses axiom A5 for the forward direction
 step 5: nothing to do
 ```
 
+The backward direction, `corollary_4_7_one_backward`, needs no axiom: it is `corollary_4_5_three`
+plus `isOrderUnit_unitClass` and the identification `V(R) = add [R]`.
+
+## New infrastructure this section added
+
+Reusable, and in the core files rather than here:
+
+| Lemma | Where | What it does |
+|---|---|---|
+| `IsLMonoidHom.inv` | `Basic.lean` | the inverse of a bijective homomorphism is a homomorphism |
+| `IsUniversalKExtension.of_base_iso` | `Universal.lean` | universality transports along an isomorphism of the base — formal, no reducedness needed, unlike `IsBraidedOver.of_base_iso` |
+| `isLMonoidHom_of_isLHom`, `isLHom_of_isLMonoidHom` | `Universal.lean` | the two packagings of a homomorphism into a `κ`-monoid; moved here from `Section32.lean` |
+
+Both base transports now allow the two bases to live in **independent universes**, which is what
+Example 4.8(1) needs (`Type u` against `Type (u+1)`).
+
 ## Status
 
-8 `sorry`s in `KappaMonoid/Section4.lean`, all statements type-checked.
-
-After each step, re-run `#print axioms` on the affected results and keep the provenance table in
-`README.md` in step: only Corollary 4.7(1) may report `bergmanDicksData`.
+2 `sorry`s in `KappaMonoid/Section4.lean`, both in Corollary 4.7(1); all statements type-checked.
+`#print axioms` on everything proved here reports only `propext`, `Classical.choice`, `Quot.sound`.
+The root `lake build` stays green and `sorry`-free because the file is not imported by
+`KappaMonoid.lean`.
