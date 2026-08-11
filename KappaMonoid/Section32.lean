@@ -965,6 +965,255 @@ theorem LinSystem.addSubmonoid_finSolutions :
   · rw [show ((a + b : Fin n → Fcard ℵ₀) i) = a i + b i from rfl, Fcard.instKMonoid_add]
     exact Cardinal.add_lt_aleph0 (ha.2 i) (hb.2 i)
 
+/-! ### `H + ℵ₀H` is closed under countable sums
+
+Three ingredients: the support of a family of cardinals injects into its cardinal sum (so a
+component of a countable sum that stays *finite* receives contributions from only finitely many
+terms); `alephPart` is additive; and a set of components is the support of a single element of `H`
+as soon as each of its components is hit by some element of `H` that vanishes outside the set. -/
+
+/-- The support of a family of cardinals injects into its cardinal sum. -/
+theorem mk_support_le_csum {ι : Type u} (c : ι → Cardinal.{u}) :
+    #{i | c i ≠ 0} ≤ Cardinal.sum c := by
+  classical
+  have hne : ∀ i : {i | c i ≠ 0}, Nonempty (c (i : ι)).out := fun i =>
+    Cardinal.mk_ne_zero_iff.mp (by rw [Cardinal.mk_out]; exact i.2)
+  exact ⟨⟨fun i => ⟨(i : ι), (hne i).some⟩,
+    fun i j hij => Subtype.ext (congrArg Sigma.fst hij)⟩⟩
+
+/-- The value of an element of `F_{ℵ₀}`, as an additive map — used to evaluate finite sums
+componentwise. -/
+noncomputable def fcardVal :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    Fcard ℵ₀ →+ Cardinal.{u} :=
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  { toFun := fun c => (c : Cardinal.{u})
+    map_zero' := Fcard.instKMonoid_zero _
+    map_add' := Fcard.instKMonoid_add _ }
+
+@[simp] theorem fcardVal_apply (c : Fcard ℵ₀) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    fcardVal c = (c : Cardinal.{u}) := rfl
+
+/-- `alephPart` is additive, being `alephOne` in each component. -/
+theorem alephPart_add {n : ℕ} (x y : Fin n → Fcard ℵ₀) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    alephPart (x + y) = alephPart x + alephPart y := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  exact funext fun i => alephOne_isAdd.2 (x i) (y i)
+
+/-- The value of `alephPart`: `0` where `x` vanishes and `ℵ₀` elsewhere. -/
+theorem val_alephPart {n : ℕ} (x : Fin n → Fcard ℵ₀) (i : Fin n) :
+    ((alephPart x i : Fcard ℵ₀) : Cardinal.{u})
+      = if ((x i : Fcard ℵ₀) : Cardinal.{u}) = 0 then 0 else ℵ₀ := by
+  rw [alephPart_eq]
+  unfold alephOne
+  split <;> rfl
+
+/-- `H` as an additive submonoid, so that finite sums may be formed inside it. -/
+noncomputable def LinSystem.finSubmonoid :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+    AddSubmonoid (Fin n → Fcard ℵ₀) :=
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  { carrier := sys.finSolutions
+    zero_mem' := sys.addSubmonoid_finSolutions.1
+    add_mem' := fun {a b} ha hb => sys.addSubmonoid_finSolutions.2 a ha b hb }
+
+theorem LinSystem.mem_finSubmonoid {x : Fin n → Fcard ℵ₀} :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+    x ∈ sys.finSubmonoid ↔ x ∈ sys.finSolutions := Iff.rfl
+
+/-- A set `U` of components is the support of a single element of `H`, as soon as every `i ∈ U` is
+hit by an element `g i ∈ H` vanishing outside `U`: take `Σ_{i ∈ U} g i`. -/
+theorem LinSystem.exists_finSolutions_support (U : Finset (Fin n))
+    (g : Fin n → (Fin n → Fcard ℵ₀)) (hgH : ∀ i, g i ∈ sys.finSolutions)
+    (hne : ∀ i ∈ U, ((g i i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0)
+    (hzero : ∀ i ∈ U, ∀ j ∉ U, ((g i j : Fcard ℵ₀) : Cardinal.{u}) = 0) :
+    ∃ w ∈ sys.finSolutions, (∀ i ∈ U, ((w i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0) ∧
+      ∀ j ∉ U, ((w j : Fcard ℵ₀) : Cardinal.{u}) = 0 := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  refine ⟨∑ i ∈ U, g i,
+    (sys.mem_finSubmonoid).mp (AddSubmonoid.sum_mem sys.finSubmonoid fun i _ => hgH i),
+    fun i hi => ?_, fun j hj => ?_⟩
+  · have hval : ((∑ i' ∈ U, g i') i : Cardinal.{u}) = ∑ i' ∈ U, ((g i' i : Fcard ℵ₀) : Cardinal.{u}) := by
+      rw [Finset.sum_apply, ← fcardVal_apply, map_sum]
+      rfl
+    intro hzero'
+    refine hne i hi (le_antisymm ?_ zero_le)
+    have hle : ((g i i : Fcard ℵ₀) : Cardinal.{u}) ≤ ∑ i' ∈ U, ((g i' i : Fcard ℵ₀) : Cardinal.{u}) :=
+      Finset.single_le_sum (f := fun i' => ((g i' i : Fcard ℵ₀) : Cardinal.{u}))
+        (fun i' _ => zero_le) hi
+    rw [← hval, hzero'] at hle
+    exact hle
+  · rw [show ((∑ i ∈ U, g i) j : Fcard ℵ₀) = ∑ i ∈ U, g i j from Finset.sum_apply _ _ _,
+      ← fcardVal_apply, map_sum]
+    exact Finset.sum_eq_zero fun i hi => hzero i hi j hj
+
+/-- A countable sum of elements of `H` lies in `H + ℵ₀H`: the components that stay finite already
+receive all of their contributions from a *finite* set `J` of indices, and every component that
+blows up to `ℵ₀` is hit by an index outside `J`, so is absorbed into the `ℵ₀H` part. -/
+theorem LinSystem.ksum_mem_alephExt (p : Idx (ℵ₀ : Cardinal.{u}) → (Fin n → Fcard ℵ₀))
+    (hp : ∀ k, p k ∈ sys.finSolutions) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+    KMonoid.ksum (κ := ℵ₀) p ∈ sys.alephExt := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  classical
+  have hidx : #(Idx (ℵ₀ : Cardinal.{u})) ≤ ℵ₀ := le_of_eq (mk_Idx _)
+  show KMonoid.sumOf (κ := ℵ₀) hidx p ∈ sys.alephExt
+  -- the value of a component of a `κ`-sum is the cardinal sum of the components
+  have hval : ∀ (y : Idx (ℵ₀ : Cardinal.{u}) → (Fin n → Fcard ℵ₀)) (i : Fin n),
+      ((KMonoid.sumOf (κ := ℵ₀) hidx y i : Fcard ℵ₀) : Cardinal.{u})
+        = Cardinal.sum fun k => ((y k i : Fcard ℵ₀) : Cardinal.{u}) := fun _ _ => rfl
+  have hadd : ∀ (x y : Fin n → Fcard ℵ₀) (i : Fin n),
+      (((x + y) i : Fcard ℵ₀) : Cardinal.{u})
+        = ((x i : Fcard ℵ₀) : Cardinal.{u}) + ((y i : Fcard ℵ₀) : Cardinal.{u}) :=
+    fun x y i => Fcard.instKMonoid_add (le_refl (ℵ₀ : Cardinal.{u})) (x i) (y i)
+  set a := KMonoid.sumOf (κ := ℵ₀) hidx p with hadef
+  -- `F`: the components of the sum that stay finite
+  set F : Finset (Fin n) := Finset.univ.filter fun i => ((a i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀
+    with hFdef
+  have hmemF : ∀ i, i ∈ F ↔ ((a i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀ := by
+    intro i; rw [hFdef]; simp
+  have hnotF : ∀ i, i ∉ F → ((a i : Fcard ℵ₀) : Cardinal.{u}) = ℵ₀ := fun i hi =>
+    le_antisymm (Fcard.le _) (not_lt.mp fun hc => hi ((hmemF i).mpr hc))
+  -- `J`: the finitely many indices contributing to a finite component
+  set J : Set (Idx (ℵ₀ : Cardinal.{u})) :=
+    ⋃ i ∈ (F : Set (Fin n)), {k | ((p k i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0} with hJdef
+  have hJfin : J.Finite := by
+    refine Set.Finite.biUnion (F : Set (Fin n)).toFinite fun i hi => ?_
+    refine Cardinal.lt_aleph0_iff_set_finite.mp (lt_of_le_of_lt (mk_support_le_csum _) ?_)
+    rw [← hval p i]
+    exact (hmemF i).mp (Finset.mem_coe.mp hi)
+  have hJout : ∀ i ∈ F, ∀ k, k ∉ J → ((p k i : Fcard ℵ₀) : Cardinal.{u}) = 0 := by
+    intro i hi k hk
+    by_contra hc
+    exact hk (Set.mem_biUnion (Finset.mem_coe.mpr hi) hc)
+  -- split the family at `J`
+  set p₁ : Idx (ℵ₀ : Cardinal.{u}) → (Fin n → Fcard ℵ₀) := fun k => if k ∈ J then p k else 0
+    with hp₁def
+  set p₂ : Idx (ℵ₀ : Cardinal.{u}) → (Fin n → Fcard ℵ₀) := fun k => if k ∈ J then 0 else p k
+    with hp₂def
+  have hsplit : a = KMonoid.sumOf (κ := ℵ₀) hidx p₁ + KMonoid.sumOf (κ := ℵ₀) hidx p₂ := by
+    rw [hadef, ← KMonoid.sumOf_add hidx p₁ p₂]
+    refine congrArg _ (funext fun k => ?_)
+    by_cases hk : k ∈ J
+    · rw [hp₁def, hp₂def]; simp only [if_pos hk]; rw [add_zero]
+    · rw [hp₁def, hp₂def]; simp only [if_neg hk]; rw [zero_add]
+  -- the first half is a *finite* sum of elements of `H`, hence lies in `H`
+  haveI : Fintype ↥J := hJfin.fintype
+  have hJle : #(J : Set (Idx (ℵ₀ : Cardinal.{u}))) ≤ ℵ₀ :=
+    (Cardinal.mk_set_le J).trans (le_of_eq (mk_Idx _))
+  have hp₁sum : KMonoid.sumOf (κ := ℵ₀) hidx p₁ = ∑ k : ↥J, p (k : Idx ℵ₀) := by
+    have hext : Function.extend (Function.Embedding.subtype (· ∈ J))
+        (fun k : ↥J => p (k : Idx ℵ₀)) 0 = p₁ := by
+      funext k
+      by_cases hk : k ∈ J
+      · have hk' : (Function.Embedding.subtype (· ∈ J)) ⟨k, hk⟩ = k := rfl
+        rw [← hk', (Function.Embedding.subtype (· ∈ J)).injective.extend_apply, hp₁def]
+        exact (if_pos hk).symm
+      · rw [Function.extend_apply' _ _ _ (by rintro ⟨⟨t, ht⟩, rfl⟩; exact hk ht), hp₁def]
+        exact (if_neg hk).symm
+    rw [← hext, KMonoid.sumOf_extend hJle hidx, KMonoid.sumOf_eq_sum]
+  have hhH : KMonoid.sumOf (κ := ℵ₀) hidx p₁ ∈ sys.finSolutions := by
+    rw [hp₁sum]
+    exact (sys.mem_finSubmonoid).mp
+      (AddSubmonoid.sum_mem sys.finSubmonoid fun k _ => (sys.mem_finSubmonoid).mpr (hp k))
+  -- and the second half contributes nothing to a component missed outside `J`
+  have hp₂zero : ∀ i, (∀ k, k ∉ J → ((p k i : Fcard ℵ₀) : Cardinal.{u}) = 0) →
+      ((KMonoid.sumOf (κ := ℵ₀) hidx p₂ i : Fcard ℵ₀) : Cardinal.{u}) = 0 := by
+    intro i hi
+    have hfam : (fun k => p₂ k i) = fun _ => (0 : Fcard ℵ₀) := by
+      funext k
+      by_cases hk : k ∈ J
+      · rw [hp₂def]; simp only [if_pos hk]; rfl
+      · rw [hp₂def]; simp only [if_neg hk]
+        exact Fcard.ext ((hi k hk).trans (Fcard.instKMonoid_zero _).symm)
+    rw [show (KMonoid.sumOf (κ := ℵ₀) hidx p₂ i) = KMonoid.sumOf (κ := ℵ₀) hidx (fun k => p₂ k i)
+      from rfl, hfam, KMonoid.sumOf_zero, Fcard.instKMonoid_zero]
+  have hafin : ∀ i, (∀ k, k ∉ J → ((p k i : Fcard ℵ₀) : Cardinal.{u}) = 0) →
+      ((a i : Fcard ℵ₀) : Cardinal.{u})
+        = ((KMonoid.sumOf (κ := ℵ₀) hidx p₁ i : Fcard ℵ₀) : Cardinal.{u}) := by
+    intro i hi
+    rw [hsplit, hadd, hp₂zero i hi, add_zero]
+  -- every component that blows up is hit by an index outside `J`
+  have hpick : ∀ i, ∃ k, i ∉ F → k ∉ J ∧ ((p k i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0 := by
+    intro i
+    by_cases hi : i ∈ F
+    · exact ⟨(nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))).some, fun hc => absurd hi hc⟩
+    · have hex : ∃ k, k ∉ J ∧ ((p k i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0 := by
+        by_contra hno
+        push Not at hno
+        exact hi ((hmemF i).mpr (by rw [hafin i hno]; exact hhH.2 i))
+      obtain ⟨k, hk1, hk2⟩ := hex
+      exact ⟨k, fun _ => ⟨hk1, hk2⟩⟩
+  choose kf hkf using hpick
+  -- realise the blown-up components as the support of a single element of `H`
+  obtain ⟨w, hwH, hw1, hw2⟩ := sys.exists_finSolutions_support Fᶜ (fun i => p (kf i))
+    (fun i => hp (kf i))
+    (fun i hi => (hkf i (Finset.mem_compl.mp hi)).2)
+    (fun i hi j hj => hJout j (by simpa using hj) _ (hkf i (Finset.mem_compl.mp hi)).1)
+  refine ⟨KMonoid.sumOf (κ := ℵ₀) hidx p₁, hhH, w, hwH, funext fun i => Fcard.ext ?_⟩
+  rw [hadd, val_alephPart]
+  by_cases hi : i ∈ F
+  · rw [if_pos (hw2 i (by simpa using hi)), add_zero]
+    exact hafin i fun k hk => hJout i hi k hk
+  · rw [if_neg (hw1 i (Finset.mem_compl.mpr hi)), hnotF i hi]
+    exact (Cardinal.add_eq_right le_rfl (le_of_lt (hhH.2 i))).symm
+
+/-- The `ℵ₀H` part of a countable sum: a countable sum of elements of `ℵ₀H` is again in `ℵ₀H`,
+because in each component it is `ℵ₀` exactly where one of the summands is. -/
+theorem LinSystem.exists_alephPart_ksum (q : Idx (ℵ₀ : Cardinal.{u}) → (Fin n → Fcard ℵ₀))
+    (hq : ∀ k, q k ∈ sys.finSolutions) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+    ∃ w ∈ sys.finSolutions,
+      KMonoid.ksum (κ := ℵ₀) (fun k => alephPart (q k)) = alephPart w := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  classical
+  have hidx : #(Idx (ℵ₀ : Cardinal.{u})) ≤ ℵ₀ := le_of_eq (mk_Idx _)
+  -- `U`: the components hit by some `q k`
+  set U : Finset (Fin n) :=
+    Finset.univ.filter fun i => ∃ k, ((q k i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0 with hUdef
+  have hmemU : ∀ i, i ∈ U ↔ ∃ k, ((q k i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0 := by
+    intro i; rw [hUdef]; simp
+  have hpick : ∀ i, ∃ k, i ∈ U → ((q k i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0 := by
+    intro i
+    by_cases hi : i ∈ U
+    · obtain ⟨k, hk⟩ := (hmemU i).mp hi
+      exact ⟨k, fun _ => hk⟩
+    · exact ⟨(nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))).some, fun hc => absurd hc hi⟩
+  choose kf hkf using hpick
+  have hout : ∀ j, j ∉ U → ∀ k, ((q k j : Fcard ℵ₀) : Cardinal.{u}) = 0 := by
+    intro j hj k
+    by_contra hc
+    exact hj ((hmemU j).mpr ⟨k, hc⟩)
+  obtain ⟨w, hwH, hw1, hw2⟩ := sys.exists_finSolutions_support U (fun i => q (kf i))
+    (fun i => hq (kf i)) (fun i hi => hkf i hi) (fun i _ j hj => hout j hj _)
+  refine ⟨w, hwH, funext fun i => Fcard.ext ?_⟩
+  rw [val_alephPart,
+    show (KMonoid.ksum (κ := ℵ₀) (fun k => alephPart (q k)) i)
+      = KMonoid.sumOf (κ := ℵ₀) hidx (fun k => alephPart (q k) i) from rfl]
+  by_cases hi : i ∈ U
+  · rw [if_neg (hw1 i hi)]
+    refine le_antisymm (Fcard.le _) ?_
+    rw [show ((KMonoid.sumOf (κ := ℵ₀) hidx (fun k => alephPart (q k) i) : Fcard ℵ₀)
+        : Cardinal.{u}) = Cardinal.sum fun k => ((alephPart (q k) i : Fcard ℵ₀) : Cardinal.{u})
+      from rfl]
+    refine le_trans (le_of_eq ?_) (Cardinal.le_sum _ (kf i))
+    rw [val_alephPart, if_neg (hkf i hi)]
+  · rw [if_pos (hw2 i hi),
+      show (fun k => alephPart (q k) i) = fun _ => (0 : Fcard ℵ₀) from
+        funext fun k => Fcard.ext (by
+          rw [val_alephPart, if_pos (hout i hi k), Fcard.instKMonoid_zero]),
+      KMonoid.sumOf_zero, Fcard.instKMonoid_zero]
+
 /-- `H + ℵ₀H` is an `ℵ₀`-submonoid of `F_{ℵ₀}^n`.
 
 The point is closure under countable sums: a countable sum of elements `h_k + ℵ₀h'_k` has, in
@@ -975,7 +1224,24 @@ theorem LinSystem.isKSubmonoid_alephExt :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     KMonoid.IsKSubmonoid ℵ₀ sys.alephExt := by
-  sorry
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  classical
+  have hap0 : alephPart (0 : Fin n → Fcard ℵ₀) = 0 := funext fun _ => alephOne_isAdd.1
+  refine ⟨⟨0, sys.addSubmonoid_finSolutions.1, 0, sys.addSubmonoid_finSolutions.1, ?_⟩,
+    fun z hz => ?_⟩
+  · rw [hap0, add_zero]
+  · choose p hp q hq hzk using hz
+    have hsplit : KMonoid.ksum (κ := ℵ₀) z
+        = KMonoid.ksum (κ := ℵ₀) p + KMonoid.ksum (κ := ℵ₀) fun k => alephPart (q k) := by
+      rw [← KMonoid.sumOf_Idx z, ← KMonoid.sumOf_Idx p,
+        ← KMonoid.sumOf_Idx (fun k => alephPart (q k)), ← KMonoid.sumOf_add]
+      exact congrArg _ (funext hzk)
+    obtain ⟨h, hhH, h', hh'H, hph⟩ := sys.ksum_mem_alephExt p hp
+    obtain ⟨w, hwH, hqw⟩ := sys.exists_alephPart_ksum q hq
+    refine ⟨h, hhH, h' + w, sys.addSubmonoid_finSolutions.2 _ hh'H _ hwH, ?_⟩
+    rw [hsplit, hph, hqw, alephPart_add]
+    exact add_assoc _ _ _
 
 /-- Every element of `H + ℵ₀H` is a solution of the system: the easy inclusion.  Both summands
 are solutions — the second because `alephPart` is additive — and the solutions form a
