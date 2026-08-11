@@ -450,6 +450,34 @@ noncomputable def instKMonoid {κ : Cardinal.{u}} (hM : IsConical M) (hκ : ℵ�
     KMonoid.ksum (κ := κ) x = sigma x :=
   KMonoid.ofKsum_ksum _ _ _
 
+/-- The inclusion `M → M ⊎ {∞}` preserves finite multiples. -/
+theorem coe_nsmul (n : ℕ) (a : M) : ((n • a : M) : WithTop M) = n • ((a : M) : WithTop M) := by
+  induction n with
+  | zero => rw [zero_nsmul, zero_nsmul, WithTop.coe_zero]
+  | succ p hp => rw [succ_nsmul, succ_nsmul, ← hp, WithTop.coe_add]
+
+/-- In the trivial `κ`-extension, `κ` copies of a *nonzero* element sum to `∞`: the constant family
+has infinite support. -/
+theorem cmul_top_eq_top {κ : Cardinal.{u}} (hM : IsConical M) (hκ : ℵ₀ ≤ κ) {x : WithTop M}
+    (hx : x ≠ 0) :
+    letI := instKMonoid hM hκ
+    KMonoid.cmul (κ := κ) κ le_rfl x = (⊤ : WithTop M) := by
+  letI := instKMonoid hM hκ
+  haveI := infinite_Idx hκ
+  have hconst : KMonoid.cmul (κ := κ) κ le_rfl x
+      = KMonoid.ksum (κ := κ) (fun _ : Idx κ => x) := by
+    rw [KMonoid.cmul_congr (mk_Idx κ).symm le_rfl (le_of_eq (mk_Idx κ)) x,
+      KMonoid.cmul_eq_sumOf (le_of_eq (mk_Idx κ)) x]
+    rfl
+  rw [hconst, instKMonoid_ksum hM hκ]
+  by_cases htop : x = ⊤
+  · exact sigma_eq_top_of_top (i₀ := (nonempty_Idx hκ).some) htop
+  · refine sigma_eq_top_of_infinite ?_
+    have hsupp : Function.support (fun _ : Idx κ => x) = Set.univ :=
+      Set.eq_univ_of_forall fun _ => hx
+    rw [hsupp]
+    exact Set.infinite_univ
+
 /-- The paper's remark that reducedness of `M` is *necessary*: a commutative monoid that embeds
 additively into any `κ`-monoid is reduced, so for non-reduced `M` there is no `κ`-monoid structure
 on `M ⊎ {∞}` extending the addition of `M`.  (The paper argues directly with an alternating family

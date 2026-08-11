@@ -905,6 +905,12 @@ theorem sumOf_subtype_support {ι : Type u} (h : #ι ≤ κ) (x : ι → H)
   conv_lhs => rw [hfun]
   exact sumOf_extend h' h e _
 
+/-- A sum over `α ⊕ β` splits as a binary sum. -/
+theorem sumOf_sumType {α β : Type u} (hα : #α ≤ κ) (hβ : #β ≤ κ) (hαβ : #(α ⊕ β) ≤ κ)
+    (f : α → H) (g : β → H) :
+    sumOf (κ := κ) hαβ (Sum.elim f g) = sumOf (κ := κ) hα f + sumOf (κ := κ) hβ g :=
+  LMonoid.lsumOf_sumType (lt_succ hα) (lt_succ hβ) (lt_succ hαβ) f g
+
 /-- The special case of `sumOf_sigma` for a partition of the index set into subsets. -/
 theorem sumOf_biUnion {ι J : Type u} (I : J → Set ι) (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
     (hcover : (⋃ p, I p) = Set.univ) (hJ : #J ≤ κ) (hι : #ι ≤ κ) (hI : ∀ p, #(I p) ≤ κ)
@@ -1081,6 +1087,28 @@ theorem cmul_add {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hα
     cmul (κ := κ) (α + β) hαβ x = cmul (κ := κ) α hα x + cmul (κ := κ) β hβ x :=
   LMonoid.lcmul_add (lam := Order.succ κ) (lt_succ_of_le hα) (lt_succ_of_le hβ)
     (lt_succ_of_le hαβ) x
+
+/-- `#ι` copies of `x` are the sum of the family constantly equal to `x`, indexed by `ι`. -/
+theorem cmul_eq_sumOf {ι : Type u} (hι : #ι ≤ κ) (x : H) :
+    cmul (κ := κ) #ι hι x = sumOf (κ := κ) hι (fun _ : ι => x) := by
+  obtain ⟨e⟩ := Cardinal.eq.mp (mk_Idx (#ι))
+  exact (sumOf_equiv hι (le_of_eq_of_le (mk_Idx (#ι)) hι) e (fun _ : ι => x)).symm
+
+/-- A family taking the value `x` on `S` and `0` off it sums to `#S · x`. -/
+theorem sumOf_indicator {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (x : H) (f : ι → H)
+    (hin : ∀ i ∈ S, f i = x) (hout : ∀ i ∉ S, f i = 0) :
+    sumOf (κ := κ) hι f = cmul (κ := κ) #S hS x := by
+  classical
+  have hfun : f = Function.extend (Function.Embedding.subtype (· ∈ S)) (fun _ : S => x) 0 := by
+    funext i
+    by_cases hi : i ∈ S
+    · have hval : (Function.Embedding.subtype (· ∈ S)) ⟨i, hi⟩ = i := rfl
+      rw [← hval, (Function.Embedding.subtype (· ∈ S)).injective.extend_apply]
+      exact hin i hi
+    · rw [Function.extend_apply' (fun _ : S => x) (0 : ι → H) i
+        (by rintro ⟨t, ht⟩; exact hi (ht ▸ t.2))]
+      exact hout i hi
+  rw [hfun, sumOf_extend hS hι _ (fun _ : S => x), cmul_eq_sumOf]
 
 /-- Cardinal scalar multiplication by a natural number is the `nsmul` of the additive monoid. -/
 theorem cmul_natCast (x : H) : ∀ n : ℕ,

@@ -77,6 +77,10 @@ theorem addOf_isLSubset (hκ : ℵ₀ ≤ κ) (x : H) : IsLSubset ℵ₀ hκ (ad
         (fun _ => le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ) (le_trans hlt.le hκ) x]
     exact cmul_congr hm _ hmκ x
 
+/-- `x ∈ add x`: take one copy of `x` and the summand `0`. -/
+theorem self_mem_addOf (x : H) : x ∈ addOf (κ := κ) x :=
+  ⟨0, 1, by rw [add_zero, cmul_natCast, one_nsmul]⟩
+
 /-- `add x` is divisor-closed: a summand of an element of `add x` is again in `add x`. -/
 theorem addOf_isSaturated (x : H) :
     ∀ a ∈ addOf (κ := κ) x, ∀ b c : H, a = b + c → b ∈ addOf (κ := κ) x := by
@@ -492,8 +496,7 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
   have hred : ∀ a b : ↥(KMonoid.addOf (κ := κ) x), a + b = 0 → a = 0 := fun a b hab =>
     (LMonoid.isConical_of_injective (fun y : ↥(KMonoid.addOf (κ := κ) x) => (y : H))
       Subtype.val_injective rfl hcoe a b hab).1
-  have hxmem : x ∈ KMonoid.addOf (κ := κ) x :=
-    ⟨0, 1, by rw [add_zero, KMonoid.cmul_natCast, one_nsmul]⟩
+  have hxmem : x ∈ KMonoid.addOf (κ := κ) x := KMonoid.self_mem_addOf x
   haveI : Nonempty ↥(KMonoid.addOf (κ := κ) x) := ⟨⟨x, hxmem⟩⟩
   have hnsmul : ∀ (m : ℕ) (u : ↥(KMonoid.addOf (κ := κ) x)),
       ((m • u : ↥(KMonoid.addOf (κ := κ) x)) : H) = m • (u : H) := by

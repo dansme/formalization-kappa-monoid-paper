@@ -2,14 +2,14 @@
 
 *Realization to hereditary rings for two-generated `ℵ₀`-monoids.*
 
-Companion to `KappaMonoid/Section5.lean`, which contains the `sorry`-ed statements — 30 of them,
-all type-checked. Work through the steps in the order given; each is independently checkable.
+Companion to `KappaMonoid/Section5.lean`. Work through the steps in the order given; each is
+independently checkable.
 
 ## Read this first
 
-**§5 is blocked on `SECTION4-PLAN.md` step 4.** Lemma 5.1 and both directions of Theorem 5.3 go
-through Corollary 4.7(1), which is still `sorry` in `KappaMonoid/Section4.lean` and depends on
-axiom A5. Nothing in §5 can be closed before that is.
+**The §4 blocker is gone.** Corollary 4.7(1) is proved (both directions, with axiom A5 for
+(i) ⇒ (ii)), so Lemma 5.1 and Theorem 5.3 have their input. Steps 1 and 6's counterexample are
+done; 17 `sorry`s remain.
 
 **§5 is the most expensive section per result.** Unlike §§2–4, its proofs are explicit
 combinatorial constructions — Lemma 5.2(3) writes down three interleaved partitions of `ℕ` by
@@ -26,7 +26,9 @@ of its own.
 - §5 fixes `κ = ℵ₀` throughout. `KMonoid ℵ₀ H` is `LMonoid ℵ₁ H` plus `ℵ₀ ≤ ℵ₀`; index types are
   countable, so `ℕ` is the canonical index and `Idx ℵ₀ ≃ ℕ` — but index by `Nats := ULift.{u} ℕ`,
   see step 1.
-- Trap 5 of `CLAUDE.md` (pin universes) is the reason for that `ULift`.
+- Trap 5 of `CLAUDE.md` (pin universes) is the reason for that `ULift`, and also for the section
+  variable being `[KMonoid (ℵ₀ : Cardinal.{u}) H]`: with `ℵ₀`'s universe auto-bound, two
+  occurrences of `eval` in one statement end up in *different* universes and cannot be combined.
 
 ## Step 1 — forms
 
@@ -50,18 +52,22 @@ noncomputable def eval (x₁ x₂ : H) (F : Form) : H := ecmul F.1 x₁ + ecmul 
 def Form.IsInfinite (F : Form) : Prop := F.1 = ⊤ ∨ F.2 = ⊤
 ```
 
-All of this is in the scaffold already, along with `familyOfForm`, `HasFiniteForm`,
-`HasInfiniteForm`, `NoMixedForms` and `BraidedForms`. Two encoding notes:
+All of this is in the scaffold already, along with `HasFiniteForm`, `HasInfiniteForm`,
+`NoMixedForms` and `BraidedForms`. `sumOf_familyOfForm` is **proved**, but the encoding had to be
+corrected first:
 
-- **The index type is `Nats := ULift.{u} ℕ`, not `ℕ`.** `BraidingData` indexes by a type in the
-  cardinal's universe, and `#ℕ : Cardinal.{0}` will not unify with `Cardinal.{u}`. Everything in
-  the section indexes by `Nats`.
-- `familyOfForm` puts the `α` copies of `x₁` first, the `β` copies of `x₂` next, and `0`
-  afterwards. Order is irrelevant to the sum (`lsumOf_comm`, Basic.lean), so this is a choice of
-  representative, not a loss.
+- **The index type is `FormIdx := Nats ⊕ Nats`**, one copy of `ℕ` for the `X₁` slots and one for the
+  `X₂` slots (`Nats := ULift.{u} ℕ`, because `BraidingData` indexes by a type in the cardinal's
+  universe). The scaffold instead listed the `α` copies of `x₁` and then the `β` copies of `x₂`
+  inside a single copy of `ℕ`, which is **wrong for `α = ℵ₀`**: no slot is left for `x₂`, and
+  `sumOf_familyOfForm` is then false — in `H = F_{ℵ₀}` with `x₁ = 0`, `x₂ = 1`, `F = (ℵ₀, 1)` the
+  family is identically `0` while the form evaluates to `1`. With two summands the sum splits by
+  `sumOf_sumType` and each slot still carries a single generator, as in the paper.
+- The sum of the `X₁`-slots is `#{n : ℕ | n < α}` copies of `x₁`, and `mk_slots` computes that
+  cardinal to be `α` (`ℵ₀` when `α = ℵ₀`). `sumOf_indicator` in `Basic.lean` turns a family that is
+  `x` on a set and `0` off it into `#S · x`.
 
-Only `sumOf_familyOfForm` is left open at this step: the family sums to the element its form
-represents. `BraidedForms` being an equivalence relation comes free from `braidingSetoid`.
+`BraidedForms` being an equivalence relation comes free from `braidingSetoid`.
 
 ## Step 2 — Lemma 5.1 (`l:twogen-braided`)
 
@@ -153,18 +159,17 @@ the trivial `ℵ₀`-extension of `ℕ₀²` with `x₁ = (1,0)`, `x₂ = (0,1)`
 already formalised as `TrivExt.instKMonoid` in `KappaMonoid/Examples.lean`, so the scaffold builds
 `H` outright and leaves only `cex_incomparable`, `cex_absorb` and `cex_unique_infinite` open.
 
-**Do these first.** They are the cheapest `sorry`s in the file and they exercise `addOf`, `ecmul`,
-`eval` and `Form.IsInfinite` end to end — a real check on the step 1 encoding before the expensive
-proofs are built on top of it.
+**Done** — and they paid for themselves: they are what exposed the encoding error in step 1.
+`isConical_natSq`, `cex_incomparable`, `cex_absorb` and `cex_unique_infinite` are proved, on
+`TrivExt.cmul_top_eq_top` (`ℵ₀` copies of a nonzero element of a trivial extension are `∞`) and
+`TrivExt.coe_nsmul`, both added to `Examples.lean`. What is left in step 6 is the three
+`corollary_5_5_*` statements themselves.
 
 ## Dependency order
 
 ```
-SECTION4-PLAN step 4 (Cor 4.7(1), axiom A5)
-        │
-        ▼
 step 1 (forms) ──> step 2 (Lem 5.1) ──> step 3 (Lem 5.2) ──> step 4 (Thm 5.3) ──> step 6 (Cor 5.5)
-                                                                                        ▲
+   done                                                                                 ▲
                                         step 5 (trace ideals, Prop 5.4) ────────────────┘
 ```
 
@@ -172,8 +177,13 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 
 ## Status
 
-30 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
+17 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
 stays green and `sorry`-free because the file is not imported by `KappaMonoid.lean`.
+
+Closed so far: `sumOf_familyOfForm` (step 1) and the whole counterexample block (step 6), with no
+axiom. New reusable infrastructure, in the core files: `KMonoid.cmul_eq_sumOf`,
+`KMonoid.sumOf_indicator`, `KMonoid.sumOf_sumType` (`Basic.lean`), `TrivExt.coe_nsmul`,
+`TrivExt.cmul_top_eq_top` (`Examples.lean`), `KMonoid.self_mem_addOf` (`Section4.lean`).
 
 ## One thing to fix in the paper
 
