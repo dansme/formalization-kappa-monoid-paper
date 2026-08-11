@@ -6,7 +6,7 @@ Sections 2–5 of the paper.
 
 Complete and `sorry`-free: `lake build` checks every definition and every theorem, including
 Theorem 3.11 (universal `κ`-extensions), Proposition 3.14 (universal extensions of Diophantine
-monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`) and all of §§2–3.
+monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`) and all of §§2–4.
 
 | File | Contents |
 |---|---|
@@ -24,7 +24,8 @@ monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`)
 | `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** and its converse (`isBraidedOver_of_isUniversalKExtension`: universal ⟹ braided over), transport of braidedness along isomorphisms |
 | `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1) and Examples 3.12 for `ℕ₀`, **Lemma 3.13**(1) and (2), **Proposition 3.14**(1) and (2) (universal extensions of Diophantine monoids), saturation for inequality-free systems, **Example 3.15**, and the counterexample showing that (2) does need the saturation hypothesis |
 | `KappaMonoid/Reals.lean` | §3: **Examples 3.3(2)(3)** and their entries of Examples 3.12 — braiding in `ℝ≥0` (same series sum, supports both finite or both infinite), why neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`, the `ℵ₀`-monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` and its universal property, that it is not braided over itself, and the `ℚ≥0` variant with its extension identified as `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` |
-| `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5–4.7 |
+| `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5, Kaplansky |
+| `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, `V(R) = add [R]`, **Corollary 4.7**(1) (both directions) and (2), **Examples 4.8(1)** (ascent of KRSA) |
 | `KappaMonoid/Axioms.lean` | The five classical results assumed rather than proved — see below |
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
@@ -41,22 +42,25 @@ inequalities; it *is* automatic without them, so the inequality-free case
 (`prop_3_14_two_of_ineqs_empty`) is the paper's statement verbatim. See "The hypothesis added to
 Proposition 3.14(2)" below.
 
-### Scaffolds
+**Section 4 is complete.** Definition 4.1 through Examples 4.8(1) are stated and proved. Corollary
+4.7(1) is an equivalence: (iii) ⇒ (i) is Corollary 4.5(3) moved along the identification
+`V(R) = add [R]` (`addOf_unitClass_eq`) and needs no axiom; (i) ⇒ (ii)
+(`corollary_4_7_one_forward`) is the only result in the build that uses Bergman–Dicks realisation,
+axiom A5 below. Corollary 4.7(2) needs no axiom either — Corollary 4.5(2) plus uniqueness of
+universal `κ`-extensions. Corollary 4.6 is Corollary 4.5(3) together with six results quoted from
+the literature, none of them monoid-theoretic and none in Mathlib, so it stays a documented stub in
+`Modules.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
+statement corrected in Examples 4.8(1)" below.
 
-Two further files carry the parts of §§4–5 that are not yet fully proved: every statement
-type-checks, and the proofs are filled in as far as they go. Neither is imported by
-`KappaMonoid.lean`, so `lake build` stays green and `sorry`-free; build them individually.
+### Scaffold
+
+One file carries the part of §5 that is not yet proved: every statement type-checks, and the proofs
+are filled in as far as they go. It is not imported by `KappaMonoid.lean`, so `lake build` stays
+green and `sorry`-free; build it individually with `lake build KappaMonoid.Section5`.
 
 | File | Contents | Plan |
 |---|---|---|
-| `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, **Cor. 4.7(2)** and the braided-implies-isomorphic lemma behind it, **Cor. 4.7(1)** in both directions, and Example 4.8(1) (KRSA ascent) | `SECTION4-PLAN.md` |
 | `KappaMonoid/Section5.lean` | §5: forms `α X₁ + β X₂` over `ℕ∞`, Lemmas 5.1–5.2, **Thm. 5.3** (which two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring), trace ideals and Prop. 5.4, Cor. 5.5 and its `ℕ₀² ∪ {∞}` counterexample | `SECTION5-PLAN.md` |
-
-Corollary 4.7(2) is the notable one: it is reachable with what is already proved — Corollary
-4.5(2) plus uniqueness of universal `κ`-extensions — and needs no axiom at all. Corollary 4.7(1)
-rests on Bergman–Dicks realisation, assumed as axiom A5 below. Corollary 4.6 is Corollary 4.5(3)
-together with six results quoted from the literature, none of them monoid-theoretic and none in
-Mathlib, so it stays a documented stub in `Modules.lean`.
 
 ## Conventions
 
@@ -76,7 +80,7 @@ standard proof sketch it stands for:
 | `leavittData` (A2) | Leavitt's realisation of the cyclic monoids `C_{m,n}` | `prop_2_16` |
 | `cyclicMonoidClassification` (A4) | every cyclic monoid is `ℕ₀` or `C_{m,n}` | `prop_2_16` |
 | `mk_multiplicity_eq` (A3) | uniqueness of the multiplicities of simple modules, infinite multiplicities included | `prop_2_17_one` |
-| `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` (scaffold) |
+| `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` |
 
 A1 is stated in the *generation* form rather than the two-bases form because the complement
 appearing in Example 2.13 is merely projective, not free, so there is no second basis to compare
@@ -90,9 +94,10 @@ Theorems 3.11 and 4.3, Proposition 2.9, Lemmas 2.14 and 2.15, and even
 `Projective.isOrderUnit_unitClass` — depends only on `propext`, `Classical.choice` and
 `Quot.sound`.**
 
-A5 is used by nothing in the `lake build` target: it exists for Corollary 4.7(1), which currently
-lives in the `Section4.lean` scaffold. When that corollary is proved and promoted to
-`Modules.lean`, it will be the only result in the build reporting `bergmanDicksData`.
+A5 is used by exactly one result: `corollary_4_7_one_forward`, the implication (i) ⇒ (ii) of
+Corollary 4.7(1). Everything else in §4 — including the identification `V(R) = add [R]`
+(`addOf_unitClass_eq`), the other direction of Corollary 4.7(1), Corollary 4.7(2) and Examples
+4.8(1) — reports only `propext`, `Classical.choice` and `Quot.sound`.
 
 ## The hypothesis added to Theorem 3.11
 
@@ -147,6 +152,26 @@ costs nothing: `isSaturatedFin_of_ineqs_empty` proves it (all values in a finite
 finite, so every linear form has a natural-number shadow and the cancellation happens in `ℕ₀`),
 and `prop_3_14_two_of_ineqs_empty` is Proposition 3.14(2) for such a system with no hypothesis
 beyond `sys.ineqs = ∅`. So the correction to the paper is confined to inequalities.
+
+## The statement corrected in Examples 4.8(1)
+
+Examples 4.8(1) concludes `V^κ(C) ≅ F_κ(B)`: if every module in `C` is a direct sum of `λ⁻`-small
+ones and `V^{λ⁻}(C_{λ⁻})` is free on `B`, then `V^κ(C)` is the free `κ`-monoid on `B`. That
+*isomorphism* is not expressible here. `F_κ(B)` is cut out of `B → F_κ`, so it lives in
+`Type (u+1)`, while `V^κ(C)` lives in `Type u`; and the `universal` field of
+`IsUniversalKExtension` quantifies over test objects in the *same* universe as the extension, so
+`isUniversalKExtension_unique` compares two extensions in one universe only (trap 8 of
+`CLAUDE.md`).
+
+What is proved instead is the universe-correct content of the example, in two steps:
+`krsa_ascent` — `V^κ(C)` *is* the universal `κ`-extension of `F_{λ⁻}(B)`, by transporting Theorem
+4.3's braiding along the isomorphism of bases — and `krsa_ascent_free`, which turns that into the
+`B`-indexed universal property of the free `κ`-monoid: every map `B → K` into a `κ`-monoid extends
+uniquely along the generators. That is what "`V^κ(C)` is the free `κ`-monoid on `B`" says, and its
+`λ⁻`-level input, `Free.exists_unique_lift`, has a free target universe. Two ways to recover the
+isomorphism itself, should it ever be wanted: make `universal` quantify over a test object in a
+fresh universe (`extend_lhom` already works in that generality, so this changes the definition and
+Theorem 3.11's statement but not its proof), or compare `ULift`s.
 
 ## Encoding decisions
 

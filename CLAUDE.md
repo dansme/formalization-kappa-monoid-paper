@@ -5,13 +5,13 @@ decompositions of modules*. The paper is in the repo: `kappa_monoids.tex` (sourc
 statements) and `kappa_monoids.pdf`.
 
 `README.md` is the status and provenance document. `SECTION{3,4,5}-PLAN.md` are the work plans;
-§§2–3 are done, §§4–5 are scaffolded.
+§§2–4 are done, §5 is scaffolded.
 
 ## Build
 
 ```fish
 lake build                          # root target: must stay green and sorry-free
-lake build KappaMonoid.Section4     # the scaffolds are NOT imported by KappaMonoid.lean
+lake build KappaMonoid.Section5     # the scaffold is NOT imported by KappaMonoid.lean
 lake exe cache get                  # after any manifest bump, before lake build
 ```
 
@@ -121,7 +121,16 @@ re-deriving them.
     `Cardinal.sum_lt_of_isRegular` gives `< λ` for a `< λ`-indexed union of `< λ` sets — this works
     uniformly at `λ = ℵ₀`, where a bound like `#Bad * ℵ₀` does not. For plain finiteness,
     `Set.Finite.biUnion`.
-12. **`tsum` is cross-universe friendly**: `Equiv.tsum_eq` and the `ENNReal.tsum_*` lemmas accept
+12. **A term whose type unfolds to a `∀` has its implicits inserted eagerly.** `IsLambdaSmall`
+    unfolds to `∀ {ι}, …`, so `exact h` against the goal `a ∈ C.lambdaSmallPart lam` applies `h` to a
+    fresh `?ι` and then fails by one binder. `show IsLambdaSmall R lam (C.rep a)` first, then
+    `exact`. Same shape as trap 7, and it also explains why `IsLambdaSmall.of_prod_left`/`of_equiv`
+    need their `M`, `M'` given by name in that position.
+13. **`IsLSubset` is a `Prop`**, so two proofs that the same subset is `λ⁻`-closed give
+    *definitionally equal* `IsLSubset.lmonoid` instances. That is what makes
+    `IsBraidedOver.of_set_eq` a one-line `subst`, and it is the cheap way to move a braiding along an
+    equality of subsets — no `of_base_iso` needed.
+14. **`tsum` is cross-universe friendly**: `Equiv.tsum_eq` and the `ENNReal.tsum_*` lemmas accept
     index types in different universes, which is what lets an `ℕ`-indexed construction be
     transported to `ι : Type u`.
 
@@ -137,7 +146,7 @@ re-deriving them.
 | `Section32.lean` | §3.2: Lemma 3.13, Prop. 3.14, Example 3.15 |
 | `Reals.lean` | Examples 3.3(2)(3): braiding in `ℝ≥0`, the monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, the `ℚ≥0` variant |
 | `Modules.lean` | §4 |
-| `Section4.lean` | §4 scaffold, not imported: Corollary 4.7(1) is what is left |
+| `Section4.lean` | §4: `add x`/`add_λ x`, `V(R) = add [R]`, Corollary 4.7, Examples 4.8(1) |
 | `Section5.lean` | §5 scaffold, not imported |
 
 Before writing a new construction, check whether the analogous one exists: the `ℕ₀` and `ℝ≥0`

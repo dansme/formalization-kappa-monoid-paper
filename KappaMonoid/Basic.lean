@@ -1082,6 +1082,21 @@ theorem cmul_add {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hα
   LMonoid.lcmul_add (lam := Order.succ κ) (lt_succ_of_le hα) (lt_succ_of_le hβ)
     (lt_succ_of_le hαβ) x
 
+/-- Cardinal scalar multiplication by a natural number is the `nsmul` of the additive monoid. -/
+theorem cmul_natCast (x : H) : ∀ n : ℕ,
+    cmul (κ := κ) (n : Cardinal.{u}) (le_trans (le_of_lt Cardinal.natCast_lt_aleph0)
+      (aleph0_le (κ := κ) (H := H))) x = n • x
+  | 0 => by
+      rw [cmul_congr (by rw [Nat.cast_zero] : ((0 : ℕ) : Cardinal.{u}) = 0) _ zero_le,
+        cmul_zero_cardinal, zero_smul]
+  | (n + 1) => by
+      have h1 : ((n + 1 : ℕ) : Cardinal.{u}) = (n : Cardinal.{u}) + 1 := by push_cast; ring
+      rw [cmul_congr h1 _ (le_trans (le_of_eq h1.symm) (le_trans
+        (le_of_lt Cardinal.natCast_lt_aleph0) (aleph0_le (κ := κ) (H := H)))),
+        cmul_add (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) (aleph0_le (κ := κ) (H := H)))
+          (le_trans (le_of_lt Cardinal.one_lt_aleph0) (aleph0_le (κ := κ) (H := H))),
+        cmul_natCast x n, cmul_one, succ_nsmul]
+
 /-! ### Reducedness (Lemma 2.8) -/
 
 /-- `κ`-many copies of `0` sum to `0`. -/

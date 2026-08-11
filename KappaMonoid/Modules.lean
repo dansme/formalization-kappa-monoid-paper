@@ -2108,11 +2108,15 @@ commutative, Bézout with Krull dimension).  These are quoted results from the l
 are not formalised here. -/
 theorem corollary_4_6 : True := trivial
 
-/-- **Corollary 4.7(1)**: for a `κ`-monoid `H` the following are equivalent: (a) `H` is
-braided over `add x` for some `x ∈ H`; (b) for every field `k` there is a hereditary
-`k`-algebra `R` with `V^κ(R) ≅ H`; (c) there is a right hereditary ring `R` with
-`V^κ(R) ≅ H`.  The implication (a) ⇒ (b) rests on the Bergman–Dicks realisation theorem,
-which is not formalised here. -/
+/-- **Corollary 4.7(1)**: for a `κ`-monoid `H` the following are equivalent: (i) `H` is
+braided over `add x` for some `x ∈ H`; (ii) for every field `k` there is a hereditary
+`k`-algebra `R` with `V^κ(R) ≅ H`; (iii) there is a right hereditary ring `R` with
+`V^κ(R) ≅ H`.
+
+Both parts of the corollary are proved in `KappaMonoid/Section4.lean`, which needs `add x` and so
+comes after this file: `corollary_4_7_one_forward` is (i) ⇒ (ii) — the direction resting on
+Bergman–Dicks realisation, axiom A5 — `corollary_4_7_one_backward_braided` is (iii) ⇒ (i), and
+(ii) ⇒ (iii) is trivial.  Part (2) is `corollary_4_7_two`.  This stub only marks the place. -/
 theorem corollary_4_7 : True := trivial
 
 end Projective
