@@ -204,6 +204,20 @@ end RealBraid
 
 /-! ## Examples 3.3(2): the classification of braided families in `ℝ≥0` -/
 
+/-- On a finitely supported family the series sum is the finite sum. -/
+theorem coe_finsum_eq_esum {ι : Type u} {z : ι → ℝ≥0} (hz : (Function.support z).Finite) :
+    ((∑ᶠ i, z i : ℝ≥0) : ℝ≥0∞) = esum z := by
+  have hzc : (Function.support fun i => ((z i : ℝ≥0) : ℝ≥0∞)).Finite := by
+    refine Set.Finite.subset hz fun i hi => ?_
+    simpa using hi
+  rw [esum, tsum_eq_finsum (f := fun i => ((z i : ℝ≥0) : ℝ≥0∞)) hzc]
+  exact (ENNReal.ofNNRealHom : ℝ≥0 →+* ℝ≥0∞).toAddMonoidHom.map_finsum hz
+
+theorem esum_ne_top_of_finite_support {ι : Type u} {z : ι → ℝ≥0}
+    (hz : (Function.support z).Finite) : esum z ≠ ⊤ := by
+  rw [← coe_finsum_eq_esum hz]
+  exact ENNReal.coe_ne_top
+
 /-- Two finitely supported families in `ℝ≥0` with the same series sum are braided (Lemma 3.4(1)). -/
 theorem isBraided_nnreal_of_finite_support {ι : Type u} (x y : ι → ℝ≥0)
     (hx : (Function.support x).Finite) (hy : (Function.support y).Finite)
@@ -217,14 +231,7 @@ theorem isBraided_nnreal_of_finite_support {ι : Type u} (x y : ι → ℝ≥0)
   rw [LMonoid.lsumOf_eq_finsum hx' x, LMonoid.lsumOf_eq_finsum hy' y,
     finsum_mem_support, finsum_mem_support]
   -- the finite sums agree because their images in `ℝ≥0∞` are the two series sums
-  have key : ∀ z : ι → ℝ≥0, (Function.support z).Finite → ((∑ᶠ i, z i : ℝ≥0) : ℝ≥0∞) = esum z := by
-    intro z hz
-    have hzc : (Function.support fun i => ((z i : ℝ≥0) : ℝ≥0∞)).Finite := by
-      refine Set.Finite.subset hz fun i hi => ?_
-      simpa using hi
-    rw [esum, tsum_eq_finsum (f := fun i => ((z i : ℝ≥0) : ℝ≥0∞)) hzc]
-    exact (ENNReal.ofNNRealHom : ℝ≥0 →+* ℝ≥0∞).toAddMonoidHom.map_finsum hz
-  exact_mod_cast (key x hx).trans (hsum.trans (key y hy).symm)
+  exact_mod_cast (coe_finsum_eq_esum hx).trans (hsum.trans (coe_finsum_eq_esum hy).symm)
 
 /-- **Examples 3.3(2)**, the substantive half: two families in `ℝ≥0` with infinite support and the
 same series sum are `ℵ₀⁻`-braided, over an index type of cardinality at most `ℵ₀`.
@@ -781,6 +788,189 @@ theorem isConical :
     rw [← val_add a b, hab, val_zero]
   obtain ⟨h1, h2⟩ := add_eq_zero.mp hval
   exact ⟨eq_zero_of_val_eq_zero h1, eq_zero_of_val_eq_zero h2⟩
+
+/-! ### `H` is `ℵ₀⁻`-braided over `ℝ≥0` -/
+
+theorem support_ofReal_comp {ι : Type u} (x : ι → ℝ≥0) :
+    Function.support (fun i => ofReal (x i)) = Function.support x := by
+  ext i
+  simp only [Function.mem_support, ne_eq, ← val_eq_zero_iff, val_ofReal]
+  exact ⟨fun h hc => h (by rw [hc]; rfl), fun h hc => h (by exact_mod_cast hc)⟩
+
+theorem tsum_val_ofReal_comp {ι : Type u} (x : ι → ℝ≥0) :
+    (∑' i, (ofReal (x i)).val) = esum x := rfl
+
+theorem isPlain_ofReal_comp_iff {ι : Type u} (x : ι → ℝ≥0) :
+    IsPlain (fun i => ofReal (x i)) ↔ (Function.support x).Finite := by
+  rw [IsPlain, support_ofReal_comp]
+  exact ⟨fun h => h.2, fun h => ⟨fun _ => rfl, h⟩⟩
+
+/-- The `ℵ₀`-sum of a family from the plain copy: its value is the series sum, and it is tilded
+exactly when the family is not finitely supported (the total being finite). -/
+theorem sigma_ofReal_comp {ι : Type u} (x : ι → ℝ≥0) :
+    (sigma fun i => ofReal (x i)).val = esum x ∧
+      ((sigma fun i => ofReal (x i)).tilded = false ↔
+        (esum x = ⊤ ∨ (Function.support x).Finite)) := by
+  refine ⟨rfl, ?_⟩
+  rw [tilded_sigma_eq_false_iff, tsum_val_ofReal_comp, isPlain_ofReal_comp_iff]
+
+/-- A geometric family with prescribed series sum `a`. -/
+noncomputable def geomTo (a : ℝ≥0) (n : ℕ) : ℝ≥0 := (a * 2⁻¹) * (2⁻¹) ^ n
+
+theorem esum_geomTo (a : ℝ≥0) : esum (geomTo a) = (a : ℝ≥0∞) := by
+  have hcoe : ∀ n, ((geomTo a n : ℝ≥0) : ℝ≥0∞)
+      = ((a : ℝ≥0∞) * 2⁻¹) * (2⁻¹ : ℝ≥0∞) ^ n := by
+    intro n
+    rw [geomTo]
+    push_cast
+    norm_num
+  rw [esum, tsum_congr hcoe, ENNReal.tsum_mul_left, ENNReal.tsum_geometric,
+    show ((1 : ℝ≥0∞) - 2⁻¹)⁻¹ = 2 by norm_num, mul_assoc,
+    show (2⁻¹ : ℝ≥0∞) * 2 = 1 from ENNReal.inv_mul_cancel (by norm_num) (by norm_num), mul_one]
+
+theorem infinite_support_geomTo {a : ℝ≥0} (ha : a ≠ 0) :
+    (Function.support (geomTo a)).Infinite := by
+  have hsupp : Function.support (geomTo a) = Set.univ := by
+    refine Set.eq_univ_of_forall fun n => ?_
+    simp only [Function.mem_support, geomTo, ne_eq, mul_eq_zero, not_or]
+    refine ⟨⟨ha, by norm_num⟩, ?_⟩
+    positivity
+  rw [hsupp]
+  exact Set.infinite_univ
+
+/-- **Examples 3.3(2)**: `H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` is `ℵ₀⁻`-braided over `ℝ≥0`, along the inclusion of
+the plain copy.
+
+The three generation cases are the paper's three kinds of element: a plain `a` is a one-term sum,
+a tilded `ã` is the sum of a geometric family with sum `a` — which has infinite support, hence gets
+the tilde — and `∞` is the sum of infinitely many `1`s.  Braidedness is the classification
+`isBraided_nnreal_iff`: equal `ℵ₀`-sums in `H` say exactly that the series sums agree *and* that
+the two families are simultaneously finitely supported. -/
+theorem isBraidedOver_rtilde :
+    letI := LMonoid.ofAddCommMonoid ℝ≥0
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+    IsBraidedOver (ℵ₀ : Cardinal.{u}) ℵ₀ ℝ≥0 RTilde le_rfl ofReal := by
+  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+  classical
+  -- a countable index type for the two infinite constructions
+  have hUL : #(ULift.{u} ℕ) = #(Idx (ℵ₀ : Cardinal.{u})) := by
+    rw [Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0, mk_Idx]
+  obtain ⟨e0⟩ := Cardinal.eq.mp hUL
+  set e : ℕ ≃ Idx (ℵ₀ : Cardinal.{u}) := Equiv.ulift.symm.trans e0 with hedef
+  refine ⟨⟨rfl, fun {ι} h x => ?_⟩, fun a b hab => ?_, fun h => ?_, fun x y hxy => ?_⟩
+  · -- the inclusion is an `ℵ₀⁻`-homomorphism
+    haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+    haveI : Fintype ι := Fintype.ofFinite ι
+    have hfin : (Function.support x).Finite := Set.toFinite _
+    have hgoal : ofReal (lsumOf (lam := (ℵ₀ : Cardinal.{u})) h x)
+        = sigma (fun i => ofReal (x i)) := by
+      refine ext ?_ ?_
+      · rw [val_ofReal, val_sigma, tsum_val_ofReal_comp, esum, tsum_fintype,
+          LMonoid.lsumOf_aleph0_eq_finsum h x]
+        push_cast
+        rfl
+      · rw [tilded_ofReal]
+        exact ((sigma_ofReal_comp x).2.mpr (Or.inr hfin)).symm
+    exact hgoal
+  · -- injectivity
+    have hv := congrArg val hab
+    rw [val_ofReal, val_ofReal] at hv
+    exact_mod_cast hv
+  · -- `ℝ≥0` generates `H`
+    by_cases htop : h.val = ⊤
+    · -- `∞` is the sum of infinitely many `1`s
+      refine ⟨fun _ => 1, ?_⟩
+      rw [eq_top_of_val_eq_top htop]
+      refine (sigma_of_val_eq_top ?_).symm
+      haveI : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
+      show (∑' _ : Idx (ℵ₀ : Cardinal.{u}), ((1 : ℝ≥0) : ℝ≥0∞)) = ⊤
+      simpa using ENNReal.tsum_const_eq_top_of_ne_zero (α := Idx (ℵ₀ : Cardinal.{u}))
+        (c := ((1 : ℝ≥0) : ℝ≥0∞)) (by simp)
+    · -- a finite value: one term if plain, a geometric family if tilded
+      set a : ℝ≥0 := h.val.toNNReal with hadef
+      have ha : ((a : ℝ≥0) : ℝ≥0∞) = h.val := ENNReal.coe_toNNReal htop
+      cases hfl : h.tilded with
+      | false =>
+          obtain ⟨i₀⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
+          refine ⟨fun i => if i = i₀ then a else 0, ?_⟩
+          have hks : (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{u}))
+              fun i => ofReal (if i = i₀ then a else 0)) = ofReal a := by
+            rw [KMonoid.ksum_single i₀ _ fun i hi => by rw [if_neg hi]; rfl, if_pos rfl]
+          have hval : ofReal a = h :=
+            ext (by rw [val_ofReal]; exact ha) (by rw [tilded_ofReal, hfl])
+          exact (hks.trans hval).symm
+      | true =>
+          have ha0 : a ≠ 0 := by
+            intro hc
+            refine val_ne_zero hfl ?_
+            rw [← ha, hc]
+            simp
+          refine ⟨fun i => geomTo a (e.symm i), ?_⟩
+          have hesum : esum (fun i => geomTo a (e.symm i)) = h.val := by
+            rw [show esum (fun i => geomTo a (e.symm i)) = esum (geomTo a) from
+              esum_comp_equiv e.symm (geomTo a), esum_geomTo, ha]
+          have hinf : ¬ (Function.support fun i => geomTo a (e.symm i)).Finite := by
+            intro hc
+            refine infinite_support_geomTo ha0 ?_
+            have himg : Function.support (fun i => geomTo a (e.symm i))
+                = e '' Function.support (geomTo a) := by
+              ext i
+              simp only [Function.mem_support, Set.mem_image]
+              constructor
+              · intro hne
+                exact ⟨e.symm i, hne, e.apply_symm_apply i⟩
+              · rintro ⟨n, hn, rfl⟩
+                simpa [e.symm_apply_apply] using hn
+            rw [himg] at hc
+            exact Set.Finite.of_finite_image hc e.injective.injOn
+          rw [show (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{u}))
+              fun i => ofReal (geomTo a (e.symm i)))
+            = sigma (fun i => ofReal (geomTo a (e.symm i))) from rfl]
+          refine (ext ?_ ?_).symm
+          · rw [val_sigma, tsum_val_ofReal_comp, hesum]
+          · rw [hfl]
+            cases hs : (sigma fun i => ofReal (geomTo a (e.symm i))).tilded with
+            | false =>
+                rcases (sigma_ofReal_comp _).2.mp hs with hc | hc
+                · rw [hesum] at hc
+                  exact absurd hc htop
+                · exact absurd hc hinf
+            | true => rfl
+  · -- families with equal `ℵ₀`-sums are braided
+    have hxy' : sigma (fun i => ofReal (x i)) = sigma (fun i => ofReal (y i)) := hxy
+    have hval : esum x = esum y := by
+      have hv := congrArg val hxy'
+      rw [val_sigma, val_sigma, tsum_val_ofReal_comp, tsum_val_ofReal_comp] at hv
+      exact hv
+    refine (isBraided_nnreal_iff (le_of_eq (mk_Idx _)) x y).mpr ⟨hval, ?_⟩
+    have hfl := congrArg tilded hxy'
+    by_cases htop : esum x = ⊤
+    · -- neither family can be finitely supported
+      exact ⟨fun hc => absurd htop (esum_ne_top_of_finite_support hc),
+        fun hc => absurd (hval ▸ htop : esum y = ⊤) (esum_ne_top_of_finite_support hc)⟩
+    · -- otherwise the flags read off finiteness of the supports
+      have hx := (sigma_ofReal_comp x).2
+      have hy := (sigma_ofReal_comp y).2
+      constructor
+      · intro hc
+        rcases hy.mp (hfl ▸ hx.mpr (Or.inr hc)) with hcc | hcc
+        · exact absurd (hval.trans hcc) htop
+        · exact hcc
+      · intro hc
+        rcases hx.mp (hfl.symm ▸ hy.mpr (Or.inr hc)) with hcc | hcc
+        · exact absurd hcc htop
+        · exact hcc
+
+/-- **Examples 3.12** for `ℝ≥0`: by Theorem 3.11(2) the universal `ℵ₀`-extension of `ℝ≥0` is
+`ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`. -/
+theorem isUniversalKExtension_rtilde :
+    letI := LMonoid.ofAddCommMonoid ℝ≥0
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+    IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ℝ≥0 RTilde le_rfl ofReal := by
+  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+  exact isBraidedOver_rtilde.isUniversalKExtension le_rfl
 
 end RTilde
 
