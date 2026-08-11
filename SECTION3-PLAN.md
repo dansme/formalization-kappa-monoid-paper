@@ -43,6 +43,7 @@ scoped separately.
 | Prop. 3.14(2) | `isBraidedOver_pi_lcard`, `alephPart_eq_ksum`, `prop_3_14_two` (with an added hypothesis, see below) |
 | Saturation for systems of equations and congruences | `linEvalNat`, `val_linEval_eq_linEvalNat`, `isSaturatedFin_of_ineqs_empty`, `prop_3_14_two_of_ineqs_empty` |
 | The counterexample to Prop. 3.14(2) as printed | `ineqSystem`, `not_isSaturatedFin_ineqSystem` |
+| Example 3.15 | `diagSystem`, `doubleSystem`, `mem_diagSystem_solutions`, `mem_doubleSystem_solutions`, `finSolutions_diagSystem`, `alephExt_congr`, `example_3_15` |
 
 And, in `Universal.lean`:
 
@@ -54,9 +55,9 @@ And, in `Universal.lean`:
 
 ## What is missing
 
-1. **Example 3.15** — `example_3_15` is still the placeholder `True`.
-2. **Examples 3.3(2) and the `ℝ≥0`, `ℚ≥0` entries of Examples 3.12** — not started; see Step E.
-3. Optionally, the *braiding* half of the counterexample to Prop. 3.14(2) — only the failure of
+1. **Examples 3.3(2) and the `ℝ≥0`, `ℚ≥0` entries of Examples 3.12** — not started; see
+   "Examples 3.3(2)" below, the only remaining piece of §3.
+2. Optionally, the *braiding* half of the counterexample to Prop. 3.14(2) — only the failure of
    saturation is formalised (`not_isSaturatedFin_ineqSystem`); the braiding computation is in its
    docstring.
 
@@ -126,20 +127,12 @@ Proposition 3.14(2)" and `not_isSaturatedFin_ineqSystem`. `prop_3_14_two` takes 
 hypothesis `IsSaturatedFin`; for systems without inequalities `isSaturatedFin_of_ineqs_empty`
 discharges it, so `prop_3_14_two_of_ineqs_empty` needs nothing but `sys.ineqs = ∅`.
 
-## Step 1 — Example 3.15 and Remark 3.16
-
-Example 3.15 (`H = {(n,n)} ⊆ ℕ₀²`, whose universal `ℵ₀`-extension is *not* the solution set of
-the same equations over `F_{ℵ₀}`) is the sharpness witness for 3.14(1) and (2) being different
-statements. `example_3_15` is a placeholder `True`; state it properly now that `finSolutions` and
-`alephExt` are available and Prop. 3.14 is proved — for `H = {(n,n)}` the system `x₁ = x₂` has
-`H + ℵ₀H = {(n,n)} ∪ {(ℵ₀,ℵ₀)}`, whereas the system `2x₁ = x₁ + x₂` cuts out
-`{(n,n)} ∪ {(ℵ₀,n)} ∪ {(ℵ₀,ℵ₀)}` over `F_{ℵ₀}`, and the two solution sets over `F_{ℵ₀}` therefore
-differ although the systems have the same solutions over `ℕ₀²`.
+## Remark 3.16
 
 Remark 3.16 (saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids, citing
 the literature) is a pointer, not a theorem. Either skip it or record it in the README.
 
-## Step 2 — Examples 3.3(2): the `ℝ≥0` example
+## Examples 3.3(2): the `ℝ≥0` example
 
 Not scaffolded. Independent of everything above; nothing else depends on it.
 
@@ -171,5 +164,5 @@ Examples 3.12 complete, and expect a light edit of `RTilde` rather than new math
 
 ## Suggested order
 
-Step 1 is short and closes §3.2. Step 2 is independent of everything else and is the only remaining
-item that needs a new `κ`-monoid built from scratch.
+Only the `ℝ≥0` example is left; it is independent of everything else and the only remaining item
+that needs a new `κ`-monoid built from scratch.

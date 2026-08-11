@@ -22,7 +22,7 @@ monoids) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻}
 | `KappaMonoid/Semisimple.lean` | §2.3: multiplicities of semisimple modules and **Proposition 2.17**, `V^κ(R) ≅ F_κ^n` for semisimple `R`, and such rings exist for every `n` |
 | `KappaMonoid/Braiding.lean` | §3: `BraidingData`, `IsBraided`, Lemmas 3.2/3.4/3.6/3.7/3.8, `braidingSetoid`, `IsBraidedOver` (Def. 3.1(2)) |
 | `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** and its converse (`isBraidedOver_of_isUniversalKExtension`: universal ⟹ braided over), transport of braidedness along isomorphisms |
-| `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1) and Examples 3.12 for `ℕ₀`, **Lemma 3.13**(1) and (2), **Proposition 3.14**(1) and (2) (universal extensions of Diophantine monoids), saturation for inequality-free systems, and the counterexample showing that (2) does need the saturation hypothesis |
+| `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1) and Examples 3.12 for `ℕ₀`, **Lemma 3.13**(1) and (2), **Proposition 3.14**(1) and (2) (universal extensions of Diophantine monoids), saturation for inequality-free systems, **Example 3.15**, and the counterexample showing that (2) does need the saturation hypothesis |
 | `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5–4.7 |
 | `KappaMonoid/Axioms.lean` | The five classical results assumed rather than proved — see below |
 
@@ -30,8 +30,8 @@ monoids) and Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻}
 proved, `sorry`-free, subject only to the four §2 axioms below (A1–A4; A5 is used nowhere in the
 checked build).
 
-**Section 3 is complete** except for Examples 3.3(2)/3.12 over `ℝ≥0` and `ℚ≥0` (not started) and
-Example 3.15 (a placeholder); see `SECTION3-PLAN.md`. Proposition 3.14(2) carries one added
+**Section 3 is complete** except for Examples 3.3(2)/3.12 over `ℝ≥0` and `ℚ≥0` (not started); see
+`SECTION3-PLAN.md`. Proposition 3.14(2) carries one added
 hypothesis — the saturation of `H`, which the paper claims is automatic but is not for systems with
 inequalities; it *is* automatic without them, so the inequality-free case
 (`prop_3_14_two_of_ineqs_empty`) is the paper's statement verbatim. See "The hypothesis added to
