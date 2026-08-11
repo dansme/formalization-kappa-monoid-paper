@@ -605,6 +605,38 @@ be read over `F_κ` for any `κ`, which is what makes Proposition 3.14 expressib
 
 section Diophantine
 
+/-! ### `κ`-sums, natural multiples and finite sums
+
+The two interchange laws needed to see that the solution set of a linear system is a
+`κ`-submonoid.  Both are formal consequences of the additivity of `Σ` (Lemma 2.7 is the analogous
+statement for *cardinal* multiples; here the multiplier is a natural number, so plain induction
+suffices). -/
+
+/-- A natural multiple commutes with `κ`-sums. -/
+theorem KMonoid.nsmul_sumOf {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {ι : Type u}
+    (h : #ι ≤ κ) (m : ℕ) (x : ι → H) :
+    m • KMonoid.sumOf (κ := κ) h x = KMonoid.sumOf (κ := κ) h fun i => m • x i := by
+  induction m with
+  | zero =>
+      rw [zero_nsmul, show (fun i => (0 : ℕ) • x i) = fun _ => (0 : H) from
+        funext fun i => zero_nsmul (x i), KMonoid.sumOf_zero]
+  | succ m ih =>
+      rw [succ_nsmul, ih, ← KMonoid.sumOf_add]
+      exact congrArg _ (funext fun i => (succ_nsmul (x i) m).symm)
+
+/-- A finite sum commutes with `κ`-sums. -/
+theorem KMonoid.finsetSum_sumOf {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {ι : Type u}
+    (h : #ι ≤ κ) {J : Type w} (s : Finset J) (f : J → ι → H) :
+    ∑ j ∈ s, KMonoid.sumOf (κ := κ) h (f j)
+      = KMonoid.sumOf (κ := κ) h fun i => ∑ j ∈ s, f j i := by
+  induction s using Finset.cons_induction with
+  | empty =>
+      rw [Finset.sum_empty, show (fun i => ∑ j ∈ (∅ : Finset J), f j i) = fun _ => (0 : H) from
+        funext fun i => Finset.sum_empty, KMonoid.sumOf_zero]
+  | cons j s hj ih =>
+      rw [Finset.sum_cons, ih, ← KMonoid.sumOf_add]
+      exact congrArg _ (funext fun i => (Finset.sum_cons (f := fun j => f j i) hj).symm)
+
 /-- A homogeneous linear system in `n` unknowns with natural coefficients: a set of equations, a
 set of inequalities, and a set of congruences. -/
 structure LinSystem (n : ℕ) where
@@ -630,23 +662,135 @@ noncomputable def LinSystem.solutions (hκ : ℵ₀ ≤ κ) : Set (Fin n → Fca
        (∀ p ∈ sys.ineqs, AddLe (linEval hκ p.1 x) (linEval hκ p.2 x)) ∧
        (∀ p ∈ sys.congrs, ∃ y : Fcard κ, linEval hκ p.1 x = (p.2) • y)}
 
+/-- A linear form vanishes at `0`. -/
+theorem linEval_zero (hκ : ℵ₀ ≤ κ) (a : Fin n → ℕ) :
+    letI := Fcard.instKMonoid hκ
+    linEval hκ a (0 : Fin n → Fcard κ) = 0 := by
+  letI := Fcard.instKMonoid hκ
+  show ∑ i, (a i) • (0 : Fin n → Fcard κ) i = 0
+  exact Finset.sum_eq_zero fun i _ => smul_zero _
+
+/-- `linEval` commutes with `κ`-sums: sums in `F_κ^n` are coordinatewise, and both a natural
+multiple and a finite sum commute with `Σ`. -/
+theorem linEval_sumOf (hκ : ℵ₀ ≤ κ) (a : Fin n → ℕ) {ι : Type u} (h : #ι ≤ κ)
+    (z : ι → (Fin n → Fcard κ)) :
+    letI := Fcard.instKMonoid hκ
+    letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+    linEval hκ a (KMonoid.sumOf (κ := κ) h z)
+      = KMonoid.sumOf (κ := κ) h fun k => linEval hκ a (z k) := by
+  letI := Fcard.instKMonoid hκ
+  letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+  calc linEval hκ a (KMonoid.sumOf (κ := κ) h z)
+      = ∑ i, KMonoid.sumOf (κ := κ) h (fun k => (a i) • z k i) := by
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [show (KMonoid.sumOf (κ := κ) h z) i = KMonoid.sumOf (κ := κ) h (fun k => z k i) from
+          KMonoid.pi_sumOf κ (fun _ : Fin n => Fcard κ) hκ h z i, KMonoid.nsmul_sumOf]
+    _ = KMonoid.sumOf (κ := κ) h fun k => linEval hκ a (z k) :=
+        KMonoid.finsetSum_sumOf h Finset.univ fun i k => (a i) • z k i
+
 /-- The solution set is a `κ`-submonoid of `F_κ^n`: each condition is preserved by `κ`-sums,
 because `Σ` commutes with the coefficientwise operations (Lemma 2.7). -/
 theorem LinSystem.isKSubmonoid_solutions (hκ : ℵ₀ ≤ κ) :
     letI := Fcard.instKMonoid hκ
     letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
     KMonoid.IsKSubmonoid κ (sys.solutions hκ) := by
-  sorry
+  letI := Fcard.instKMonoid hκ
+  letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+  have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
+  constructor
+  · -- `0` solves every condition
+    refine ⟨fun p _ => by rw [linEval_zero, linEval_zero], fun p _ => ?_,
+      fun p _ => ⟨0, by rw [linEval_zero, smul_zero]⟩⟩
+    rw [linEval_zero, linEval_zero]
+  · -- and each condition is closed under `κ`-sums
+    intro z hz
+    rw [← KMonoid.sumOf_Idx z]
+    refine ⟨fun p hp => ?_, fun p hp => ?_, fun p hp => ?_⟩
+    · rw [linEval_sumOf, linEval_sumOf]
+      exact congrArg _ (funext fun k => (hz k).1 p hp)
+    · choose c hc using fun k => (hz k).2.1 p hp
+      refine ⟨KMonoid.sumOf (κ := κ) hidx c, ?_⟩
+      rw [linEval_sumOf, linEval_sumOf, ← KMonoid.sumOf_add]
+      exact congrArg _ (funext fun k => hc k)
+    · choose y hy using fun k => (hz k).2.2 p hp
+      refine ⟨KMonoid.sumOf (κ := κ) hidx y, ?_⟩
+      rw [linEval_sumOf, KMonoid.nsmul_sumOf]
+      exact congrArg _ (funext fun k => hy k)
 
 /-- The inclusion `F_{ℵ₀} ↪ F_κ`. -/
 def fcardIncl (hκ : ℵ₀ ≤ κ) (a : Fcard ℵ₀) : Fcard κ :=
   Fcard.mk (a : Cardinal.{u}) (le_trans (Fcard.le a) hκ)
 
-/-- A solution over `F_{ℵ₀}` is a solution over `F_κ`. -/
+@[simp] theorem val_fcardIncl (hκ : ℵ₀ ≤ κ) (a : Fcard ℵ₀) :
+    ((fcardIncl hκ a : Fcard κ) : Cardinal.{u}) = (a : Cardinal.{u}) := rfl
+
+/-- `F_{ℵ₀} ↪ F_κ` is additive: on both sides addition is addition of cardinals. -/
+theorem fcardIncl_add (hκ : ℵ₀ ≤ κ) (a b : Fcard ℵ₀) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := Fcard.instKMonoid hκ
+    fcardIncl hκ (a + b) = fcardIncl hκ a + fcardIncl hκ b := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := Fcard.instKMonoid hκ
+  refine Fcard.ext ?_
+  rw [val_fcardIncl, Fcard.instKMonoid_add, Fcard.instKMonoid_add, val_fcardIncl, val_fcardIncl]
+
+theorem fcardIncl_zero (hκ : ℵ₀ ≤ κ) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := Fcard.instKMonoid hκ
+    fcardIncl hκ (0 : Fcard ℵ₀) = 0 := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := Fcard.instKMonoid hκ
+  refine Fcard.ext ?_
+  rw [val_fcardIncl, Fcard.instKMonoid_zero, Fcard.instKMonoid_zero]
+
+theorem fcardIncl_finsetSum (hκ : ℵ₀ ≤ κ) {J : Type w} (s : Finset J) (f : J → Fcard ℵ₀) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := Fcard.instKMonoid hκ
+    fcardIncl hκ (∑ j ∈ s, f j) = ∑ j ∈ s, fcardIncl hκ (f j) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := Fcard.instKMonoid hκ
+  induction s using Finset.cons_induction with
+  | empty => rw [Finset.sum_empty, Finset.sum_empty, fcardIncl_zero]
+  | cons j s hj ih => rw [Finset.sum_cons, Finset.sum_cons, fcardIncl_add, ih]
+
+theorem fcardIncl_nsmul (hκ : ℵ₀ ≤ κ) (m : ℕ) (a : Fcard ℵ₀) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := Fcard.instKMonoid hκ
+    fcardIncl hκ (m • a) = m • fcardIncl hκ a := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := Fcard.instKMonoid hκ
+  induction m with
+  | zero => rw [zero_nsmul, zero_nsmul, fcardIncl_zero]
+  | succ m ih => rw [succ_nsmul, succ_nsmul, fcardIncl_add, ih]
+
+/-- `F_{ℵ₀} ↪ F_κ` commutes with the linear forms. -/
+theorem fcardIncl_linEval (hκ : ℵ₀ ≤ κ) (a : Fin n → ℕ) (x : Fin n → Fcard ℵ₀) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := Fcard.instKMonoid hκ
+    fcardIncl hκ (linEval (le_refl ℵ₀) a x) = linEval hκ a (fun i => fcardIncl hκ (x i)) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := Fcard.instKMonoid hκ
+  show fcardIncl hκ (∑ i, (a i) • x i) = ∑ i, (a i) • fcardIncl hκ (x i)
+  rw [fcardIncl_finsetSum]
+  exact Finset.sum_congr rfl fun i _ => fcardIncl_nsmul hκ (a i) (x i)
+
+/-- A solution over `F_{ℵ₀}` is a solution over `F_κ`.  Note that this is not formal for the
+inequalities: `≼` is an existential, and its witness has to be transported — which it can be,
+`fcardIncl` being an additive map. -/
 theorem LinSystem.mem_solutions_of_incl (hκ : ℵ₀ ≤ κ) {x : Fin n → Fcard ℵ₀}
     (hx : x ∈ sys.solutions (le_refl ℵ₀)) :
     (fun i => fcardIncl hκ (x i)) ∈ sys.solutions hκ := by
-  sorry
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := Fcard.instKMonoid hκ
+  refine ⟨fun p hp => ?_, fun p hp => ?_, fun p hp => ?_⟩
+  · rw [← fcardIncl_linEval, ← fcardIncl_linEval]
+    exact congrArg _ (hx.1 p hp)
+  · obtain ⟨c, hc⟩ := hx.2.1 p hp
+    refine ⟨fcardIncl hκ c, ?_⟩
+    rw [← fcardIncl_linEval, ← fcardIncl_linEval, ← fcardIncl_add, hc]
+  · obtain ⟨y, hy⟩ := hx.2.2 p hp
+    refine ⟨fcardIncl hκ y, ?_⟩
+    rw [← fcardIncl_linEval, hy, fcardIncl_nsmul]
 
 /-- **Proposition 3.14(1)**: the universal `κ`-extension of the `ℵ₀`-monoid cut out of `F_{ℵ₀}^n`
 by a system is the `κ`-submonoid of `F_κ^n` cut out by the *same* system.
