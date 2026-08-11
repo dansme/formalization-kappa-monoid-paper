@@ -1744,6 +1744,113 @@ theorem isBraided_iff_of_ne_aleph0 (hlam : lam ≠ ℵ₀) (x y : ι → X) :
   · rintro ⟨I, J, hI, hJ, hIdisj, hJdisj, hIcov, hJcov, heq⟩
     exact IsBraided.of_partition I J hIdisj hJdisj hIcov hJcov hI hJ heq
 
+/-! ### The converse of Lemma 3.4(1): braidedness preserves smallness of support
+
+Reducedness makes a vanishing sum vanish termwise, and that turns the braiding equations into a
+bound on the support of one family in terms of the support of the other.  This is what makes
+"finite support" and "infinite support" incompatible under `ℵ₀⁻`-braiding, which the paper uses
+repeatedly in Examples 3.3. -/
+
+/-- In a reduced `λ⁻`-monoid a vanishing sum has vanishing terms: split off the term. -/
+theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < lam) (f : ι → X)
+    (h : lsumOf (lam := lam) hS (fun i : S => f i) = 0) {i : ι} (hi : i ∈ S) : f i = 0 := by
+  classical
+  have hset : ({i} : Set ι) ∪ (S \ {i}) = S := by
+    ext j
+    by_cases hj : j = i <;> simp [hj, hi]
+  have h1 : #({i} : Set ι) < lam :=
+    LMonoid.mk_lt_finite (X := X) _
+  have hT : #(↥(S \ {i})) < lam :=
+    lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset Set.diff_subset) hS
+  have hST : #(↥(({i} : Set ι) ∪ (S \ {i}))) < lam := by rw [hset]; exact hS
+  have hcollapse : lsumOf (lam := lam) hST (fun j : ↥(({i} : Set ι) ∪ (S \ {i})) => f j)
+      = lsumOf (lam := lam) hS (fun j : S => f j) :=
+    LMonoid.lsumOf_of_subset hST hS (le_of_eq hset.symm) f fun j hj hnj =>
+      absurd (hset ▸ hj) hnj
+  have hsplit := LMonoid.lsumOf_union ({i} : Set ι) (S \ {i})
+    (Set.disjoint_iff_inter_eq_empty.mpr (by simp)) h1 hT hST f
+  rw [hcollapse, h] at hsplit
+  haveI : Unique ({i} : Set ι) := ⟨⟨⟨i, rfl⟩⟩, fun j => Subtype.ext j.2⟩
+  have hdef : ((default : ({i} : Set ι)) : ι) = i := (default : ({i} : Set ι)).2
+  have hsingle : lsumOf (lam := lam) h1 (fun j : ({i} : Set ι) => f j) = f i := by
+    rw [LMonoid.lsumOf_unique h1 (fun j : ({i} : Set ι) => f j), hdef]
+  rw [hsingle] at hsplit
+  exact (hcon _ _ hsplit.symm).1
+
+/-- **The converse of Lemma 3.4(1)**: in a reduced `λ⁻`-monoid, if `x` and `y` are `λ⁻`-braided
+and the support of `x` has size `< λ`, then so does the support of `y`.
+
+Proof: call a piece `I p` *active* if it meets the support of `x`; there are fewer than `λ` of
+them, since the pieces are disjoint.  If a block `a` has no active piece from level `n` on, then
+`Σ_{I (a,m)} x = 0` for all `m ≥ n`, so reducedness forces `u (a,m) = v (a,m) = 0` there, whence
+`Σ_{J (a,n)} y = v (a,n+1) + u (a,n) = 0` and, again by reducedness, `y` vanishes on `J (a,n)`.
+So the support of `y` is contained in the union of the `J p` over those `p = (a,n)` that lie at or
+below an active level of their own block — fewer than `λ` many pieces, each of size `< λ`. -/
+theorem IsBraided.mk_support_lt (hcon : IsConical X) {x y : ι → X} (h : IsBraided lam x y)
+    (hx : #(Function.support x) < lam) : #(Function.support y) < lam := by
+  classical
+  obtain ⟨d⟩ := h
+  have hlam : lam.IsRegular := ‹LMonoid lam X›.isRegular
+  -- the pieces of the `x`-partition that meet the support of `x`
+  set Bad : Set (ι × ℕ) := {p | ∃ i ∈ d.I p, x i ≠ 0} with hBaddef
+  have hBad : #Bad < lam := by
+    have hinj : ∃ f : Bad → Function.support x, Function.Injective f := by
+      have hchoice : ∀ p : Bad, ∃ i : Function.support x, (i : ι) ∈ d.I p := by
+        rintro ⟨p, i, hiI, hix⟩
+        exact ⟨⟨i, hix⟩, hiI⟩
+      choose f hf using hchoice
+      refine ⟨f, fun p q hpq => ?_⟩
+      by_contra hne
+      have hd := Set.disjoint_left.mp (d.I_disjoint p q (fun hc => hne (Subtype.ext hc))) (hf p)
+      exact hd (hpq ▸ hf q)
+    obtain ⟨f, hf⟩ := hinj
+    exact lt_of_le_of_lt (Cardinal.mk_le_of_injective hf) hx
+  -- the pairs at or below an active level of their own block
+  set Low : Set (ι × ℕ) := {q | ∃ m, q.2 ≤ m ∧ (q.1, m) ∈ Bad} with hLowdef
+  have hLow : #Low < lam := by
+    have hsub : Low ⊆ ⋃ p : Bad, {q : ι × ℕ | q.1 = (p : ι × ℕ).1 ∧ q.2 ≤ (p : ι × ℕ).2} := by
+      rintro ⟨a, n⟩ ⟨m, hnm, hm⟩
+      exact Set.mem_iUnion.mpr ⟨⟨(a, m), hm⟩, rfl, hnm⟩
+    refine lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset hsub) ?_
+    refine lt_of_le_of_lt Cardinal.mk_iUnion_le_sum_mk
+      (Cardinal.sum_lt_of_isRegular hlam hBad fun p => ?_)
+    -- each such set is finite: it is a copy of an initial segment of `ℕ`
+    have hfin : {q : ι × ℕ | q.1 = (p : ι × ℕ).1 ∧ q.2 ≤ (p : ι × ℕ).2}.Finite := by
+      refine Set.Finite.subset ((Set.finite_singleton (p : ι × ℕ).1).prod
+        (Set.finite_Iic (p : ι × ℕ).2)) ?_
+      rintro ⟨a, n⟩ ⟨ha, hn⟩
+      exact ⟨ha, hn⟩
+    haveI := hfin.to_subtype
+    exact LMonoid.mk_lt_finite (X := X) _
+  -- outside `Low`, the `y`-pieces carry nothing
+  have hzero : ∀ p : ι × ℕ, p ∉ Low → ∀ j ∈ d.J p, y j = 0 := by
+    intro p hp j hj
+    have hIzero : ∀ m, p.2 ≤ m → lsumOf (lam := lam) (d.I_small (p.1, m))
+        (fun i : d.I (p.1, m) => x i) = 0 := by
+      intro m hm
+      refine LMonoid.lsumOf_eq_zero _ x fun i hi => ?_
+      by_contra hne
+      exact hp ⟨m, hm, i, hi, hne⟩
+    have huv : ∀ m, p.2 ≤ m → d.v (p.1, m) = 0 ∧ d.u (p.1, m) = 0 := by
+      intro m hm
+      have := (d.hI (p.1, m)).symm.trans (hIzero m hm)
+      exact hcon _ _ this
+    have hJsum : lsumOf (lam := lam) (d.J_small p) (fun j : d.J p => y j) = 0 := by
+      rw [d.hJ p]
+      show d.v (p.1, p.2 + 1) + d.u p = 0
+      rw [(huv (p.2 + 1) (Nat.le_succ p.2)).1, (huv p.2 le_rfl).2, add_zero]
+    exact eq_zero_of_lsumOf_eq_zero hcon (d.J_small p) y hJsum hj
+  -- hence the support of `y` sits inside the `Low` pieces
+  have hsupp : Function.support y ⊆ ⋃ p : Low, d.J (p : ι × ℕ) := by
+    intro j hj
+    obtain ⟨p, hp⟩ := Set.mem_iUnion.mp (d.J_cover ▸ Set.mem_univ j)
+    by_cases hpLow : p ∈ Low
+    · exact Set.mem_iUnion.mpr ⟨⟨p, hpLow⟩, hp⟩
+    · exact absurd (hzero p hpLow j hp) hj
+  refine lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset hsupp) ?_
+  exact lt_of_le_of_lt Cardinal.mk_iUnion_le_sum_mk
+    (Cardinal.sum_lt_of_isRegular hlam hLow fun p => d.J_small _)
+
 end Lemma34
 
 /-! ## Transitivity for uncountable `λ`
