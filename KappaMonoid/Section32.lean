@@ -376,14 +376,84 @@ theorem isBraided_nat_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀) (
       · simp only [hJdef, hfst, if_neg hp]
         simp)⟩
 
+/-! ### Packaging: `ℕ₀ ∪ {∞}` as an `ℵ₀`-monoid over `ℕ₀` -/
+
+/-- The inclusion `ℕ₀ ↪ ℕ₀ ∪ {∞}` does not change the support of a family. -/
+theorem support_coe_withTop_nat {ι : Type u} (x : ι → ℕ) :
+    Function.support (fun i => ((x i : ℕ) : WithTop ℕ)) = Function.support x := by
+  ext i
+  simp [Function.mem_support]
+
+/-- The summation of `ℕ₀ ∪ {∞}` on a finitely supported family from `ℕ₀` is its finite sum. -/
+theorem trivExt_sigma_coe_nat_of_finite {ι : Type u} {x : ι → ℕ}
+    (hx : (Function.support x).Finite) :
+    TrivExt.sigma (fun i => ((x i : ℕ) : WithTop ℕ)) = ((∑ᶠ i, x i : ℕ) : WithTop ℕ) := by
+  rw [TrivExt.sigma_of_good (x := fun i => ((x i : ℕ) : WithTop ℕ))
+    (by rw [support_coe_withTop_nat]; exact hx) fun _ => WithTop.coe_ne_top]
+  exact congrArg _ (finsum_congr fun i => rfl)
+
+/-- The summation of `ℕ₀ ∪ {∞}` on an infinitely supported family from `ℕ₀` is `∞`. -/
+theorem trivExt_sigma_coe_nat_of_infinite {ι : Type u} {x : ι → ℕ}
+    (hx : (Function.support x).Infinite) :
+    TrivExt.sigma (fun i => ((x i : ℕ) : WithTop ℕ)) = ⊤ :=
+  TrivExt.sigma_eq_top_of_infinite (by rw [support_coe_withTop_nat]; exact hx)
+
 /-- **Examples 3.3(1)**: the trivial `ℵ₀`-extension `ℕ₀ ∪ {∞}` is `ℵ₀⁻`-braided over `ℕ₀`, hence
 (by Theorem 3.11(2)) *is* the universal `ℵ₀`-extension of `ℕ₀`.  This is the first entry of
 Examples 3.12. -/
 theorem isBraidedOver_withTop_nat :
     letI := LMonoid.ofAddCommMonoid ℕ
-    letI := TrivExt.instKMonoid (M := ℕ) (fun a b h => by omega) le_rfl
-    IsBraidedOver ℵ₀ ℵ₀ ℕ (WithTop ℕ) le_rfl (fun a => (a : WithTop ℕ)) := by
-  sorry
+    letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+    IsBraidedOver (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) le_rfl (fun a => (a : WithTop ℕ)) := by
+  letI := LMonoid.ofAddCommMonoid ℕ
+  letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+  classical
+  have hksum : ∀ x : Idx (ℵ₀ : Cardinal.{u}) → WithTop ℕ,
+      KMonoid.ksum (κ := ℵ₀) x = TrivExt.sigma x :=
+    fun x => TrivExt.instKMonoid_ksum _ _ x
+  refine ⟨⟨rfl, fun {ι} h x => ?_⟩, fun a b hab => ?_, fun h => ?_, fun x y hxy => ?_⟩
+  · -- `↑` is an `ℵ₀⁻`-homomorphism: both sides are the finite sum of the `x i`
+    haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+    haveI : Fintype ι := Fintype.ofFinite ι
+    rw [LMonoid.lsumOf_aleph0_eq_finsum h x, KMonoid.sumOf_eq_sum]
+    simp
+  · exact_mod_cast hab
+  · -- `ℕ₀` generates `ℕ₀ ∪ {∞}`: a finite element is a one-term sum, `∞` is the sum of `1`s
+    rcases eq_or_ne h ⊤ with rfl | hne
+    · refine ⟨fun _ => 1, ?_⟩
+      haveI : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
+      rw [hksum, trivExt_sigma_coe_nat_of_infinite
+        (x := fun _ : Idx (ℵ₀ : Cardinal.{u}) => 1) ?_]
+      rw [show (Function.support fun _ : Idx (ℵ₀ : Cardinal.{u}) => 1) = Set.univ from
+        Set.eq_univ_of_forall fun _ => one_ne_zero]
+      exact Set.infinite_univ
+    · obtain ⟨a, rfl⟩ := WithTop.ne_top_iff_exists.mp hne
+      obtain ⟨i₀⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
+      refine ⟨fun i => if i = i₀ then a else 0, ?_⟩
+      rw [KMonoid.ksum_single i₀ _ fun i hi => by simp [hi]]
+      simp
+  · -- families with equal sum are braided: finite support on both sides, or infinite on both
+    rw [hksum, hksum] at hxy
+    have hidx : #(Idx (ℵ₀ : Cardinal.{u})) ≤ ℵ₀ := le_of_eq (mk_Idx _)
+    by_cases hfx : (Function.support x).Finite <;> by_cases hfy : (Function.support y).Finite
+    · rw [trivExt_sigma_coe_nat_of_finite hfx, trivExt_sigma_coe_nat_of_finite hfy] at hxy
+      exact isBraided_nat_of_finite_support x y hfx hfy (by exact_mod_cast hxy)
+    · rw [trivExt_sigma_coe_nat_of_finite hfx, trivExt_sigma_coe_nat_of_infinite hfy] at hxy
+      exact absurd hxy WithTop.coe_ne_top
+    · rw [trivExt_sigma_coe_nat_of_infinite hfx, trivExt_sigma_coe_nat_of_finite hfy] at hxy
+      exact absurd hxy.symm WithTop.coe_ne_top
+    · exact isBraided_nat_of_infinite_support hidx x y hfx hfy
+
+/-- **Examples 3.12**, first entry: `ℕ̂₀ = ℕ₀ ∪ {∞}`.  Combining `isBraidedOver_withTop_nat` with
+Theorem 3.11(2), the universal `ℵ₀`-extension of `ℕ₀` is its trivial `ℵ₀`-extension. -/
+theorem isUniversalKExtension_withTop_nat :
+    letI := LMonoid.ofAddCommMonoid ℕ
+    letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+    IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) le_rfl
+      (fun a => (a : WithTop ℕ)) := by
+  letI := LMonoid.ofAddCommMonoid ℕ
+  letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+  exact isBraidedOver_withTop_nat.isUniversalKExtension le_rfl
 
 /-! ## Lemma 3.13(1): free objects
 
