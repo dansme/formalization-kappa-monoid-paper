@@ -40,12 +40,17 @@ README's "The limit well-order" note. Leave them alone unless you specifically w
 well-order independence as a theorem, in which case it is a project of its own and should be
 scoped separately.
 
+In `Universal.lean`:
+
+| Paper | Where |
+|---|---|
+| Theorem 3.11 read as an equivalence (universal ⟹ braided over) | `IsBraidedOver.of_iso`, `isBraidedOver_of_isUniversalKExtension` |
+
 ## What is missing
 
-Exactly two `sorry`s remain in `Section32.lean`: `prop_3_14_one` and `prop_3_14_two`. Both are
-blocked on **one** missing ingredient, described in the next section. Beyond that, §3 is missing
-Examples 3.3(2) — the `ℝ≥0` and `ℚ≥0` entries of Examples 3.12 — which is independent of
-everything else and not scaffolded any more than sketched below.
+Exactly two `sorry`s remain in `Section32.lean`: `prop_3_14_one` and `prop_3_14_two`. Beyond
+that, §3 is missing Examples 3.3(2) — the `ℝ≥0` and `ℚ≥0` entries of Examples 3.12 — which is
+independent of everything else and not scaffolded any more than sketched below.
 
 ---
 
@@ -73,7 +78,7 @@ Same as the rest of the development:
 
 ---
 
-## Step A (the blocker) — "universal ⟹ braided", i.e. Theorem 3.11 as an equivalence
+## Step A (mostly done) — "universal ⟹ braided", i.e. Theorem 3.11 as an equivalence
 
 Both halves of Prop. 3.14 follow the paper by applying **Lemma 3.13(2)** (`lemma_3_13_sub`, now
 proved) to a *known ambient braided extension*:
@@ -81,34 +86,27 @@ proved) to a *known ambient braided extension*:
 * 3.14(1): `X = F_{ℵ₀}^n`, `Ĥ = F_κ^n`, `λ = ℵ₁`, `S =` the `ℵ₀`-solutions;
 * 3.14(2): `X = ℕ₀^n`, `Ĥ = F_{ℵ₀}^n`, `λ = ℵ₀`, `S = H`, which is saturated.
 
-`lemma_3_13_sub` takes `IsBraidedOver lam κ X Ĥ hlk f` as its hypothesis — but what
-`lemma_3_13_free` supplies for these `X ⊆ Ĥ` is `IsUniversalKExtension`, and the development has
-no way back:
+`lemma_3_13_sub` takes `IsBraidedOver lam κ X Ĥ hlk f` as its hypothesis, whereas what
+`lemma_3_13_free` supplies for these `X ⊆ Ĥ` is `IsUniversalKExtension`. The paper gets back with
+Theorem 3.11 plus uniqueness ("universal ⟹ braided", the remark after Def. 3.10 that the two
+notions are equivalent), and **that is now available**:
 
-* the paper gets it from Theorem 3.11 plus uniqueness ("universal ⟹ braided", the remark after
-  Def. 3.10 that the two notions are equivalent);
-* `theorem_3_11` is stated for `X : Type u`, with `lam κ : Cardinal.{u}`. But `Fcard κ` is
-  `Type (u+1)`, so `F_κ^n : Type (u+1)` and the theorem does not apply to it.
+* `UnivExt` and `theorem_3_11` were stated for `X : Type u`, which excluded
+  `F_κ^n : Type (u+1)`; the construction never needed the restriction (it only ever indexes by
+  `Idx κ : Type u`), so it is now stated for `X : Type v` with the extension in
+  `Type (max u v)`;
+* `IsBraidedOver.of_iso` transports braidedness along an isomorphism of the *extension* — a
+  bijective `κ`-homomorphism commuting with the structure maps, which is exactly what
+  `isUniversalKExtension_unique` hands you;
+* `isBraidedOver_of_isUniversalKExtension` combines the two.
 
-So the missing ingredient is:
-
-1. **Generalise the `UnivExt` construction to `X : Type v`.** In `Universal.lean`, the section
-   `Construction` opens with `variable (lam κ) (X : Type u)`; `UnivExt lam κ X` is
-   `Quotient (braidingSetoid lam κ X)` on `Idx κ → X`, which lives in `Type (max u v)` for
-   `X : Type v`. `braidingSetoid` is already stated for `X : Type v`, and every proof in the
-   section only ever indexes by `Idx κ : Type u`, so this should be a mechanical change of the
-   `variable` line plus the universe annotation on `UnivExt` and on `theorem_3_11`'s existential.
-2. **Transport lemmas.** `IsBraidedOver` along an isomorphism of the *extension*
-   (`e : H₁ ≃ H₂` a `κ`-homomorphism with `e ∘ f₁ = f₂` — this is what
-   `isUniversalKExtension_unique` hands you), and along an isomorphism of the *base*
-   (`g : X₁ ≃ X₂` a `λ⁻`-isomorphism; `BraidingData` transports by applying `g` to `u` and `v`).
-3. **`isBraidedOver_of_isUniversalKExtension`**: given `IsConical X` and a universal `κ`-extension
-   `H` of `X` in `Type (max u v)`, `H` is `λ⁻`-braided over `X` — Theorem 3.11 produces a braided
-   `Ĥ`, uniqueness gives `Ĥ ≅ H` over `X`, and (2) transports braidedness.
-
-This is worth doing for its own sake: it is the paper's stated equivalence between `λ⁻`-braided
-`κ`-overmonoids and universal `κ`-extensions, and it is the only thing standing between the
-existing §3.2 machinery and Prop. 3.14.
+What is still missing on this route is the transport along an isomorphism of the *base*
+(`g : X₁ ≃ X₂` a `λ⁻`-isomorphism; `BraidingData` transports by applying `g` to `u` and `v`),
+needed because `lemma_3_13_free` is about `F_{λ⁻}(B) ⊆ F_κ(B)`, whose carriers are *subtypes* of
+the products `B → LCard lam`, `B → Fcard κ`, whereas §3.2 works with the products themselves. For
+`B = Fin n` the two are isomorphic — the support condition is vacuous for finite `B` — and both
+isomorphisms are the subtype coercion, so this is a bijection whose compatibility with the sums is
+`rfl`-level.
 
 **Do not try to prove the two braidings by hand instead.** Both are genuinely `n`-component
 constructions:
@@ -121,15 +119,20 @@ constructions:
   has to consume all remaining nonzero entries in the components whose total is finite while
   growing the blocks in the others.
 
-Either is a project the size of Step 1 was, and the first is larger. Step A is cheaper and gives
-both.
+Either is a project the size of the `ℕ₀` braiding was, and the first is larger. The Step A route
+is cheaper and gives both.
 
-## Step B — Prop. 3.14(1) after Step A
+## Step B — Prop. 3.14(1)
 
-With `IsBraidedOver ℵ₁ κ (F_{ℵ₀}^n) (F_κ^n)` in hand:
+First assemble `IsBraidedOver ℵ₁ κ (F_{ℵ₀}^n) (F_κ^n)`: apply
+`isBraidedOver_of_isUniversalKExtension` to `lemma_3_13_free` at `lam = ℵ₁`, `B = Fin n`
+(reducedness is automatic for `λ > ℵ₀`, by `LMonoid.isConical`), then transport both sides from the
+`FreeL`/`FreeK` subtypes to the products as described in Step A. Then:
 
 1. `lemma_3_13_sub` (the `λ ≠ ℵ₀` branch) gives that `⟨H⟩_κ ⊆ F_κ^n` is the universal
-   `κ`-extension of `H`, for `H` the `ℵ₀`-solution set.
+   `κ`-extension of `H`, for `H` the `ℵ₀`-solution set. Its `IsLSubmonoid ℵ₁ H` hypothesis is
+   `isKSubmonoid_solutions`: a `KMonoid ℵ₀` structure *is* an `LMonoid ℵ₁` structure, with the
+   same sums.
 2. What remains is the paper's generation statement: `⟨H⟩_κ =` the `κ`-solution set. One
    inclusion is `mem_solutions_map`; the other is the decomposition
    `α = β + Σ_{ℵ₀ ≤ λ ≤ κ} λ γ^{(λ)}`. Only *finitely many* levels are needed: take
@@ -142,9 +145,15 @@ With `IsBraidedOver ℵ₁ κ (F_{ℵ₀}^n) (F_κ^n)` in hand:
 3. Finally transport `IsUniversalKExtension` from `↥⟨H⟩_κ` to `↥(solutions κ)` along the equality
    of the two sets.
 
-## Step C — Prop. 3.14(2) after Step A
+## Step C — Prop. 3.14(2)
 
-Same shape, and shorter, because everything else is done: `H = finSolutions` is saturated in
+The ambient braiding here is `IsBraidedOver ℵ₀ ℵ₀ (ℕ₀^n) (F_{ℵ₀}^n)`, again from
+`lemma_3_13_free` — at `lam = ℵ₀`, `κ = ℵ₀`, `B = Fin n`, where `F_{ℵ₀⁻}(Fin n) = ℕ₀^n` — plus
+`isBraidedOver_of_isUniversalKExtension`. Note that at `λ = ℵ₀` reducedness is *not* automatic and
+has to be supplied: `ℕ₀^n` is reduced.
+
+Then the same shape as Step B, and shorter, because everything else is done: `H = finSolutions` is
+saturated in
 `ℕ₀^n` (cancellativity — this still has to be proved, it is the paper's remark before
 Prop. 3.14), `alephExt = ⟨H⟩_{ℵ₀}` needs `isKSubmonoid_alephExt` (proved) for one inclusion and
 the paper's finite-`J` argument for the other — which is precisely the argument already carried
@@ -192,4 +201,5 @@ Examples 3.12 complete, and expect a light edit of `RTilde` rather than new math
 
 ## Suggested order
 
-Step A → Step B → Step C → Step D. Step E any time.
+Step A is done except for the base-side transport; do that, then Step B → Step C → Step D. Step E
+any time — it is independent of all of them.
