@@ -1701,13 +1701,128 @@ has its complement in `H`.
 
 The paper asserts this for every `H` cut out by equations, inequalities and congruences, citing
 cancellativity of `ℕ₀^n` (the remark before Prop. 3.14).  For equations and congruences that is
-right, but **it fails for inequalities**, and with it Proposition 3.14(2): see
-`not_saturated_of_ineq` below. -/
+right — `isSaturatedFin_of_ineqs_empty` — but **it fails for inequalities**, and with it
+Proposition 3.14(2): see `not_isSaturatedFin_ineqSystem` below. -/
 def LinSystem.IsSaturatedFin : Prop :=
   letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   ∀ s ∈ sys.finSolutions, ∀ t ∈ sys.finSolutions, ∀ h : Fin n → Fcard ℵ₀,
     (∀ i, ((h i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) → s = t + h → h ∈ sys.finSolutions
+
+/-! ### Systems without inequalities are saturated
+
+The paper's argument — cancel the `t`-part, using cancellativity of `ℕ₀^n` — does work for
+equations and congruences.  All the values in sight are finite, so every linear form has a
+natural-number shadow (`linEvalNat`), the hypothesis `s = t + h` becomes `A(s) = A(t) + A(h)` in
+`ℕ₀` for every form `A`, and there both cancellation and "`d ∣ A(s)` and `d ∣ A(t)` imply
+`d ∣ A(h)`" are available. -/
+
+/-- The value of a natural multiple. -/
+theorem val_nsmul (hκ : ℵ₀ ≤ κ) (d : ℕ) (y : Fcard κ) :
+    letI := Fcard.instKMonoid hκ
+    ((d • y : Fcard κ) : Cardinal.{u}) = (d : Cardinal.{u}) * (y : Cardinal.{u}) := by
+  letI := Fcard.instKMonoid hκ
+  rw [← fcardVal_apply hκ, map_nsmul, fcardVal_apply, nsmul_eq_mul]
+
+/-- The natural-number shadow of the linear form `a` on a family with finite components. -/
+noncomputable def linEvalNat {n : ℕ} (a : Fin n → ℕ) (x : Fin n → Fcard ℵ₀) : ℕ :=
+  ∑ i, a i * ((x i : Fcard ℵ₀) : Cardinal.{u}).toNat
+
+/-- On a family with finite components a linear form is its own natural-number shadow. -/
+theorem val_linEval_eq_linEvalNat (a : Fin n → ℕ) {x : Fin n → Fcard ℵ₀}
+    (hx : ∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) :
+    ((linEval (le_refl (ℵ₀ : Cardinal.{u})) a x : Fcard ℵ₀) : Cardinal.{u})
+      = (linEvalNat a x : Cardinal.{u}) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  show ((∑ i, (a i) • x i : Fcard ℵ₀) : Cardinal.{u}) = _
+  rw [← fcardVal_apply (le_refl (ℵ₀ : Cardinal.{u})), map_sum]
+  show (∑ i, ((a i • x i : Fcard ℵ₀) : Cardinal.{u})) = _
+  rw [linEvalNat, Nat.cast_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [val_nsmul, Nat.cast_mul, Cardinal.cast_toNat_of_lt_aleph0 (hx i)]
+
+/-- **The paper's saturation remark, in the case where it is true**: a system of equations and
+congruences — no inequalities — cuts out a saturated submonoid of `ℕ₀^n`, so Proposition 3.14(2)
+applies to it with no hypothesis beyond the system.
+
+Paper proof: cancel the `t`-part.  For an equation, `A(s) = B(s)` and `A(t) = B(t)` together with
+`A(s) = A(t) + A(h)` and `B(s) = B(t) + B(h)` give `A(h) = B(h)`; for a congruence, `d` divides
+both `A(s)` and `A(t)`, hence their difference `A(h)`.  Both steps happen in `ℕ₀`. -/
+theorem LinSystem.isSaturatedFin_of_ineqs_empty (hineq : sys.ineqs = ∅) :
+    LinSystem.IsSaturatedFin.{u} sys := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  intro s hs t ht z hz hsum
+  -- the shadow of `s = t + z`, for every linear form
+  have hshadow : ∀ a : Fin n → ℕ, linEvalNat a s = linEvalNat a t + linEvalNat a z := by
+    intro a
+    have hcomp : ∀ i, ((s i : Fcard ℵ₀) : Cardinal.{u}).toNat
+        = ((t i : Fcard ℵ₀) : Cardinal.{u}).toNat + ((z i : Fcard ℵ₀) : Cardinal.{u}).toNat := by
+      intro i
+      have h : ((s i : Fcard ℵ₀) : Cardinal.{u})
+          = ((t i : Fcard ℵ₀) : Cardinal.{u}) + ((z i : Fcard ℵ₀) : Cardinal.{u}) := by
+        rw [hsum]
+        exact Fcard.instKMonoid_add (le_refl (ℵ₀ : Cardinal.{u})) _ _
+      rw [h, Cardinal.toNat_add (ht.2 i) (hz i)]
+    rw [linEvalNat, linEvalNat, linEvalNat, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun i _ => by rw [hcomp i, Nat.mul_add]
+  -- a linear form of a solution with finite components has the shadow one expects
+  have hshadowEq : ∀ (a b : Fin n → ℕ) {x : Fin n → Fcard ℵ₀},
+      (∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) →
+      linEval (le_refl (ℵ₀ : Cardinal.{u})) a x = linEval (le_refl (ℵ₀ : Cardinal.{u})) b x →
+      linEvalNat a x = linEvalNat b x := by
+    intro a b x hx hab
+    have h := congrArg (fun c : Fcard ℵ₀ => (c : Cardinal.{u})) hab
+    rw [val_linEval_eq_linEvalNat a hx, val_linEval_eq_linEvalNat b hx] at h
+    exact_mod_cast h
+  -- divisibility of a shadow, read off a congruence
+  have hshadowDvd : ∀ (a : Fin n → ℕ) (d : ℕ) {x : Fin n → Fcard ℵ₀}
+      (hx : ∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) (y : Fcard ℵ₀),
+      linEval (le_refl (ℵ₀ : Cardinal.{u})) a x = d • y → d ∣ linEvalNat a x := by
+    intro a d x hx y hxy
+    have h := congrArg (fun c : Fcard ℵ₀ => (c : Cardinal.{u})) hxy
+    rw [val_linEval_eq_linEvalNat a hx, val_nsmul] at h
+    rcases Nat.eq_zero_or_pos d with hd | hd
+    · refine ⟨0, ?_⟩
+      rw [hd] at h ⊢
+      have : (linEvalNat a x : Cardinal.{u}) = 0 := by rw [h]; simp
+      simpa using (by exact_mod_cast this : linEvalNat a x = 0)
+    · -- `d ≥ 1`, so `y` too is finite and the equation descends to `ℕ₀`
+      have hdne : (d : Cardinal.{u}) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.ne_of_gt hd)
+      have hyfin : ((y : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀ := by
+        rcases Cardinal.mul_lt_aleph0_iff.mp
+          (h ▸ (Cardinal.natCast_lt_aleph0 : (linEvalNat a x : Cardinal.{u}) < ℵ₀)) with
+          hc | hc | hc
+        · exact absurd hc hdne
+        · rw [hc]; exact Cardinal.aleph0_pos
+        · exact hc.2
+      refine ⟨((y : Fcard ℵ₀) : Cardinal.{u}).toNat, ?_⟩
+      rw [← Cardinal.cast_toNat_of_lt_aleph0 hyfin, ← Nat.cast_mul] at h
+      exact_mod_cast h
+  -- assemble: `z` satisfies every equation and every congruence, and has finite components
+  refine ⟨⟨fun p hp => ?_, fun p hp => absurd hp (by rw [hineq]; exact Set.notMem_empty p),
+    fun p hp => ?_⟩, hz⟩
+  · -- an equation: cancel the `t`-part
+    have hsE := hshadowEq p.1 p.2 hs.2 (hs.1.1 p hp)
+    have htE := hshadowEq p.1 p.2 ht.2 (ht.1.1 p hp)
+    have h1 := hshadow p.1
+    have h2 := hshadow p.2
+    refine Fcard.ext ?_
+    rw [val_linEval_eq_linEvalNat p.1 hz, val_linEval_eq_linEvalNat p.2 hz]
+    exact congrArg _ (by omega)
+  · -- a congruence: `d` divides `A(s)` and `A(t)`, hence `A(z) = A(s) - A(t)`
+    obtain ⟨ys, hys⟩ := hs.1.2.2 p hp
+    obtain ⟨yt, hyt⟩ := ht.1.2.2 p hp
+    have hds := hshadowDvd p.1 p.2 hs.2 ys hys
+    have hdt := hshadowDvd p.1 p.2 ht.2 yt hyt
+    have h1 := hshadow p.1
+    have hdz : p.2 ∣ linEvalNat p.1 z := by
+      have hsub : linEvalNat p.1 z = linEvalNat p.1 s - linEvalNat p.1 t := by omega
+      rw [hsub]
+      exact Nat.dvd_sub hds hdt
+    obtain ⟨k, hk⟩ := hdz
+    refine ⟨Fcard.mk (k : Cardinal.{u}) Cardinal.natCast_lt_aleph0.le, Fcard.ext ?_⟩
+    rw [val_linEval_eq_linEvalNat p.1 hz, val_nsmul, Fcard.val_mk, hk, Nat.cast_mul]
 
 /-- **Proposition 3.14(2)**: for a monoid `H ⊆ ℕ₀^n` cut out by a homogeneous system, the
 universal `ℵ₀`-extension is `H + ℵ₀H ⊆ F_{ℵ₀}^n`.
@@ -1723,8 +1838,10 @@ witness.
 
 **Deviation from the paper.** The saturation of `H` is added as a hypothesis, because the paper's
 remark that it is automatic is false for systems involving inequalities — see
-`LinSystem.IsSaturatedFin` and `not_saturated_of_ineq`.  It *is* automatic for systems of equations
-and congruences, which is the case the paper's applications use. -/
+`LinSystem.IsSaturatedFin` and `not_isSaturatedFin_ineqSystem`.  It *is* automatic for systems of
+equations and congruences, the case the paper's applications use:
+`isSaturatedFin_of_ineqs_empty` supplies the hypothesis there, and
+`prop_3_14_two_of_ineqs_empty` is the resulting hypothesis-free statement. -/
 theorem prop_3_14_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
@@ -1817,6 +1934,22 @@ theorem prop_3_14_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     hg hg' (fun y => Subtype.ext (hdown y))
     (fun s => Subtype.ext (funext fun i => LCard.ext rfl))
   exact hbr.isUniversalKExtension (le_refl ℵ₀)
+
+/-- **Proposition 3.14(2) for a system of equations and congruences**, with no hypothesis beyond
+the system: such an `H` is saturated in `ℕ₀^n` by `isSaturatedFin_of_ineqs_empty`.  This is the
+form in which the paper's applications use it. -/
+theorem prop_3_14_two_of_ineqs_empty (hineq : sys.ineqs = ∅) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+    letI : AddCommMonoid ↥sys.finSolutions :=
+      addCommMonoidOfClosed sys.addSubmonoid_finSolutions.1
+        (fun a ha b hb => sys.addSubmonoid_finSolutions.2 a ha b hb)
+    letI := LMonoid.ofAddCommMonoid ↥sys.finSolutions
+    letI := sys.isKSubmonoid_alephExt.kmonoid
+    IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (le_refl ℵ₀)
+      (fun h => ⟨(h : Fin n → Fcard ℵ₀), ⟨(h : Fin n → Fcard ℵ₀), h.2, 0,
+        sys.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) :=
+  prop_3_14_two sys (sys.isSaturatedFin_of_ineqs_empty hineq)
 
 /-! ### The saturation hypothesis in Proposition 3.14(2) cannot be dropped
 
