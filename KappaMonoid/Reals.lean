@@ -12,6 +12,7 @@ recording that a sum was reached only with infinite support.
 -/
 import KappaMonoid.Braiding
 import KappaMonoid.Examples
+import KappaMonoid.Universal
 
 universe u v
 
@@ -19,6 +20,8 @@ open Cardinal Function Set
 open scoped ENNReal NNReal
 
 namespace KappaMonoid
+
+open KMonoid LMonoid
 
 /-! ## Series sums of families of nonnegative reals
 
@@ -356,5 +359,155 @@ theorem isBraided_nnreal_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀
         exact realBraidBJ_sum_eq hx3 hy3 hsum3 p.2
       · simp only [hJdef, hfst, if_neg hp]
         simp)⟩
+
+/-! ### Braided families have the same series sum
+
+Lemma 3.2 applied in the `ℵ₀`-monoid `ℝ≥0∞` of Examples 2.3(2): the inclusion `ℝ≥0 ↪ ℝ≥0∞` is an
+`ℵ₀⁻`-homomorphism, and it turns `ℵ₀`-sums into series sums. -/
+
+/-- The inclusion `ℝ≥0 ↪ ℝ≥0∞` is an `ℵ₀⁻`-homomorphism: a `λ⁻`-sum at `λ = ℵ₀` is a finite sum,
+which the inclusion preserves. -/
+theorem isLHom_coe_ennreal :
+    letI := LMonoid.ofAddCommMonoid ℝ≥0
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
+    IsLHom (le_refl (ℵ₀ : Cardinal.{u})) (fun a : ℝ≥0 => (a : ℝ≥0∞)) := by
+  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
+  refine ⟨rfl, fun {ι} h x => ?_⟩
+  haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+  haveI : Fintype ι := Fintype.ofFinite ι
+  rw [LMonoid.lsumOf_aleph0_eq_finsum h x, ENNRealExample.instKMonoid_sumOf h.le, tsum_fintype]
+  push_cast
+  rfl
+
+/-- The `ℵ₀`-sum of a family of nonnegative reals, computed in `ℝ≥0∞`, is its series sum. -/
+theorem sumOf_coe_eq_esum {ι : Type u} (hι : #ι ≤ (ℵ₀ : Cardinal.{u})) (x : ι → ℝ≥0) :
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
+    KMonoid.sumOf (κ := (ℵ₀ : Cardinal.{u})) hι (fun i => ((x i : ℝ≥0) : ℝ≥0∞)) = esum x := rfl
+
+/-- Braided families in `ℝ≥0` have the same series sum. -/
+theorem esum_eq_of_isBraided {ι : Type u} (hι : #ι ≤ (ℵ₀ : Cardinal.{u})) {x y : ι → ℝ≥0}
+    (h : letI := LMonoid.ofAddCommMonoid ℝ≥0
+      IsBraided (ℵ₀ : Cardinal.{u}) x y) : esum x = esum y := by
+  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
+  have hb := sumOf_map_eq_of_isBraided (le_refl (ℵ₀ : Cardinal.{u})) isLHom_coe_ennreal hι h
+  exact (sumOf_coe_eq_esum hι x).symm.trans (hb.trans (sumOf_coe_eq_esum hι y))
+
+/-- `ℝ≥0` is reduced. -/
+theorem isConical_nnreal : IsConical ℝ≥0 := fun _ _ h => add_eq_zero.mp h
+
+/-! ### Examples 3.3(2): the classification -/
+
+/-- **Examples 3.3(2)**: two families in `ℝ≥0`, over an index type of cardinality at most `ℵ₀`, are
+`ℵ₀⁻`-braided exactly when they have the same series sum and their supports are either both finite
+or both infinite.
+
+The support condition is forced: braidedness preserves smallness of support in a reduced monoid
+(`IsBraided.mk_support_lt`), and it is symmetric. -/
+theorem isBraided_nnreal_iff {ι : Type u} (hι : #ι ≤ (ℵ₀ : Cardinal.{u})) (x y : ι → ℝ≥0) :
+    letI := LMonoid.ofAddCommMonoid ℝ≥0
+    IsBraided (ℵ₀ : Cardinal.{u}) x y ↔
+      (esum x = esum y ∧ ((Function.support x).Finite ↔ (Function.support y).Finite)) := by
+  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  constructor
+  · intro h
+    refine ⟨esum_eq_of_isBraided hι h, ?_⟩
+    constructor
+    · intro hxfin
+      exact Cardinal.lt_aleph0_iff_set_finite.mp
+        (h.mk_support_lt isConical_nnreal (Cardinal.lt_aleph0_iff_set_finite.mpr hxfin))
+    · intro hyfin
+      exact Cardinal.lt_aleph0_iff_set_finite.mp
+        (h.symm.mk_support_lt isConical_nnreal (Cardinal.lt_aleph0_iff_set_finite.mpr hyfin))
+  · rintro ⟨hsum, hfin⟩
+    by_cases hx : (Function.support x).Finite
+    · exact isBraided_nnreal_of_finite_support x y hx (hfin.mp hx) hsum
+    · exact isBraided_nnreal_of_infinite_support hι x y hx (fun hc => hx (hfin.mpr hc)) hsum
+
+/-! ### Neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`
+
+A positive real is the sum of a finitely supported family and also of an infinitely supported one,
+and by the classification those two families are not braided.  For `ℝ≥0∞` they nevertheless have
+the same `ℵ₀`-sum, so `braided` fails; for the trivial extension the witness is instead a pair of
+infinitely supported families with different series sums, both of which sum to `∞`. -/
+
+/-- The geometric family `(2⁻¹)^n`: infinite support, series sum `2`. -/
+noncomputable def geom (n : ℕ) : ℝ≥0 := (2⁻¹ : ℝ≥0) ^ n
+
+theorem geom_ne_zero (n : ℕ) : geom n ≠ 0 := by
+  rw [geom]
+  positivity
+
+theorem support_geom : Function.support geom = Set.univ :=
+  Set.eq_univ_of_forall fun n => geom_ne_zero n
+
+theorem infinite_support_geom : (Function.support geom).Infinite := by
+  rw [support_geom]
+  exact Set.infinite_univ
+
+theorem esum_geom : esum geom = 2 := by
+  have hcoe : ∀ n, ((geom n : ℝ≥0) : ℝ≥0∞) = ((2⁻¹ : ℝ≥0∞)) ^ n := by
+    intro n
+    rw [geom]
+    push_cast
+    norm_num
+  rw [esum, tsum_congr hcoe, ENNReal.tsum_geometric]
+  norm_num
+
+/-- Twice the geometric family: infinite support, series sum `4`. -/
+theorem esum_two_geom : esum (fun n => 2 * geom n) = 4 := by
+  have hcoe : ∀ n, ((2 * geom n : ℝ≥0) : ℝ≥0∞) = 2 * ((geom n : ℝ≥0) : ℝ≥0∞) := by
+    intro n
+    push_cast
+    rfl
+  rw [esum, tsum_congr hcoe, ENNReal.tsum_mul_left]
+  rw [show ∑' n, ((geom n : ℝ≥0) : ℝ≥0∞) = 2 from esum_geom]
+  norm_num
+
+theorem infinite_support_two_geom : (Function.support fun n => 2 * geom n).Infinite := by
+  have hsupp : (Function.support fun n => 2 * geom n) = Set.univ :=
+    Set.eq_univ_of_forall fun n => by
+      simp only [Function.mem_support, ne_eq, mul_eq_zero, not_or]
+      exact ⟨two_ne_zero, geom_ne_zero n⟩
+  rw [hsupp]
+  exact Set.infinite_univ
+
+/-- The single-entry family with value `2`: finite support, series sum `2`. -/
+noncomputable def single2 (n : ℕ) : ℝ≥0 := if n = 0 then 2 else 0
+
+theorem finite_support_single2 : (Function.support single2).Finite := by
+  refine Set.Finite.subset (Set.finite_singleton 0) fun n hn => ?_
+  simp only [Set.mem_singleton_iff]
+  by_contra hne
+  exact hn (by simp [single2, hne])
+
+theorem esum_single2 : esum single2 = 2 := by
+  classical
+  rw [esum, tsum_eq_single 0 fun n hn => by simp [single2, hn]]
+  simp [single2]
+
+/-- **Examples 3.3(2)**: the two families `single2` and `geom` witness that `ℝ≥0∞` — the
+`ℵ₀`-monoid structure of Examples 2.3(2) on `ℝ≥0 ∪ {∞}` — is *not* `ℵ₀⁻`-braided over `ℝ≥0`: they
+have the same `ℵ₀`-sum but different support behaviour, so they are not braided. -/
+theorem not_isBraided_single2_geom :
+    letI := LMonoid.ofAddCommMonoid ℝ≥0
+    ¬ IsBraided (ℵ₀ : Cardinal.{0}) single2 geom := by
+  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  intro h
+  have hfin := ((isBraided_nnreal_iff (le_of_eq Cardinal.mk_nat) single2 geom).mp h).2
+  exact infinite_support_geom (hfin.mp finite_support_single2)
+
+/-- **Examples 3.3(2)**: `geom` and `2 · geom` witness that the *trivial* `ℵ₀`-extension of `ℝ≥0`
+(Examples 2.3(1)) is not `ℵ₀⁻`-braided over `ℝ≥0` either: both families have infinite support, so
+both sum to `∞` there, but their series sums differ, so they are not braided. -/
+theorem not_isBraided_geom_two_geom :
+    letI := LMonoid.ofAddCommMonoid ℝ≥0
+    ¬ IsBraided (ℵ₀ : Cardinal.{0}) geom (fun n => 2 * geom n) := by
+  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  intro h
+  have hsum := esum_eq_of_isBraided (le_of_eq Cardinal.mk_nat) h
+  rw [esum_geom, esum_two_geom] at hsum
+  norm_num at hsum
 
 end KappaMonoid
