@@ -363,9 +363,9 @@ theorem isBraided_nat_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀) (
         exact natBraidBI_sum_eq x3 y3 hx3 hy3 p.2
       · simp [hIdef, if_neg hp])
     (fun p => by
+      have hfst : (bsucc p).1 = p.1 := rfl
       by_cases hp : p.1 = a₀
-      · simp only [bsucc, hJdef]
-        simp only [if_pos hp]
+      · simp only [hJdef, hfst, if_pos hp]
         rw [finsum_mem_image φ.injective.injOn,
           show (Set.Ico (natBraidBJ x3 y3 hx3 hy3 p.2) (natBraidBJ x3 y3 hx3 hy3 (p.2 + 1))
               : Set ℕ)
@@ -373,8 +373,8 @@ theorem isBraided_nat_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀) (
               : Set ℕ)
             from (Finset.coe_Ico _ _).symm, finsum_mem_coe_finset]
         exact natBraidBJ_sum_eq x3 y3 hx3 hy3 p.2
-      · simp only [bsucc, hJdef]
-        simp [if_neg hp])⟩
+      · simp only [hJdef, hfst, if_neg hp]
+        simp)⟩
 
 /-- **Examples 3.3(1)**: the trivial `ℵ₀`-extension `ℕ₀ ∪ {∞}` is `ℵ₀⁻`-braided over `ℕ₀`, hence
 (by Theorem 3.11(2)) *is* the universal `ℵ₀`-extension of `ℕ₀`.  This is the first entry of
