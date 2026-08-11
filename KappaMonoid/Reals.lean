@@ -17,7 +17,7 @@ import KappaMonoid.Universal
 universe u v
 
 open Cardinal Function Set
-open scoped ENNReal NNReal
+open scoped ENNReal NNReal Classical
 
 namespace KappaMonoid
 
@@ -509,5 +509,279 @@ theorem not_isBraided_geom_two_geom :
   have hsum := esum_eq_of_isBraided (le_of_eq Cardinal.mk_nat) h
   rw [esum_geom, esum_two_geom] at hsum
   norm_num at hsum
+
+/-! ## Examples 3.3(2): the `ℵ₀`-monoid `H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`
+
+The paper's construction.  An element is a value in `ℝ≥0∞` together with a tilde flag, where only a
+value that is neither `0` nor `∞` may carry the flag — so there is exactly one `0` and one `∞`, as
+required.  The `ℵ₀`-sum of a family is the series sum of the values, marked with a tilde unless the
+family is plain and finitely supported: the flag records that the sum was reached only with
+infinite support, or from a tilded summand. -/
+
+/-- The carrier `H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` of Examples 3.3(2). -/
+def RTilde : Type := {p : ℝ≥0∞ × Bool // p.2 = true → p.1 ≠ 0 ∧ p.1 ≠ ⊤}
+
+namespace RTilde
+
+/-- The underlying value in `ℝ≥0∞`. -/
+def val (h : RTilde) : ℝ≥0∞ := h.1.1
+
+/-- Whether the element lies in the tilde copy `ℝ̃>0`. -/
+def tilded (h : RTilde) : Bool := h.1.2
+
+theorem ext {h h' : RTilde} (hv : h.val = h'.val) (ht : h.tilded = h'.tilded) : h = h' :=
+  Subtype.ext (Prod.ext hv ht)
+
+theorem val_ne_zero {h : RTilde} (ht : h.tilded = true) : h.val ≠ 0 := (h.2 ht).1
+
+theorem val_ne_top {h : RTilde} (ht : h.tilded = true) : h.val ≠ ⊤ := (h.2 ht).2
+
+/-- The plain copy of `ℝ≥0`. -/
+def ofReal (a : ℝ≥0) : RTilde := ⟨(a, false), by simp⟩
+
+/-- The tilde copy of `ℝ>0`. -/
+def tilde (a : ℝ≥0) (ha : a ≠ 0) : RTilde :=
+  ⟨(a, true), fun _ => ⟨by simpa using ha, ENNReal.coe_ne_top⟩⟩
+
+/-- The element `∞`. -/
+def top : RTilde := ⟨(⊤, false), by simp⟩
+
+instance : Zero RTilde := ⟨ofReal 0⟩
+
+@[simp] theorem val_ofReal (a : ℝ≥0) : (ofReal a).val = (a : ℝ≥0∞) := rfl
+
+@[simp] theorem tilded_ofReal (a : ℝ≥0) : (ofReal a).tilded = false := rfl
+
+@[simp] theorem val_tilde (a : ℝ≥0) (ha : a ≠ 0) : (tilde a ha).val = (a : ℝ≥0∞) := rfl
+
+@[simp] theorem tilded_tilde (a : ℝ≥0) (ha : a ≠ 0) : (tilde a ha).tilded = true := rfl
+
+@[simp] theorem val_top : (top : RTilde).val = ⊤ := rfl
+
+@[simp] theorem tilded_top : (top : RTilde).tilded = false := rfl
+
+@[simp] theorem val_zero : (0 : RTilde).val = 0 := rfl
+
+@[simp] theorem tilded_zero : (0 : RTilde).tilded = false := rfl
+
+/-- The tilde copy omits `0`, so `0` is the only element of value `0`. -/
+theorem eq_zero_of_val_eq_zero {h : RTilde} (hv : h.val = 0) : h = 0 := by
+  refine ext hv ?_
+  cases ht : h.tilded with
+  | false => rfl
+  | true => exact absurd hv (val_ne_zero ht)
+
+theorem val_eq_zero_iff {h : RTilde} : h.val = 0 ↔ h = 0 :=
+  ⟨eq_zero_of_val_eq_zero, fun h => by rw [h, val_zero]⟩
+
+/-- There is only one element of value `∞`. -/
+theorem eq_top_of_val_eq_top {h : RTilde} (hv : h.val = ⊤) : h = top := by
+  refine ext hv ?_
+  cases ht : h.tilded with
+  | false => rfl
+  | true => exact absurd hv (val_ne_top ht)
+
+/-- Equality of the flags follows from their equality as propositions. -/
+theorem tilded_eq_of_iff {h h' : RTilde} (hiff : h.tilded = false ↔ h'.tilded = false) :
+    h.tilded = h'.tilded := by
+  cases hh : h.tilded <;> cases hh' : h'.tilded <;> simp_all
+
+/-! ### The summation -/
+
+/-- A family stays in the plain copy exactly when every entry does and only finitely many entries
+are nonzero. -/
+def IsPlain {ι : Type u} (x : ι → RTilde) : Prop :=
+  (∀ i, (x i).tilded = false) ∧ (Function.support x).Finite
+
+/-- If a family is not plain, then some entry — a tilded one, or one of the infinitely many nonzero
+ones — has nonzero value, so the total is nonzero. -/
+theorem tsum_val_ne_zero {ι : Type u} {x : ι → RTilde} (hpl : ¬ IsPlain x) :
+    (∑' i, (x i).val) ≠ 0 := by
+  intro h0
+  have hz : ∀ i, x i = 0 := fun i => eq_zero_of_val_eq_zero (ENNReal.tsum_eq_zero.mp h0 i)
+  refine hpl ⟨fun i => by rw [hz i, tilded_zero], ?_⟩
+  have hsupp : Function.support x = ∅ :=
+    Set.eq_empty_iff_forall_notMem.mpr fun i hi => hi (hz i)
+  rw [hsupp]
+  exact Set.finite_empty
+
+/-- The tilde flag of an `ℵ₀`-sum: set unless the total is `∞` — where the answer is the single
+element `∞` — or the family is plain and finitely supported. -/
+noncomputable def sigmaFlag {ι : Type u} (x : ι → RTilde) : Bool :=
+  if (∑' i, (x i).val) = ⊤ ∨ IsPlain x then false else true
+
+theorem sigmaFlag_eq_false_iff {ι : Type u} (x : ι → RTilde) :
+    sigmaFlag x = false ↔ ((∑' i, (x i).val) = ⊤ ∨ IsPlain x) := by
+  unfold sigmaFlag
+  by_cases h : (∑' i, (x i).val) = ⊤ ∨ IsPlain x
+  · rw [if_pos h]
+    exact ⟨fun _ => h, fun _ => rfl⟩
+  · rw [if_neg h]
+    exact ⟨fun hc => absurd hc (by simp), fun hc => absurd hc h⟩
+
+/-- The `ℵ₀`-summation of `H`: the series sum of the values, tilded unless the family is plain and
+finitely supported. -/
+noncomputable def sigma {ι : Type u} (x : ι → RTilde) : RTilde :=
+  ⟨(∑' i, (x i).val, sigmaFlag x), fun ht => by
+    have ht' : sigmaFlag x = true := ht
+    have h := (sigmaFlag_eq_false_iff x).not.mp (by simp [ht'])
+    exact ⟨tsum_val_ne_zero fun hp => h (Or.inr hp), fun hc => h (Or.inl hc)⟩⟩
+
+@[simp] theorem val_sigma {ι : Type u} (x : ι → RTilde) : (sigma x).val = ∑' i, (x i).val := rfl
+
+@[simp] theorem tilded_sigma {ι : Type u} (x : ι → RTilde) : (sigma x).tilded = sigmaFlag x := rfl
+
+/-- The result is plain exactly when the family was, the case of an infinite total aside. -/
+theorem tilded_sigma_eq_false_iff {ι : Type u} (x : ι → RTilde) :
+    (sigma x).tilded = false ↔ ((∑' i, (x i).val) = ⊤ ∨ IsPlain x) :=
+  sigmaFlag_eq_false_iff x
+
+/-- A family whose values sum to `∞` sums to `∞`. -/
+theorem sigma_of_val_eq_top {ι : Type u} {x : ι → RTilde} (htop : (∑' i, (x i).val) = ⊤) :
+    sigma x = top := by
+  refine ext (by rw [val_sigma, htop, val_top]) ?_
+  rw [tilded_top]
+  exact (tilded_sigma_eq_false_iff x).mpr (Or.inl htop)
+
+theorem sigma_eq_zero_iff {ι : Type u} (x : ι → RTilde) : sigma x = 0 ↔ ∀ i, x i = 0 := by
+  rw [← val_eq_zero_iff, val_sigma, ENNReal.tsum_eq_zero]
+  exact ⟨fun h i => eq_zero_of_val_eq_zero (h i), fun h i => by rw [h i, val_zero]⟩
+
+/-! ### The three axioms -/
+
+theorem sigma_comp_equiv {ι ι' : Type u} (e : ι ≃ ι') (x : ι' → RTilde) :
+    sigma (x ∘ e) = sigma x := by
+  have hval : (∑' i, ((x ∘ e) i).val) = ∑' i', (x i').val := e.tsum_eq fun i' => (x i').val
+  have hsupp : Function.support (x ∘ e) = e ⁻¹' Function.support x := rfl
+  have hpl : IsPlain (x ∘ e) ↔ IsPlain x := by
+    constructor
+    · rintro ⟨h1, h2⟩
+      refine ⟨fun i' => by rw [← e.apply_symm_apply i']; exact h1 (e.symm i'), ?_⟩
+      rw [← Set.image_preimage_eq (Function.support x) e.surjective, ← hsupp]
+      exact h2.image _
+    · rintro ⟨h1, h2⟩
+      refine ⟨fun i => h1 (e i), ?_⟩
+      rw [hsupp]
+      exact h2.preimage e.injective.injOn
+  refine ext (by rw [val_sigma, val_sigma, hval]) (tilded_eq_of_iff ?_)
+  rw [tilded_sigma_eq_false_iff, tilded_sigma_eq_false_iff, hval]
+  exact or_congr Iff.rfl hpl
+
+theorem sigma_unique {ι : Type u} [Unique ι] (x : ι → RTilde) : sigma x = x default := by
+  have hval : (∑' i, (x i).val) = (x default).val :=
+    tsum_eq_single default fun i hi => absurd (Unique.eq_default i) hi
+  refine ext (by rw [val_sigma, hval]) (tilded_eq_of_iff ?_)
+  rw [tilded_sigma_eq_false_iff, hval]
+  constructor
+  · rintro (htop | ⟨h1, _⟩)
+    · cases ht : (x default).tilded with
+      | false => rfl
+      | true => exact absurd htop (val_ne_top ht)
+    · exact h1 default
+  · intro hd
+    refine Or.inr ⟨fun i => by rw [Unique.eq_default i]; exact hd, ?_⟩
+    exact Set.toFinite _
+
+/-- The row sums of a family with finite total are themselves finite. -/
+theorem tsum_row_ne_top {ι : Type u} {ρ : ι → Type u} (x : ∀ i, ρ i → RTilde)
+    (htop : (∑' p : (i : ι) × ρ i, (x p.1 p.2).val) ≠ ⊤) (i : ι) :
+    (∑' j, (x i j).val) ≠ ⊤ := by
+  refine fun hrow => htop ?_
+  have hle : (∑' j, (x i j).val) ≤ ∑' i', ∑' j, (x i' j).val :=
+    ENNReal.le_tsum i
+  rw [← ENNReal.tsum_sigma fun i j => (x i j).val] at hle
+  exact top_unique (hrow ▸ hle)
+
+/-- The key compatibility: for a family with finite total, the family of row sums is plain exactly
+when the whole double family is.  This is what makes the marking of `sigma` associative. -/
+theorem isPlain_sigma_iff {ι : Type u} {ρ : ι → Type u} (x : ∀ i, ρ i → RTilde)
+    (htop : (∑' p : (i : ι) × ρ i, (x p.1 p.2).val) ≠ ⊤) :
+    IsPlain (fun i => sigma (x i)) ↔ IsPlain (fun p : (i : ι) × ρ i => x p.1 p.2) := by
+  classical
+  have hrow : ∀ i, (∑' j, (x i j).val) ≠ ⊤ := tsum_row_ne_top x htop
+  have hrowpl : ∀ i, (sigma (x i)).tilded = false ↔ IsPlain (x i) := by
+    intro i
+    rw [tilded_sigma_eq_false_iff]
+    exact ⟨fun h => h.elim (fun hc => absurd hc (hrow i)) id, Or.inr⟩
+  constructor
+  · rintro ⟨h1, h2⟩
+    have hrowpl' : ∀ i, IsPlain (x i) := fun i => (hrowpl i).mp (h1 i)
+    refine ⟨fun p => (hrowpl' p.1).1 p.2, ?_⟩
+    refine Set.Finite.subset (Set.Finite.biUnion h2 fun i _ =>
+      ((hrowpl' i).2.image (fun j : ρ i => (⟨i, j⟩ : (i : ι) × ρ i)))) ?_
+    rintro ⟨i, j⟩ hij
+    refine Set.mem_biUnion (show i ∈ Function.support fun i => sigma (x i) from ?_) ⟨j, hij, rfl⟩
+    intro hcon
+    exact hij ((sigma_eq_zero_iff (x i)).mp hcon j)
+  · rintro ⟨h1, h2⟩
+    refine ⟨fun i => (hrowpl i).mpr ⟨fun j => h1 ⟨i, j⟩, ?_⟩, ?_⟩
+    · refine Set.Finite.of_finite_image (f := fun j : ρ i => (⟨i, j⟩ : (i : ι) × ρ i)) ?_ ?_
+      · refine Set.Finite.subset h2 ?_
+        rintro _ ⟨j, hj, rfl⟩
+        exact hj
+      · exact Set.injOn_of_injective fun a b hab => by simpa using hab
+    · refine Set.Finite.subset (h2.image Sigma.fst) ?_
+      intro i hi
+      obtain ⟨j, hj⟩ := not_forall.mp (fun hc => hi ((sigma_eq_zero_iff (x i)).mpr hc))
+      exact ⟨⟨i, j⟩, hj, rfl⟩
+
+theorem sigma_sigma {ι : Type u} {ρ : ι → Type u} (x : ∀ i, ρ i → RTilde) :
+    sigma (fun i => sigma (x i)) = sigma (fun p : (i : ι) × ρ i => x p.1 p.2) := by
+  have hvals : (∑' i, (sigma (x i)).val) = ∑' p : (i : ι) × ρ i, (x p.1 p.2).val := by
+    rw [tsum_congr fun i => val_sigma (x i)]
+    exact (ENNReal.tsum_sigma fun i j => (x i j).val).symm
+  refine ext (by rw [val_sigma, val_sigma, hvals]) (tilded_eq_of_iff ?_)
+  rw [tilded_sigma_eq_false_iff, tilded_sigma_eq_false_iff, hvals]
+  by_cases htop : (∑' p : (i : ι) × ρ i, (x p.1 p.2).val) = ⊤
+  · simp [htop]
+  · exact or_congr Iff.rfl (isPlain_sigma_iff x htop)
+
+/-! ### `H` as an `ℵ₀`-monoid -/
+
+/-- `Σ` on `H`. -/
+noncomputable def sumData : SumData (Order.succ (ℵ₀ : Cardinal.{u})) RTilde where
+  isRegular := Cardinal.isRegular_succ le_rfl
+  sum _ x := sigma x
+  sum_congr _ _ e x := sigma_comp_equiv e x
+  sum_unique := fun {ι} _ _ x => sigma_unique x
+  sum_sigma _ _ x _ := sigma_sigma x
+
+theorem sumData_zero :
+    (sumData : SumData (Order.succ (ℵ₀ : Cardinal.{u})) RTilde).zero = 0 := by
+  show sigma (PEmpty.elim : PEmpty.{u + 1} → RTilde) = 0
+  refine (sigma_eq_zero_iff _).mpr fun i => i.elim
+
+/-- **Examples 3.3(2)**: `H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` is an `ℵ₀`-monoid. -/
+@[instance_reducible]
+noncomputable def instKMonoid : KMonoid (ℵ₀ : Cardinal.{u}) RTilde where
+  toLMonoid := sumData.toLMonoidOfZero sumData_zero
+  aleph0_le := le_rfl
+
+/-- The `ℵ₀`-sum of `H` is `sigma`. -/
+@[simp] theorem instKMonoid_sumOf {ι : Type u} (h : #ι ≤ (ℵ₀ : Cardinal.{u})) (x : ι → RTilde) :
+    letI := instKMonoid
+    KMonoid.sumOf (κ := (ℵ₀ : Cardinal.{u})) h x = sigma x := rfl
+
+/-- Addition on `H` adds the values. -/
+theorem val_add (a b : RTilde) :
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+    (a + b).val = a.val + b.val := by
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+  show (sigma (Sum.elim (fun _ : PUnit.{u + 1} => a) (fun _ : PUnit.{u + 1} => b))).val = _
+  rw [val_sigma, tsum_fintype]
+  simp
+
+/-- `H` is reduced. -/
+theorem isConical :
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+    IsConical RTilde := by
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+  intro a b hab
+  have hval : a.val + b.val = 0 := by
+    rw [← val_add a b, hab, val_zero]
+  obtain ⟨h1, h2⟩ := add_eq_zero.mp hval
+  exact ⟨eq_zero_of_val_eq_zero h1, eq_zero_of_val_eq_zero h2⟩
+
+end RTilde
 
 end KappaMonoid
