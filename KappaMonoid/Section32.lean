@@ -828,23 +828,54 @@ theorem fcardIncl_linEval (hκ : ℵ₀ ≤ κ) (a : Fin n → ℕ) (x : Fin n �
   rw [fcardIncl_finsetSum]
   exact Finset.sum_congr rfl fun i _ => fcardIncl_nsmul hκ (a i) (x i)
 
-/-- A solution over `F_{ℵ₀}` is a solution over `F_κ`.  Note that this is not formal for the
-inequalities: `≼` is an existential, and its witness has to be transported — which it can be,
-`fcardIncl` being an additive map. -/
-theorem LinSystem.mem_solutions_of_incl (hκ : ℵ₀ ≤ κ) {x : Fin n → Fcard ℵ₀}
-    (hx : x ∈ sys.solutions (le_refl ℵ₀)) :
-    (fun i => fcardIncl hκ (x i)) ∈ sys.solutions hκ := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+/-- An additive map `F_κ → F_{κ'}` commutes with the linear forms: they are finite sums of
+natural multiples. -/
+theorem map_linEval {κ' : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) (hκ' : ℵ₀ ≤ κ') (g : Fcard κ → Fcard κ')
+    (hg : letI := Fcard.instKMonoid hκ
+          letI := Fcard.instKMonoid hκ'
+          g 0 = 0 ∧ ∀ a b, g (a + b) = g a + g b)
+    (a : Fin n → ℕ) (x : Fin n → Fcard κ) :
+    letI := Fcard.instKMonoid hκ
+    letI := Fcard.instKMonoid hκ'
+    g (linEval hκ a x) = linEval hκ' a (fun i => g (x i)) := by
   letI := Fcard.instKMonoid hκ
+  letI := Fcard.instKMonoid hκ'
+  set G : Fcard κ →+ Fcard κ' := { toFun := g, map_zero' := hg.1, map_add' := hg.2 } with hG
+  show G (∑ i, (a i) • x i) = ∑ i, (a i) • G (x i)
+  rw [map_sum]
+  exact Finset.sum_congr rfl fun i _ => G.map_nsmul (a i) (x i)
+
+/-- **Any** additive map `F_κ → F_{κ'}` carries solutions to solutions.  Note that this is not
+formal for the inequalities: `≼` is an existential, and its witness has to be transported —
+which it can be, precisely because the map is additive. -/
+theorem LinSystem.mem_solutions_map {κ' : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) (hκ' : ℵ₀ ≤ κ')
+    (g : Fcard κ → Fcard κ')
+    (hg : letI := Fcard.instKMonoid hκ
+          letI := Fcard.instKMonoid hκ'
+          g 0 = 0 ∧ ∀ a b, g (a + b) = g a + g b)
+    {x : Fin n → Fcard κ} (hx : x ∈ sys.solutions hκ) :
+    (fun i => g (x i)) ∈ sys.solutions hκ' := by
+  letI := Fcard.instKMonoid hκ
+  letI := Fcard.instKMonoid hκ'
+  have hmap := map_linEval (n := n) hκ hκ' g hg
   refine ⟨fun p hp => ?_, fun p hp => ?_, fun p hp => ?_⟩
-  · rw [← fcardIncl_linEval, ← fcardIncl_linEval]
+  · rw [← hmap, ← hmap]
     exact congrArg _ (hx.1 p hp)
   · obtain ⟨c, hc⟩ := hx.2.1 p hp
-    refine ⟨fcardIncl hκ c, ?_⟩
-    rw [← fcardIncl_linEval, ← fcardIncl_linEval, ← fcardIncl_add, hc]
+    refine ⟨g c, ?_⟩
+    rw [← hmap, ← hmap, ← hg.2, hc]
   · obtain ⟨y, hy⟩ := hx.2.2 p hp
-    refine ⟨fcardIncl hκ y, ?_⟩
-    rw [← fcardIncl_linEval, hy, fcardIncl_nsmul]
+    refine ⟨g y, ?_⟩
+    rw [← hmap, hy]
+    exact ({ toFun := g, map_zero' := hg.1, map_add' := hg.2 } :
+      Fcard κ →+ Fcard κ').map_nsmul p.2 y
+
+/-- A solution over `F_{ℵ₀}` is a solution over `F_κ`. -/
+theorem LinSystem.mem_solutions_of_incl (hκ : ℵ₀ ≤ κ) {x : Fin n → Fcard ℵ₀}
+    (hx : x ∈ sys.solutions (le_refl ℵ₀)) :
+    (fun i => fcardIncl hκ (x i)) ∈ sys.solutions hκ :=
+  sys.mem_solutions_map (le_refl ℵ₀) hκ (fcardIncl hκ)
+    ⟨fcardIncl_zero hκ, fcardIncl_add hκ⟩ hx
 
 /-- **Proposition 3.14(1)**: the universal `κ`-extension of the `ℵ₀`-monoid cut out of `F_{ℵ₀}^n`
 by a system is the `κ`-submonoid of `F_κ^n` cut out by the *same* system.
@@ -884,13 +915,55 @@ noncomputable def LinSystem.alephExt : Set (Fin n → Fcard ℵ₀) :=
   letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   {z | ∃ h ∈ sys.finSolutions, ∃ h' ∈ sys.finSolutions, z = h + alephPart h'}
 
+/-- The single-coordinate version of `alephPart`: `0 ↦ 0` and everything else to `ℵ₀`. -/
+noncomputable def alephOne (c : Fcard ℵ₀) : Fcard ℵ₀ :=
+  if (c : Cardinal.{u}) = 0 then Fcard.mk 0 (zero_le : (0 : Cardinal.{u}) ≤ ℵ₀)
+  else Fcard.mk ℵ₀ le_rfl
+
+theorem alephPart_eq {n : ℕ} (x : Fin n → Fcard ℵ₀) (i : Fin n) :
+    alephPart x i = alephOne (x i) := rfl
+
+/-- `alephOne` is additive: `a + b` is zero exactly when both summands are, and otherwise both
+sides are `ℵ₀`. -/
+theorem alephOne_isAdd :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    alephOne 0 = 0 ∧ ∀ a b, alephOne (a + b) = alephOne a + alephOne b := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  have hval : ∀ c : Fcard ℵ₀, (alephOne c : Cardinal.{u})
+      = if (c : Cardinal.{u}) = 0 then 0 else ℵ₀ := by
+    intro c
+    unfold alephOne
+    split <;> rfl
+  refine ⟨Fcard.ext ?_, fun a b => Fcard.ext ?_⟩
+  · rw [hval, Fcard.instKMonoid_zero, if_pos rfl]
+  · rw [hval, Fcard.instKMonoid_add, Fcard.instKMonoid_add, hval, hval]
+    by_cases ha : (a : Cardinal.{u}) = 0 <;> by_cases hb : (b : Cardinal.{u}) = 0
+    · rw [if_pos (by rw [ha, hb, add_zero]), if_pos ha, if_pos hb, add_zero]
+    · rw [if_neg (fun h => hb (add_eq_zero.mp h).2), if_pos ha, if_neg hb, zero_add]
+    · rw [if_neg (fun h => ha (add_eq_zero.mp h).1), if_neg ha, if_pos hb, add_zero]
+    · rw [if_neg (fun h => ha (add_eq_zero.mp h).1), if_neg ha, if_neg hb,
+        Cardinal.aleph0_add_aleph0]
+
+/-- `ℵ₀H ⊆ H`'s solution set: the componentwise `ℵ₀`-collapse of a solution is a solution. -/
+theorem LinSystem.mem_solutions_alephPart {x : Fin n → Fcard ℵ₀}
+    (hx : x ∈ sys.solutions (le_refl (ℵ₀ : Cardinal.{u}))) :
+    alephPart x ∈ sys.solutions (le_refl (ℵ₀ : Cardinal.{u})) :=
+  sys.mem_solutions_map (le_refl ℵ₀) (le_refl ℵ₀) alephOne alephOne_isAdd hx
+
 /-- `H` is a submonoid: finite solutions are closed under `+`. -/
 theorem LinSystem.addSubmonoid_finSolutions :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     (0 : Fin n → Fcard ℵ₀) ∈ sys.finSolutions ∧
       ∀ a ∈ sys.finSolutions, ∀ b ∈ sys.finSolutions, a + b ∈ sys.finSolutions := by
-  sorry
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  have hsub := sys.isKSubmonoid_solutions (le_refl (ℵ₀ : Cardinal.{u}))
+  refine ⟨⟨hsub.zero_mem, fun i => ?_⟩, fun a ha b hb => ⟨hsub.add_mem ha.1 hb.1, fun i => ?_⟩⟩
+  · rw [show ((0 : Fin n → Fcard ℵ₀) i) = 0 from rfl, Fcard.instKMonoid_zero]
+    exact Cardinal.aleph0_pos
+  · rw [show ((a + b : Fin n → Fcard ℵ₀) i) = a i + b i from rfl, Fcard.instKMonoid_add]
+    exact Cardinal.add_lt_aleph0 (ha.2 i) (hb.2 i)
 
 /-- `H + ℵ₀H` is an `ℵ₀`-submonoid of `F_{ℵ₀}^n`.
 
@@ -904,10 +977,16 @@ theorem LinSystem.isKSubmonoid_alephExt :
     KMonoid.IsKSubmonoid ℵ₀ sys.alephExt := by
   sorry
 
-/-- Every element of `H + ℵ₀H` is a solution of the system: the easy inclusion. -/
+/-- Every element of `H + ℵ₀H` is a solution of the system: the easy inclusion.  Both summands
+are solutions — the second because `alephPart` is additive — and the solutions form a
+submonoid. -/
 theorem LinSystem.alephExt_subset_solutions :
     sys.alephExt ⊆ sys.solutions (le_refl (ℵ₀ : Cardinal.{u})) := by
-  sorry
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  rintro z ⟨h, hh, h', hh', rfl⟩
+  exact (sys.isKSubmonoid_solutions (le_refl ℵ₀)).add_mem hh.1
+    (sys.mem_solutions_alephPart hh'.1)
 
 /-- **Proposition 3.14(2)**: for a monoid `H ⊆ ℕ₀^n` cut out by a homogeneous system, the
 universal `ℵ₀`-extension is `H + ℵ₀H ⊆ F_{ℵ₀}^n`.
