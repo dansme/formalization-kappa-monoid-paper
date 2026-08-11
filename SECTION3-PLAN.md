@@ -41,7 +41,7 @@ scoped separately.
 
 | Prop. 3.14(1) | `isBraidedOver_pi_fcard`, `solutions_subset_kclosure`, `prop_3_14_one` |
 | Prop. 3.14(2) | `isBraidedOver_pi_lcard`, `alephPart_eq_ksum`, `prop_3_14_two` (with an added hypothesis, see below) |
-| Examples 3.3(2)(3), Examples 3.12 for `ℝ≥0`/`ℚ≥0` (in `Reals.lean`) | `esum`, `isBraided_nnreal_iff`, `not_isBraided_single2_geom`, `not_isBraided_geom_two_geom`, `RTilde`, `RTilde.instKMonoid`, `isBraidedOver_rtilde`, `isUniversalKExtension_rtilde`, `not_isBraidedOver_rtilde_self`, `isUniversalKExtension_ratSet` |
+| Examples 3.3(2)(3), Examples 3.12 for `ℝ≥0`/`ℚ≥0` (in `Reals.lean`) | `esum`, `isBraided_nnreal_iff`, `not_isBraided_single2_geom`, `not_isBraided_geom_two_geom`, `RTilde`, `RTilde.instKMonoid`, `isBraidedOver_rtilde`, `isUniversalKExtension_rtilde`, `not_isBraidedOver_rtilde_self`, `isUniversalKExtension_ratSet`, `exists_ratSet_family`, `kclosure_ofReal_ratSet` |
 | The converse of Lemma 3.4(1) (in `Braiding.lean`) | `IsBraided.mk_support_lt` |
 | Saturation for systems of equations and congruences | `linEvalNat`, `val_linEval_eq_linEvalNat`, `isSaturatedFin_of_ineqs_empty`, `prop_3_14_two_of_ineqs_empty` |
 | The counterexample to Prop. 3.14(2) as printed | `ineqSystem`, `not_isSaturatedFin_ineqSystem` |
@@ -63,12 +63,9 @@ open on purpose, and one is a loose end worth recording:
 1. **Lemma 3.4(2)(3), Lemma 3.5, Remark 3.16** — deliberately absent, see above and below.
 2. The *braiding* half of the counterexample to Prop. 3.14(2) — only the failure of saturation is
    formalised (`not_isSaturatedFin_ineqSystem`); the braiding computation is in its docstring.
-3. For `ℚ≥0` (Examples 3.3(3)) the universal `ℵ₀`-extension is identified as `⟨ℚ≥0⟩_{ℵ₀} ⊆ H` and
-   its *plain* part is pinned down exactly (`ofReal_notMem_kclosure_of_not_mem_ratSet`: no plain
-   irrational is an `ℵ₀`-sum of rationals). The converse inclusion — that *every* tilded `ã` is
-   such a sum, so that `⟨ℚ≥0⟩_{ℵ₀} = ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` on the nose — needs one analytic fact not
-   yet formalised: every positive real is the sum of a series of positive rationals (take a
-   rational sequence increasing to it and sum the increments).
+3. Nothing further for `ℚ≥0`: `kclosure_ofReal_ratSet` identifies the extension as
+   `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` on the nose, both inclusions, on top of
+   `exists_ratSet_family` (every positive real is the sum of a series of positive rationals).
 
 ---
 
@@ -150,10 +147,14 @@ two cumulative partial sums and alternately overshoot, `u k = X(bI (k+1)) − Y(
 analysis, and the only analytic inputs are `coe_psum_lt_esum` (with infinite support no partial sum
 reaches the total) and `exists_psum_ge`.
 
-`ℚ≥0` needed no new construction at all: `ℚ≥0` is a *saturated* `ℵ₀⁻`-submonoid of `ℝ≥0`, so
+`ℚ≥0` needed no new *braiding* at all: `ℚ≥0` is a *saturated* `ℵ₀⁻`-submonoid of `ℝ≥0`, so
 Lemma 3.13(2) applies at `λ = ℵ₀`. That is a forward reference from §3.1 to §3.2 — hence
 `Reals.lean` importing `Section32.lean` — but it replaces a second run of the whole braiding
-argument.
+argument. It did need one analytic fact: every positive real is the sum of a series of positive
+rationals (`exists_ratSet_family`). The cheap route is a case split — a rational value gets the
+geometric family already in hand, an irrational one the increments of its dyadic truncations
+`⌊a·2ⁿ⌋/2ⁿ`, where irrationality is what keeps infinitely many increments nonzero. No recursion
+with invariants and no sequence-existence lemma from Mathlib are needed.
 
 ## Where to go next
 
