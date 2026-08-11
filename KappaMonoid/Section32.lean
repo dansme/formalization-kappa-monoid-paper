@@ -435,22 +435,6 @@ section Free
 
 variable {lam κ : Cardinal.{u}} {B : Type u}
 
-/-- A `λ⁻`-homomorphism into a `κ`-monoid is the same thing as an `LMonoid lam`-homomorphism for
-the induced structure: `toLMonoidOfLE`'s `λ⁻`-sums *are* the `κ`-sums, by definition. -/
-theorem isLMonoidHom_of_isLHom {X : Type v} {K : Type w} [LMonoid lam X] [KMonoid κ K]
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → K} (hf : LMonoid.IsLHom hlk f) :
-    letI := KMonoid.toLMonoidOfLE K hlam hlk
-    IsLMonoidHom lam f :=
-  fun h x => hf.2 h x
-
-/-- Conversely, an `LMonoid lam`-homomorphism into a `κ`-monoid is a `λ⁻`-homomorphism. -/
-theorem isLHom_of_isLMonoidHom {X : Type v} {K : Type w} [LMonoid lam X] [KMonoid κ K]
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → K}
-    (hf : letI := KMonoid.toLMonoidOfLE K hlam hlk; IsLMonoidHom lam f) :
-    LMonoid.IsLHom hlk f := by
-  letI := KMonoid.toLMonoidOfLE K hlam hlk
-  exact ⟨hf.map_zero, fun h x => hf h x⟩
-
 /-- The inclusion `F_{λ⁻}(B) ↪ F_κ(B)`. -/
 def freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) (x : ↥(FreeL lam B)) :
     ↥(FreeK κ B) :=

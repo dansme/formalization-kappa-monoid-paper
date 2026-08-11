@@ -22,6 +22,7 @@ See `SECTION4-PLAN.md`.
 import KappaMonoid.Modules
 import KappaMonoid.Free
 import KappaMonoid.OrderUnit
+import KappaMonoid.Section32
 
 universe u v
 
@@ -162,7 +163,8 @@ theorem corollary_4_7_two {S : Type u} [LMonoid ℵ₀ S] {H : Type u} [KMonoid 
     letI := (projClass R κ hκ).instKMonoid hκ
     ∃ e : H → (projClass R κ hκ).carrier,
       KMonoid.IsKHom κ e ∧ (∀ s, e (f s) = g s) ∧ Function.Bijective e := by
-  sorry
+  letI := (projClass R κ hκ).instKMonoid hκ
+  exact isKIso_of_braidedOver_same hκ hbr hbr'
 
 /-- **Corollary 4.7(1)**, (iii) ⇒ (i): if `V^κ(R) ≅ H` for a ring `R` all of whose projectives
 are direct sums of finitely generated modules — in particular a hereditary ring, by Corollary 4.6
@@ -195,17 +197,25 @@ end Cor47
 
 If every module in `C` is a direct sum of `λ⁻`-small ones and `V^{λ⁻}(C_{λ⁻})` is a *free*
 `λ⁻`-monoid on `B`, then `V^κ(C)` is the free `κ`-monoid on `B`.  Theorem 4.3 makes `V^κ(C)`
-`λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`, hence its universal `κ`-extension; Lemma 3.13(1) identifies
-the universal `κ`-extension of `F_{λ⁻}(B)` as `F_κ(B)`; uniqueness finishes.
+`λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`, hence its universal `κ`-extension (Theorem 3.11(2)), and
+transporting that along the isomorphism of bases says exactly that `V^κ(C)` is the universal
+`κ`-extension of `F_{λ⁻}(B)`.
 
-This is the one worked example of §4 that needs no literature — only Lemma 3.13(1) from the §3
-scaffold. -/
+**A universe remark on the statement.**  One would like to conclude `V^κ(C) ≅ F_κ(B)` by combining
+this with Lemma 3.13(1) and uniqueness.  That comparison is not available: `F_κ(B)` is cut out of
+`B → F_κ` and so lives in `Type (u+1)`, while `V^κ(C)` lives in `Type u`, and
+`isUniversalKExtension_unique` — like the universal property itself, which quantifies over test
+objects in the *same* universe as the extension — compares two extensions in one universe only.
+The universal property below is the universe-correct form of "is the free `κ`-monoid on `B`", and
+composing it with the `λ⁻`-level universal property of `F_{λ⁻}(B)` (`Free.exists_unique_lift`,
+whose target universe *is* free) recovers the usual `B`-indexed formulation. -/
 
 section KRSA
 
 variable {R : Type u} [Ring R] {κ : Cardinal.{u}}
 
-/-- **Example 4.8(1)**: finite KRSA ascends to infinite KRSA. -/
+/-- **Example 4.8(1)**: finite KRSA ascends to infinite KRSA — if `V^{λ⁻}(C_{λ⁻})` is free on `B`,
+then `V^κ(C)` is the universal `κ`-extension of the free `λ⁻`-monoid on `B`. -/
 theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
     {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (B : Type u)
     (hfree : letI : Fact lam.IsRegular := ⟨hlam⟩
@@ -216,11 +226,60 @@ theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤
     (hbr : letI := C.instKMonoid hκ
       letI := IsLSubset.lmonoid hlam (C.lambdaSmallPart_isLSubset hκ lam hlam hlk)
       IsBraidedOver lam κ ↥(C.lambdaSmallPart lam) C.carrier hlk (fun a => (a : C.carrier))) :
-    letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+    letI : Fact lam.IsRegular := ⟨hlam⟩
     letI := C.instKMonoid hκ
-    letI := instKMonoidFreeK κ hκ B
-    ∃ e : C.carrier → ↥(FreeK κ B), KMonoid.IsKHom κ e ∧ Function.Bijective e := by
-  sorry
+    ∃ f : ↥(FreeL lam B) → C.carrier,
+      IsUniversalKExtension lam κ ↥(FreeL lam B) C.carrier hlk f := by
+  letI : Fact lam.IsRegular := ⟨hlam⟩
+  letI := C.instKMonoid hκ
+  letI := IsLSubset.lmonoid hlam (C.lambdaSmallPart_isLSubset hκ lam hlam hlk)
+  classical
+  obtain ⟨e, hehom, hebij⟩ := hfree
+  -- the inverse of the isomorphism of bases is again a `λ⁻`-homomorphism
+  set e' : ↥(FreeL lam B) → ↥(C.lambdaSmallPart lam) := Function.invFun e with he'def
+  have hee' : ∀ a, e' (e a) = a := Function.leftInverse_invFun hebij.injective
+  have he'e : ∀ b, e (e' b) = b := fun b => Function.invFun_eq (hebij.surjective b)
+  have he'hom : IsLMonoidHom lam e' := hehom.inv hee' he'e
+  -- `V^κ(C)` is the universal `κ`-extension of `V^{λ⁻}(C_{λ⁻})`, hence of `F_{λ⁻}(B)`
+  refine ⟨fun b => ((e' b : ↥(C.lambdaSmallPart lam)) : C.carrier), ?_⟩
+  exact IsUniversalKExtension.of_base_iso hlk (hbr.isUniversalKExtension hlk) e' e he'hom hehom
+    he'e hee'
+
+/-- The `B`-indexed form: `V^κ(C)` has the universal property of the free `κ`-monoid on `B`.  Every
+map from `B` into a `κ`-monoid extends uniquely along the generators `ι(b)`. -/
+theorem krsa_ascent_free (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
+    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (B : Type u)
+    {f : letI : Fact lam.IsRegular := ⟨hlam⟩; ↥(FreeL lam B) → C.carrier}
+    (huniv : letI : Fact lam.IsRegular := ⟨hlam⟩
+      letI := C.instKMonoid hκ
+      IsUniversalKExtension lam κ ↥(FreeL lam B) C.carrier hlk f) :
+    letI : Fact lam.IsRegular := ⟨hlam⟩
+    letI := C.instKMonoid hκ
+    ∀ (K : Type u) [KMonoid κ K] (g : B → K),
+      ∃! ψ : C.carrier → K, KMonoid.IsKHom κ ψ ∧ ∀ b, ψ (f (iota b)) = g b := by
+  letI : Fact lam.IsRegular := ⟨hlam⟩
+  letI := C.instKMonoid hκ
+  intro K _ g
+  letI := KMonoid.toLMonoidOfLE K hlam hlk
+  -- lift `g` to the free `λ⁻`-monoid, then extend along the universal property
+  have hlift : LMonoid.IsLHom hlk (lift (lam := lam) g) :=
+    isLHom_of_isLMonoidHom hlam hlk (isLMonoidHom_lift (lam := lam) g)
+  obtain ⟨ψ, ⟨hψhom, hψ⟩, hψu⟩ := huniv.universal K (lift (lam := lam) g) hlift
+  refine ⟨ψ, ⟨hψhom, fun b => ?_⟩, fun ψ' ⟨hψ'hom, hψ'⟩ => ?_⟩
+  · rw [hψ (iota b), lift_iota]
+  refine hψu ψ' ⟨hψ'hom, fun x => ?_⟩
+  -- two extensions agreeing on the generators agree, by uniqueness at the `λ⁻` level
+  have hcomp0 : LMonoid.IsLHom hlk (fun y : ↥(FreeL lam B) => ψ' (f y)) := by
+    refine ⟨by show ψ' (f 0) = 0; rw [huniv.isLHom.1, hψ'hom.1], fun {ι} hι y => ?_⟩
+    show ψ' (f (LMonoid.lsumOf hι y)) = _
+    rw [huniv.isLHom.2 hι y, hψ'hom.map_sumOf (hι.le.trans hlk) (f ∘ y)]
+    rfl
+  have hcomp : IsLMonoidHom lam (fun y : ↥(FreeL lam B) => ψ' (f y)) :=
+    isLMonoidHom_of_isLHom hlam hlk hcomp0
+  have heq : (fun y : ↥(FreeL lam B) => ψ' (f y)) = lift (lam := lam) g :=
+    hom_ext (lam := lam) hcomp (isLMonoidHom_lift (lam := lam) g)
+      fun b => by show ψ' (f (iota b)) = lift g (iota b); rw [hψ' b, lift_iota]
+  exact congrFun heq x
 
 end KRSA
 

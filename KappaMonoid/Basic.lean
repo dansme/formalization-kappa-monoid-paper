@@ -1346,6 +1346,16 @@ theorem map_add (hf : IsLMonoidHom lam f) (a b : X) : f (a + b) = f a + f b := b
     funext fun p => by obtain ⟨(_ | _)⟩ := p <;> rfl]
   exact LMonoid.lsumOf_two (f a) (f b) hUB
 
+/-- The inverse of a bijective homomorphism is a homomorphism: apply the original one to both
+sides and use its injectivity. -/
+theorem inv {g : X → Y} (hg : IsLMonoidHom lam g) {g' : Y → X}
+    (hgg' : ∀ x, g' (g x) = x) (hg'g : ∀ y, g (g' y) = y) : IsLMonoidHom lam g' := by
+  have hinj : Function.Injective g := fun a b hab => by rw [← hgg' a, hab, hgg' b]
+  intro ι h y
+  refine hinj ?_
+  rw [hg'g, hg h (g' ∘ y)]
+  exact congrArg _ (funext fun i => (hg'g (y i)).symm)
+
 /-- A homomorphism preserves cardinal scalar multiplication, which is a sum. -/
 theorem map_lcmul (hf : IsLMonoidHom lam f) {α : Cardinal.{u}} (hα : α < lam) (x : X) :
     f (LMonoid.lcmul (lam := lam) α hα x) = LMonoid.lcmul (lam := lam) α hα (f x) :=

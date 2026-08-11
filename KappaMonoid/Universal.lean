@@ -40,7 +40,7 @@ from `X^κ`; only the two `κ`-monoid axioms need braiding arguments.
 -/
 import KappaMonoid.Braiding
 
-universe u v w
+universe u v w z
 
 open Cardinal Function Set
 
@@ -429,6 +429,26 @@ theorem IsLHom.map_add (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) (a b
     | ⟨false⟩ => rfl
   rw [h1, h2, sumOf_two (f a) (f b) (hUB.le.trans hlk)]
 
+/-- A `λ⁻`-homomorphism into a `κ`-monoid is a homomorphism of `λ⁻`-monoids for the induced
+structure — the two notions differ only in how the target's sums are packaged. -/
+theorem isLMonoidHom_of_isLHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → H}
+    (hf : IsLHom hlk f) :
+    letI := KMonoid.toLMonoidOfLE H hlam hlk
+    IsLMonoidHom lam f := by
+  letI := KMonoid.toLMonoidOfLE H hlam hlk
+  intro ι h x
+  rw [KMonoid.toLMonoidOfLE_lsumOf hlam hlk h (f ∘ x)]
+  exact hf.2 h x
+
+/-- The converse of `IsLHom.isLMonoidHom`. -/
+theorem isLHom_of_isLMonoidHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → H}
+    (hf : letI := KMonoid.toLMonoidOfLE H hlam hlk
+      IsLMonoidHom lam f) : IsLHom hlk f := by
+  letI := KMonoid.toLMonoidOfLE H hlam hlk
+  refine ⟨hf.map_zero, fun {ι} h x => ?_⟩
+  rw [hf h x]
+  exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk h (f ∘ x)).symm
+
 /-- A `λ⁻`-homomorphism carries braided families to braided families. -/
 theorem IsBraided.map_lhom (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) {ι : Type u}
     {x y : ι → X} (h : IsBraided lam x y) :
@@ -554,6 +574,35 @@ structure IsUniversalKExtension (lam κ : Cardinal.{u}) (X : Type v) (Hh : Type 
   universal : ∀ (K : Type w) [KMonoid κ K] (φ : X → K), IsLHom hlk φ →
     ∃! ψ : Hh → K, IsKHom κ ψ ∧ ∀ x, ψ (f x) = φ x
 
+/-- Being a universal `κ`-extension transports along an isomorphism of the base — a purely formal
+consequence of the universal property, needing no reducedness. -/
+theorem IsUniversalKExtension.of_base_iso {X₁ : Type v} {X₂ : Type z} {Hh : Type w}
+    [LMonoid lam X₁] [LMonoid lam X₂] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X₁ → Hh}
+    (h : IsUniversalKExtension lam κ X₁ Hh hlk f) (g : X₂ → X₁) (g' : X₁ → X₂)
+    (hg : IsLMonoidHom lam g) (hg' : IsLMonoidHom lam g')
+    (hgg' : ∀ x, g' (g x) = x) (hg'g : ∀ x, g (g' x) = x) :
+    IsUniversalKExtension lam κ X₂ Hh hlk (fun x => f (g x)) where
+  isLHom := by
+    refine ⟨show f (g 0) = 0 by rw [hg.map_zero, h.isLHom.1], fun {ι} hι x => ?_⟩
+    show f (g (lsumOf (lam := lam) hι x)) = _
+    rw [hg hι x, h.isLHom.2 hι (g ∘ x)]
+    rfl
+  universal := by
+    intro K _ φ hφ
+    -- transport `φ` to the isomorphic base and use the universal property there
+    have hφ' : IsLHom hlk (fun x₁ => φ (g' x₁)) := by
+      refine ⟨show φ (g' 0) = 0 by rw [hg'.map_zero, hφ.1], fun {ι} hι x => ?_⟩
+      show φ (g' (lsumOf (lam := lam) hι x)) = _
+      rw [hg' hι x, hφ.2 hι (g' ∘ x)]
+      rfl
+    obtain ⟨ψ, ⟨hψhom, hψ⟩, hψu⟩ := h.universal K (fun x₁ => φ (g' x₁)) hφ'
+    refine ⟨ψ, ⟨hψhom, fun x => ?_⟩, fun ψ' ⟨hψ'hom, hψ'⟩ => ?_⟩
+    · rw [hψ (g x), hgg' x]
+    · refine hψu ψ' ⟨hψ'hom, fun x₁ => ?_⟩
+      have hx := hψ' (g' x₁)
+      rw [hg'g x₁] at hx
+      exact hx
+
 /-- A universal `κ`-extension is unique up to a unique isomorphism, as for any object
 defined by a universal property. -/
 theorem isUniversalKExtension_unique {X : Type v} {H₁ H₂ : Type w}
@@ -633,7 +682,7 @@ theorem isLMonoidHom_aleph0_of_add {X : Type v} {Y : Type w} [LMonoid (ℵ₀ : 
 /-- Braidedness over the base transports along an isomorphism of the base: if `H` is
 `λ⁻`-braided over `X₁` and `g : X₂ → X₁` is an isomorphism of `λ⁻`-monoids, then `H` is
 `λ⁻`-braided over `X₂` along `f ∘ g`. -/
-theorem IsBraidedOver.of_base_iso {X₁ X₂ : Type v} {H : Type w} [LMonoid lam X₁]
+theorem IsBraidedOver.of_base_iso {X₁ : Type v} {X₂ : Type z} {H : Type w} [LMonoid lam X₁]
     [LMonoid lam X₂] [KMonoid κ H] (hlk : lam ≤ κ) {f : X₁ → H}
     (hbr : IsBraidedOver lam κ X₁ H hlk f) {g : X₂ → X₁} {g' : X₁ → X₂}
     (hg : IsLMonoidHom lam g) (hg' : IsLMonoidHom lam g')
