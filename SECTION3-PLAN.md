@@ -1,9 +1,9 @@
-# Completing Section 3
+# Section 3
 
-A work plan for the part of §3 of Nazemian–Smertnig that is not yet formalised.
+A record of how §3 of Nazemian–Smertnig was formalised, and of what was left out.
 
-Baseline: branch `simplify`. `lake build` is green and `sorry`-free, `KappaMonoid/Section32.lean`
-included — §3 is complete apart from the items under "What is missing" below.
+Baseline: branch `simplify`. `lake build` is green and `sorry`-free with every §3 file imported —
+§3 is complete; see "What is missing" for the two deliberate omissions and one loose end.
 
 Paper source: `kappa_monoids.tex` / `kappa_monoids.pdf`.
 
@@ -41,6 +41,8 @@ scoped separately.
 
 | Prop. 3.14(1) | `isBraidedOver_pi_fcard`, `solutions_subset_kclosure`, `prop_3_14_one` |
 | Prop. 3.14(2) | `isBraidedOver_pi_lcard`, `alephPart_eq_ksum`, `prop_3_14_two` (with an added hypothesis, see below) |
+| Examples 3.3(2)(3), Examples 3.12 for `ℝ≥0`/`ℚ≥0` (in `Reals.lean`) | `esum`, `isBraided_nnreal_iff`, `not_isBraided_single2_geom`, `not_isBraided_geom_two_geom`, `RTilde`, `RTilde.instKMonoid`, `isBraidedOver_rtilde`, `isUniversalKExtension_rtilde`, `not_isBraidedOver_rtilde_self`, `isUniversalKExtension_ratSet` |
+| The converse of Lemma 3.4(1) (in `Braiding.lean`) | `IsBraided.mk_support_lt` |
 | Saturation for systems of equations and congruences | `linEvalNat`, `val_linEval_eq_linEvalNat`, `isSaturatedFin_of_ineqs_empty`, `prop_3_14_two_of_ineqs_empty` |
 | The counterexample to Prop. 3.14(2) as printed | `ineqSystem`, `not_isSaturatedFin_ineqSystem` |
 | Example 3.15 | `diagSystem`, `doubleSystem`, `mem_diagSystem_solutions`, `mem_doubleSystem_solutions`, `finSolutions_diagSystem`, `alephExt_congr`, `example_3_15` |
@@ -55,11 +57,18 @@ And, in `Universal.lean`:
 
 ## What is missing
 
-1. **Examples 3.3(2) and the `ℝ≥0`, `ℚ≥0` entries of Examples 3.12** — not started; see
-   "Examples 3.3(2)" below, the only remaining piece of §3.
-2. Optionally, the *braiding* half of the counterexample to Prop. 3.14(2) — only the failure of
-   saturation is formalised (`not_isSaturatedFin_ineqSystem`); the braiding computation is in its
-   docstring.
+Nothing: §3 is complete and `sorry`-free, `KappaMonoid/Reals.lean` included. Two things are left
+open on purpose, and one is a loose end worth recording:
+
+1. **Lemma 3.4(2)(3), Lemma 3.5, Remark 3.16** — deliberately absent, see above and below.
+2. The *braiding* half of the counterexample to Prop. 3.14(2) — only the failure of saturation is
+   formalised (`not_isSaturatedFin_ineqSystem`); the braiding computation is in its docstring.
+3. For `ℚ≥0` (Examples 3.3(3)) the universal `ℵ₀`-extension is identified as `⟨ℚ≥0⟩_{ℵ₀} ⊆ H` and
+   its *plain* part is pinned down exactly (`ofReal_notMem_kclosure_of_not_mem_ratSet`: no plain
+   irrational is an `ℵ₀`-sum of rationals). The converse inclusion — that *every* tilded `ã` is
+   such a sum, so that `⟨ℚ≥0⟩_{ℵ₀} = ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` on the nose — needs one analytic fact not
+   yet formalised: every positive real is the sum of a series of positive rationals (take a
+   rational sequence increasing to it and sum the increments).
 
 ---
 
@@ -132,37 +141,34 @@ discharges it, so `prop_3_14_two_of_ineqs_empty` needs nothing but `sys.ineqs = 
 Remark 3.16 (saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids, citing
 the literature) is a pointer, not a theorem. Either skip it or record it in the README.
 
-## Examples 3.3(2): the `ℝ≥0` example
+## How Examples 3.3(2)(3) came out
 
-Not scaffolded. Independent of everything above; nothing else depends on it.
+For the record, since the plan's guesses were only half right.
 
-The carrier encoding that works: an inductive `RTilde` with `ofReal`, `tilde` (over *positive*
-reals only) and `top`. The tilde copy omitting `0` avoids a quotient and gives exactly one `0`
-and one `∞` by construction. The summation: sum the underlying values as a `tsum` in `ℝ≥0∞` —
-unconditional there, and order-independent, which is what the paper's "sum of the convergent
-series" means for nonnegative terms — then mark the result with a tilde unless the family is
-finitely supported with every entry plain.
+The carrier is **not** an inductive with a positivity side condition but
+`{p : ℝ≥0∞ × Bool // p.2 = true → p.1 ≠ 0 ∧ p.1 ≠ ⊤}`: a value together with a tilde flag that
+only a value which is neither `0` nor `∞` may carry. That gives exactly one `0` and one `∞` with no
+quotient, and — the part that matters in practice — the summation can be written as a *single* term
+(`sigmaFlag` computes the flag separately), so `val` and `tilded` of a sum are `rfl`. The
+three-branch `dite` the plan suggested makes every branch lemma fight the dependent motive, because
+`RTilde` is a `def` and the projections cannot be seen through.
 
-The three `SumData` axioms: `sum_congr` is immediate (`tsum`, finiteness of support and plainness
-are all invariant under reindexing); `sum_unique` is a case check on the single entry; `sum_sigma`
-is where the work is. `tsum` over a sigma is `ENNReal.tsum_sigma`, so the *values* match; the
-content is that the *marking* matches, i.e. that the double family is finitely supported with all
-entries plain iff the family of row-sums is. Left to right is easy; right to left needs that a row
-whose sum is plain and nonzero must itself be finitely supported and plain, which is the
-definition of the summation read backwards. Prove that as a standalone lemma first.
+`sum_congr` and `sum_unique` are routine; `sum_sigma` is `isPlain_sigma_iff`, exactly the statement
+the plan predicted (the marking is associative because, for a family with finite total, the family
+of row sums is plain iff the whole double family is).
 
-The braiding classification is the analogue of Examples 3.3(1) with "same series sum, and supports
-both finite or both infinite" in place of "both supports infinite"; the infinite case reuses the
-alternating construction of `natBraidState`, with the domination step supplied by the tail of a
-convergent series of positive terms rather than by entries being `≥ 1`. Then
-`isBraidedOver_rtilde` packages it, and the paper's argument that `{0} ∪ ℝ̃>0` is *not*
-`ℵ₀⁻`-braided over itself is a short direct computation.
+The braiding construction for `ℝ≥0` is *simpler* than the `ℕ₀` one, not a variation of it: keep the
+two cumulative partial sums and alternately overshoot, `u k = X(bI (k+1)) − Y(bJ k)` and
+`v k = Y(bJ k) − X(bI k)`. The deficits then telescope by `tsub_add_tsub_cancel` with no case
+analysis, and the only analytic inputs are `coe_psum_lt_esum` (with infinite support no partial sum
+reaches the total) and `exists_psum_ge`.
 
-`ℚ≥0` is the same construction restricted, with the observation that irrationals admit only
-infinitely-supported representations, so only one copy of them appears. Do it only if you want
-Examples 3.12 complete, and expect a light edit of `RTilde` rather than new mathematics.
+`ℚ≥0` needed no new construction at all: `ℚ≥0` is a *saturated* `ℵ₀⁻`-submonoid of `ℝ≥0`, so
+Lemma 3.13(2) applies at `λ = ℵ₀`. That is a forward reference from §3.1 to §3.2 — hence
+`Reals.lean` importing `Section32.lean` — but it replaces a second run of the whole braiding
+argument.
 
-## Suggested order
+## Where to go next
 
-Only the `ℝ≥0` example is left; it is independent of everything else and the only remaining item
-that needs a new `κ`-monoid built from scratch.
+§3 is done. The open items are listed under "What is missing"; none blocks §§4–5, whose plans are
+`SECTION4-PLAN.md` and `SECTION5-PLAN.md`.
