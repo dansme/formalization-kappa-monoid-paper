@@ -472,6 +472,22 @@ noncomputable def traceIdeal : Ideal R := ⨆ f : P →ₗ[R] R, LinearMap.range
 theorem le_traceIdeal (f : P →ₗ[R] R) : LinearMap.range f ≤ traceIdeal R P :=
   le_iSup (fun f : P →ₗ[R] R => LinearMap.range f) f
 
+/-- **The trace ideal is two-sided**, so `Ideal R` (= left ideals) is not the wrong home for it:
+right multiplication by `r` is a left-`R`-linear endomorphism of `R`, so `f (·) * r` is again a
+functional on `P`.
+
+This is needed because `I • (⊤ : Submodule R R) ≤ I` is *false* for a one-sided ideal, and that
+inclusion is what `traceIdeal_le_of_smul_eq` and `traceIdeal_mul_self` rest on. -/
+instance traceIdeal_isTwoSided : (traceIdeal R P).IsTwoSided where
+  mul_mem_of_left := by
+    intro a r ha
+    -- `a` lies in a sum of ranges; push the whole sum through `· * r`
+    have hle : traceIdeal R P ≤ Submodule.comap (LinearMap.mulRight R r) (traceIdeal R P) := by
+      refine iSup_le fun f => ?_
+      rintro x ⟨p, rfl⟩
+      exact le_traceIdeal R P ((LinearMap.mulRight R r).comp f) ⟨p, rfl⟩
+    exact hle ha
+
 /-- `P = Tr(P) · P` for projective `P`.
 
 Proof: `Module.projective_def` gives `s : P →ₗ[R] P →₀ R` splitting `linearCombination R id`, so
@@ -479,14 +495,24 @@ Proof: `Module.projective_def` gives `s : P →ₗ[R] P →₀ R` splitting `lin
 `Finsupp.lapply p ∘ₗ s`, hence lands in `Tr(P)`; so `x ∈ Tr(P) • ⊤`. -/
 theorem smul_traceIdeal_eq [Module.Projective R P] :
     traceIdeal R P • (⊤ : Submodule R P) = ⊤ := by
-  sorry
+  refine le_antisymm le_top fun x _ => ?_
+  obtain ⟨s, hs⟩ := (Module.projective_def (R := R) (P := P)).mp inferInstance
+  have hx : (Finsupp.linearCombination R id) (s x) = x := hs x
+  rw [← hx, Finsupp.linearCombination_apply, Finsupp.sum]
+  refine Submodule.sum_mem _ fun p _ => ?_
+  have hcoef : (s x) p ∈ traceIdeal R P :=
+    le_traceIdeal R P ((Finsupp.lapply p).comp s) ⟨x, rfl⟩
+  exact Submodule.smul_mem_smul hcoef Submodule.mem_top
 
-/-- `Tr(P)` is the least ideal `I` with `P = I · P`.
+/-- `Tr(P)` is the least *two-sided* ideal `I` with `P = I · P`.
 
-Proof: if `I • ⊤ = ⊤` then for any `f : P →ₗ[R] R`, `im f = f (I • ⊤) = I * im f ⊆ I`. -/
-theorem traceIdeal_le_of_smul_eq {I : Ideal R} (h : I • (⊤ : Submodule R P) = ⊤) :
-    traceIdeal R P ≤ I := by
-  sorry
+Proof: if `I • ⊤ = ⊤` then for any `f : P →ₗ[R] R`, `im f = f (I • ⊤) = I * im f ⊆ I`, the last
+step by two-sidedness. -/
+theorem traceIdeal_le_of_smul_eq {I : Ideal R} [I.IsTwoSided]
+    (h : I • (⊤ : Submodule R P) = ⊤) : traceIdeal R P ≤ I := by
+  refine iSup_le fun f => ?_
+  rw [LinearMap.range_eq_map, ← h, Submodule.map_smul'']
+  exact Submodule.smul_le.2 fun a ha x _ => Ideal.IsTwoSided.mul_mem_of_left x ha
 
 /-- `Tr(P)` is idempotent.
 
@@ -494,7 +520,10 @@ Proof: `Tr(P) • ⊤ = ⊤` gives `im f = f (Tr(P) • ⊤) = Tr(P) * im f ⊆ 
 so `Tr(P) ≤ Tr(P) * Tr(P)`; the reverse inclusion is `Ideal.mul_le_left`. -/
 theorem traceIdeal_mul_self [Module.Projective R P] :
     traceIdeal R P * traceIdeal R P = traceIdeal R P := by
-  sorry
+  refine le_antisymm Ideal.mul_le_left (iSup_le fun f => ?_)
+  rw [LinearMap.range_eq_map, ← smul_traceIdeal_eq R P, Submodule.map_smul'']
+  refine Submodule.smul_le.2 fun a ha x hx => ?_
+  exact Ideal.mul_mem_mul ha (le_traceIdeal R P f ((LinearMap.range_eq_map f) ▸ hx))
 
 end Trace
 
@@ -567,15 +596,64 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
           ∃ m₁ m₂ : ℕ, eval x₁ x₂ ((m₁ : ℕ∞), F.2) = eval x₁ x₂ ((m₂ : ℕ∞), G.2)) := by
   sorry
 
-/-- **Corollary 5.5(2)**, first claim: if `add x₁ = add x₂` then `H` has exactly one element with
-an infinite form.
+/-- **`ℵ₀ x₂` absorbs any number of copies of `x₁`** as soon as `x₁ ∈ add x₂`: from `x₁ + z = n x₂`
+one gets `β x₁ ≼ ℵ₀ x₁ ≼ ℵ₀ (n x₂) = ℵ₀ x₂`, and Lemma 2.8(2) (`add_cmul_top_eq`) turns a summand of
+`ℵ₀ x₂` into an absorbed one.  The degenerate case `n = 0` forces `x₁ = 0` by reducedness. -/
+theorem cmul_top_absorb (h : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂) (β : ℕ∞) :
+    KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + ecmul β x₁
+      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
+  obtain ⟨z, n, hzn⟩ := h
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · -- `0 · x₂ = 0`, so `x₁ = 0` and there is nothing to absorb
+    have h0 : x₁ + z = 0 := by
+      rw [hzn, KMonoid.cmul_congr (by rw [Nat.cast_zero] : ((0 : ℕ) : Cardinal.{u}) = 0) _ zero_le,
+        KMonoid.cmul_zero_cardinal]
+    rw [(KMonoid.isConical (ℵ₀ : Cardinal.{u}) H x₁ z h0).1, ecmul, KMonoid.cmul_zero, add_zero]
+  · -- `ℵ₀ · n = ℵ₀`
+    have hmul : (ℵ₀ : Cardinal.{u}) * ((n : ℕ) : Cardinal.{u}) = ℵ₀ :=
+      Cardinal.mul_eq_left le_rfl (le_of_lt Cardinal.natCast_lt_aleph0)
+        (by exact_mod_cast hn.ne')
+    have hnκ : ((n : ℕ) : Cardinal.{u}) ≤ ℵ₀ := le_of_lt Cardinal.natCast_lt_aleph0
+    -- `ℵ₀ x₁ + ℵ₀ z = ℵ₀ (x₁ + z) = ℵ₀ (n x₂) = ℵ₀ x₂`
+    have hstep : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl z
+        = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
+      rw [← KMonoid.cmul_top_distrib, hzn, KMonoid.cmul_cmul le_rfl hnκ (le_of_eq hmul),
+        KMonoid.cmul_congr hmul (le_of_eq hmul) le_rfl x₂]
+    -- so `β x₁ ≼ ℵ₀ x₁ ≼ ℵ₀ x₂`
+    obtain ⟨w, hw⟩ : ecmul β x₁ ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ :=
+      AddLe.trans
+        (KMonoid.cmul_le_cmul (Cardinal.ofENat_le_aleph0 β) le_rfl
+          (Cardinal.ofENat_le_aleph0 β) x₁)
+        ⟨KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl z, hstep⟩
+    rw [add_comm]
+    exact KMonoid.add_cmul_top_eq hw
 
-Proof: `x := x₁ + x₂` is an order-unit; from `x_i ∈ add x_j` one gets `ℵ₀ x_j = ℵ₀ x` by Lemma
-2.14, so every infinite form represents `ℵ₀ x`. -/
+/-- **Corollary 5.5(2)**, first claim: if `add x₁ = add x₂` then `H` has exactly one element with
+an infinite form, namely `ℵ₀ x₁ = ℵ₀ x₂`.
+
+Each generator absorbs the other by `cmul_top_absorb`, which both identifies `ℵ₀ x₁` with `ℵ₀ x₂`
+and collapses every infinite form to it. -/
 theorem corollary_5_5_two_unique (h : KMonoid.addOf (κ := ℵ₀) x₁ = KMonoid.addOf (κ := ℵ₀) x₂)
-    (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H)) :
+    (_hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H)) :
     ∀ F G : Form, F.IsInfinite → G.IsInfinite → eval x₁ x₂ F = eval x₁ x₂ G := by
-  sorry
+  have h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂ := by rw [← h]; exact KMonoid.self_mem_addOf x₁
+  have h₂ : x₂ ∈ KMonoid.addOf (κ := ℵ₀) x₁ := by rw [h]; exact KMonoid.self_mem_addOf x₂
+  have habs₁ := cmul_top_absorb x₁ x₂ h₁
+  have habs₂ := cmul_top_absorb x₂ x₁ h₂
+  -- the two infinite multiples agree, both being `ℵ₀ x₁ + ℵ₀ x₂`
+  have heq : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
+    have e₁ := habs₁ ⊤
+    have e₂ := habs₂ ⊤
+    rw [ecmul_top] at e₁ e₂
+    rw [← e₂, add_comm, e₁]
+  -- every infinite form evaluates to `ℵ₀ x₁`
+  have key : ∀ F : Form, F.IsInfinite → eval x₁ x₂ F = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+    intro F hF
+    rcases hF with hc | hc
+    · rw [eval, hc, ecmul_top]
+      exact habs₂ F.2
+    · rw [eval, hc, ecmul_top, add_comm, habs₁ F.1, heq]
+  exact fun F G hF hG => (key F hF).trans (key G hG).symm
 
 /-- **Corollary 5.5(2)**, equivalence: `add x₁ = add x₂` with no mixed forms is exactly
 realizability by a ring whose countably (non finitely) generated projectives are all free. -/
@@ -590,11 +668,12 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
   sorry
 
-/-- **Corollary 5.5(3)**, first claim: `x₁ ∈ add x₂` forces `ℵ₀ x₂ + β x₁ = ℵ₀ x₂` for every `β`. -/
+/-- **Corollary 5.5(3)**, first claim: `x₁ ∈ add x₂` forces `ℵ₀ x₂ + β x₁ = ℵ₀ x₂` for every `β`.
+Generation is not needed — this is `cmul_top_absorb`. -/
 theorem corollary_5_5_three_absorb (h : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
-    (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H)) (β : ℕ∞) :
-    KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + ecmul β x₁ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
-  sorry
+    (_hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H)) (β : ℕ∞) :
+    KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + ecmul β x₁ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ :=
+  cmul_top_absorb x₁ x₂ h β
 
 /-- **Corollary 5.5(3)**, equivalence: for `add x₁ ⊊ add x₂`, realizability with a non-free
 `P^{(ℵ₀)}` is equivalent to an explicit relation condition, and to a strict trace inclusion. -/

@@ -9,7 +9,8 @@ independently checkable.
 
 **The §4 blocker is gone.** Corollary 4.7(1) is proved (both directions, with axiom A5 for
 (i) ⇒ (ii)), so Lemma 5.1 and Theorem 5.3 have their input. Steps 1 and 6's counterexample are
-done, as are Lemma 5.2(1)(2); 15 `sorry`s remain.
+done, as are Lemma 5.2(1)(2), the trace ideals of step 5 and two claims of step 6;
+10 `sorry`s remain.
 
 **§5 is the most expensive section per result.** Unlike §§2–4, its proofs are explicit
 combinatorial constructions — Lemma 5.2(3) writes down three interleaved partitions of `ℕ` by
@@ -134,8 +135,15 @@ more than it saves.
 
 **Mathlib has no trace ideal** — there is no `traceIdeal`, and `Module.trace` is the trace of an
 endomorphism, unrelated. The scaffold defines it and states the three facts to prove. These are
-being **formalised, not assumed**: unlike Bergman–Dicks (A5) or Leavitt (A2) they are elementary,
-so assuming them would be assuming the inconvenient rather than the out-of-reach.
+**formalised, not assumed**: unlike Bergman–Dicks (A5) or Leavitt (A2) they are elementary, so
+assuming them would be assuming the inconvenient rather than the out-of-reach.
+
+**The three lemmas are done**, with one addition to the scaffold: `Ideal R` in Mathlib is a *left*
+ideal, and `I • (⊤ : Submodule R R) ≤ I` — the inclusion both `traceIdeal_le_of_smul_eq` and
+`traceIdeal_mul_self` rest on — is false for a one-sided ideal. So `traceIdeal_isTwoSided` is proved
+first (right multiplication by `r` is left-`R`-linear, so `f (·) * r` is again a functional) and
+`traceIdeal_le_of_smul_eq` takes `[I.IsTwoSided]`. What remains of step 5 is Proposition 5.4
+itself.
 
 ```lean
 noncomputable def traceIdeal : Ideal R := ⨆ f : P →ₗ[R] R, LinearMap.range f
@@ -171,6 +179,10 @@ already formalised as `TrivExt.instKMonoid` in `KappaMonoid/Examples.lean`, so t
 `H` outright and leaves only `cex_incomparable`, `cex_absorb` and `cex_unique_infinite` open.
 
 **Done** — and they paid for themselves: they are what exposed the encoding error in step 1.
+`corollary_5_5_two_unique` and `corollary_5_5_three_absorb` are proved too, both from
+`cmul_top_absorb`: if `x₁ ∈ add x₂` then `ℵ₀ x₂` absorbs any number of copies of `x₁`
+(`β x₁ ≼ ℵ₀ x₁ ≼ ℵ₀ (n x₂) = ℵ₀ x₂`, then Lemma 2.8(2)). Neither needs the generation hypothesis,
+which is why both carry it as `_hgen`.
 `isConical_natSq`, `cex_incomparable`, `cex_absorb` and `cex_unique_infinite` are proved, on
 `TrivExt.cmul_top_eq_top` (`ℵ₀` copies of a nonzero element of a trivial extension are `∞`) and
 `TrivExt.coe_nsmul`, both added to `Examples.lean`. What is left in step 6 is the three
@@ -188,12 +200,18 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 
 ## Status
 
-17 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
+10 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
 stays green and `sorry`-free because the file is not imported by `KappaMonoid.lean`.
 
-Closed so far: `sumOf_familyOfForm` (step 1), Lemma 5.2(1)(2) (step 3) and the whole counterexample
-block (step 6), with no axiom. New reusable infrastructure, in the core files: `KMonoid.cmul_eq_sumOf`,
-`KMonoid.sumOf_indicator`, `KMonoid.sumOf_eq_sumOf_subset`, `KMonoid.sumOf_sumType` (`Basic.lean`), `TrivExt.coe_nsmul`,
+Closed so far, all without any axiom: `sumOf_familyOfForm` (step 1); Lemma 5.2(1)(2) (step 3); the
+trace ideals `smul_traceIdeal_eq`, `traceIdeal_le_of_smul_eq`, `traceIdeal_mul_self` and
+`traceIdeal_isTwoSided` (step 5); the counterexample block, `corollary_5_5_two_unique` and
+`corollary_5_5_three_absorb` (step 6).
+
+Still open (10): Lemma 5.1; Lemma 5.2(3)(4)(5); Theorem 5.3; Proposition 5.4 and its hereditary
+addendum; Corollary 5.5(1)(2)(3). New reusable infrastructure, in the core files: `KMonoid.cmul_eq_sumOf`,
+`KMonoid.sumOf_indicator`, `KMonoid.sumOf_eq_sumOf_subset`, `KMonoid.sumOf_sumType`,
+`KMonoid.cmul_zero`, `KMonoid.cmul_cmul` (`Basic.lean`), `TrivExt.coe_nsmul`,
 `TrivExt.cmul_top_eq_top` (`Examples.lean`), `KMonoid.self_mem_addOf` (`Section4.lean`).
 
 ## One thing to fix in the paper

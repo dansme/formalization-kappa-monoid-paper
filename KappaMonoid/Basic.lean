@@ -1088,6 +1088,17 @@ theorem cmul_add {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hα
   LMonoid.lcmul_add (lam := Order.succ κ) (lt_succ_of_le hα) (lt_succ_of_le hβ)
     (lt_succ_of_le hαβ) x
 
+/-- Any number of copies of `0` is `0`. -/
+@[simp] theorem cmul_zero (α : Cardinal.{u}) (hα : α ≤ κ) :
+    cmul (κ := κ) α hα (0 : H) = 0 :=
+  LMonoid.lcmul_zero (lam := Order.succ κ) (X := H) α _
+
+/-- Lemma 2.7(4): iterated scalar multiplication multiplies the cardinals. -/
+theorem cmul_cmul {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hαβ : α * β ≤ κ) (x : H) :
+    cmul (κ := κ) α hα (cmul (κ := κ) β hβ x) = cmul (κ := κ) (α * β) hαβ x :=
+  LMonoid.lcmul_lcmul (lam := Order.succ κ) (lt_succ_of_le hα) (lt_succ_of_le hβ)
+    (lt_succ_of_le hαβ) x
+
 /-- `#ι` copies of `x` are the sum of the family constantly equal to `x`, indexed by `ι`. -/
 theorem cmul_eq_sumOf {ι : Type u} (hι : #ι ≤ κ) (x : H) :
     cmul (κ := κ) #ι hι x = sumOf (κ := κ) hι (fun _ : ι => x) := by
