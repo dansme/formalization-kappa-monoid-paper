@@ -38,6 +38,21 @@ theorem esum_comp_equiv {ι : Type u} {ι' : Type v} (e : ι ≃ ι') (x : ι' �
     esum (x ∘ e) = esum x :=
   e.tsum_eq fun i => ((x i : ℝ≥0) : ℝ≥0∞)
 
+/-- Infinitude of the support survives reindexing along a bijection. -/
+theorem infinite_support_comp_equiv {ι : Type v} (e : ℕ ≃ ι) {x : ℕ → ℝ≥0}
+    (hx : (Function.support x).Infinite) :
+    (Function.support fun i => x (e.symm i)).Infinite := by
+  have himg : (Function.support fun i => x (e.symm i)) = e '' Function.support x := by
+    ext i
+    simp only [Function.mem_support, Set.mem_image]
+    constructor
+    · intro hne
+      exact ⟨e.symm i, hne, e.apply_symm_apply i⟩
+    · rintro ⟨n, hn, rfl⟩
+      simpa [e.symm_apply_apply] using hn
+  rw [himg]
+  exact hx.image e.injective.injOn
+
 /-- The `n`-th partial sum of a family indexed by `ℕ`. -/
 noncomputable def psum (x : ℕ → ℝ≥0) (n : ℕ) : ℝ≥0 := ∑ i ∈ Finset.range n, x i
 
@@ -518,6 +533,30 @@ theorem not_isBraided_geom_two_geom :
   rw [esum_geom, esum_two_geom] at hsum
   norm_num at hsum
 
+/-- A geometric family with prescribed series sum `a`. -/
+noncomputable def geomTo (a : ℝ≥0) (n : ℕ) : ℝ≥0 := (a * 2⁻¹) * (2⁻¹) ^ n
+
+theorem esum_geomTo (a : ℝ≥0) : esum (geomTo a) = (a : ℝ≥0∞) := by
+  have hcoe : ∀ n, ((geomTo a n : ℝ≥0) : ℝ≥0∞)
+      = ((a : ℝ≥0∞) * 2⁻¹) * (2⁻¹ : ℝ≥0∞) ^ n := by
+    intro n
+    rw [geomTo]
+    push_cast
+    norm_num
+  rw [esum, tsum_congr hcoe, ENNReal.tsum_mul_left, ENNReal.tsum_geometric,
+    show ((1 : ℝ≥0∞) - 2⁻¹)⁻¹ = 2 by norm_num, mul_assoc,
+    show (2⁻¹ : ℝ≥0∞) * 2 = 1 from ENNReal.inv_mul_cancel (by norm_num) (by norm_num), mul_one]
+
+theorem infinite_support_geomTo {a : ℝ≥0} (ha : a ≠ 0) :
+    (Function.support (geomTo a)).Infinite := by
+  have hsupp : Function.support (geomTo a) = Set.univ := by
+    refine Set.eq_univ_of_forall fun n => ?_
+    simp only [Function.mem_support, geomTo, ne_eq, mul_eq_zero, not_or]
+    refine ⟨⟨ha, by norm_num⟩, ?_⟩
+    positivity
+  rw [hsupp]
+  exact Set.infinite_univ
+
 /-! ## Examples 3.3(2): the `ℵ₀`-monoid `H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`
 
 The paper's construction.  An element is a value in `ℝ≥0∞` together with a tilde flag, where only a
@@ -815,30 +854,6 @@ theorem sigma_ofReal_comp {ι : Type u} (x : ι → ℝ≥0) :
   refine ⟨rfl, ?_⟩
   rw [tilded_sigma_eq_false_iff, tsum_val_ofReal_comp, isPlain_ofReal_comp_iff]
 
-/-- A geometric family with prescribed series sum `a`. -/
-noncomputable def geomTo (a : ℝ≥0) (n : ℕ) : ℝ≥0 := (a * 2⁻¹) * (2⁻¹) ^ n
-
-theorem esum_geomTo (a : ℝ≥0) : esum (geomTo a) = (a : ℝ≥0∞) := by
-  have hcoe : ∀ n, ((geomTo a n : ℝ≥0) : ℝ≥0∞)
-      = ((a : ℝ≥0∞) * 2⁻¹) * (2⁻¹ : ℝ≥0∞) ^ n := by
-    intro n
-    rw [geomTo]
-    push_cast
-    norm_num
-  rw [esum, tsum_congr hcoe, ENNReal.tsum_mul_left, ENNReal.tsum_geometric,
-    show ((1 : ℝ≥0∞) - 2⁻¹)⁻¹ = 2 by norm_num, mul_assoc,
-    show (2⁻¹ : ℝ≥0∞) * 2 = 1 from ENNReal.inv_mul_cancel (by norm_num) (by norm_num), mul_one]
-
-theorem infinite_support_geomTo {a : ℝ≥0} (ha : a ≠ 0) :
-    (Function.support (geomTo a)).Infinite := by
-  have hsupp : Function.support (geomTo a) = Set.univ := by
-    refine Set.eq_univ_of_forall fun n => ?_
-    simp only [Function.mem_support, geomTo, ne_eq, mul_eq_zero, not_or]
-    refine ⟨⟨ha, by norm_num⟩, ?_⟩
-    positivity
-  rw [hsupp]
-  exact Set.infinite_univ
-
 /-- **Examples 3.3(2)**: `H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` is `ℵ₀⁻`-braided over `ℝ≥0`, along the inclusion of
 the plain copy.
 
@@ -911,20 +926,8 @@ theorem isBraidedOver_rtilde :
           have hesum : esum (fun i => geomTo a (e.symm i)) = h.val := by
             rw [show esum (fun i => geomTo a (e.symm i)) = esum (geomTo a) from
               esum_comp_equiv e.symm (geomTo a), esum_geomTo, ha]
-          have hinf : ¬ (Function.support fun i => geomTo a (e.symm i)).Finite := by
-            intro hc
-            refine infinite_support_geomTo ha0 ?_
-            have himg : Function.support (fun i => geomTo a (e.symm i))
-                = e '' Function.support (geomTo a) := by
-              ext i
-              simp only [Function.mem_support, Set.mem_image]
-              constructor
-              · intro hne
-                exact ⟨e.symm i, hne, e.apply_symm_apply i⟩
-              · rintro ⟨n, hn, rfl⟩
-                simpa [e.symm_apply_apply] using hn
-            rw [himg] at hc
-            exact Set.Finite.of_finite_image hc e.injective.injOn
+          have hinf : ¬ (Function.support fun i => geomTo a (e.symm i)).Finite :=
+            infinite_support_comp_equiv e (infinite_support_geomTo ha0)
           rw [show (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{u}))
               fun i => ofReal (geomTo a (e.symm i)))
             = sigma (fun i => ofReal (geomTo a (e.symm i))) from rfl]
@@ -1071,6 +1074,21 @@ theorem add_mem_ratSet {a b : ℝ≥0} (ha : a ∈ ratSet) (hb : b ∈ ratSet) :
   push_cast
   ring
 
+theorem mul_mem_ratSet {a b : ℝ≥0} (ha : a ∈ ratSet) (hb : b ∈ ratSet) : a * b ∈ ratSet := by
+  obtain ⟨p, hp⟩ := ha
+  obtain ⟨q, hq⟩ := hb
+  refine ⟨p * q, ?_⟩
+  rw [NNReal.coe_mul, ← hp, ← hq]
+  push_cast
+  ring
+
+theorem inv_two_mem_ratSet : (2⁻¹ : ℝ≥0) ∈ ratSet := ⟨2⁻¹, by norm_num⟩
+
+theorem pow_mem_ratSet {a : ℝ≥0} (ha : a ∈ ratSet) (n : ℕ) : a ^ n ∈ ratSet := by
+  induction n with
+  | zero => exact ⟨1, by norm_num⟩
+  | succ n ih => rw [pow_succ]; exact mul_mem_ratSet ih ha
+
 /-- The rationals as an additive submonoid of `ℝ≥0`, for summing over finsets. -/
 def ratSubmonoid : AddSubmonoid ℝ≥0 where
   carrier := ratSet
@@ -1096,6 +1114,157 @@ theorem isSaturated_ratSet : IsSaturated ratSet := by
   push_cast
   rw [hp, hq, hreal]
   ring
+
+/-! ### Every positive real is the sum of a series of positive rationals
+
+The one analytic input the `ℚ≥0` case needs beyond the `ℝ≥0` one, and what makes every *tilded*
+element an `ℵ₀`-sum of rationals.  For a rational value the geometric family already does it; for an
+irrational one, take the dyadic truncations `⌊a·2ⁿ⌋/2ⁿ` and sum their increments — irrationality is
+exactly what keeps infinitely many of those increments nonzero. -/
+
+/-- The `n`-th dyadic truncation `⌊a·2ⁿ⌋/2ⁿ` of `a`. -/
+noncomputable def dyadic (a : ℝ≥0) (n : ℕ) : ℝ≥0 := (⌊a * 2 ^ n⌋₊ : ℝ≥0) / 2 ^ n
+
+theorem dyadic_mem_ratSet (a : ℝ≥0) (n : ℕ) : dyadic a n ∈ ratSet := by
+  refine ⟨(⌊a * 2 ^ n⌋₊ : ℚ) / 2 ^ n, ?_⟩
+  rw [dyadic]
+  push_cast
+  ring
+
+theorem dyadic_le (a : ℝ≥0) (n : ℕ) : dyadic a n ≤ a := by
+  rw [dyadic, div_le_iff₀ (by positivity : (0 : ℝ≥0) < 2 ^ n)]
+  exact Nat.floor_le zero_le
+
+theorem dyadic_mono (a : ℝ≥0) : Monotone (dyadic a) := by
+  refine monotone_nat_of_le_succ fun n => ?_
+  rw [dyadic, dyadic, div_le_div_iff₀ (by positivity : (0 : ℝ≥0) < 2 ^ n)
+    (by positivity : (0 : ℝ≥0) < 2 ^ (n + 1))]
+  have hle : ((2 * ⌊a * 2 ^ n⌋₊ : ℕ) : ℝ≥0) ≤ a * 2 ^ (n + 1) := by
+    push_cast
+    rw [pow_succ, ← mul_assoc, mul_comm (2 : ℝ≥0) _]
+    exact mul_le_mul_of_nonneg_right (Nat.floor_le zero_le) zero_le
+  have hfloor : 2 * ⌊a * 2 ^ n⌋₊ ≤ ⌊a * 2 ^ (n + 1)⌋₊ := Nat.le_floor hle
+  calc (⌊a * 2 ^ n⌋₊ : ℝ≥0) * 2 ^ (n + 1) = ((2 * ⌊a * 2 ^ n⌋₊ : ℕ) : ℝ≥0) * 2 ^ n := by
+        push_cast
+        rw [pow_succ]
+        ring
+    _ ≤ (⌊a * 2 ^ (n + 1)⌋₊ : ℝ≥0) * 2 ^ n := by
+        exact mul_le_mul_of_nonneg_right (by exact_mod_cast hfloor) zero_le
+
+/-- The dyadic truncations approximate from below to within `2⁻ⁿ`. -/
+theorem lt_dyadic_add (a : ℝ≥0) (n : ℕ) : a < dyadic a n + (2⁻¹ : ℝ≥0) ^ n := by
+  have hpos : (0 : ℝ≥0) < 2 ^ n := by positivity
+  have key : (dyadic a n + (2⁻¹ : ℝ≥0) ^ n) * 2 ^ n = (⌊a * 2 ^ n⌋₊ : ℝ≥0) + 1 := by
+    rw [dyadic, add_mul, div_mul_cancel₀ _ (ne_of_gt hpos), ← mul_pow]
+    norm_num
+  refine lt_of_mul_lt_mul_right ?_ (le_of_lt hpos)
+  rw [key]
+  exact Nat.lt_floor_add_one (a * 2 ^ n)
+
+/-- So the dyadic truncations have supremum `a`. -/
+theorem iSup_dyadic (a : ℝ≥0) : (⨆ n, ((dyadic a n : ℝ≥0) : ℝ≥0∞)) = (a : ℝ≥0∞) := by
+  refine le_antisymm (iSup_le fun n => by exact_mod_cast dyadic_le a n) ?_
+  refine le_iSup_iff.mpr fun b hb => ?_
+  by_contra hcon
+  rw [not_le] at hcon
+  have hbtop : b ≠ ⊤ := fun hc => absurd (hc ▸ hcon) (by simp)
+  set c : ℝ≥0 := b.toNNReal with hcdef
+  have hbc : (c : ℝ≥0∞) = b := ENNReal.coe_toNNReal hbtop
+  have hca : c < a := by rw [← ENNReal.coe_lt_coe, hbc]; exact hcon
+  have hD : ∀ n, dyadic a n ≤ c := fun n => by
+    rw [← ENNReal.coe_le_coe, hbc]; exact hb n
+  obtain ⟨n, hn⟩ := exists_pow_lt_of_lt_one (tsub_pos_of_lt hca) (by norm_num : (2⁻¹ : ℝ≥0) < 1)
+  have h1 : a < c + (a - c) := lt_of_lt_of_le (lt_dyadic_add a n)
+    (add_le_add (hD n) (le_of_lt hn))
+  rw [add_tsub_cancel_of_le (le_of_lt hca)] at h1
+  exact absurd h1 (lt_irrefl a)
+
+/-- The increments of a monotone sequence form a family whose series sum is its supremum. -/
+theorem esum_increments {P : ℕ → ℝ≥0} (hmono : Monotone P) :
+    esum (fun n => if n = 0 then P 1 else P (n + 1) - P n) = ⨆ n, ((P n : ℝ≥0) : ℝ≥0∞) := by
+  set x : ℕ → ℝ≥0 := fun n => if n = 0 then P 1 else P (n + 1) - P n with hxdef
+  have hpsum : ∀ N, psum x (N + 1) = P (N + 1) := by
+    intro N
+    induction N with
+    | zero => simp [psum, hxdef]
+    | succ N ih =>
+        rw [psum, Finset.sum_range_succ, ← psum, ih, hxdef]
+        show P (N + 1) + (if N + 1 = 0 then P 1 else P (N + 2) - P (N + 1)) = P (N + 2)
+        rw [if_neg (Nat.succ_ne_zero N)]
+        exact add_tsub_cancel_of_le (hmono (Nat.le_succ (N + 1)))
+  have hesum : esum x = ⨆ N, ((psum x N : ℝ≥0) : ℝ≥0∞) := by
+    rw [esum, ENNReal.tsum_eq_iSup_nat]
+    exact iSup_congr fun N => (coe_psum x N).symm
+  rw [hesum]
+  refine le_antisymm (iSup_le fun N => ?_) (iSup_le fun n => ?_)
+  · cases N with
+    | zero => simp [psum]
+    | succ N =>
+        rw [hpsum N]
+        exact le_iSup (fun n => ((P n : ℝ≥0) : ℝ≥0∞)) (N + 1)
+  · refine le_trans (by exact_mod_cast hmono (Nat.le_succ n) : ((P n : ℝ≥0) : ℝ≥0∞) ≤ (P (n + 1) : ℝ≥0∞)) ?_
+    rw [← hpsum n]
+    exact le_iSup (fun N => ((psum x N : ℝ≥0) : ℝ≥0∞)) (n + 1)
+
+/-- **Every positive real is the sum of a series of positive rationals** — with infinite support, as
+it must be. -/
+theorem exists_ratSet_family {a : ℝ≥0} (ha : a ≠ 0) :
+    ∃ x : ℕ → ℝ≥0, (∀ n, x n ∈ ratSet) ∧ (Function.support x).Infinite
+      ∧ esum x = (a : ℝ≥0∞) := by
+  classical
+  by_cases hrat : a ∈ ratSet
+  · -- a rational value: the geometric family, whose terms are rational
+    refine ⟨geomTo a, fun n => ?_, infinite_support_geomTo ha, esum_geomTo a⟩
+    rw [geomTo]
+    exact mul_mem_ratSet (mul_mem_ratSet hrat inv_two_mem_ratSet)
+      (pow_mem_ratSet inv_two_mem_ratSet n)
+  · -- an irrational value: the increments of the dyadic truncations
+    refine ⟨fun n => if n = 0 then dyadic a 1 else dyadic a (n + 1) - dyadic a n, fun n => ?_, ?_,
+      by rw [esum_increments (dyadic_mono a), iSup_dyadic]⟩
+    · -- each increment is rational, being a difference of rationals
+      cases n with
+      | zero => exact dyadic_mem_ratSet a 1
+      | succ n =>
+          refine isSaturated_ratSet _ (dyadic_mem_ratSet a (n + 2)) _
+            (dyadic_mem_ratSet a (n + 1)) _ ?_
+          simp only [if_neg (Nat.succ_ne_zero n)]
+          exact (add_tsub_cancel_of_le (dyadic_mono a (Nat.le_succ (n + 1)))).symm
+    · -- infinitely many increments are nonzero: else `a` would be a dyadic truncation
+      intro hfin
+      obtain ⟨N, hN⟩ := (Set.Finite.bddAbove hfin)
+      have hconst : ∀ m, dyadic a (N + 1 + m) = dyadic a (N + 1) := by
+        intro m
+        induction m with
+        | zero => rfl
+        | succ m ih =>
+            have hzero : dyadic a (N + 1 + m + 1) - dyadic a (N + 1 + m) = 0 := by
+              by_contra hne
+              have hmem : (N + 1 + m) ∈ Function.support
+                  (fun n => if n = 0 then dyadic a 1 else dyadic a (n + 1) - dyadic a n) := by
+                simp only [Function.mem_support, if_neg (show N + 1 + m ≠ 0 by omega)]
+                exact hne
+              have := hN hmem
+              omega
+            have := add_tsub_cancel_of_le (dyadic_mono a (Nat.le_succ (N + 1 + m)))
+            rw [hzero, add_zero] at this
+            rw [show N + 1 + (m + 1) = N + 1 + m + 1 from rfl, ← this, ih]
+      -- then `a` is that truncation, which is rational
+      refine hrat ?_
+      have heq : a = dyadic a (N + 1) := by
+        refine le_antisymm ?_ (dyadic_le a (N + 1))
+        by_contra hlt
+        rw [not_le] at hlt
+        obtain ⟨k, hk⟩ := exists_pow_lt_of_lt_one (tsub_pos_of_lt hlt)
+          (by norm_num : (2⁻¹ : ℝ≥0) < 1)
+        have hmono2 : (2⁻¹ : ℝ≥0) ^ (N + 1 + k) ≤ (2⁻¹ : ℝ≥0) ^ k :=
+          pow_le_pow_of_le_one zero_le (by norm_num) (by omega)
+        have h1 : a < dyadic a (N + 1) + (a - dyadic a (N + 1)) :=
+          lt_of_lt_of_le (lt_dyadic_add a (N + 1 + k))
+            (add_le_add (le_of_eq (hconst k)) (le_of_lt (lt_of_le_of_lt hmono2 hk)))
+        rw [add_tsub_cancel_of_le (le_of_lt hlt)] at h1
+        exact absurd h1 (lt_irrefl a)
+      rw [heq]
+      exact dyadic_mem_ratSet a (N + 1)
 
 /-- **Examples 3.3(3)** / **Examples 3.12** for `ℚ≥0`: the universal `ℵ₀`-extension of `ℚ≥0` is the
 `ℵ₀`-submonoid of `H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` generated by `ℚ≥0`. -/
@@ -1186,5 +1355,88 @@ theorem ofReal_notMem_kclosure_of_not_mem_ratSet {a : ℝ≥0} (ha : a ∉ ratSe
     have : ((a : ℝ≥0) : ℝ≥0∞) = ((b : ℝ≥0) : ℝ≥0∞) := congrArg RTilde.val hbe
     rw [show a = b from by exact_mod_cast this]
     exact hb
+
+/-! ### The extension of `ℚ≥0` is `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` on the nose -/
+
+/-- Every tilded element is an `ℵ₀`-sum of rationals: expand its value as a series of positive
+rationals, which has infinite support and therefore gets the tilde. -/
+theorem tilde_mem_kclosure (a : ℝ≥0) (ha : a ≠ 0) :
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+    RTilde.tilde a ha ∈ KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet) := by
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  obtain ⟨x, hxrat, hxinf, hxsum⟩ := exists_ratSet_family ha
+  have hUL : #(ULift.{u} ℕ) = #(Idx (ℵ₀ : Cardinal.{u})) := by
+    rw [Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0, mk_Idx]
+  obtain ⟨e0⟩ := Cardinal.eq.mp hUL
+  set e : ℕ ≃ Idx (ℵ₀ : Cardinal.{u}) := Equiv.ulift.symm.trans e0 with hedef
+  set y : Idx (ℵ₀ : Cardinal.{u}) → ℝ≥0 := fun i => x (e.symm i) with hydef
+  have hyinf : (Function.support y).Infinite := infinite_support_comp_equiv e hxinf
+  have hysum : esum y = (a : ℝ≥0∞) := by
+    rw [hydef, show (esum fun i => x (e.symm i)) = esum (x ∘ e.symm) from rfl,
+      esum_comp_equiv e.symm x, hxsum]
+  have hmem := (KMonoid.isKSubmonoid_kclosure (ℵ₀ : Cardinal.{u})
+    (RTilde.ofReal '' ratSet)).ksum_mem (fun i => RTilde.ofReal (y i))
+    fun i => KMonoid.subset_kclosure ⟨y i, hxrat (e.symm i), rfl⟩
+  have heq : (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{u})) fun i => RTilde.ofReal (y i))
+      = RTilde.tilde a ha := by
+    rw [show (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{u})) fun i => RTilde.ofReal (y i))
+      = RTilde.sigma (fun i => RTilde.ofReal (y i)) from rfl]
+    refine RTilde.ext ?_ ?_
+    · rw [RTilde.val_sigma, RTilde.tsum_val_ofReal_comp, hysum, RTilde.val_tilde]
+    · rw [RTilde.tilded_tilde]
+      cases hs : (RTilde.sigma fun i => RTilde.ofReal (y i)).tilded with
+      | false =>
+          rcases (RTilde.sigma_ofReal_comp y).2.mp hs with hc | hc
+          · rw [hysum] at hc
+            exact absurd hc ENNReal.coe_ne_top
+          · exact absurd hc hyinf
+      | true => rfl
+  rw [← heq]
+  exact hmem
+
+/-- `∞` is an `ℵ₀`-sum of rationals: infinitely many `1`s. -/
+theorem top_mem_kclosure :
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+    RTilde.top ∈ KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet) := by
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  have hone : (1 : ℝ≥0) ∈ ratSet := ⟨1, by norm_num⟩
+  have hmem := (KMonoid.isKSubmonoid_kclosure (ℵ₀ : Cardinal.{u})
+    (RTilde.ofReal '' ratSet)).ksum_mem (fun _ : Idx (ℵ₀ : Cardinal.{u}) => RTilde.ofReal 1)
+    fun _ => KMonoid.subset_kclosure ⟨1, hone, rfl⟩
+  have heq : (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{u})) fun _ : Idx (ℵ₀ : Cardinal.{u}) =>
+      RTilde.ofReal 1) = RTilde.top := by
+    refine RTilde.sigma_of_val_eq_top ?_
+    haveI : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
+    show (∑' _ : Idx (ℵ₀ : Cardinal.{u}), ((1 : ℝ≥0) : ℝ≥0∞)) = ⊤
+    simpa using ENNReal.tsum_const_eq_top_of_ne_zero (α := Idx (ℵ₀ : Cardinal.{u}))
+      (c := ((1 : ℝ≥0) : ℝ≥0∞)) (by simp)
+  rw [← heq]
+  exact hmem
+
+/-- **Examples 3.3(3)**: the `ℵ₀`-submonoid of `H` generated by `ℚ≥0` — the universal
+`ℵ₀`-extension of `ℚ≥0`, by `isUniversalKExtension_ratSet` — is exactly
+`ℚ≥0 ∪ ℝ̃>0 ∪ {∞}`: every tilded element and `∞` are reached, and no plain irrational is. -/
+theorem kclosure_ofReal_ratSet :
+    letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+    KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet) = ratReachable := by
+  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  refine Set.Subset.antisymm (KMonoid.kclosure_le
+    (fun _ ⟨b, hb, hbe⟩ => Or.inr (Or.inr ⟨b, hb, hbe.symm⟩)) isKSubmonoid_ratReachable) ?_
+  rintro h (hfl | hval | ⟨b, hb, rfl⟩)
+  · -- a tilded element: its value is neither `0` nor `∞`
+    have hne : h.val ≠ ⊤ := RTilde.val_ne_top hfl
+    set a : ℝ≥0 := h.val.toNNReal with hadef
+    have ha : ((a : ℝ≥0) : ℝ≥0∞) = h.val := ENNReal.coe_toNNReal hne
+    have ha0 : a ≠ 0 := by
+      intro hc
+      refine RTilde.val_ne_zero hfl ?_
+      rw [← ha, hc]
+      simp
+    rw [show h = RTilde.tilde a ha0 from RTilde.ext (by rw [RTilde.val_tilde, ha])
+      (by rw [RTilde.tilded_tilde, hfl])]
+    exact tilde_mem_kclosure a ha0
+  · rw [RTilde.eq_top_of_val_eq_top hval]
+    exact top_mem_kclosure
+  · exact KMonoid.subset_kclosure ⟨b, hb, rfl⟩
 
 end KappaMonoid
