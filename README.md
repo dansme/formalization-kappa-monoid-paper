@@ -58,6 +58,13 @@ rests on Bergman–Dicks realisation, assumed as axiom A5 below. Corollary 4.6 i
 together with six results quoted from the literature, none of them monoid-theoretic and none in
 Mathlib, so it stays a documented stub in `Modules.lean`.
 
+## Conventions
+
+`CLAUDE.md` collects what a contributor (human or model) needs before touching the files: the build
+commands, the Lean house style, the axiom and deviation discipline, the recurring elaboration traps
+of this development, and the workflow that keeps the edit/build loop cheap. The three plan
+documents defer to it and only record what is specific to their section.
+
 ## The assumed results
 
 Five classical theorems are taken as axioms in `KappaMonoid/Axioms.lean`, each with the

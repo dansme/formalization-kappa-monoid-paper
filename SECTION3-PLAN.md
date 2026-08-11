@@ -74,29 +74,16 @@ open on purpose, and one is a loose end worth recording:
 
 ## Ground rules
 
-Same as the rest of the development:
+`CLAUDE.md` carries the conventions, the workflow and the accumulated elaboration traps — all of
+the traps below were met in §3 and are recorded there. Specific to §3:
 
-1. **One step = one commit**, with `lake build` green before each.
-2. **Prove at the λ⁻ level and specialise to κ** where the statement allows it.
-3. **House style**: index types in `Type u`, carriers in `Type v`; docstrings open with the bold
-   paper reference; defs producing instances carry `@[instance_reducible]`.
-4. **No new axioms** without asking. §3 needs none.
-5. **Watch instance resolution on coercions.** Two traps cost real time in §2 and recurred in §3.2:
-   a plain `def` is not reducible, so `(freeClass …).carrier` does not unify with `Carrier` during
-   instance search — state lemmas at the type instance search expects; and a double coercion like
-   `↥↑m` can defeat synthesis outright — state such lemmas over a plain type variable and
-   specialise.
-6. When a `letI`-in-statement instance argument cannot be inferred from the goal, pass it
-   explicitly (`Fcard.instKMonoid_add (le_refl (ℵ₀ : Cardinal.{u}))`); and `rw` will not unfold
-   `KMonoid.ksum` to `KMonoid.sumOf`, so convert with `KMonoid.sumOf_Idx` (or `show`) before
-   rewriting with the `sumOf` lemmas.
-7. **Pin universes in statements that do not mention them.** A hypothesis like
-   `(hsat : sys.IsSaturatedFin)` is elaborated before the `letI`s that fix `Cardinal.{u}`, so its
-   universe is auto-bound to a *fresh* variable and the proof then fails with
-   `constant has level params [u, u_1]`. Write `LinSystem.IsSaturatedFin.{u} sys`.
-8. **Pass `g`/`g'` explicitly to the transport lemmas.** `IsLMonoidHom` is a plain `def`, so
-   unification against an expected unfolded ∀-type will not solve for the function; supply
-   `(g := …)`, `(g' := …)`.
+- §3 needs **no axiom**; `#print axioms` on any §3 result must report only `propext`,
+  `Classical.choice`, `Quot.sound`.
+- Prove at the `λ⁻` level and specialise to `κ` wherever the statement allows it — most of §3 is
+  stated for `lam` and used at `lam = ℵ₀` or `lam = ℵ₁`.
+- The two deviations from the paper (the `IsConical` hypothesis in Theorem 3.11, the
+  `IsSaturatedFin` hypothesis in Proposition 3.14(2)) are documented in the docstrings and in
+  `README.md`; keep it that way if a third appears.
 
 ---
 

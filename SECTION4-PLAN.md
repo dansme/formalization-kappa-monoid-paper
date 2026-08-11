@@ -5,20 +5,15 @@ the steps in the order given; each is independently checkable.
 
 ## Ground rules
 
-Same as `SECTION3-PLAN.md`:
+`CLAUDE.md` carries the conventions, the workflow and the elaboration traps. Specific to §4:
 
-- `lake build` must stay green and `sorry`-free at every commit.  `Section4.lean` is **not**
-  imported by `KappaMonoid.lean`; build it with `lake build KappaMonoid.Section4`.  Move
-  a statement into `Modules.lean` only once it is proved.
-- Prove at the `λ⁻` level and specialise to `κ`.  `KMonoid κ H` *is* `LMonoid (Order.succ κ) H`
-  plus `ℵ₀ ≤ κ`, and `#ι ≤ κ ↔ #ι < Order.succ κ`.
-- After a manifest bump run `lake exe cache get` before `lake build`, or Mathlib rebuilds from
-  source (30+ minutes with no output).
-- Two instance-resolution traps carried over from §2/§3:
-  1. A plain `def` is not reducible, and instance search runs at reducible transparency.  State
-     results at the type `(projClass R κ hκ).carrier`, not at an abbreviation of it.
-  2. Double coercions `↥↑m` defeat synthesis.  When a lemma is about a subtype of a subtype,
-     state it over a plain type variable and transport.
+- `Section4.lean` is **not** imported by `KappaMonoid.lean`; build it with
+  `lake build KappaMonoid.Section4`, and move a statement into `Modules.lean` only once it is
+  proved.
+- Trap 1 of `CLAUDE.md` bites here as `(projClass R κ hκ).carrier`, and trap 2 as
+  `lambdaSmallPart`, which is a subtype of a subtype.
+- Only Corollary 4.7(1) may report `bergmanDicksData` (axiom A5); re-run `#print axioms` after each
+  step and keep the provenance table in `README.md` in step.
 
 ## What is already done
 

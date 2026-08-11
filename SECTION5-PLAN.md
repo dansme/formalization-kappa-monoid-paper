@@ -19,16 +19,14 @@ of its own.
 
 ## Ground rules
 
-Same as `SECTION3-PLAN.md` and `SECTION4-PLAN.md`:
+`CLAUDE.md` carries the conventions, the workflow and the elaboration traps. Specific to §5:
 
-- `lake build` stays green and `sorry`-free at every commit. `KappaMonoid/Section5.lean` is
-  **not** imported by `KappaMonoid.lean`; build it with `lake build KappaMonoid.Section5`.
-- After a manifest bump run `lake exe cache get` first.
-- Instance-resolution traps: a plain `def` is not reducible, so state results at
-  `(projClass R κ hκ).carrier` rather than at an abbreviation; double coercions `↥↑m` defeat
-  synthesis, so state subtype-of-subtype lemmas over a plain type variable and transport.
+- `Section5.lean` is **not** imported by `KappaMonoid.lean`; build it with
+  `lake build KappaMonoid.Section5`.
 - §5 fixes `κ = ℵ₀` throughout. `KMonoid ℵ₀ H` is `LMonoid ℵ₁ H` plus `ℵ₀ ≤ ℵ₀`; index types are
-  countable, so `ℕ` is the canonical index and `Idx ℵ₀ ≃ ℕ`.
+  countable, so `ℕ` is the canonical index and `Idx ℵ₀ ≃ ℕ` — but index by `Nats := ULift.{u} ℕ`,
+  see step 1.
+- Trap 5 of `CLAUDE.md` (pin universes) is the reason for that `ULift`.
 
 ## Step 1 — forms
 
