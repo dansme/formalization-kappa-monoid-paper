@@ -24,9 +24,9 @@ monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`)
 | `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** and its converse (`isBraidedOver_of_isUniversalKExtension`: universal ⟹ braided over), transport of braidedness along isomorphisms |
 | `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1) and Examples 3.12 for `ℕ₀`, **Lemma 3.13**(1) and (2), **Proposition 3.14**(1) and (2) (universal extensions of Diophantine monoids), saturation for inequality-free systems, **Example 3.15**, and the counterexample showing that (2) does need the saturation hypothesis |
 | `KappaMonoid/Reals.lean` | §3: **Examples 3.3(2)(3)** and their entries of Examples 3.12 — braiding in `ℝ≥0` (same series sum, supports both finite or both infinite), why neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`, the `ℵ₀`-monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` and its universal property, that it is not braided over itself, and the `ℚ≥0` variant with its extension identified as `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` |
-| `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5, Kaplansky |
+| `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5, Kaplansky (the `κ`-monoid form; the classical statement is axiom A6) |
 | `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, `V(R) = add [R]`, **Corollary 4.7**(1) (both directions) and (2), **Examples 4.8(1)** (ascent of KRSA) |
-| `KappaMonoid/Axioms.lean` | The five classical results assumed rather than proved — see below |
+| `KappaMonoid/Axioms.lean` | The six classical results assumed rather than proved — see below |
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
 proved, `sorry`-free, subject only to the four §2 axioms below (A1–A4; A5 is used nowhere in the
@@ -71,7 +71,7 @@ documents defer to it and only record what is specific to their section.
 
 ## The assumed results
 
-Five classical theorems are taken as axioms in `KappaMonoid/Axioms.lean`, each with the
+Six classical theorems are taken as axioms in `KappaMonoid/Axioms.lean`, each with the
 standard proof sketch it stands for:
 
 | Axiom | Statement | Used by |
@@ -81,6 +81,11 @@ standard proof sketch it stands for:
 | `cyclicMonoidClassification` (A4) | every cyclic monoid is `ℕ₀` or `C_{m,n}` | `prop_2_16` |
 | `mk_multiplicity_eq` (A3) | uniqueness of the multiplicities of simple modules, infinite multiplicities included | `prop_2_17_one` |
 | `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` |
+| `kaplansky_classical` (A6) | Kaplansky's theorem: every projective module is a direct sum of countably generated projective modules | `kaplansky`, and through it Cor. 4.5 and Cor. 4.7 |
+
+The list is enforced: `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
+declarations under `KappaMonoid/` differs from the six above, so adding one means editing the
+workflow and this table in the same commit.
 
 A1 is stated in the *generation* form rather than the two-bases form because the complement
 appearing in Example 2.13 is merely projective, not free, so there is no second basis to compare

@@ -1,7 +1,7 @@
 /-
 The classical results assumed by this development.
 
-Four theorems of ordinary mathematics are taken as axioms rather than proved.  Assuming true
+Six theorems of ordinary mathematics are taken as axioms rather than proved.  Assuming true
 statements cannot make the development inconsistent, but a *mis-stated* axiom is false and a
 false axiom proves everything, so each statement below is accompanied by the standard proof
 sketch it stands for and should be checked against the literature before it is relied on.
@@ -165,5 +165,25 @@ axiom bergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M]
     (_hred : ∀ a b : M, a + b = 0 → a = 0)
     (_hunit : ∃ u : M, ∀ y : M, ∃ (z : M) (n : ℕ), y + z = n • u) :
     BergmanDicksData.{u} k M
+
+/-! ## A6: Kaplansky's theorem -/
+
+/-- **Assumed** (Kaplansky's theorem, [Kaplansky58]): every projective module is a direct sum of
+countably generated projective modules.
+
+Standard proof, not formalised here: `P ⊕ Q` is free on a basis `B`, and one builds a
+transfinite filtration of `B` by subsets whose spans are compatible with the decomposition —
+starting from any element, alternately close up under the supports of the `P`- and `Q`-components
+until the process stabilises after countably many steps.  Each step adds a countably generated
+summand, and `P` is the direct sum of the `P`-parts of the successive quotients.
+
+Used by `kaplansky`, the `κ`-monoid form: `V^κ(R)` is generated as a `κ`-monoid by the countably
+generated projectives. -/
+axiom kaplansky_classical {R : Type u} [Ring R] (P : Type u) [AddCommGroup P] [Module R P]
+    [Module.Projective R P] :
+    ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i)) (_ : ∀ i, Module R (Q i)),
+      (∀ i, Module.Projective R (Q i)) ∧
+        (∀ i, ∃ s : Set (Q i), #s ≤ ℵ₀ ∧ Submodule.span R s = ⊤) ∧
+          Nonempty (P ≃ₗ[R] ⨁ i, Q i)
 
 end KappaMonoid

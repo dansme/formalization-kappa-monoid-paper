@@ -16,6 +16,7 @@ data of
 satisfy them up to isomorphism.  This is `ModuleClass.instKMonoid` below.
 -/
 import KappaMonoid.Universal
+import KappaMonoid.Axioms
 
 universe u v w
 
@@ -1734,16 +1735,6 @@ theorem KMonoid.KGenerates.mono {S S' : Set H} (h : S ⊆ S') (hgen : KGenerates
   Set.eq_univ_of_univ_subset (hgen ▸ KMonoid.kclosure_mono h)
 
 end Gen
-
-/-- **Kaplansky's Theorem** [Kaplansky58] in its classical form, which we take as an axiom:
-every projective module is a direct sum of countably generated projective modules. -/
-axiom kaplansky_classical {R : Type u} [Ring R] (P : Type u) [AddCommGroup P] [Module R P]
-    [Module.Projective R P] :
-    ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i)) (_ : ∀ i, Module R (Q i)),
-      (∀ i, Module.Projective R (Q i)) ∧
-        (∀ i, ∃ s : Set (Q i), #s ≤ ℵ₀ ∧ Submodule.span R s = ⊤) ∧
-          Nonempty (P ≃ₗ[R] ⨁ i, Q i)
-
 
 /-! ## Projective modules: Corollaries 4.5–4.7 -/
 
