@@ -1233,6 +1233,18 @@ theorem IsKHom.inv {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom κ f)
   · rw [hfg (ksum (κ := κ) x), hf.2 (g ∘ x)]
     exact congrArg _ (funext fun i => (hfg (x i)).symm)
 
+/-- A `κ`-homomorphism commutes with `cmul`: both sides are the sum of a constant family. -/
+theorem IsKHom.map_cmul {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom κ f)
+    {α : Cardinal.{u}} (hα : α ≤ κ) (x : H) :
+    f (cmul (κ := κ) α hα x) = cmul (κ := κ) α hα (f x) := by
+  have hmk : #(Idx α) ≤ κ := le_of_eq_of_le (mk_Idx α) hα
+  have h1 : cmul (κ := κ) α hα x = sumOf (κ := κ) hmk (fun _ : Idx α => x) :=
+    (cmul_congr (mk_Idx α).symm hα hmk x).trans (cmul_eq_sumOf hmk x)
+  have h2 : cmul (κ := κ) α hα (f x) = sumOf (κ := κ) hmk (fun _ : Idx α => f x) :=
+    (cmul_congr (mk_Idx α).symm hα hmk (f x)).trans (cmul_eq_sumOf hmk (f x))
+  rw [h1, h2, hf.map_sumOf hmk (fun _ : Idx α => x)]
+  rfl
+
 /-- A `κ`-submonoid of a `κ`-monoid. -/
 structure IsKSubmonoid (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Prop where
   zero_mem : (0 : H) ∈ S
@@ -1495,6 +1507,26 @@ structure IsLSubset (lam : Cardinal.{u}) {κ : Cardinal.{u}} {H : Type v} [KMono
   zero_mem : (0 : H) ∈ S
   sumOf_mem : ∀ {ι : Type u} (h : #ι < lam) (x : ι → H), (∀ i, x i ∈ S) →
     KMonoid.sumOf (κ := κ) (h.le.trans hlk) x ∈ S
+
+/-- A `λ⁻`-closed subset is closed under binary sums: `a + b` is a sum indexed by `Bool`, and
+`#(ULift Bool) < ℵ₀ ≤ lam`. -/
+theorem IsLSubset.add_mem {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {hlk : lam ≤ κ}
+    {S : Set H} (hS : IsLSubset lam hlk S) (hlam : ℵ₀ ≤ lam) {a b : H} (ha : a ∈ S)
+    (hb : b ∈ S) : a + b ∈ S := by
+  classical
+  have hUB : #(ULift.{u} Bool) < lam :=
+    lt_of_lt_of_le (Cardinal.lt_aleph0_iff_finite.mpr inferInstance) hlam
+  have hmem := hS.sumOf_mem hUB (fun p : ULift.{u} Bool => if p.down then a else b)
+    (by rintro ⟨(_ | _)⟩ <;> simpa)
+  rwa [KMonoid.sumOf_two a b (hUB.le.trans hlk)] at hmem
+
+/-- A `λ⁻`-closed subset is closed under finite multiples. -/
+theorem IsLSubset.nsmul_mem {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {hlk : lam ≤ κ}
+    {S : Set H} (hS : IsLSubset lam hlk S) (hlam : ℵ₀ ≤ lam) {a : H} (ha : a ∈ S) (n : ℕ) :
+    n • a ∈ S := by
+  induction n with
+  | zero => rw [zero_nsmul]; exact hS.zero_mem
+  | succ p hp => rw [succ_nsmul]; exact hS.add_mem hlam hp ha
 
 namespace KMonoid
 

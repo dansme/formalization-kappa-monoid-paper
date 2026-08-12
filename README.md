@@ -27,7 +27,8 @@ two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring) and al
 | `KappaMonoid/Reals.lean` | §3: **Examples 3.3(2)(3)** and their entries of Examples 3.12 — braiding in `ℝ≥0` (same series sum, supports both finite or both infinite), why neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`, the `ℵ₀`-monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` and its universal property, that it is not braided over itself, and the `ℚ≥0` variant with its extension identified as `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` |
 | `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5, Kaplansky (the `κ`-monoid form; the classical statement is axiom A6) |
 | `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, `V(R) = add [R]`, **Corollary 4.7**(1) (both directions) and (2), **Examples 4.8(1)** (ascent of KRSA) |
-| `KappaMonoid/Section5.lean` | §5: forms `α X₁ + β X₂` over `ℕ∞`, **Lemma 5.1**, **Lemma 5.2**(1)–(5), **Theorem 5.3**, trace ideals and **Proposition 5.4**, **Corollary 5.5**(1)(2)(3) and its `ℕ₀² ∪ {∞}` counterexample |
+| `KappaMonoid/Section5/` | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Braided` (**Lemma 5.1**, **Lemma 5.2**(1)–(5)), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
+| `KappaMonoid/ForMathlib/` | no `κ`-monoid content and no repo dependencies: `TraceIdeal.lean` (Mathlib has no trace ideal), `NatBlocks.lean`, `Finprod.lean` |
 | `KappaMonoid/Axioms.lean` | The six classical results assumed rather than proved — see below |
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and

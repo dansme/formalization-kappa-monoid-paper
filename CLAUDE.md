@@ -162,7 +162,13 @@ re-deriving them.
 | `Reals.lean` | Examples 3.3(2)(3): braiding in `ℝ≥0`, the monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, the `ℚ≥0` variant |
 | `Modules.lean` | §4 |
 | `Section4.lean` | §4: `add x`/`add_λ x`, `V(R) = add [R]`, Corollary 4.7, Examples 4.8(1) |
-| `Section5.lean` | §5: forms, Lemmas 5.1–5.2, Thm. 5.3, trace ideals, Prop. 5.4, Cor. 5.5 |
+| `Section5.lean` | §5 aggregator; the parts are `Section5/{Forms,Braided,Realization,Trace,Corollary55,Counterexample}.lean` |
+| `ForMathlib/` | material with no `κ`-monoid content and no repo dependencies: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx` and the fibres of `j ↦ j / d`), `Finprod.lean` |
 
 Before writing a new construction, check whether the analogous one exists: the `ℕ₀` and `ℝ≥0`
 braidings, the `Fcard`/`RTilde` `SumData`s, and the `TrivExt` extension are all templates.
+
+Anything with no `κ`-monoid content belongs in `KappaMonoid/ForMathlib/`, which imports only
+Mathlib and so never gets rebuilt when the development changes.  Putting general lemmas in a leaf
+file to dodge a `Basic.lean` rebuild is the wrong trade — it is how the trace ideals and the `ℕ`
+block combinatorics ended up inside §5, and it cost a refactor to undo.
