@@ -45,6 +45,25 @@ section branches on. -/
 -- *different* universes (trap 5 of `CLAUDE.md`).
 variable {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H]
 
+/-- The `ℵ₀`-sum of a constant family is `ℵ₀` copies of its value. -/
+theorem ksum_const (c : H) :
+    KMonoid.ksum (κ := ℵ₀) (fun _ : Idx (ℵ₀ : Cardinal.{u}) => c)
+      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl c := by
+  rw [← KMonoid.sumOf_Idx, ← KMonoid.cmul_eq_sumOf]
+  exact KMonoid.cmul_congr (mk_Idx (ℵ₀ : Cardinal.{u})) _ le_rfl c
+
+/-- A constant family over a finite index set sums to a finite multiple of its value.  This is the
+bookkeeping every block of a braiding needs: the pieces of a braiding partition are `ℵ₀⁻`-small,
+hence finite, so each block sum is an honest `n • c`. -/
+theorem sumOf_const_finite {ι : Type u} {T : Set ι} (hT : #T < (ℵ₀ : Cardinal.{u})) (c : H) :
+    ∃ m : ℕ, #T = (m : Cardinal.{u}) ∧
+      KMonoid.sumOf (κ := ℵ₀) hT.le (fun _ : T => c) = m • c := by
+  obtain ⟨m, hm⟩ := Cardinal.lt_aleph0.mp hT
+  refine ⟨m, hm, ?_⟩
+  rw [← KMonoid.cmul_eq_sumOf hT.le c,
+    KMonoid.cmul_congr hm hT.le (le_of_lt Cardinal.natCast_lt_aleph0) c]
+  exact KMonoid.cmul_natCast c m
+
 /-- A **form** `α X₁ + β X₂`: a pair of coefficients in `{0, 1, 2, …, ℵ₀}`. -/
 abbrev Form : Type := ℕ∞ × ℕ∞
 
@@ -395,16 +414,138 @@ theorem lemma_5_2_four (hmem : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂) (hmix
     ∃ k k' : ℕ, eval x₁ x₂ ((m : ℕ∞), (k : ℕ∞)) = eval x₁ x₂ ((n : ℕ∞), (k' : ℕ∞)) := by
   sorry
 
+/-- **`ℵ₀ x₂` absorbs any number of copies of `x₁`** as soon as `x₁ ∈ add x₂`: from `x₁ + z = n x₂`
+one gets `β x₁ ≼ ℵ₀ x₁ ≼ ℵ₀ (n x₂) = ℵ₀ x₂`, and Lemma 2.8(2) (`add_cmul_top_eq`) turns a summand of
+`ℵ₀ x₂` into an absorbed one.  The degenerate case `n = 0` forces `x₁ = 0` by reducedness. -/
+theorem cmul_top_absorb (h : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂) (β : ℕ∞) :
+    KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + ecmul β x₁
+      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
+  obtain ⟨z, n, hzn⟩ := h
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · -- `0 · x₂ = 0`, so `x₁ = 0` and there is nothing to absorb
+    have h0 : x₁ + z = 0 := by
+      rw [hzn, KMonoid.cmul_congr (by rw [Nat.cast_zero] : ((0 : ℕ) : Cardinal.{u}) = 0) _ zero_le,
+        KMonoid.cmul_zero_cardinal]
+    rw [(KMonoid.isConical (ℵ₀ : Cardinal.{u}) H x₁ z h0).1, ecmul, KMonoid.cmul_zero, add_zero]
+  · -- `ℵ₀ · n = ℵ₀`
+    have hmul : (ℵ₀ : Cardinal.{u}) * ((n : ℕ) : Cardinal.{u}) = ℵ₀ :=
+      Cardinal.mul_eq_left le_rfl (le_of_lt Cardinal.natCast_lt_aleph0)
+        (by exact_mod_cast hn.ne')
+    have hnκ : ((n : ℕ) : Cardinal.{u}) ≤ ℵ₀ := le_of_lt Cardinal.natCast_lt_aleph0
+    -- `ℵ₀ x₁ + ℵ₀ z = ℵ₀ (x₁ + z) = ℵ₀ (n x₂) = ℵ₀ x₂`
+    have hstep : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl z
+        = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
+      rw [← KMonoid.cmul_top_distrib, hzn, KMonoid.cmul_cmul le_rfl hnκ (le_of_eq hmul),
+        KMonoid.cmul_congr hmul (le_of_eq hmul) le_rfl x₂]
+    -- so `β x₁ ≼ ℵ₀ x₁ ≼ ℵ₀ x₂`
+    obtain ⟨w, hw⟩ : ecmul β x₁ ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ :=
+      AddLe.trans
+        (KMonoid.cmul_le_cmul (Cardinal.ofENat_le_aleph0 β) le_rfl
+          (Cardinal.ofENat_le_aleph0 β) x₁)
+        ⟨KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl z, hstep⟩
+    rw [add_comm]
+    exact KMonoid.add_cmul_top_eq hw
+
 /-- **Lemma 5.2(5)**: if `H` is braided over `add (x₁ + x₂)`, then `x₁ ∈ add x₂` exactly when
 `ℵ₀ (x₁ + x₂) = ℵ₀ x₂`.
 
-Uses Lemma 2.14, `eq_cmul_top_of_add` in `OrderUnit.lean`, which is proved. -/
+Forward is `cmul_top_absorb`: `ℵ₀ x₂` swallows `ℵ₀ x₁`.
+
+Backward is where the work is.  The paper's "we conclude that there exist positive integers `m`,
+`n`" hides a block induction, which the formal proof runs explicitly.  Braid the constant families
+`(x₁ + x₂)` and `(x₂)` — they have the same `ℵ₀`-sum by hypothesis — and let `k` be the least
+level of the block `a` whose `I`-piece is nonempty.  Below `k` the `I`-pieces are empty, so
+`v + u = 0` there and reducedness of `H` kills both; the `J`-equation one level down then reads
+`v (a,k) = r x₂` with `r = #J (a,k-1)` finite (and `v (a,0) = 0` when `k = 0`).  The two braiding
+equations at level `k` now give
+
+    m (x₁ + x₂) = r x₂ + u (a,k)    and    u (a,k) + v (a,k+1) = s x₂,
+
+with `m = #I (a,k) ≥ 1` and `s = #J (a,k)`, so `x₁ ≼ m (x₁ + x₂) ≼ (r + s) x₂`. -/
 theorem lemma_5_2_five
     (hbr : letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
       IsBraidedOver ℵ₀ ℵ₀ ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) H le_rfl (fun y => (y : H))) :
     x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂ ↔
       KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (x₁ + x₂) = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
-  sorry
+  classical
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  constructor
+  · -- `ℵ₀ (x₁ + x₂) = ℵ₀ x₁ + ℵ₀ x₂ = ℵ₀ x₂`
+    intro h
+    rw [KMonoid.cmul_top_distrib, add_comm]
+    have habs := cmul_top_absorb x₁ x₂ h ⊤
+    rwa [ecmul_top] at habs
+  intro heq
+  -- the two constant families, in `add (x₁ + x₂)`
+  have hx12 : x₁ + x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) := KMonoid.self_mem_addOf _
+  have hx2 : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+    KMonoid.addOf_isSaturated (x₁ + x₂) _ hx12 x₂ x₁ (add_comm x₁ x₂)
+  have hsum : (KMonoid.ksum (κ := ℵ₀) fun _ : Idx (ℵ₀ : Cardinal.{u}) => x₁ + x₂)
+      = KMonoid.ksum (κ := ℵ₀) fun _ : Idx (ℵ₀ : Cardinal.{u}) => x₂ := by
+    rw [ksum_const, ksum_const]; exact heq
+  obtain ⟨D⟩ := hbr.braided (fun _ => ⟨x₁ + x₂, hx12⟩) (fun _ => ⟨x₂, hx2⟩) hsum
+  -- the braiding equations, read in `H` (the coercion of a `λ⁻`-sum *is* the ambient sum)
+  have hIcoe : ∀ q : Idx (ℵ₀ : Cardinal.{u}) × ℕ,
+      KMonoid.sumOf (κ := ℵ₀) (D.I_small q).le (fun _ : D.I q => x₁ + x₂)
+        = ((D.v q : H) + (D.u q : H)) := fun q => congrArg Subtype.val (D.hI q)
+  have hJcoe : ∀ (b : Idx (ℵ₀ : Cardinal.{u})) (j : ℕ),
+      KMonoid.sumOf (κ := ℵ₀) (D.J_small (b, j)).le (fun _ : D.J (b, j) => x₂)
+        = ((D.v (b, j + 1) : H) + (D.u (b, j) : H)) :=
+    fun b j => congrArg Subtype.val (D.hJ (b, j))
+  -- some block has a nonempty `I`-piece; take the least level of that block at which it does
+  obtain ⟨i₀⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
+  obtain ⟨⟨a, k₀⟩, hp⟩ : ∃ q, i₀ ∈ D.I q :=
+    Set.mem_iUnion.mp (by rw [D.I_cover]; trivial)
+  have hex : ∃ k : ℕ, (D.I (a, k)).Nonempty := ⟨k₀, ⟨i₀, hp⟩⟩
+  obtain ⟨k, hk, hlow⟩ : ∃ k : ℕ, (D.I (a, k)).Nonempty ∧ ∀ j < k, D.I (a, j) = ∅ :=
+    ⟨Nat.find hex, Nat.find_spec hex,
+      fun j hj => Set.not_nonempty_iff_eq_empty.mp (Nat.find_min hex hj)⟩
+  -- below level `k` both braiding families vanish, by reducedness
+  have hzero : ∀ j < k, (D.v (a, j) : H) = 0 ∧ (D.u (a, j) : H) = 0 := by
+    intro j hj
+    obtain ⟨m, hm, hmsum⟩ := sumOf_const_finite (D.I_small (a, j)) (x₁ + x₂)
+    have hm0 : m = 0 := by
+      have : ((m : ℕ) : Cardinal.{u}) = 0 := by rw [← hm, hlow j hj]; simp
+      exact_mod_cast this
+    refine KMonoid.isConical (ℵ₀ : Cardinal.{u}) H _ _ ?_
+    rw [← hIcoe (a, j), hmsum, hm0, zero_nsmul]
+  -- so `v (a,k)` is a finite multiple of `x₂`
+  obtain ⟨r, hr⟩ : ∃ r : ℕ, (D.v (a, k) : H) = r • x₂ := by
+    rcases Nat.eq_zero_or_pos k with rfl | hkpos
+    · exact ⟨0, by rw [D.v_limit a, zero_nsmul]; rfl⟩
+    obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hkpos.ne'
+    obtain ⟨s, _, hssum⟩ := sumOf_const_finite (D.J_small (a, j)) x₂
+    have hj := hJcoe a j
+    rw [hssum, (hzero j (Nat.lt_succ_self j)).2, add_zero] at hj
+    exact ⟨s, hj.symm⟩
+  -- and `u (a,k)` is a summand of a finite multiple of `x₂`
+  obtain ⟨s, _, hssum⟩ := sumOf_const_finite (D.J_small (a, k)) x₂
+  have hu : (D.u (a, k) : H) + (D.v (a, k + 1) : H) = s • x₂ := by
+    have h := hJcoe a k
+    rw [hssum] at h
+    rw [h]
+    exact add_comm _ _
+  -- the `I`-equation at level `k`, with `m ≥ 1` copies of `x₁ + x₂`
+  obtain ⟨m, hmcard, hmsum⟩ := sumOf_const_finite (D.I_small (a, k)) (x₁ + x₂)
+  have hIeq : m • (x₁ + x₂) = r • x₂ + (D.u (a, k) : H) := by
+    rw [← hmsum, hIcoe (a, k), hr]
+  obtain ⟨m', rfl⟩ : ∃ m' : ℕ, m = m' + 1 := by
+    refine Nat.exists_eq_succ_of_ne_zero fun h0 => ?_
+    rw [h0, Nat.cast_zero] at hmcard
+    exact Cardinal.mk_ne_zero_iff.mpr hk.to_subtype hmcard
+  -- read off `x₁ + z = (r + s) x₂`
+  refine ⟨x₂ + m' • (x₁ + x₂) + (D.v (a, k + 1) : H), r + s, ?_⟩
+  have hsplit : x₁ + (x₂ + m' • (x₁ + x₂)) = (m' + 1) • (x₁ + x₂) := by
+    rw [succ_nsmul, ← add_assoc]
+    exact add_comm _ _
+  rw [KMonoid.cmul_natCast, add_nsmul]
+  calc x₁ + (x₂ + m' • (x₁ + x₂) + (D.v (a, k + 1) : H))
+      = (x₁ + (x₂ + m' • (x₁ + x₂))) + (D.v (a, k + 1) : H) := (add_assoc _ _ _).symm
+    _ = (m' + 1) • (x₁ + x₂) + (D.v (a, k + 1) : H) := by rw [hsplit]
+    _ = (r • x₂ + (D.u (a, k) : H)) + (D.v (a, k + 1) : H) := by rw [hIeq]
+    _ = r • x₂ + ((D.u (a, k) : H) + (D.v (a, k + 1) : H)) := add_assoc _ _ _
+    _ = r • x₂ + s • x₂ := by rw [hu]
 
 end Lemma52
 
@@ -595,38 +736,6 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
         (∀ F G : Form, F.1 = ⊤ → G.1 = ⊤ → eval x₁ x₂ F = eval x₁ x₂ G →
           ∃ m₁ m₂ : ℕ, eval x₁ x₂ ((m₁ : ℕ∞), F.2) = eval x₁ x₂ ((m₂ : ℕ∞), G.2)) := by
   sorry
-
-/-- **`ℵ₀ x₂` absorbs any number of copies of `x₁`** as soon as `x₁ ∈ add x₂`: from `x₁ + z = n x₂`
-one gets `β x₁ ≼ ℵ₀ x₁ ≼ ℵ₀ (n x₂) = ℵ₀ x₂`, and Lemma 2.8(2) (`add_cmul_top_eq`) turns a summand of
-`ℵ₀ x₂` into an absorbed one.  The degenerate case `n = 0` forces `x₁ = 0` by reducedness. -/
-theorem cmul_top_absorb (h : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂) (β : ℕ∞) :
-    KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + ecmul β x₁
-      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
-  obtain ⟨z, n, hzn⟩ := h
-  rcases Nat.eq_zero_or_pos n with rfl | hn
-  · -- `0 · x₂ = 0`, so `x₁ = 0` and there is nothing to absorb
-    have h0 : x₁ + z = 0 := by
-      rw [hzn, KMonoid.cmul_congr (by rw [Nat.cast_zero] : ((0 : ℕ) : Cardinal.{u}) = 0) _ zero_le,
-        KMonoid.cmul_zero_cardinal]
-    rw [(KMonoid.isConical (ℵ₀ : Cardinal.{u}) H x₁ z h0).1, ecmul, KMonoid.cmul_zero, add_zero]
-  · -- `ℵ₀ · n = ℵ₀`
-    have hmul : (ℵ₀ : Cardinal.{u}) * ((n : ℕ) : Cardinal.{u}) = ℵ₀ :=
-      Cardinal.mul_eq_left le_rfl (le_of_lt Cardinal.natCast_lt_aleph0)
-        (by exact_mod_cast hn.ne')
-    have hnκ : ((n : ℕ) : Cardinal.{u}) ≤ ℵ₀ := le_of_lt Cardinal.natCast_lt_aleph0
-    -- `ℵ₀ x₁ + ℵ₀ z = ℵ₀ (x₁ + z) = ℵ₀ (n x₂) = ℵ₀ x₂`
-    have hstep : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl z
-        = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
-      rw [← KMonoid.cmul_top_distrib, hzn, KMonoid.cmul_cmul le_rfl hnκ (le_of_eq hmul),
-        KMonoid.cmul_congr hmul (le_of_eq hmul) le_rfl x₂]
-    -- so `β x₁ ≼ ℵ₀ x₁ ≼ ℵ₀ x₂`
-    obtain ⟨w, hw⟩ : ecmul β x₁ ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ :=
-      AddLe.trans
-        (KMonoid.cmul_le_cmul (Cardinal.ofENat_le_aleph0 β) le_rfl
-          (Cardinal.ofENat_le_aleph0 β) x₁)
-        ⟨KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl z, hstep⟩
-    rw [add_comm]
-    exact KMonoid.add_cmul_top_eq hw
 
 /-- **Corollary 5.5(2)**, first claim: if `add x₁ = add x₂` then `H` has exactly one element with
 an infinite form, namely `ℵ₀ x₁ = ℵ₀ x₂`.
