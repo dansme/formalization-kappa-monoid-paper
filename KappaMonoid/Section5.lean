@@ -25,8 +25,9 @@ Two things to know before starting:
 See `SECTION5-PLAN.md`.
 -/
 import KappaMonoid.Section4
+import Mathlib.LinearAlgebra.Projection
 
-universe u
+universe u v
 
 open Cardinal Function Set
 
@@ -2407,25 +2408,207 @@ theorem traceIdeal_mul_self [Module.Projective R P] :
   refine Submodule.smul_le.2 fun a ha x hx => ?_
   exact Ideal.mul_mem_mul ha (le_traceIdeal R P f ((LinearMap.range_eq_map f) ▸ hx))
 
+
+/-! ### The trace ideal as an invariant
+
+Proposition 5.4 needs three more facts, all elementary: the trace ideal only depends on the
+isomorphism class, `Tr(R) = R`, and the trace ideal of a direct sum is the supremum of the trace
+ideals of the summands (only `≤` is used, together with the reverse inclusion for a single
+summand). -/
+
+/-- The trace ideal is an isomorphism invariant. -/
+theorem traceIdeal_of_iso {M N : Type u} [AddCommGroup M] [Module R M] [AddCommGroup N]
+    [Module R N] (e : M ≃ₗ[R] N) : traceIdeal R M = traceIdeal R N := by
+  refine le_antisymm (iSup_le fun f => ?_) (iSup_le fun f => ?_)
+  · rintro y ⟨m, rfl⟩
+    exact le_traceIdeal R N (f.comp (e.symm : N →ₗ[R] M)) ⟨e m, by simp⟩
+  · rintro y ⟨n, rfl⟩
+    exact le_traceIdeal R M (f.comp (e : M →ₗ[R] N)) ⟨e.symm n, by simp⟩
+
+/-- `Tr(R) = R`: the identity is a functional with full image. -/
+theorem traceIdeal_self : traceIdeal R R = ⊤ :=
+  eq_top_iff.mpr fun x _ => le_traceIdeal R R LinearMap.id ⟨x, rfl⟩
+
+/-- A direct summand has a smaller trace ideal: compose a functional with the projection. -/
+theorem traceIdeal_le_of_prod {M N K : Type u} [AddCommGroup M] [Module R M] [AddCommGroup N]
+    [Module R N] [AddCommGroup K] [Module R K] (e : M ≃ₗ[R] N × K) :
+    traceIdeal R N ≤ traceIdeal R M := by
+  refine iSup_le fun f => ?_
+  rintro y ⟨n, rfl⟩
+  refine le_traceIdeal R M (f.comp ((LinearMap.fst R N K).comp (e : M →ₗ[R] N × K))) ?_
+  exact ⟨e.symm (n, 0), by simp⟩
+
+/-- The trace ideal of a direct sum is contained in the supremum of the trace ideals: a functional
+on the sum restricts to each summand, and every element is a finite sum of its components. -/
+theorem traceIdeal_dsum_le {ι : Type u} (M : ι → Type u) [∀ i, AddCommGroup (M i)]
+    [∀ i, Module R (M i)] :
+    traceIdeal R (DirectSum ι M) ≤ ⨆ i, traceIdeal R (M i) := by
+  classical
+  refine iSup_le fun f => ?_
+  rintro y ⟨x, rfl⟩
+  have hx : (∑ i ∈ x.support, DirectSum.of (fun i => M i) i (x i)) = x := DFinsupp.sum_single
+  rw [← hx, map_sum]
+  refine Submodule.sum_mem _ fun i _ => ?_
+  refine Submodule.mem_iSup_of_mem i ?_
+  exact le_traceIdeal R (M i) (f.comp (DirectSum.lof R ι M i)) ⟨x i, rfl⟩
+
+
+/-- **If the trace ideal is everything, finitely many functionals already witness `1`.**  This is
+the paper's "let `1_R ∈ im(f₁) + ⋯ + im(f_k)`". -/
+theorem exists_sum_eq_one_of_traceIdeal_eq_top (h : traceIdeal R P = ⊤) :
+    ∃ (n : ℕ) (f : Fin n → (P →ₗ[R] R)) (x : Fin n → P), ∑ j, f j (x j) = 1 := by
+  classical
+  let N : Ideal R :=
+    { carrier := {r | ∃ (n : ℕ) (f : Fin n → (P →ₗ[R] R)) (x : Fin n → P), ∑ j, f j (x j) = r}
+      zero_mem' := ⟨0, Fin.elim0, Fin.elim0, by simp⟩
+      add_mem' := by
+        rintro a b ⟨n, f, x, rfl⟩ ⟨m, g, y, rfl⟩
+        exact ⟨n + m, Fin.append f g, Fin.append x y, by rw [Fin.sum_univ_add]; simp⟩
+      smul_mem' := by
+        rintro c a ⟨n, f, x, rfl⟩
+        refine ⟨n, f, fun j => c • x j, ?_⟩
+        rw [Finset.smul_sum]
+        exact Finset.sum_congr rfl fun j _ => map_smul (f j) c (x j) }
+  have hle : traceIdeal R P ≤ N := by
+    refine iSup_le fun f => ?_
+    rintro y ⟨p, rfl⟩
+    exact ⟨1, fun _ => f, fun _ => p, by simp⟩
+  exact hle (by rw [h]; trivial)
+
 end Trace
 
 section Prop54
 
 variable (R : Type u) [Ring R]
 
+/-- **`Tr(P₁) = R` makes `R` a direct summand of a finite power of `P₁`**, hence `[R] ≼ n [P₁]`
+in `V^{ℵ₀}(R)`.
+
+The finitely many functionals of `exists_sum_eq_one_of_traceIdeal_eq_top` assemble into an
+epimorphism `P₁ⁿ ↠ R`; it splits because `R` is projective, and the resulting idempotent cuts
+`P₁ⁿ` into `R` and a complement, both of which are again classes because `V^{ℵ₀}(R)` is closed
+under direct summands. -/
+theorem addLe_cmul_of_traceIdeal_eq_top (p₁ : (projClass R ℵ₀ le_rfl).carrier)
+    (k : Idx (ℵ₀ : Cardinal.{u}))
+    (h : traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁) = ⊤) :
+    letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+    ∃ n : ℕ, Projective.unitClass R ℵ₀ le_rfl k
+      ≼ KMonoid.cmul (κ := ℵ₀) ((n : ℕ) : Cardinal.{u})
+          (le_of_lt Cardinal.natCast_lt_aleph0) p₁ := by
+  classical
+  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  set P := (projClass R ℵ₀ le_rfl).rep p₁ with hP
+  obtain ⟨n, f, x, hfx⟩ := exists_sum_eq_one_of_traceIdeal_eq_top R P h
+  refine ⟨n, ?_⟩
+  -- the epimorphism `P₁ⁿ ↠ R`
+  set Φ : DirectSum (ULift.{u} (Fin n)) (fun _ => P) →ₗ[R] R :=
+    DirectSum.toModule R _ _ (fun j => f j.down) with hΦ
+  have hone : (1 : R) ∈ LinearMap.range Φ := by
+    refine ⟨∑ j : ULift.{u} (Fin n), DirectSum.lof R _ (fun _ => P) j (x j.down), ?_⟩
+    rw [map_sum, ← hfx]
+    exact Fintype.sum_equiv Equiv.ulift _ _
+      (fun j => DirectSum.toModule_lof R (M := fun _ => P) j (x j.down))
+  have hsurj : Function.Surjective Φ :=
+    LinearMap.range_eq_top.mp (Ideal.eq_top_iff_one _ |>.mpr hone)
+  obtain ⟨ψ, hψ⟩ := Module.projective_lifting_property Φ LinearMap.id hsurj
+  have hψinv : ∀ r : R, Φ (ψ r) = r := fun r => congrFun (congrArg DFunLike.coe hψ) r
+  -- the idempotent `ψ ∘ Φ` splits `P₁ⁿ`
+  set π : DirectSum (ULift.{u} (Fin n)) (fun _ => P) →ₗ[R]
+      DirectSum (ULift.{u} (Fin n)) (fun _ => P) := ψ.comp Φ with hπ
+  have hidem : IsIdempotentElem π := by
+    refine LinearMap.ext fun y => ?_
+    show ψ (Φ (ψ (Φ y))) = ψ (Φ y)
+    rw [hψinv]
+  have hcompl : IsCompl (LinearMap.range π) (LinearMap.ker π) := LinearMap.IsIdempotentElem.isCompl hidem
+  have hrange : LinearMap.range π = LinearMap.range ψ := by
+    refine le_antisymm ?_ ?_
+    · rintro y ⟨z, rfl⟩
+      exact ⟨Φ z, rfl⟩
+    · rintro y ⟨r, rfl⟩
+      exact ⟨ψ r, by show ψ (Φ (ψ r)) = ψ r; rw [hψinv]⟩
+  have hRiso : R ≃ₗ[R] ↥(LinearMap.range π) :=
+    (LinearEquiv.ofInjective ψ (Function.LeftInverse.injective hψinv)).trans
+      (LinearEquiv.ofEq _ _ hrange.symm)
+  -- `P₁ⁿ` is the representative of `n · p₁`
+  have hcard : #(ULift.{u} (Fin n)) = ((n : ℕ) : Cardinal.{u}) := by simp
+  have hle : #(ULift.{u} (Fin n)) ≤ (ℵ₀ : Cardinal.{u}) :=
+    le_of_eq_of_le hcard (le_of_lt Cardinal.natCast_lt_aleph0)
+  have hAeq : KMonoid.cmul (κ := ℵ₀) #(ULift.{u} (Fin n)) hle p₁
+      = KMonoid.sumOf (κ := ℵ₀) hle (fun _ : ULift.{u} (Fin n) => p₁) :=
+    KMonoid.cmul_eq_sumOf hle p₁
+  have e : (projClass R ℵ₀ le_rfl).rep (KMonoid.cmul (κ := ℵ₀) #(ULift.{u} (Fin n)) hle p₁)
+      ≃ₗ[R] DirectSum (ULift.{u} (Fin n)) (fun _ => P) := by
+    rw [hAeq]
+    exact ((projClass R ℵ₀ le_rfl).rep_sumOf le_rfl hle (fun _ : ULift.{u} (Fin n) => p₁)).some
+  -- both pieces are classes, and they add up
+  obtain ⟨b, hb⟩ := (projClass R ℵ₀ le_rfl).exists_class_of_summand _ e hcompl
+  obtain ⟨c, hc⟩ := (projClass R ℵ₀ le_rfl).exists_class_of_summand _ e hcompl.symm
+  have hbunit : b = Projective.unitClass R ℵ₀ le_rfl k :=
+    (projClass R ℵ₀ le_rfl).eq_of_iso
+      (hb.some.trans (hRiso.symm.trans (Projective.rep_unitClass R ℵ₀ le_rfl k).some.symm))
+  have hsum := (projClass R ℵ₀ le_rfl).add_eq_of_relCompl le_rfl hcompl.disjoint
+    (codisjoint_iff.mp hcompl.codisjoint) hb hc ⟨e.trans Submodule.topEquiv.symm⟩
+  refine ⟨c, ?_⟩
+  rw [← hbunit, hsum]
+  exact KMonoid.cmul_congr hcard hle (le_of_lt Cardinal.natCast_lt_aleph0) p₁
+
+
+/-- **If both generators have trace ideal inside `I`, then `I = R`.**
+
+The class of `R` is an `ℵ₀`-sum of copies of the two generators, and the trace ideal of a direct
+sum is contained in the supremum of the trace ideals of the summands; `Tr(R) = R` finishes.  This
+is the paper's "if `J ⊆ I` then `P₂ I = P₂`, and hence `I = R`". -/
+theorem eq_top_of_traceIdeal_generators (p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier)
+    (hgen : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+      KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set (projClass R ℵ₀ le_rfl).carrier))
+    {I : Ideal R}
+    (h₁ : traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁) ≤ I)
+    (h₂ : traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂) ≤ I) : I = ⊤ := by
+  classical
+  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
+  -- the classes whose trace ideal fits inside `I` form a `κ`-submonoid
+  have hsub : KMonoid.IsKSubmonoid (ℵ₀ : Cardinal.{u})
+      {a : (projClass R ℵ₀ le_rfl).carrier |
+        traceIdeal R ((projClass R ℵ₀ le_rfl).rep a) ≤ I} := by
+    constructor
+    · show traceIdeal R ((projClass R ℵ₀ le_rfl).rep 0) ≤ I
+      haveI := (projClass R ℵ₀ le_rfl).subsingleton_rep_of_eq_zero
+        ((projClass R ℵ₀ le_rfl).instKMonoid_zero le_rfl)
+      refine iSup_le fun f => ?_
+      rintro y ⟨m, rfl⟩
+      rw [Subsingleton.elim m 0, map_zero]
+      exact Submodule.zero_mem I
+    · intro z hz
+      show traceIdeal R ((projClass R ℵ₀ le_rfl).rep
+        (KMonoid.sumOf (κ := ℵ₀) (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) z)) ≤ I
+      rw [traceIdeal_of_iso R
+        ((projClass R ℵ₀ le_rfl).rep_sumOf le_rfl (le_of_eq (mk_Idx _)) z).some]
+      exact le_trans (traceIdeal_dsum_le R _) (iSup_le fun i => hz i)
+  have hmem : traceIdeal R ((projClass R ℵ₀ le_rfl).rep (Projective.unitClass R ℵ₀ le_rfl k))
+      ≤ I := by
+    refine KMonoid.kclosure_le ?_ hsub (KMonoid.kGenerates_iff.mp hgen _)
+    rintro w (rfl | rfl)
+    · exact h₁
+    · exact h₂
+  refine top_le_iff.mp ?_
+  rw [← traceIdeal_self R, ← traceIdeal_of_iso R (Projective.rep_unitClass R ℵ₀ le_rfl k).some]
+  exact hmem
+
 /-- **Proposition 5.4**: for a ring with non-cyclic `V^{ℵ₀}(R)` generated by `[P₁]` and `[P₂]`,
-the four conditions `Tr(P₂) ⊆ Tr(P₁)`, `Tr(P₁) = R`, `P₂ | P₁^{(ℵ₀)}` and `P₁^{(ℵ₀)}` free are
-equivalent.
+`Tr(P₂) ⊆ Tr(P₁)`, `Tr(P₁) = R` and `P₂ | P₁^{(ℵ₀)}` are equivalent.
 
 The two classes are given as carrier elements `p₁ p₂` and their modules as `rep p₁`, `rep p₂` —
 `ModuleClass` has no constructor taking a module to its class, only `rep` going the other way.
 
-(i) ⇒ (ii) is `P₂ · Tr(P₁) = P₂`; (ii) ⇒ (iii) writes `1 ∈ im f₁ + ⋯ + im f_k` to split `R` off
-`P₁^k`; (iii) ⇒ (iv) is Lemma 2.14 (`eq_cmul_top_of_add`, proved); (iv) ⇒ (i) is immediate. -/
+(i) ⇒ (ii) is `eq_top_of_traceIdeal_generators`, which replaces the paper's `P₂ Tr(P₁) = P₂` by
+the trace ideal of a direct sum.  (ii) ⇒ (iii) is the paper's "`1 ∈ im f₁ + ⋯ + im f_k`", giving
+`[R] ≼ n [P₁]` (`addLe_cmul_of_traceIdeal_eq_top`); scaling by `ℵ₀` and using that `[R]` is an
+order-unit puts `[P₂]` below `ℵ₀ [P₁]`.  (iii) ⇒ (i) is the trace ideal of a summand. -/
 theorem prop_5_4 (p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier)
     (hgen : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
       KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set (projClass R ℵ₀ le_rfl).carrier))
-    (hnoncyclic : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+    (_hnoncyclic : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
       ∀ x : (projClass R ℵ₀ le_rfl).carrier,
         ¬ KMonoid.KGenerates ℵ₀ ({x} : Set (projClass R ℵ₀ le_rfl).carrier)) :
     (traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂) ≤ traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁)
@@ -2434,7 +2617,78 @@ theorem prop_5_4 (p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier)
         ∃ (Q : Type u) (_ : AddCommGroup Q) (_ : Module R Q),
           Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁) ≃ₗ[R]
             (projClass R ℵ₀ le_rfl).rep p₂ × Q)) := by
-  sorry
+  classical
+  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
+  -- the free module on `ℕ` and on `Idx ℵ₀` agree
+  have hIdxNat : Idx (ℵ₀ : Cardinal.{u}) ≃ ℕ := idxEquivNats.{u}.trans Equiv.ulift
+  have hfirst : traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂)
+      ≤ traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁)
+      ↔ traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁) = ⊤ := by
+    refine ⟨fun h => eq_top_of_traceIdeal_generators R p₁ p₂ hgen le_rfl h, fun h => ?_⟩
+    rw [h]
+    exact le_top
+  refine ⟨hfirst, ⟨fun h => ?_, fun h => ?_⟩⟩
+  · -- `Tr(P₁) = R` gives `[R] ≼ n [P₁]`, hence `[P₂] ≼ ℵ₀ [P₁]`
+    obtain ⟨n, c, hc⟩ := addLe_cmul_of_traceIdeal_eq_top R p₁ k h
+    have hn1 : Projective.unitClass R ℵ₀ le_rfl k
+        ≼ KMonoid.cmul (κ := ℵ₀) (((n + 1 : ℕ)) : Cardinal.{u})
+            (le_of_lt Cardinal.natCast_lt_aleph0) p₁ :=
+      AddLe.trans ⟨c, hc⟩ (KMonoid.cmul_le_cmul _ _ (by exact_mod_cast Nat.le_succ n) p₁)
+    -- scale by `ℵ₀`
+    obtain ⟨t, ht⟩ := hn1
+    have hmul : (ℵ₀ : Cardinal.{u}) * (((n + 1 : ℕ)) : Cardinal.{u}) = ℵ₀ :=
+      Cardinal.mul_eq_left le_rfl (le_of_lt Cardinal.natCast_lt_aleph0)
+        (by exact_mod_cast Nat.succ_ne_zero n)
+    have htop : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (Projective.unitClass R ℵ₀ le_rfl k)
+        ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p₁ := by
+      refine ⟨KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl t, ?_⟩
+      rw [← KMonoid.cmul_top_distrib, ht, KMonoid.cmul_cmul le_rfl
+        (le_of_lt Cardinal.natCast_lt_aleph0) (le_of_eq hmul)]
+      exact KMonoid.cmul_congr hmul (le_of_eq hmul) le_rfl p₁
+    obtain ⟨d, hd⟩ := AddLe.trans (Projective.isOrderUnit_unitClass R ℵ₀ le_rfl k p₂) htop
+    -- read the relation as an isomorphism of modules
+    refine ⟨(projClass R ℵ₀ le_rfl).rep d, inferInstance, inferInstance, ?_⟩
+    have e1 : (projClass R ℵ₀ le_rfl).rep (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p₁)
+        ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u}))
+          (fun _ => (projClass R ℵ₀ le_rfl).rep p₁) := by
+      rw [show KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p₁
+          = KMonoid.sumOf (κ := ℵ₀) (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u})))
+            (fun _ : Idx (ℵ₀ : Cardinal.{u}) => p₁) from
+        (KMonoid.cmul_congr (mk_Idx (ℵ₀ : Cardinal.{u})).symm le_rfl
+            (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) p₁).trans
+          (KMonoid.cmul_eq_sumOf (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) p₁)]
+      exact ((projClass R ℵ₀ le_rfl).rep_sumOf le_rfl (le_of_eq (mk_Idx _))
+        (fun _ : Idx (ℵ₀ : Cardinal.{u}) => p₁)).some
+    have e2 : DirectSum (Idx (ℵ₀ : Cardinal.{u}))
+        (fun _ => (projClass R ℵ₀ le_rfl).rep p₁)
+        ≃ₗ[R] DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁) :=
+      DirectSum.lequivCongrLeft R hIdxNat
+    have e3 : (projClass R ℵ₀ le_rfl).rep (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p₁)
+        ≃ₗ[R] (projClass R ℵ₀ le_rfl).rep p₂ × (projClass R ℵ₀ le_rfl).rep d := by
+      rw [← hd]
+      exact ((projClass R ℵ₀ le_rfl).rep_add le_rfl p₂ d).some
+    exact ⟨(e2.symm.trans e1.symm).trans e3⟩
+  · -- a summand of `P₁^{(ℕ)}` has a smaller trace ideal
+    obtain ⟨Q, hQ₁, hQ₂, e⟩ := h
+    letI := hQ₁
+    letI := hQ₂
+    obtain ⟨e'⟩ := e
+    have s1 : traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂)
+        ≤ traceIdeal R (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁)) :=
+      traceIdeal_le_of_prod R
+        (M := DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁))
+        (N := (projClass R ℵ₀ le_rfl).rep p₂) (K := Q) e'
+    have hlift : DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁)
+        ≃ₗ[R] DirectSum (ULift.{u} ℕ) (fun _ => (projClass R ℵ₀ le_rfl).rep p₁) :=
+      DirectSum.lequivCongrLeft R Equiv.ulift.symm
+    have s2 : traceIdeal R (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁))
+        ≤ traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁) := by
+      rw [traceIdeal_of_iso R hlift]
+      exact le_trans
+        (traceIdeal_dsum_le R (fun _ : ULift.{u} ℕ => (projClass R ℵ₀ le_rfl).rep p₁))
+        (iSup_le fun _ => le_rfl)
+    exact hfirst.mp (le_trans s1 s2)
 
 /-- **Proposition 5.4**, final statement: over a hereditary ring, `Tr(P₁) = Tr(P₂)` exactly when
 every countably (non finitely) generated projective is free. -/
