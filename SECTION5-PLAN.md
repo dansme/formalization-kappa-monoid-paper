@@ -10,7 +10,7 @@ independently checkable.
 **The §4 blocker is gone.** Corollary 4.7(1) is proved (both directions, with axiom A5 for
 (i) ⇒ (ii)), so Lemma 5.1 and Theorem 5.3 have their input. Steps 1, 2 and 6's counterexample are
 done, as is all of Lemma 5.2, **Theorem 5.3**, the trace ideals of step 5 and two claims of
-step 6; 5 `sorry`s remain.
+step 6 including **Corollary 5.5(1)**; 4 `sorry`s remain.
 
 **§5 is the most expensive section per result.** Unlike §§2–4, its proofs are explicit
 combinatorial constructions — Lemma 5.2(3) writes down three interleaved partitions of `ℕ` by
@@ -239,17 +239,24 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 
 ## Status
 
-5 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
+4 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
 stays green and `sorry`-free because the file is not imported by `KappaMonoid.lean`.
 
 Closed so far, all without any axiom beyond the A5 already inside Corollary 4.7(1):
 `sumOf_familyOfForm` and `exists_form` (step 1); **Lemma 5.1** (step 2); **all of Lemma 5.2**
 (step 3); **Theorem 5.3** (step 4), which uses no axiom beyond the A5 inside Corollary 4.7(1);
 the trace ideals `smul_traceIdeal_eq`, `traceIdeal_le_of_smul_eq`, `traceIdeal_mul_self`
-and `traceIdeal_isTwoSided` (step 5); the counterexample block, `corollary_5_5_two_unique` and
-`corollary_5_5_three_absorb` (step 6).
+and `traceIdeal_isTwoSided` (step 5); the counterexample block, `corollary_5_5_two_unique`,
+`corollary_5_5_three_absorb` and **Corollary 5.5(1)** (step 6).
 
-Still open (5): Proposition 5.4 and its hereditary addendum; Corollary 5.5(1)(2)(3).
+Corollary 5.5(1) needed a **scaffold correction**: the paper's condition is quantified over
+`1 ≤ i ≠ j ≤ 2`, so each of its two clauses has two instances, and the scaffold kept only one of
+each.  Both are needed — without the `X₂`-half of the first clause condition (iii) of Theorem 5.3
+does not follow, and the two halves of the second clause are condition (ii) for the two orderings.
+
+Still open (4): Proposition 5.4 and its hereditary addendum; Corollary 5.5(2)(3).  All four need
+module theory rather than monoid theory — the trace ideal of a projective module and the relation
+between finite forms and finite generation — which is why they are the last to go.
 
 New reusable infrastructure in the core files: `KMonoid.cmul_eq_sumOf`, `KMonoid.sumOf_indicator`,
 `KMonoid.sumOf_eq_sumOf_subset`, `KMonoid.sumOf_sumType`, `KMonoid.cmul_zero`, `KMonoid.cmul_cmul`,

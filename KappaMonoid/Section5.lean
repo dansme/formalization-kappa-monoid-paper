@@ -2463,8 +2463,17 @@ variable (x₁ x₂ : H)
 /-- **Corollary 5.5(1)**: for incomparable generators, realizability is equivalent to an explicit
 condition on the relations of `H`.
 
-(i) ⇒ (ii) adds `ℵ₀ x_j` to reduce to Theorem 5.3(i); (ii) ⇒ (i) verifies the three conditions of
-Theorem 5.3, of which (i) holds vacuously. -/
+**This corrects the scaffold.**  The paper's condition is quantified over `1 ≤ i ≠ j ≤ 2`, so each
+of its two clauses has two instances; the scaffold kept only one of each, and both instances of
+each are needed.  Without the `X₂`-half of the first clause a finite and an infinite form could
+share a value, so condition (iii) of Theorem 5.3 would not follow; and the two halves of the second
+clause are exactly condition (ii) of Theorem 5.3 for the two orderings.
+
+(i) ⇒ (ii): adding `ℵ₀ x_j` to a relation with one infinite and one finite `X_i`-coefficient turns
+it into the hypothesis of Theorem 5.3(i), whose conclusion `x_i ∈ add x_j` is excluded; the second
+clause is Theorem 5.3(ii).  (ii) ⇒ (i): Theorem 5.3(i) holds vacuously — its hypothesis would make
+an infinite coefficient equal a finite one — (ii) is the assumption, and (iii) follows from the
+first clause. -/
 theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
     (h₂ : x₂ ∉ KMonoid.addOf (κ := ℵ₀) x₁)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
@@ -2473,10 +2482,121 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
         letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
-      (∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G → (F.1 = ⊤ ↔ G.1 = ⊤)) ∧
+      ((∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G → (F.1 = ⊤ ↔ G.1 = ⊤) ∧ (F.2 = ⊤ ↔ G.2 = ⊤)) ∧
         (∀ F G : Form, F.1 = ⊤ → G.1 = ⊤ → eval x₁ x₂ F = eval x₁ x₂ G →
-          ∃ m₁ m₂ : ℕ, eval x₁ x₂ ((m₁ : ℕ∞), F.2) = eval x₁ x₂ ((m₂ : ℕ∞), G.2)) := by
-  sorry
+          ∃ m₁ m₂ : ℕ, eval x₁ x₂ ((m₁ : ℕ∞), F.2) = eval x₁ x₂ ((m₂ : ℕ∞), G.2)) ∧
+        (∀ F G : Form, F.2 = ⊤ → G.2 = ⊤ → eval x₁ x₂ F = eval x₁ x₂ G →
+          ∃ n₁ n₂ : ℕ, eval x₁ x₂ (F.1, (n₁ : ℕ∞)) = eval x₁ x₂ (G.1, (n₂ : ℕ∞)))) := by
+  constructor
+  · rintro ⟨R, _, hfg, e, hhom, hbij⟩
+    obtain ⟨hc1, hc1', hc2, hc2', hmix⟩ :=
+      theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
+    -- an infinite `X₁`-coefficient against a finite one would give `x₁ ∈ add x₂`
+    have key1 : ∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G → F.1 = ⊤ → G.1 ≠ ⊤ → False := by
+      intro F G hFG hF hG
+      obtain ⟨m, hm⟩ : ∃ m : ℕ, G.1 = (m : ℕ∞) := ⟨G.1.toNat, (ENat.natCast_toNat hG).symm⟩
+      refine h₁ (hc1 m ?_).2
+      have hadd : eval x₁ x₂ F + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂
+          = eval x₁ x₂ G + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by rw [hFG]
+      rw [eval, eval, hF, hm, add_assoc, add_assoc, ecmul_add_cmul_top, ecmul_add_cmul_top,
+        ecmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₁ m] at hadd
+      exact hadd.symm
+    -- and symmetrically for the `X₂`-coefficient
+    have key2 : ∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G → F.2 = ⊤ → G.2 ≠ ⊤ → False := by
+      intro F G hFG hF hG
+      obtain ⟨n, hn⟩ : ∃ n : ℕ, G.2 = (n : ℕ∞) := ⟨G.2.toNat, (ENat.natCast_toNat hG).symm⟩
+      refine h₂ (hc1' n ?_).2
+      have hadd : eval x₁ x₂ F + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
+          = eval x₁ x₂ G + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by rw [hFG]
+      have hL : eval x₁ x₂ F + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
+          = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+        rw [eval, hF]
+        calc ecmul F.1 x₁ + ecmul (⊤ : ℕ∞) x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
+            = (ecmul F.1 x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁) + ecmul (⊤ : ℕ∞) x₂ := by abel
+          _ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+              rw [ecmul_add_cmul_top, ecmul_top, add_comm]
+      have hR : eval x₁ x₂ G + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
+          = KMonoid.cmul (κ := ℵ₀) (n : Cardinal.{u})
+              (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂
+            + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+        rw [eval, hn]
+        calc ecmul G.1 x₁ + ecmul ((n : ℕ) : ℕ∞) x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
+            = (ecmul G.1 x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁)
+              + ecmul ((n : ℕ) : ℕ∞) x₂ := by abel
+          _ = _ := by
+              rw [ecmul_add_cmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₂ n, add_comm]
+      rw [hL, hR] at hadd
+      exact hadd.symm
+    have hcl1 : ∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G →
+        (F.1 = ⊤ ↔ G.1 = ⊤) ∧ (F.2 = ⊤ ↔ G.2 = ⊤) := by
+      intro F G hFG
+      exact ⟨⟨fun h => not_not.mp fun hc => key1 F G hFG h hc,
+          fun h => not_not.mp fun hc => key1 G F hFG.symm h hc⟩,
+        ⟨fun h => not_not.mp fun hc => key2 F G hFG h hc,
+          fun h => not_not.mp fun hc => key2 G F hFG.symm h hc⟩⟩
+    refine ⟨hcl1, fun F G hF hG hFG => ?_, fun F G hF hG hFG => ?_⟩
+    · -- both `X₁`-coefficients infinite: Theorem 5.3(ii) for the ordering `(x₂, x₁)`
+      by_cases hF2 : F.2 = ⊤
+      · exact ⟨0, 0, by rw [hF2, ((hcl1 F G hFG).2).mp hF2]⟩
+      obtain ⟨a, ha⟩ : ∃ a : ℕ, F.2 = (a : ℕ∞) := ⟨F.2.toNat, (ENat.natCast_toNat hF2).symm⟩
+      have hG2 : G.2 ≠ ⊤ := fun h => hF2 (((hcl1 F G hFG).2).mpr h)
+      obtain ⟨b, hb⟩ : ∃ b : ℕ, G.2 = (b : ℕ∞) := ⟨G.2.toNat, (ENat.natCast_toNat hG2).symm⟩
+      have e1 : F = ((⊤ : ℕ∞), ((a : ℕ) : ℕ∞)) := by rw [← hF, ← ha]
+      have e2 : G = ((⊤ : ℕ∞), ((b : ℕ) : ℕ∞)) := by rw [← hG, ← hb]
+      obtain ⟨k, k', hkk'⟩ := hc2' h₂ a b (by
+        rw [eval_swap x₂ x₁, eval_swap x₂ x₁]
+        show eval x₁ x₂ ((⊤ : ℕ∞), ((a : ℕ) : ℕ∞)) = eval x₁ x₂ ((⊤ : ℕ∞), ((b : ℕ) : ℕ∞))
+        rw [← e1, ← e2]
+        exact hFG)
+      refine ⟨k, k', ?_⟩
+      rw [ha, hb]
+      rw [eval_swap x₂ x₁, eval_swap x₂ x₁] at hkk'
+      exact hkk'
+    · -- both `X₂`-coefficients infinite: Theorem 5.3(ii) for the ordering `(x₁, x₂)`
+      by_cases hF1 : F.1 = ⊤
+      · exact ⟨0, 0, by rw [hF1, ((hcl1 F G hFG).1).mp hF1]⟩
+      obtain ⟨a, ha⟩ : ∃ a : ℕ, F.1 = (a : ℕ∞) := ⟨F.1.toNat, (ENat.natCast_toNat hF1).symm⟩
+      have hG1 : G.1 ≠ ⊤ := fun h => hF1 (((hcl1 F G hFG).1).mpr h)
+      obtain ⟨b, hb⟩ : ∃ b : ℕ, G.1 = (b : ℕ∞) := ⟨G.1.toNat, (ENat.natCast_toNat hG1).symm⟩
+      have e1 : F = (((a : ℕ) : ℕ∞), (⊤ : ℕ∞)) := by rw [← hF, ← ha]
+      have e2 : G = (((b : ℕ) : ℕ∞), (⊤ : ℕ∞)) := by rw [← hG, ← hb]
+      obtain ⟨k, k', hkk'⟩ := hc2 h₁ a b (by rw [← e1, ← e2]; exact hFG)
+      exact ⟨k, k', by rw [ha, hb]; exact hkk'⟩
+  · rintro ⟨hcl1, hcl2, hcl3⟩
+    -- the three conditions of Theorem 5.3
+    have hc1 : Cond1 x₁ x₂ := by
+      intro n hn
+      refine absurd ((hcl1 (((n : ℕ) : ℕ∞), ⊤) ((⊤ : ℕ∞), ⊤) ?_).1.mpr rfl) (ENat.coe_ne_top n)
+      show ecmul ((n : ℕ) : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
+        = ecmul (⊤ : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
+      rw [ecmul_natCast, ecmul_top, ecmul_top, ← KMonoid.cmul_natCast x₁ n]
+      exact hn
+    have hc1' : Cond1 x₂ x₁ := by
+      intro n hn
+      refine absurd ((hcl1 ((⊤ : ℕ∞), ((n : ℕ) : ℕ∞)) ((⊤ : ℕ∞), ⊤) ?_).2.mpr rfl)
+        (ENat.coe_ne_top n)
+      show ecmul (⊤ : ℕ∞) x₁ + ecmul ((n : ℕ) : ℕ∞) x₂
+        = ecmul (⊤ : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
+      rw [ecmul_natCast, ecmul_top, ecmul_top, ← KMonoid.cmul_natCast x₂ n,
+        add_comm (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁)
+          (KMonoid.cmul (κ := ℵ₀) (n : Cardinal.{u})
+            (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂),
+        add_comm (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁) (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂)]
+      exact hn
+    have hmix : NoMixedForms x₁ x₂ := by
+      rintro y ⟨⟨F, hF, hFe⟩, ⟨G, hG, hGe⟩⟩
+      rcases hG with h | h
+      · exact hF.1 (((hcl1 F G (hFe.trans hGe.symm)).1).mpr h)
+      · exact hF.2 (((hcl1 F G (hFe.trans hGe.symm)).2).mpr h)
+    obtain ⟨R, hring, -, -, hfg, e, hhom, hbij⟩ :=
+      theorem_5_3_backward x₁ x₂ (ULift.{u} ℚ) hgen hc1 hc1'
+        (fun _ m n hmn => hcl3 (((m : ℕ) : ℕ∞), ⊤) (((n : ℕ) : ℕ∞), ⊤) rfl rfl hmn)
+        (fun _ m n hmn => by
+          obtain ⟨k, k', hkk'⟩ := hcl2 ((⊤ : ℕ∞), ((m : ℕ) : ℕ∞)) ((⊤ : ℕ∞), ((n : ℕ) : ℕ∞))
+            rfl rfl (by rw [eval_swap x₂ x₁, eval_swap x₂ x₁] at hmn; exact hmn)
+          exact ⟨k, k', by rw [eval_swap x₂ x₁, eval_swap x₂ x₁]; exact hkk'⟩)
+        hmix
+    exact ⟨R, hring, hfg, e, hhom, hbij⟩
 
 /-- **Corollary 5.5(2)**, first claim: if `add x₁ = add x₂` then `H` has exactly one element with
 an infinite form, namely `ℵ₀ x₁ = ℵ₀ x₂`.
