@@ -3296,8 +3296,19 @@ theorem corollary_5_5_three_absorb (h : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x�
     KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + ecmul β x₁ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ :=
   cmul_top_absorb x₁ x₂ h β
 
-/-- **Corollary 5.5(3)**, equivalence: for `add x₁ ⊊ add x₂`, realizability with a non-free
-`P^{(ℵ₀)}` is equivalent to an explicit relation condition, and to a strict trace inclusion. -/
+/-- **Corollary 5.5(3)**, equivalence: for `add x₁ ⊊ add x₂`, realizability is equivalent to an
+explicit relation condition.
+
+`EveryProjectiveIsSumOfFG R` is carried explicitly, as everywhere in §5.  The paper's part (3) also
+records two further reformulations of realizability — that `R` may be taken with a finitely
+generated projective `P` whose `P^{(ℵ₀)}` is not free, and that this is the same as
+`Tr(P₁) ⊊ Tr(P₂)`.  Those are not part of the statement here; see `SECTION5-PLAN.md`.
+
+(i) ⇒ (ii): condition (i) of Theorem 5.3 for the ordered pair `(x₂, x₁)` gives `β` finite — an
+infinite `β` would put `x₂` in `add x₁` — and condition (ii) for that pair is the relation.
+(ii) ⇒ (i): Theorem 5.3(i) holds for `(x₁, x₂)` because `x₁ ∈ add x₂` and `ℵ₀ x₂` absorbs `ℵ₀ x₁`,
+and vacuously for `(x₂, x₁)`; (ii) holds vacuously for `(x₁, x₂)` and is the assumption for
+`(x₂, x₁)`. -/
 theorem corollary_5_5_three (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
     (h₂ : x₂ ∉ KMonoid.addOf (κ := ℵ₀) x₁)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
@@ -3309,7 +3320,51 @@ theorem corollary_5_5_three (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
         letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
-  sorry
+  classical
+  -- the two readings of `ℵ₀ x₁ + a x₂`
+  have hev : ∀ a : ℕ, eval x₁ x₂ ((⊤ : ℕ∞), ((a : ℕ) : ℕ∞))
+      = KMonoid.cmul (κ := ℵ₀) (a : Cardinal.{u})
+          (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂
+        + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+    intro a
+    rw [eval, ecmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₂ a, add_comm]
+  have hevtop : eval x₁ x₂ ((⊤ : ℕ∞), (⊤ : ℕ∞))
+      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+    rw [eval, ecmul_top, ecmul_top, add_comm]
+  constructor
+  · rintro ⟨hrel, hmix⟩
+    -- Theorem 5.3(i) for `(x₁, x₂)`
+    have hc1 : Cond1 x₁ x₂ := by
+      intro n _
+      refine ⟨?_, h₁⟩
+      have habs := cmul_top_absorb x₁ x₂ h₁ ⊤
+      rw [ecmul_top] at habs
+      exact habs.symm.trans (add_comm _ _)
+    -- and vacuously for `(x₂, x₁)`
+    have hc1' : Cond1 x₂ x₁ := by
+      intro n hn
+      exact absurd ((hrel n ⊤ (by rw [hev n, hevtop]; exact hn)).1) (fun h => h rfl)
+    refine (theorem_5_3 x₁ x₂ (ULift.{u} ℚ) hgen hnoncyclic).mpr
+      ⟨hc1, hc1', fun hnot => absurd h₁ hnot, fun _ m n hmn => ?_, hmix⟩
+      |>.imp fun R hR => ?_
+    · -- Theorem 5.3(ii) for `(x₂, x₁)` is the relation condition
+      obtain ⟨-, a, a', ha⟩ := hrel n ((m : ℕ) : ℕ∞)
+        (by rw [eval_swap x₂ x₁, eval_swap x₂ x₁] at hmn; exact hmn.symm)
+      exact ⟨a, a', by rw [eval_swap x₂ x₁, eval_swap x₂ x₁]; exact ha⟩
+    · obtain ⟨hring, -, -, hfg, he⟩ := hR
+      exact ⟨hring, hfg, he⟩
+  · rintro ⟨R, hring, hfg, e, hhom, hbij⟩
+    obtain ⟨-, hc1', -, hc2', hmix⟩ :=
+      theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
+    refine ⟨fun n β hβ => ?_, hmix⟩
+    have hne : β ≠ ⊤ := by
+      rintro rfl
+      exact h₂ (hc1' n (by rw [← hev n, ← hevtop]; exact hβ)).2
+    obtain ⟨b, rfl⟩ : ∃ b : ℕ, β = (b : ℕ∞) := ⟨β.toNat, (ENat.natCast_toNat hne).symm⟩
+    refine ⟨hne, ?_⟩
+    obtain ⟨k, k', hkk'⟩ := hc2' h₂ b n
+      (by rw [eval_swap x₂ x₁, eval_swap x₂ x₁]; exact hβ.symm)
+    exact ⟨k, k', by rw [eval_swap x₂ x₁, eval_swap x₂ x₁] at hkk'; exact hkk'⟩
 
 end Cor55
 

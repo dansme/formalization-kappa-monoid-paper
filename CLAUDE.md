@@ -5,18 +5,17 @@ decompositions of modules*. The paper is in the repo: `kappa_monoids.tex` (sourc
 statements) and `kappa_monoids.pdf`.
 
 `README.md` is the status and provenance document. `SECTION{3,4,5}-PLAN.md` are the work plans;
-§§2–4 are done, §5 is scaffolded.
+§§2–5 are done.
 
 ## Build
 
 ```fish
 lake build                          # root target: must stay green and sorry-free
-lake build KappaMonoid.Section5     # the scaffold is NOT imported by KappaMonoid.lean
 lake exe cache get                  # after any manifest bump, before lake build
 ```
 
 A scaffold file joins `KappaMonoid.lean` in the same commit that removes its last `sorry`, so the
-root build is always sorry-free.
+root build is always sorry-free.  As of §5 there is no scaffold left: every file is imported.
 
 ## Working efficiently
 
@@ -163,7 +162,7 @@ re-deriving them.
 | `Reals.lean` | Examples 3.3(2)(3): braiding in `ℝ≥0`, the monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, the `ℚ≥0` variant |
 | `Modules.lean` | §4 |
 | `Section4.lean` | §4: `add x`/`add_λ x`, `V(R) = add [R]`, Corollary 4.7, Examples 4.8(1) |
-| `Section5.lean` | §5 scaffold, not imported |
+| `Section5.lean` | §5: forms, Lemmas 5.1–5.2, Thm. 5.3, trace ideals, Prop. 5.4, Cor. 5.5 |
 
 Before writing a new construction, check whether the analogous one exists: the `ℕ₀` and `ℝ≥0`
 braidings, the `Fcard`/`RTilde` `SumData`s, and the `TrivExt` extension are all templates.

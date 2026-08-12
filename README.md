@@ -6,7 +6,8 @@ Sections 2–5 of the paper.
 
 Complete and `sorry`-free: `lake build` checks every definition and every theorem, including
 Theorem 3.11 (universal `κ`-extensions), Proposition 3.14 (universal extensions of Diophantine
-monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`) and all of §§2–4.
+monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`), Theorem 5.3 (which
+two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring) and all of §§2–5.
 
 | File | Contents |
 |---|---|
@@ -26,6 +27,7 @@ monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`)
 | `KappaMonoid/Reals.lean` | §3: **Examples 3.3(2)(3)** and their entries of Examples 3.12 — braiding in `ℝ≥0` (same series sum, supports both finite or both infinite), why neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`, the `ℵ₀`-monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` and its universal property, that it is not braided over itself, and the `ℚ≥0` variant with its extension identified as `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` |
 | `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5, Kaplansky (the `κ`-monoid form; the classical statement is axiom A6) |
 | `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, `V(R) = add [R]`, **Corollary 4.7**(1) (both directions) and (2), **Examples 4.8(1)** (ascent of KRSA) |
+| `KappaMonoid/Section5.lean` | §5: forms `α X₁ + β X₂` over `ℕ∞`, **Lemma 5.1**, **Lemma 5.2**(1)–(5), **Theorem 5.3**, trace ideals and **Proposition 5.4**, **Corollary 5.5**(1)(2)(3) and its `ℕ₀² ∪ {∞}` counterexample |
 | `KappaMonoid/Axioms.lean` | The six classical results assumed rather than proved — see below |
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
@@ -52,24 +54,12 @@ the literature, none of them monoid-theoretic and none in Mathlib, so it stays a
 `Modules.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
 statement corrected in Examples 4.8(1)" below.
 
-### Scaffold
-
-One file carries the part of §5 that is not yet proved: every statement type-checks, and the proofs
-are filled in as far as they go. It is not imported by `KappaMonoid.lean`, so `lake build` stays
-green and `sorry`-free; build it individually with `lake build KappaMonoid.Section5`.
-
-Four `sorry`s remain there. Proved so far: the theory of forms `α X₁ + β X₂` including
-`exists_form` (every element of `H` has a form); **Lemma 5.1**, the braidedness of `H` over
-`add (x₁ + x₂)`; **all five parts of Lemma 5.2**; **Theorem 5.3**, the section's main result, in
-both directions; the trace ideals of Proposition 5.4; and the `ℕ₀² ∪ {∞}` counterexample with the
-two absorption claims of Corollary 5.5, together with **Corollary 5.5(1)**. `theorem_5_3` uses no
-axiom beyond A5, which enters through Corollary 4.7(1); see "The hypothesis added to Theorem 5.3"
-below. Still open: Proposition 5.4 and its hereditary addendum, and Corollary 5.5(2) and (3) — all
-four needing module theory rather than monoid theory. See `SECTION5-PLAN.md`.
-
-| File | Contents | Plan |
-|---|---|---|
-| `KappaMonoid/Section5.lean` | §5: forms `α X₁ + β X₂` over `ℕ∞`, Lemmas 5.1–5.2, **Thm. 5.3** (which two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring), trace ideals and Prop. 5.4, Cor. 5.5 and its `ℕ₀² ∪ {∞}` counterexample | `SECTION5-PLAN.md` |
+**Section 5 is complete.** Every lemma, theorem, proposition and corollary of §5 is stated and
+proved, `sorry`-free. Theorem 5.3 and Corollary 5.5 use no axiom beyond A5, which enters through
+Corollary 4.7(1); Proposition 5.4 and its hereditary half use none at all. Six statements needed
+correcting before they could be proved — the scaffold had dropped hypotheses that the paper's
+standing assumptions supply, and in two places the quantifier was too wide; all six are recorded in
+"The statements corrected in Section 5" below.
 
 ## Conventions
 
@@ -187,21 +177,46 @@ isomorphism itself, should it ever be wanted: make `universal` quantify over a t
 fresh universe (`extend_lhom` already works in that generality, so this changes the definition and
 Theorem 3.11's statement but not its proof), or compare `ULift`s.
 
-## The hypothesis added to Theorem 5.3
+## The statements corrected in Section 5
 
-Theorem 5.3 characterises the non-cyclic two-generated `ℵ₀`-monoids isomorphic to `V^{ℵ₀}(R)` for a
-*hereditary* ring `R`. Both directions of the paper's proof reach `R` only through Corollary 4.6:
-over a hereditary ring every projective module is a direct sum of finitely generated ones. That
-implication is a quoted result (Albrecht; Bergman), not monoid theory and not in Mathlib, so this
-development does not derive it — it is bundled into the Bergman–Dicks data of axiom A5, as
-`BergmanDicksData.sumOfFG`, for the ring A5 produces. It therefore cannot be recovered from
-`∀ I : Ideal R, Module.Projective R I` inside the formalisation.
+Section 5 was scaffolded before it was proved, and six of its statements had to be corrected on the
+way. Each correction is also recorded in the docstring of the affected result.
 
-`theorem_5_3` accordingly carries `EveryProjectiveIsSumOfFG R` alongside hereditariness on both
-sides of the equivalence. For a hereditary ring the extra conjunct is automatic, so the statement is
-the paper's; making it explicit is the same treatment Corollary 4.6 already gets in `Modules.lean`,
-where it is a documented stub rather than a formalised implication.
-`corollary_4_7_one_forward` was extended to return it, which it can because axiom A5 supplies it.
+**Hereditariness is carried together with `EveryProjectiveIsSumOfFG R`** — in Theorem 5.3,
+Proposition 5.4's hereditary half and all three parts of Corollary 5.5. Both directions of the
+paper's proofs reach `R` only through Corollary 4.6: over a hereditary ring every projective module
+is a direct sum of finitely generated ones. That implication is a quoted result (Albrecht; Bergman),
+not monoid theory and not in Mathlib, so this development does not derive it — it is bundled into
+the Bergman–Dicks data of axiom A5, as `BergmanDicksData.sumOfFG`, for the ring A5 produces. It is
+therefore not recoverable from `∀ I : Ideal R, Module.Projective R I` inside the formalisation. For
+a hereditary ring the extra conjunct is automatic, so the statements are the paper's; making it
+explicit is the same treatment Corollary 4.6 already gets in `Modules.lean`, where it is a
+documented stub rather than a formalised implication. `corollary_4_7_one_forward` was extended to
+return it, which it can because axiom A5 supplies it.
+
+**Lemma 5.2(3) and 5.2(4) take the generation hypothesis `hgen`.** It is a standing assumption of
+§5 ("let `H` be a non-cyclic `ℵ₀`-monoid generated by two elements") and both proofs genuinely need
+it: in 5.2(3) it is where `t = m' x_i + n' x_j` comes from, and in 5.2(4) it is what lets
+`v (a, K+1)` be written in a form at all.
+
+**Corollary 5.5(1)'s condition is quantified over both orderings of the generators.** The paper
+writes it for `1 ≤ i ≠ j ≤ 2`, so each of its two clauses has two instances; the scaffold kept only
+one of each, and both are needed. Without the `X₂`-half of the first clause a finite and an infinite
+form could share a value, so condition (iii) of Theorem 5.3 would not follow; and the two halves of
+the second clause are exactly condition (ii) of Theorem 5.3 for the two orderings.
+
+**Proposition 5.4's hereditary half and Corollary 5.5(2) quantify over classes, not over all
+projective modules.** As scaffolded, the freeness clause read "every projective module that is not
+finitely generated is free on a countable basis", which is false as soon as `R ≠ 0`: `R^{(ℵ₁)}` is
+projective and not finitely generated, but is not free on a countable basis (axiom A1). The paper
+says "any countably (non finitely) generated projective module", and the carrier of `V^{ℵ₀}(R)` is
+exactly the countably generated projectives, so the statements range over `q : V^{ℵ₀}(R)`.
+
+One thing the paper has that Section 5 does not: part (3) of Corollary 5.5 also records two further
+reformulations of realizability — that `R` may be taken with a finitely generated projective `P`
+whose `P^{(ℵ₀)}` is not free, and that this is the same as `Tr(P₁) ⊊ Tr(P₂)`. The scaffold stated
+part (3) without them, and it is a correct equivalence as it stands; the omission is noted in
+`SECTION5-PLAN.md`.
 
 ## Encoding decisions
 

@@ -4,7 +4,7 @@ A formalisation of
   Zahra Nazemian and Daniel Smertnig,
   *A monoid-theoretical approach to infinite direct-sum decompositions of modules*,
 
-covering Sections 2–4 (Section 5 is deliberately omitted).
+covering Sections 2–5.
 -/
 import KappaMonoid.Basic
 import KappaMonoid.Braiding
@@ -23,3 +23,4 @@ import KappaMonoid.Semisimple
 import KappaMonoid.Section32
 import KappaMonoid.Reals
 import KappaMonoid.Section4
+import KappaMonoid.Section5
