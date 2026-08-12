@@ -1215,6 +1215,15 @@ theorem IsKHom.map_sumOf {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom 
       exact hf.1
   rw [sumOf_eq_extend h (emb h) x, hf.2, hext, ← sumOf_eq_extend h (emb h) (f ∘ x)]
 
+/-- A `κ`-homomorphism is additive: `a + b` is a `κ`-sum indexed by `Bool`. -/
+theorem IsKHom.map_add {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom κ f) (a b : H) :
+    f (a + b) = f a + f b := by
+  have hUB : #(ULift.{u} Bool) ≤ κ :=
+    le_trans (le_of_lt (Cardinal.lt_aleph0_iff_finite.mpr inferInstance))
+      (aleph0_le (κ := κ) (H := H))
+  rw [← sumOf_two a b hUB, hf.map_sumOf hUB, ← sumOf_two (f a) (f b) hUB]
+  exact congrArg _ (funext fun p => by rcases p with ⟨(_ | _)⟩ <;> rfl)
+
 /-- A `κ`-submonoid of a `κ`-monoid. -/
 structure IsKSubmonoid (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Prop where
   zero_mem : (0 : H) ∈ S

@@ -77,6 +77,43 @@ noncomputable def ecmul (a : ℕ∞) (x : H) : H :=
 /-- The element of `H` represented by a form. -/
 noncomputable def eval (x₁ x₂ : H) (F : Form) : H := ecmul F.1 x₁ + ecmul F.2 x₂
 
+@[simp] theorem ecmul_zero (x : H) : ecmul (0 : ℕ∞) x = 0 := by
+  rw [ecmul, KMonoid.cmul_congr (by simp : Cardinal.ofENat (0 : ℕ∞) = 0) _ zero_le,
+    KMonoid.cmul_zero_cardinal]
+
+@[simp] theorem ecmul_one (x : H) : ecmul (1 : ℕ∞) x = x := by
+  rw [ecmul, KMonoid.cmul_congr (by simp : Cardinal.ofENat (1 : ℕ∞) = 1) _
+    (le_of_lt Cardinal.one_lt_aleph0), KMonoid.cmul_one]
+
+/-- Every cardinal `≤ ℵ₀` is a coefficient: `ℕ∞` is exactly `{0, 1, 2, …, ℵ₀}`. -/
+theorem exists_ofENat_of_le_aleph0 {c : Cardinal.{u}} (h : c ≤ ℵ₀) :
+    ∃ a : ℕ∞, Cardinal.ofENat a = c := by
+  rcases lt_or_eq_of_le h with hlt | rfl
+  · obtain ⟨n, rfl⟩ := Cardinal.lt_aleph0.mp hlt
+    exact ⟨(n : ℕ∞), by simp⟩
+  · exact ⟨⊤, Cardinal.ofENat_top⟩
+
+/-- A nonzero number of copies of `x` has `x` as a summand. -/
+theorem self_addLe_ecmul {a : ℕ∞} (ha : a ≠ 0) (x : H) : x ≼ ecmul a x := by
+  have h1 : (1 : Cardinal.{u}) ≤ Cardinal.ofENat a :=
+    Cardinal.one_le_iff_ne_zero.mpr (by simpa using ha)
+  have h := KMonoid.cmul_le_cmul (κ := ℵ₀) (le_of_lt Cardinal.one_lt_aleph0)
+    (Cardinal.ofENat_le_aleph0 a) h1 x
+  rwa [KMonoid.cmul_one] at h
+
+/-- A `κ`-submonoid absorbs `ecmul`: any number `≤ ℵ₀` of copies of one of its elements is again a
+sum of a family in it. -/
+theorem IsKSubmonoid.ecmul_mem {S : Set H} (hS : KMonoid.IsKSubmonoid (ℵ₀ : Cardinal.{u}) S)
+    {x : H} (hx : x ∈ S) (a : ℕ∞) : ecmul a x ∈ S := by
+  have hmk : #(Idx (Cardinal.ofENat a)) ≤ (ℵ₀ : Cardinal.{u}) :=
+    le_of_eq_of_le (mk_Idx _) (Cardinal.ofENat_le_aleph0 a)
+  have hrw : ecmul a x
+      = KMonoid.sumOf (κ := ℵ₀) hmk (fun _ : Idx (Cardinal.ofENat a) => x) := by
+    rw [← KMonoid.cmul_eq_sumOf hmk x, ecmul]
+    exact KMonoid.cmul_congr (mk_Idx _).symm _ _ x
+  rw [hrw]
+  exact hS.sumOf_mem hmk _ fun _ => hx
+
 /-- A form is *infinite* if at least one coefficient is. -/
 def Form.IsInfinite (F : Form) : Prop := F.1 = ⊤ ∨ F.2 = ⊤
 
@@ -85,6 +122,53 @@ def Form.IsFinite (F : Form) : Prop := F.1 ≠ ⊤ ∧ F.2 ≠ ⊤
 
 theorem Form.not_isInfinite_iff (F : Form) : ¬ F.IsInfinite ↔ F.IsFinite := by
   simp [Form.IsInfinite, Form.IsFinite, not_or]
+
+/-- **Every element of `H` has a form**, which is the sentence opening §5: "every `y ∈ H` can be
+represented as `y = Σ_{k ∈ ℵ₀} y_k` with `y_k` equal to either `x₁` or `x₂`".
+
+Proof: the elements representable by a form are a `κ`-submonoid — an `ℵ₀`-indexed sum of forms is
+the form whose coefficients are the cardinal sums, which stay `≤ ℵ₀` because `ℵ₀ · ℵ₀ = ℵ₀`, and
+every cardinal `≤ ℵ₀` is a coefficient (`exists_ofENat_of_le_aleph0`) — and it contains `x₁` and
+`x₂`, so it contains all of `⟨x₁, x₂⟩ = H`. -/
+theorem exists_form (x₁ x₂ : H)
+    (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H)) (y : H) :
+    ∃ F : Form, eval x₁ x₂ F = y := by
+  have hidx : #(Idx (ℵ₀ : Cardinal.{u})) ≤ (ℵ₀ : Cardinal.{u}) := le_of_eq (mk_Idx _)
+  have hsub : KMonoid.IsKSubmonoid (ℵ₀ : Cardinal.{u}) {y : H | ∃ F : Form, eval x₁ x₂ F = y} := by
+    constructor
+    · exact ⟨(0, 0), by rw [eval, ecmul_zero, ecmul_zero, add_zero]⟩
+    · intro z hz
+      choose F hF using hz
+      -- the coefficient sums, and the coefficients they come from
+      have hbound : ∀ c : Idx (ℵ₀ : Cardinal.{u}) → ℕ∞,
+          Cardinal.sum (fun i => Cardinal.ofENat (c i)) ≤ (ℵ₀ : Cardinal.{u}) := by
+        intro c
+        refine le_trans (Cardinal.sum_le_sum _ (fun _ => (ℵ₀ : Cardinal.{u}))
+          fun i => Cardinal.ofENat_le_aleph0 (c i)) ?_
+        rw [Cardinal.sum_const', mk_Idx]
+        exact le_of_eq (Cardinal.mul_eq_left le_rfl le_rfl Cardinal.aleph0_ne_zero)
+      -- an `ℵ₀`-sum of `ecmul`s is an `ecmul` by the cardinal sum
+      have hslot : ∀ (c : Idx (ℵ₀ : Cardinal.{u}) → ℕ∞) (x : H), ∃ a : ℕ∞,
+          KMonoid.ksum (κ := ℵ₀) (fun i => ecmul (c i) x) = ecmul a x := by
+        intro c x
+        obtain ⟨a, ha⟩ := exists_ofENat_of_le_aleph0 (hbound c)
+        refine ⟨a, ?_⟩
+        simp only [ecmul]
+        rw [← KMonoid.sumOf_Idx,
+          ← KMonoid.cmul_sumOf_cardinal hidx (fun i => Cardinal.ofENat (c i))
+            (fun i => Cardinal.ofENat_le_aleph0 (c i)) (hbound c) x]
+        exact KMonoid.cmul_congr ha.symm _ _ x
+      obtain ⟨α, hα⟩ := hslot (fun i => (F i).1) x₁
+      obtain ⟨β, hβ⟩ := hslot (fun i => (F i).2) x₂
+      refine ⟨(α, β), ?_⟩
+      rw [show z = fun i => ecmul (F i).1 x₁ + ecmul (F i).2 x₂ from
+          funext fun i => (hF i).symm,
+        ← KMonoid.sumOf_Idx, KMonoid.sumOf_add hidx, KMonoid.sumOf_Idx, KMonoid.sumOf_Idx,
+        hα, hβ, eval]
+  refine KMonoid.kclosure_le ?_ hsub (KMonoid.kGenerates_iff.mp hgen y)
+  rintro w (rfl | rfl)
+  · exact ⟨(1, 0), by rw [eval, ecmul_one, ecmul_zero, add_zero]⟩
+  · exact ⟨(0, 1), by rw [eval, ecmul_one, ecmul_zero, zero_add]⟩
 
 /-- The index type of a family in an `ℵ₀`-monoid: `ℕ`, lifted into `Type u` because `BraidingData`
 indexes by a type in the cardinal's universe. -/
@@ -249,7 +333,106 @@ theorem lemma_5_1 (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
     (hbij : Function.Bijective e) :
     letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
     IsBraidedOver ℵ₀ ℵ₀ ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) H le_rfl (fun y => (y : H)) := by
-  sorry
+  classical
+  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    ((projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  -- Corollary 4.5(3): `V^{ℵ₀}(R)` is braided over `V(R)`, the `ℵ₀⁻`-small classes
+  have hbrV := (corollary_4_5_three R ℵ₀ le_rfl hfg).1
+  -- `S = e⁻¹(V(R))` is the set of elements of `H` corresponding to finitely generated modules
+  set S : Set H := e ⁻¹' ((projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀) with hSdef
+  have hWsub := (projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀
+    Cardinal.isRegular_aleph0 le_rfl
+  have h0S : (0 : H) ∈ S := by
+    show e 0 ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀
+    rw [hhom.1]
+    exact hWsub.zero_mem
+  -- `V(R)` is closed under binary sums: `+` is a two-element `ℵ₀⁻`-sum
+  have hWadd : ∀ p q : (projClass R ℵ₀ le_rfl).carrier,
+      p ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀ →
+      q ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀ →
+      p + q ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀ := by
+    intro p q hp hq
+    have hUB : #(ULift.{u} Bool) < (ℵ₀ : Cardinal.{u}) :=
+      Cardinal.lt_aleph0_iff_finite.mpr inferInstance
+    -- ascribe the type: `IsLambdaSmall` unfolds to a `∀`, so an unascribed `have` over-applies
+    have hmem : KMonoid.sumOf (κ := ℵ₀) (hUB.le.trans le_rfl)
+        (fun t : ULift.{u} Bool => if t.down then p else q)
+          ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀ :=
+      hWsub.sumOf_mem hUB _ (by rintro ⟨(_ | _)⟩ <;> simpa)
+    rwa [KMonoid.sumOf_two p q (hUB.le.trans le_rfl)] at hmem
+  have haddS : ∀ a ∈ S, ∀ b ∈ S, a + b ∈ S := by
+    intro a ha b hb
+    show e (a + b) ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀
+    rw [KMonoid.IsKHom.map_add hhom]
+    exact hWadd _ _ ha hb
+  -- `S` is divisor-closed, because `V(R)` is (a summand of a f.g. module is f.g.)
+  have hSsat : ∀ a ∈ S, ∀ b c : H, a = b + c → b ∈ S := by
+    intro a ha b c habc
+    exact (projClass R ℵ₀ le_rfl).lambdaSmallPart_summand le_rfl ℵ₀ (e a) ha (e b)
+      ⟨e c, by rw [← KMonoid.IsKHom.map_add hhom, ← habc]⟩
+  -- and `S` generates `H`, because `V(R)` generates `V^{ℵ₀}(R)`
+  have hSgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) S := by
+    refine KMonoid.kGenerates_iff.mpr fun h => ?_
+    obtain ⟨z, hz⟩ := hbrV.generates (e h)
+    choose w hw using fun i => hbij.2 ((z i : (projClass R ℵ₀ le_rfl).carrier))
+    refine (KMonoid.mem_kclosure_iff (S := S) h0S h).mpr ⟨w, fun i => ?_, hbij.1 ?_⟩
+    · show e (w i) ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀
+      rw [hw i]
+      exact (z i).2
+    · rw [hz, hhom.2 w]
+      exact congrArg _ (funext fun i => (hw i).symm)
+  -- **the paper's parenthetical**: both generators lie in `S`, else `H` would be cyclic
+  have key : ∀ a b : H, KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({a, b} : Set H) → a ∈ S := by
+    intro a b hab
+    by_contra haS
+    -- otherwise every element of `S` is a multiple of `b` alone
+    have hsub : S ⊆ KMonoid.kclosure (ℵ₀ : Cardinal.{u}) ({b} : Set H) := by
+      intro y hy
+      obtain ⟨F, hF⟩ := exists_form a b hab y
+      have hα : F.1 = 0 := by
+        by_contra hne
+        obtain ⟨c, hc⟩ := self_addLe_ecmul hne a
+        exact haS (hSsat y hy a (c + ecmul F.2 b)
+          (by rw [← hF, eval, ← hc, add_assoc]))
+      rw [← hF, eval, hα, ecmul_zero, zero_add]
+      exact IsKSubmonoid.ecmul_mem
+        (S := KMonoid.kclosure (ℵ₀ : Cardinal.{u}) ({b} : Set H))
+        (KMonoid.isKSubmonoid_kclosure _ _) (KMonoid.subset_kclosure rfl) F.2
+    refine hnoncyclic b (Set.eq_univ_of_univ_subset ?_)
+    rw [← hSgen]
+    exact KMonoid.kclosure_le hsub (KMonoid.isKSubmonoid_kclosure _ _)
+  have hx₁S : x₁ ∈ S := key x₁ x₂ hgen
+  have hx₂S : x₂ ∈ S := key x₂ x₁ (by rwa [Set.pair_comm])
+  -- hence `add (x₁ + x₂) ⊆ S`: it is generated by a divisor-closed set containing `x₁ + x₂`
+  have hnsmulS : ∀ (n : ℕ) (a : H), a ∈ S → n • a ∈ S := by
+    intro n a ha
+    induction n with
+    | zero => rwa [zero_nsmul]
+    | succ p hp => rw [succ_nsmul]; exact haddS _ hp _ ha
+  have hTS : ∀ a ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂),
+      e a ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀ := by
+    rintro a ⟨z, n, hzn⟩
+    refine hSsat _ ?_ a z hzn.symm
+    rw [KMonoid.cmul_natCast]
+    exact hnsmulS n _ (haddS _ hx₁S _ hx₂S)
+  -- `add (x₁ + x₂)` still generates `H`, since it contains both generators
+  have hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+    KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₁ x₂ rfl
+  have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+    KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₂ x₁ (add_comm x₁ x₂)
+  have hTgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) (KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) := by
+    refine Set.eq_univ_of_univ_subset ?_
+    rw [← hgen]
+    refine KMonoid.kclosure_le ?_ (KMonoid.isKSubmonoid_kclosure _ _)
+    rintro w (rfl | rfl)
+    · exact KMonoid.subset_kclosure hx₁T
+    · exact KMonoid.subset_kclosure hx₂T
+  exact IsBraidedOver.of_kIso_subset Cardinal.isRegular_aleph0 hWsub
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂)) hbrV hhom hbij hTS
+    (KMonoid.addOf_isSaturated (x₁ + x₂)) hTgen
 
 end Lemma51
 

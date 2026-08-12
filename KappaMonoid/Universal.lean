@@ -755,6 +755,87 @@ theorem IsBraidedOver.of_set_eq {H : Type v} [KMonoid κ H] (hlam : lam.IsRegula
   subst hST
   exact hbr
 
+/-- **Braidedness transported along a `κ`-isomorphism and cut down to a smaller base.**
+
+Suppose `H₂` is `λ⁻`-braided over a subset `S`, that `e : H₁ → H₂` is an isomorphism of
+`κ`-monoids, and that `T ⊆ H₁` is a `λ⁻`-closed subset which
+
+* maps into `S`,
+* is *divisor-closed* in `H₁` (`hsat`), and
+* still generates `H₁` as a `κ`-monoid.
+
+Then `H₁` is `λ⁻`-braided over `T`.
+
+Only `braided` has content.  Two `T`-families with equal `κ`-sum are carried by `e` to two
+`S`-families with equal `κ`-sum, hence are braided in `S`; the braiding families `u_μ`, `v_μ` are
+then pulled back through `e` and land in `T` because each block sum `Σ_{I_μ} x i` lies in `T` and
+`u_μ`, `v_μ` are summands of it.  This is how Lemma 5.1 replaces the base `V(R)` — where the
+braiding of Corollary 4.5(3) lives — by the smaller base `add (x₁ + x₂)`. -/
+theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMonoid κ H₂]
+    (hlam : lam.IsRegular) {hlk : lam ≤ κ} {S : Set H₂} {T : Set H₁}
+    (hS : IsLSubset lam hlk S) (hT : IsLSubset lam hlk T)
+    (hbr : letI := hS.lmonoid hlam
+      IsBraidedOver lam κ ↥S H₂ hlk (fun y => (y : H₂)))
+    {e : H₁ → H₂} (he : IsKHom κ e) (hbij : Function.Bijective e)
+    (hmaps : ∀ a ∈ T, e a ∈ S)
+    (hsat : ∀ a ∈ T, ∀ b c : H₁, a = b + c → b ∈ T)
+    (hgen : KGenerates κ T) :
+    letI := hT.lmonoid hlam
+    IsBraidedOver lam κ ↥T H₁ hlk (fun y => (y : H₁)) := by
+  letI := hS.lmonoid hlam
+  letI := hT.lmonoid hlam
+  -- the inverse isomorphism
+  obtain ⟨einv, hli, hri⟩ : ∃ g : H₂ → H₁, Function.LeftInverse g e ∧ Function.RightInverse g e :=
+    ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
+      (Equiv.ofBijective e hbij).right_inv⟩
+  refine ⟨⟨rfl, fun {ι} h x => rfl⟩, Subtype.val_injective, fun h => ?_, fun x y hxy => ?_⟩
+  · -- generation is `hgen`, read through `mem_kclosure_iff`
+    obtain ⟨z, hzT, rfl⟩ := (mem_kclosure_iff hT.zero_mem h).mp (kGenerates_iff.mp hgen h)
+    exact ⟨fun i => ⟨z i, hzT i⟩, rfl⟩
+  -- the two `T`-families, carried into `S`
+  have himg : ∀ z : ↥T, e (z : H₁) ∈ S := fun z => hmaps z z.2
+  have hksum : ∀ z : Idx κ → ↥T,
+      e (ksum (κ := κ) fun i => (z i : H₁)) = ksum (κ := κ) fun i => e (z i : H₁) :=
+    fun z => he.2 _
+  obtain ⟨D⟩ := hbr.braided (fun i => ⟨e (x i : H₁), himg (x i)⟩)
+    (fun i => ⟨e (y i : H₁), himg (y i)⟩) (by rw [← hksum x, ← hksum y, hxy])
+  -- every `u`, `v` of the braiding pulls back into `T`
+  have hpull : ∀ (z : Idx κ → ↥T) (p : Idx κ × ℕ) (P : Set (Idx κ)) (hP : #P < lam)
+      (a b : ↥S), KMonoid.sumOf (κ := κ) (hP.le.trans hlk) (fun i : P => e (z i : H₁))
+        = ((a : H₂) + (b : H₂)) →
+      einv (a : H₂) ∈ T ∧ einv (b : H₂) ∈ T ∧
+        KMonoid.sumOf (κ := κ) (hP.le.trans hlk) (fun i : P => (z i : H₁))
+          = einv (a : H₂) + einv (b : H₂) := by
+    intro z p P hP a b hab
+    have hblock : KMonoid.sumOf (κ := κ) (hP.le.trans hlk) (fun i : P => (z i : H₁)) ∈ T :=
+      hT.sumOf_mem hP _ fun i => (z i).2
+    have hsplit : KMonoid.sumOf (κ := κ) (hP.le.trans hlk) (fun i : P => (z i : H₁))
+        = einv (a : H₂) + einv (b : H₂) := by
+      refine hbij.1 ?_
+      rw [he.map_add, hri (a : H₂), hri (b : H₂), ← hab]
+      exact he.map_sumOf (hP.le.trans hlk) (fun i : P => (z i : H₁))
+    exact ⟨hsat _ hblock _ _ hsplit, hsat _ hblock _ _ (hsplit.trans (add_comm _ _)), hsplit⟩
+  have huv : ∀ p : Idx κ × ℕ, einv (D.v p : H₂) ∈ T ∧ einv (D.u p : H₂) ∈ T := by
+    intro p
+    obtain ⟨h₁, h₂, -⟩ := hpull x p (D.I p) (D.I_small p) (D.v p) (D.u p)
+      (congrArg Subtype.val (D.hI p))
+    exact ⟨h₁, h₂⟩
+  refine ⟨{ I := D.I, J := D.J, I_disjoint := D.I_disjoint, J_disjoint := D.J_disjoint
+            I_cover := D.I_cover, J_cover := D.J_cover
+            I_small := D.I_small, J_small := D.J_small
+            u := fun p => ⟨einv (D.u p : H₂), (huv p).2⟩
+            v := fun p => ⟨einv (D.v p : H₂), (huv p).1⟩
+            v_limit := fun a => Subtype.ext ?_
+            hI := fun p => Subtype.ext ?_
+            hJ := fun p => Subtype.ext ?_ }⟩
+  · show einv (D.v (a, 0) : H₂) = (0 : H₁)
+    rw [D.v_limit a]
+    exact hbij.1 (by rw [hri, he.1]; rfl)
+  · exact (hpull x p (D.I p) (D.I_small p) (D.v p) (D.u p)
+      (congrArg Subtype.val (D.hI p))).2.2
+  · exact (hpull y p (D.J p) (D.J_small p) (D.v (bsucc p)) (D.u p)
+      (congrArg Subtype.val (D.hJ p))).2.2
+
 /-- Being `λ⁻`-braided over `X` implies being the universal `κ`-extension of `X`
 (the second half of Theorem 3.11(2)); it is immediate from Proposition 3.9. -/
 theorem IsBraidedOver.isUniversalKExtension {X : Type v} {H : Type w}
