@@ -665,6 +665,12 @@ end Fibres
 
 /-! ### The fibre counts used by Lemma 5.2(3) -/
 
+theorem ecmul_add (a b : ℕ∞) (x : H) : ecmul (a + b) x = ecmul a x + ecmul b x := by
+  have hc : Cardinal.ofENat (a + b) = Cardinal.ofENat a + Cardinal.ofENat b := by simp
+  have hle : Cardinal.ofENat a + Cardinal.ofENat b ≤ ℵ₀ := hc ▸ Cardinal.ofENat_le_aleph0 (a + b)
+  rw [ecmul, ecmul, ecmul, KMonoid.cmul_congr hc _ hle,
+    KMonoid.cmul_add (Cardinal.ofENat_le_aleph0 a) (Cardinal.ofENat_le_aleph0 b) hle]
+
 theorem ecmul_one_add (a : ℕ∞) (x : H) : ecmul (1 + a) x = x + ecmul a x := by
   have hc : Cardinal.ofENat (1 + a) = 1 + Cardinal.ofENat a := by simp
   have hle : (1 : Cardinal.{u}) + Cardinal.ofENat a ≤ ℵ₀ := hc ▸ Cardinal.ofENat_le_aleph0 (1 + a)
@@ -985,15 +991,306 @@ theorem lemma_5_2_three (hmem : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂) (hmi
   exact IsBraided.trans_aleph0 (braidedForms_of_top x₁ x₂ hmem hmix hgen α hFm hZm)
     (IsBraided.symm (braidedForms_of_top x₁ x₂ hmem hmix hgen β hGm hZm))
 
+/-! ### Extra bookkeeping for Lemma 5.2(4) -/
+
+/-- A finite sum of multiples of `c` is a multiple of `c`. -/
+theorem exists_nsmul_finsum {M : Type v} [AddCommMonoid M] {ι : Type u} {S : Set ι}
+    (hS : S.Finite) (F : ι → M) (c : M) (hF : ∀ i ∈ S, ∃ p : ℕ, F i = p • c) :
+    ∃ p : ℕ, ∑ᶠ i ∈ S, F i = p • c := by
+  classical
+  revert hF
+  induction S, hS using Set.Finite.induction_on with
+  | empty => exact fun _ => ⟨0, by rw [finsum_mem_empty, zero_smul]⟩
+  | @insert a S' ha hS' hind =>
+    intro hF
+    obtain ⟨p, hp⟩ := hind (fun i hi => hF i (Set.mem_insert_of_mem a hi))
+    obtain ⟨q, hq⟩ := hF a (Set.mem_insert a S')
+    exact ⟨q + p, by rw [finsum_mem_insert _ ha hS', hp, hq, add_smul]⟩
+
+/-- The coercion `add (x₁ + x₂) → H` commutes with `nsmul`. -/
+theorem coe_nsmul_addOf (k : ℕ) (a : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    ((k • a : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H) = k • (a : H) := by
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  induction k with
+  | zero => rw [zero_nsmul, zero_nsmul]; rfl
+  | succ p hp => rw [succ_nsmul, succ_nsmul, ← hp]; rfl
+
+/-- The slots at which the family of `c X₁ + ℵ₀ X₂` takes the value `x₁`. -/
+def oneSlots (c : ℕ) : Set FormIdx.{u} := Sum.inl '' {j : Nats.{u} | j.down < c}
+
+theorem finite_oneSlots (c : ℕ) : (oneSlots.{u} c).Finite := (finite_nats_lt c).image _
+
+theorem ncard_oneSlots (c : ℕ) : (oneSlots.{u} c).ncard = c := by
+  rw [oneSlots, Set.ncard_image_of_injective _ Sum.inl_injective]
+  exact ncard_nats_lt c
+
+theorem familyOfForm_eq_of_mem_oneSlots {c : ℕ} {i : FormIdx.{u}} (hi : i ∈ oneSlots.{u} c) :
+    familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i = x₁ := by
+  obtain ⟨j, hj, rfl⟩ := hi
+  rw [familyOfForm_inl]
+  refine if_pos ?_
+  show ((j.down : ℕ) : ℕ∞) < ((c : ℕ) : ℕ∞)
+  exact_mod_cast hj
+
+theorem familyOfForm_eq_of_notMem_oneSlots {c : ℕ} {i : FormIdx.{u}} (hi : i ∉ oneSlots.{u} c) :
+    familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i = x₂ ∨ familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i = 0 := by
+  rcases i with j | j
+  · refine Or.inr ?_
+    rw [familyOfForm_inl]
+    refine if_neg ?_
+    show ¬ (((j.down : ℕ) : ℕ∞) < ((c : ℕ) : ℕ∞))
+    intro h
+    exact hi ⟨j, by exact_mod_cast h, rfl⟩
+  · refine Or.inl ?_
+    rw [familyOfForm_inr]
+    exact if_pos (WithTop.coe_lt_top (j.down : ℕ))
+
+/-- **A block sum of the family of `c X₁ + ℵ₀ X₂`** over a finite set of slots containing all the
+`x₁`-slots is `c x₁ + p x₂` for some finite `p`: the `x₁`-slots contribute exactly `c` copies and
+every other slot carries `x₂` or `0`. -/
+theorem exists_block_value {c : ℕ} {S : Set FormIdx.{u}} (hS : S.Finite)
+    (hsub : oneSlots.{u} c ⊆ S)
+    (hFm : ∀ i, familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
+    (hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
+    (hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    ∃ p : ℕ, (∑ᶠ i ∈ S, (⟨familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i, hFm i⟩ :
+        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
+      = c • (⟨x₁, hx₁T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))
+        + p • (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) := by
+  classical
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  have hsplit : S = oneSlots.{u} c ∪ (S \ oneSlots.{u} c) := (Set.union_diff_cancel hsub).symm
+  have hdisj : Disjoint (oneSlots.{u} c) (S \ oneSlots.{u} c) := Set.disjoint_sdiff_right
+  have hdfin : (S \ oneSlots.{u} c).Finite := hS.subset Set.diff_subset
+  obtain ⟨p, hp⟩ := exists_nsmul_finsum hdfin
+    (fun i => (⟨familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i, hFm i⟩ :
+      ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
+    (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))
+    (fun i (hi : i ∈ S \ oneSlots.{u} c) => by
+      rcases familyOfForm_eq_of_notMem_oneSlots x₁ x₂ hi.2 with h | h
+      · exact ⟨1, by rw [one_smul]; exact Subtype.ext h⟩
+      · exact ⟨0, by rw [zero_smul]; exact Subtype.ext h⟩)
+  refine ⟨p, ?_⟩
+  rw [hsplit, finsum_mem_union hdisj (finite_oneSlots c) hdfin, hp,
+    finsum_mem_congr rfl (fun i hi => (Subtype.ext (familyOfForm_eq_of_mem_oneSlots x₁ x₂ hi) :
+      (⟨familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i, hFm i⟩ :
+        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) = ⟨x₁, hx₁T⟩)),
+    finsum_mem_const_finite (finite_oneSlots c), ncard_oneSlots]
+
 /-- **Lemma 5.2(4)**: for incomparable generators, a braiding of `m X₁ + ℵ₀ X₂` with
-`n X₁ + ℵ₀ X₂` forces a finite relation `m x₁ + k x₂ = n x₁ + k' x₂`. -/
+`n X₁ + ℵ₀ X₂` forces a finite relation `m x₁ + k x₂ = n x₁ + k' x₂`.
+
+Paper proof, adapted to the block structure `ι × ℕ` of `BraidingData` — where the positions form
+countably many `ω`-chains rather than one well-order, so the paper's single cut `μ ≤ α` becomes a
+*rectangle*: choose a finite set `A` of chains and a level `K` such that every one of the finitely
+many `x₁`-slots of either family lies in some `I (a,k)` resp. `J (a,k)` with `a ∈ A`, `k ≤ K`.
+`BraidingData.telescope` then gives
+
+    n x₁ + q x₂ = m x₁ + p x₂ + Σ_{a ∈ A} v (a, K+1),
+
+because each of the two rectangles is a finite set of slots containing all the `x₁`-slots of its
+family (`exists_block_value`).  Finally `I (a, K+1)` contains no `x₁`-slot at all, so
+`v (a,K+1) + u (a,K+1)` is a finite multiple of `x₂`; hence `v (a,K+1) ∈ add x₂`, so its form has
+zero `X₁`-coefficient (`x₁ ∉ add x₂`) and finite `X₂`-coefficient (`NoMixedForms`, applied to that
+finite multiple of `x₂`).
+
+**This corrects the scaffold**, which omitted the generation hypothesis `hgen`; it is a standing
+assumption of §5, and the last step needs it to write `v (a,K+1)` in a form at all. -/
 theorem lemma_5_2_four (hmem : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂) (hmix : NoMixedForms x₁ x₂)
-    (m n : ℕ)
+    (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H)) (m n : ℕ)
     (hFm : ∀ i, familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hGm : ∀ i, familyOfForm x₁ x₂ ((n : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hbr : BraidedForms x₁ x₂ ((m : ℕ∞), ⊤) ((n : ℕ∞), ⊤) hFm hGm) :
     ∃ k k' : ℕ, eval x₁ x₂ ((m : ℕ∞), (k : ℕ∞)) = eval x₁ x₂ ((n : ℕ∞), (k' : ℕ∞)) := by
-  sorry
+  classical
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  have hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+    KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₁ x₂ rfl
+  have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+    KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₂ x₁ (add_comm x₁ x₂)
+  obtain ⟨D⟩ := hbr
+  -- the finitely many `x₁`-slots of the two families, and the blocks holding them
+  have hWfin : (oneSlots.{u} m ∪ oneSlots.{u} n).Finite :=
+    (finite_oneSlots m).union (finite_oneSlots n)
+  have hPPfin : ((fun i => IsBraided.blockOf D.I D.I_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n)
+      ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n)).Finite :=
+    (hWfin.image _).union (hWfin.image _)
+  have hAfin : (Prod.fst '' ((fun i => IsBraided.blockOf D.I D.I_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n)
+      ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n))).Finite :=
+    hPPfin.image _
+  obtain ⟨K, hK⟩ := (hPPfin.image Prod.snd).bddAbove
+  -- disjointness of the rectangle pieces
+  have hdisjK : ∀ (P : FormIdx.{u} × ℕ → Set FormIdx.{u}),
+      (∀ p q, p ≠ q → Disjoint (P p) (P q)) → ∀ a : FormIdx.{u},
+        ((↑(Finset.range (K + 1)) : Set ℕ)).PairwiseDisjoint (fun k => P (a, k)) := by
+    intro P hP a k _ k' _ hkk'
+    exact hP (a, k) (a, k') fun h => hkk' (congrArg Prod.snd h)
+  have hdisjA : ∀ (P : FormIdx.{u} × ℕ → Set FormIdx.{u}),
+      (∀ p q, p ≠ q → Disjoint (P p) (P q)) →
+      (Prod.fst '' ((fun i => IsBraided.blockOf D.I D.I_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n)
+        ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n))).PairwiseDisjoint
+        (fun a => ⋃ k ∈ (↑(Finset.range (K + 1)) : Set ℕ), P (a, k)) := by
+    intro P hP a _ a' _ haa'
+    refine Set.disjoint_left.mpr ?_
+    intro i hi hi'
+    obtain ⟨k, -, hk⟩ := Set.mem_iUnion₂.mp hi
+    obtain ⟨k', -, hk'⟩ := Set.mem_iUnion₂.mp hi'
+    exact Set.disjoint_left.mp (hP (a, k) (a', k') fun h => haa' (congrArg Prod.fst h)) hk hk'
+  -- the two rectangles, as finite sets of slots
+  have hrect : ∀ (P : FormIdx.{u} × ℕ → Set FormIdx.{u}),
+      (∀ p, #(P p) < (ℵ₀ : Cardinal.{u})) →
+      (⋃ a ∈ (Prod.fst '' ((fun i => IsBraided.blockOf D.I D.I_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n)
+        ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n))),
+        ⋃ k ∈ (↑(Finset.range (K + 1)) : Set ℕ), P (a, k)).Finite := by
+    intro P hP
+    exact hAfin.biUnion fun a _ => (Finset.range (K + 1)).finite_toSet.biUnion
+      fun k _ => Cardinal.lt_aleph0_iff_set_finite.mp (hP (a, k))
+  -- the rectangle sums are the double sums the telescoping identity speaks about
+  have hrectsum : ∀ (P : FormIdx.{u} × ℕ → Set FormIdx.{u})
+      (hPd : ∀ p q, p ≠ q → Disjoint (P p) (P q)) (hPs : ∀ p, #(P p) < (ℵ₀ : Cardinal.{u}))
+      (f : FormIdx.{u} → ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))),
+      (∑ᶠ i ∈ (⋃ a ∈ (Prod.fst '' ((fun i => IsBraided.blockOf D.I D.I_cover i) ''
+          (oneSlots.{u} m ∪ oneSlots.{u} n)
+          ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n))),
+          ⋃ k ∈ (↑(Finset.range (K + 1)) : Set ℕ), P (a, k)), f i)
+        = ∑ᶠ a ∈ (Prod.fst '' ((fun i => IsBraided.blockOf D.I D.I_cover i) ''
+            (oneSlots.{u} m ∪ oneSlots.{u} n)
+            ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n))),
+            ∑ k ∈ Finset.range (K + 1),
+              LMonoid.lsumOf (lam := (ℵ₀ : Cardinal.{u})) (hPs (a, k)) (fun i : P (a, k) => f i) := by
+    intro P hPd hPs f
+    rw [finsum_mem_biUnion (hdisjA P hPd) hAfin
+      (fun a _ => (Finset.range (K + 1)).finite_toSet.biUnion
+        fun k _ => Cardinal.lt_aleph0_iff_set_finite.mp (hPs (a, k)))]
+    refine finsum_mem_congr rfl fun a _ => ?_
+    rw [finsum_mem_biUnion (hdisjK P hPd a) (Finset.range (K + 1)).finite_toSet
+      (fun k _ => Cardinal.lt_aleph0_iff_set_finite.mp (hPs (a, k))), finsum_mem_coe_finset]
+    exact Finset.sum_congr rfl fun k _ => (LMonoid.lsumOf_eq_finsum (hPs (a, k)) f).symm
+  -- the rectangles cover the `x₁`-slots
+  have hcover : ∀ (P : FormIdx.{u} × ℕ → Set FormIdx.{u}) (hcov : (⋃ p, P p) = Set.univ),
+      ((fun i => IsBraided.blockOf P hcov i) '' (oneSlots.{u} m ∪ oneSlots.{u} n)
+        ⊆ (fun i => IsBraided.blockOf D.I D.I_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n)
+          ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n)) →
+      ∀ c : ℕ, oneSlots.{u} c ⊆ oneSlots.{u} m ∪ oneSlots.{u} n →
+      oneSlots.{u} c ⊆ ⋃ a ∈ (Prod.fst '' ((fun i => IsBraided.blockOf D.I D.I_cover i) ''
+        (oneSlots.{u} m ∪ oneSlots.{u} n)
+        ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n))),
+        ⋃ k ∈ (↑(Finset.range (K + 1)) : Set ℕ), P (a, k) := by
+    intro P hcov hsub c hc i hi
+    have hpp : IsBraided.blockOf P hcov i ∈ (fun i => IsBraided.blockOf D.I D.I_cover i) ''
+        (oneSlots.{u} m ∪ oneSlots.{u} n)
+        ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n) :=
+      hsub ⟨i, hc hi, rfl⟩
+    refine Set.mem_iUnion₂.mpr ⟨(IsBraided.blockOf P hcov i).1, ⟨_, hpp, rfl⟩, ?_⟩
+    refine Set.mem_iUnion₂.mpr ⟨(IsBraided.blockOf P hcov i).2, ?_, ?_⟩
+    · simp only [Finset.coe_range, Set.mem_Iio]
+      exact Nat.lt_succ_of_le (hK ⟨_, hpp, rfl⟩)
+    · rw [Prod.mk.eta]
+      exact IsBraided.mem_blockOf P hcov i
+  -- the two block values
+  obtain ⟨p, hp⟩ := exists_block_value x₁ x₂ (hrect D.I D.I_small)
+    (hcover D.I D.I_cover Set.subset_union_left m Set.subset_union_left) hFm hx₁T hx₂T
+  obtain ⟨q, hq⟩ := exists_block_value x₁ x₂ (hrect D.J D.J_small)
+    (hcover D.J D.J_cover Set.subset_union_right n Set.subset_union_right) hGm hx₁T hx₂T
+  -- the surviving `v`-terms are finite multiples of `x₂`
+  have hV : ∃ r : ℕ, (∑ᶠ a ∈ (Prod.fst '' ((fun i => IsBraided.blockOf D.I D.I_cover i) ''
+      (oneSlots.{u} m ∪ oneSlots.{u} n)
+      ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n))),
+      D.v (a, K + 1)) = r • (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) := by
+    refine exists_nsmul_finsum hAfin _ _ fun a _ => ?_
+    -- no `x₁`-slot survives past level `K`
+    have hno : ∀ i ∈ D.I (a, K + 1), familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i = x₂
+        ∨ familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i = 0 := by
+      intro i hi
+      refine familyOfForm_eq_of_notMem_oneSlots x₁ x₂ fun hone => ?_
+      have hb : IsBraided.blockOf D.I D.I_cover i = (a, K + 1) := IsBraided.blockOf_eq D.I_disjoint D.I_cover hi
+      have hpp : IsBraided.blockOf D.I D.I_cover i ∈ (fun i => IsBraided.blockOf D.I D.I_cover i) ''
+          (oneSlots.{u} m ∪ oneSlots.{u} n)
+          ∪ (fun i => IsBraided.blockOf D.J D.J_cover i) '' (oneSlots.{u} m ∪ oneSlots.{u} n) :=
+        Set.mem_union_left _ ⟨i, Set.mem_union_left _ hone, rfl⟩
+      have := hK (Set.mem_image_of_mem Prod.snd hpp)
+      rw [hb] at this
+      omega
+    -- so the block sums to a finite multiple of `x₂`
+    obtain ⟨r', hr'⟩ := exists_nsmul_finsum
+      (Cardinal.lt_aleph0_iff_set_finite.mp (D.I_small (a, K + 1)))
+      (fun i => (⟨familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i, hFm i⟩ :
+        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
+      (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))
+      (fun i hi => by
+        rcases hno i hi with h | h
+        · exact ⟨1, by rw [one_smul]; exact Subtype.ext h⟩
+        · exact ⟨0, by rw [zero_smul]; exact Subtype.ext h⟩)
+    have hblock : D.v (a, K + 1) + D.u (a, K + 1)
+        = r' • (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) := by
+      rw [← hr', ← LMonoid.lsumOf_eq_finsum (D.I_small (a, K + 1))]
+      exact (D.hI (a, K + 1)).symm
+    -- read the equation in `H` and use that `x₁ ∉ add x₂`
+    have hblockH : (D.v (a, K + 1) : H) + (D.u (a, K + 1) : H) = r' • x₂ := by
+      have := congrArg Subtype.val hblock
+      rwa [coe_nsmul_addOf x₁ x₂ r' ⟨x₂, hx₂T⟩] at this
+    have hvadd : (D.v (a, K + 1) : H) ∈ KMonoid.addOf (κ := ℵ₀) x₂ :=
+      ⟨(D.u (a, K + 1) : H), r', by rw [KMonoid.cmul_natCast]; exact hblockH⟩
+    obtain ⟨F, hF⟩ := exists_form x₁ x₂ hgen ((D.v (a, K + 1) : H))
+    have hF1 : F.1 = 0 := by
+      by_contra hne
+      obtain ⟨w, hw⟩ := self_addLe_ecmul hne x₁
+      exact hmem ⟨w + ecmul F.2 x₂ + (D.u (a, K + 1) : H), r', by
+        rw [KMonoid.cmul_natCast, ← hblockH, ← hF, eval, ← hw]
+        abel⟩
+    have hF2 : F.2 ≠ ⊤ := by
+      intro htop
+      obtain ⟨G, hG⟩ := exists_form x₁ x₂ hgen ((D.u (a, K + 1) : H))
+      refine hmix (r' • x₂) ⟨⟨(0, (r' : ℕ∞)), ⟨by simp, by simp⟩, ?_⟩, ⟨(G.1, ⊤), Or.inr rfl, ?_⟩⟩
+      · rw [eval, ecmul_zero, zero_add, ecmul_natCast]
+      · have hu : ecmul (⊤ : ℕ∞) x₂ + ecmul G.2 x₂ = ecmul (⊤ : ℕ∞) x₂ := by
+          rw [← ecmul_add, top_add]
+        calc eval x₁ x₂ (G.1, ⊤) = ecmul G.1 x₁ + ecmul (⊤ : ℕ∞) x₂ := rfl
+          _ = ecmul G.1 x₁ + (ecmul (⊤ : ℕ∞) x₂ + ecmul G.2 x₂) := by rw [hu]
+          _ = ecmul (⊤ : ℕ∞) x₂ + (ecmul G.1 x₁ + ecmul G.2 x₂) := by abel
+          _ = eval x₁ x₂ F + eval x₁ x₂ G := by
+                rw [eval, eval, hF1, htop, ecmul_zero, zero_add]
+          _ = (D.v (a, K + 1) : H) + (D.u (a, K + 1) : H) := by rw [hF, hG]
+          _ = r' • x₂ := hblockH
+    obtain ⟨g, hg⟩ : ∃ g : ℕ, F.2 = (g : ℕ∞) := ⟨F.2.toNat, (ENat.natCast_toNat hF2).symm⟩
+    refine ⟨g, Subtype.ext ?_⟩
+    rw [coe_nsmul_addOf x₁ x₂ g ⟨x₂, hx₂T⟩]
+    show (D.v (a, K + 1) : H) = g • x₂
+    rw [← hF, eval, hF1, hg, ecmul_zero, zero_add, ecmul_natCast]
+  obtain ⟨r, hr⟩ := hV
+  -- telescope, and read off the finite relation
+  have htel := D.telescope hAfin K
+  rw [← hrectsum D.J D.J_disjoint D.J_small
+      (fun i => (⟨familyOfForm x₁ x₂ ((n : ℕ∞), ⊤) i, hGm i⟩ :
+        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))),
+    ← hrectsum D.I D.I_disjoint D.I_small
+      (fun i => (⟨familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i, hFm i⟩ :
+        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))),
+    hp, hq, hr] at htel
+  have htelH : n • x₁ + q • x₂ = m • x₁ + p • x₂ + r • x₂ := by
+    have hc : ((n • (⟨x₁, hx₁T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
+          ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H)
+        + ((q • (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
+          ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H)
+        = ((m • (⟨x₁, hx₁T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
+            ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H)
+          + ((p • (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
+            ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H)
+          + ((r • (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
+            ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H) := congrArg Subtype.val htel
+    rwa [coe_nsmul_addOf x₁ x₂ n ⟨x₁, hx₁T⟩, coe_nsmul_addOf x₁ x₂ q ⟨x₂, hx₂T⟩,
+      coe_nsmul_addOf x₁ x₂ m ⟨x₁, hx₁T⟩, coe_nsmul_addOf x₁ x₂ p ⟨x₂, hx₂T⟩,
+      coe_nsmul_addOf x₁ x₂ r ⟨x₂, hx₂T⟩] at hc
+  refine ⟨p + r, q, ?_⟩
+  rw [eval, eval, ecmul_natCast, ecmul_natCast, ecmul_natCast, ecmul_natCast, add_nsmul,
+    ← add_assoc, ← htelH]
 
 /-- **`ℵ₀ x₂` absorbs any number of copies of `x₁`** as soon as `x₁ ∈ add x₂`: from `x₁ + z = n x₂`
 one gets `β x₁ ≼ ℵ₀ x₁ ≼ ℵ₀ (n x₂) = ℵ₀ x₂`, and Lemma 2.8(2) (`add_cmul_top_eq`) turns a summand of

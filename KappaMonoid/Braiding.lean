@@ -1698,6 +1698,49 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
     exact LMonoid.lsumOf_extend hNlt hNlt ⟨bsuccU, bsuccU_inj⟩ (fun n => d.v (a, n.down + 1))
   rw [hvtel]
 
+/-- **Finite telescoping across a rectangle of blocks.**
+
+Summing the two braiding equations over the levels `0, …, K` of finitely many `ω`-chains, the
+`v`-terms cancel pairwise — `v (a, 0) = 0` shifts the two ranges onto each other — and only
+`v (a, K+1)` survives:
+
+    Σ_{a ∈ A} Σ_{k ≤ K} Σ_{J (a,k)} y = Σ_{a ∈ A} Σ_{k ≤ K} Σ_{I (a,k)} x + Σ_{a ∈ A} v (a, K+1).
+
+This is the `λ = ℵ₀` counterpart of `block_lsumOf_eq`, which sums a whole chain at once and so
+needs `λ` uncountable.  Lemma 5.2(4) uses it with `A` and `K` chosen to cover the finitely many
+slots that carry the generator being tracked. -/
+theorem BraidingData.telescope {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
+    {ι : Type u} {x y : ι → X} (d : BraidingData lam x y) {A : Set ι} (hA : A.Finite) (K : ℕ) :
+    (∑ᶠ a ∈ A, ∑ k ∈ Finset.range (K + 1),
+        lsumOf (lam := lam) (d.J_small (a, k)) (fun j : d.J (a, k) => y j))
+      = (∑ᶠ a ∈ A, ∑ k ∈ Finset.range (K + 1),
+          lsumOf (lam := lam) (d.I_small (a, k)) (fun i : d.I (a, k) => x i))
+        + ∑ᶠ a ∈ A, d.v (a, K + 1) := by
+  have hchain : ∀ a : ι,
+      (∑ k ∈ Finset.range (K + 1),
+          lsumOf (lam := lam) (d.J_small (a, k)) (fun j : d.J (a, k) => y j))
+        = (∑ k ∈ Finset.range (K + 1),
+            lsumOf (lam := lam) (d.I_small (a, k)) (fun i : d.I (a, k) => x i))
+          + d.v (a, K + 1) := by
+    intro a
+    have hI' : ∀ k : ℕ, lsumOf (lam := lam) (d.I_small (a, k)) (fun i : d.I (a, k) => x i)
+        = d.v (a, k) + d.u (a, k) := fun k => d.hI (a, k)
+    have hJ' : ∀ k : ℕ, lsumOf (lam := lam) (d.J_small (a, k)) (fun j : d.J (a, k) => y j)
+        = d.v (a, k + 1) + d.u (a, k) := fun k => d.hJ (a, k)
+    -- the shift of the `v`-range, by induction on `K`
+    have hv : ∀ N : ℕ, (∑ k ∈ Finset.range (N + 1), d.v (a, k + 1))
+        = (∑ k ∈ Finset.range (N + 1), d.v (a, k)) + d.v (a, N + 1) := by
+      intro N
+      induction N with
+      | zero => simp [d.v_limit a]
+      | succ P hP =>
+        rw [Finset.sum_range_succ (fun k => d.v (a, k + 1)) (P + 1),
+          Finset.sum_range_succ (fun k => d.v (a, k)) (P + 1), hP]
+    rw [Finset.sum_congr rfl (fun k _ => hJ' k), Finset.sum_congr rfl (fun k _ => hI' k),
+      Finset.sum_add_distrib, Finset.sum_add_distrib, hv K]
+    abel
+  rw [finsum_mem_congr rfl (fun a _ => hchain a), finsum_mem_add_distrib hA]
+
 /-- Forward implication of Lemma 3.4(4) (uncountable-`λ` collapse of braiding data), used in
 `isBraided_iff_of_ne_aleph0`. -/
 theorem exists_partition_of_isBraided_of_ne_aleph0 {lam : Cardinal.{u}} {X : Type v}

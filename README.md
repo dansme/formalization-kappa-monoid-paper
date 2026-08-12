@@ -58,12 +58,12 @@ One file carries the part of §5 that is not yet proved: every statement type-ch
 are filled in as far as they go. It is not imported by `KappaMonoid.lean`, so `lake build` stays
 green and `sorry`-free; build it individually with `lake build KappaMonoid.Section5`.
 
-Seven `sorry`s remain there. Proved so far: the theory of forms `α X₁ + β X₂` including
+Six `sorry`s remain there. Proved so far: the theory of forms `α X₁ + β X₂` including
 `exists_form` (every element of `H` has a form); **Lemma 5.1**, the braidedness of `H` over
-`add (x₁ + x₂)`; Lemma 5.2, parts (1), (2), (3) and (5); the trace ideals of Proposition 5.4; and
-the `ℕ₀² ∪ {∞}` counterexample with the two absorption claims of Corollary 5.5. Still open:
-Lemma 5.2(4), Theorem 5.3, Proposition 5.4 and its hereditary addendum, and the three parts of
-Corollary 5.5. See `SECTION5-PLAN.md`.
+`add (x₁ + x₂)`; **all five parts of Lemma 5.2**; the trace ideals of Proposition 5.4; and the
+`ℕ₀² ∪ {∞}` counterexample with the two absorption claims of Corollary 5.5. Still open: Theorem
+5.3, Proposition 5.4 and its hereditary addendum, and the three parts of Corollary 5.5. See
+`SECTION5-PLAN.md`.
 
 | File | Contents | Plan |
 |---|---|---|

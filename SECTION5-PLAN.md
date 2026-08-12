@@ -9,8 +9,8 @@ independently checkable.
 
 **The §4 blocker is gone.** Corollary 4.7(1) is proved (both directions, with axiom A5 for
 (i) ⇒ (ii)), so Lemma 5.1 and Theorem 5.3 have their input. Steps 1, 2 and 6's counterexample are
-done, as are all of Lemma 5.2 except (4), the trace ideals of step 5 and two claims of step 6;
-7 `sorry`s remain.
+done, as is all of Lemma 5.2, the trace ideals of step 5 and two claims of step 6;
+6 `sorry`s remain.
 
 **§5 is the most expensive section per result.** Unlike §§2–4, its proofs are explicit
 combinatorial constructions — Lemma 5.2(3) writes down three interleaved partitions of `ℕ` by
@@ -114,8 +114,17 @@ non-cyclicity hypothesis, and is where `H` being non-cyclic first bites.
   The supporting machinery is in `Section5.lean`: fibre splitting and counting on `FormIdx`
   (`fiber_elim`, `finsum_fiber_const`, `ncard_nats_div`, …), `coe_finsum_mem` for computing a
   submonoid `finsum` in `H`, and `addOf_add_mem` / `addOf_nsmul_mem`.
-- **(4)** `x_i ∉ add x_j`, no mixed forms, `m X_i + ℵ₀ X_j` braided with `n X_i + ℵ₀ X_j` ⟹
-  `m x_i + k x_j = n x_i + k' x_j` for some finite `k, k'`.
+- **(4) — done**, and it also needed the generation hypothesis `hgen` added to the scaffold's
+  statement. The paper cuts its single well-order at one ordinal `α`; `BraidingData` has countably
+  many `ω`-chains instead, so the cut becomes a **rectangle**: choose a finite set `A` of chains and
+  a level `K` with every one of the finitely many `x_i`-slots of either family inside some
+  `I (a,k)` resp. `J (a,k)`, `a ∈ A`, `k ≤ K`. `BraidingData.telescope` (new, in `Braiding.lean` —
+  the `λ = ℵ₀` counterpart of `block_lsumOf_eq`) then gives
+  `n x_i + q x_j = m x_i + p x_j + Σ_{a ∈ A} v (a, K+1)`, each rectangle being a finite set of slots
+  containing all the `x_i`-slots of its family (`exists_block_value`). Finally `I (a, K+1)` holds no
+  `x_i`-slot, so `v (a,K+1) + u (a,K+1)` is a finite multiple of `x_j`; hence `v (a,K+1) ∈ add x_j`,
+  its form has zero `X_i`-coefficient (`x_i ∉ add x_j`) and finite `X_j`-coefficient
+  (`NoMixedForms`).
 - **(5) — done**. The forward direction is `cmul_top_absorb`. The backward direction is where the
   work is, and the paper's "we conclude that there exist positive integers `m`, `n`" hides a block
   induction, which the formal proof runs explicitly: braid the constant families `(x₁+x₂)` and
@@ -124,17 +133,7 @@ non-cyclicity hypothesis, and is where `H` being non-cyclic first bites.
   of* `x₂`, and read `x₁ ≼ m(x₁+x₂) = v(a,k) + u(a,k) ≼ (r + #J(a,k)) x₂` off the two braiding
   equations. `ksum_const` and `sumOf_const_finite` came out of it.
 
-Only (4) is left. Its shape is the same block bookkeeping as (5), but over a *finite family of
-chains* rather than one: the finitely many `x_i`-slots of the two families sit in finitely many
-blocks, so choose a finite set `A` of chains and a level `K` covering them all, telescope
-
-    Σ_{a∈A} Σ_{k≤K} Σ_{J(a,k)} y = Σ_{a∈A} Σ_{k≤K} Σ_{I(a,k)} x + Σ_{a∈A} v(a,K+1)
-
-(the `v`-terms cancel pairwise because `v(a,0) = 0`), read off `n x_i + n' x_j = m x_i + m' x_j + V`
-with `V = Σ_{a∈A} v(a,K+1)`, and finish as the paper does: `I(a,K+1)` contains no `x_i`-slot, so
-`v(a,K+1) ∈ add(x_j)`, hence has a form with zero `X_i`-coefficient (`x_i ∉ add x_j`) whose
-`X_j`-coefficient is finite (`NoMixedForms` applied to `r x_j`). The telescoping identity is worth
-stating in `Braiding.lean` as the finite-`λ = ℵ₀` counterpart of `BraidingData.block_lsumOf_eq`.
+Step 3 is complete. Theorem 5.3 (step 4) now has all five parts of Lemma 5.2 available.
 
 ## Step 4 — Theorem 5.3 (`hereditarycasecor`)
 
@@ -215,7 +214,7 @@ which is why both carry it as `_hgen`.
 
 ```
 step 1 (forms) ──> step 2 (Lem 5.1) ──> step 3 (Lem 5.2) ──> step 4 (Thm 5.3) ──> step 6 (Cor 5.5)
-   done                done              done but 5.2(4)                               ▲
+   done                done                  done                                      ▲
                                         step 5 (trace ideals, Prop 5.4) ────────────────┘
 ```
 
@@ -223,21 +222,22 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 
 ## Status
 
-7 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
+6 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
 stays green and `sorry`-free because the file is not imported by `KappaMonoid.lean`.
 
 Closed so far, all without any axiom beyond the A5 already inside Corollary 4.7(1):
-`sumOf_familyOfForm` and `exists_form` (step 1); **Lemma 5.1** (step 2); Lemma 5.2(1)(2)(3)(5)
+`sumOf_familyOfForm` and `exists_form` (step 1); **Lemma 5.1** (step 2); **all of Lemma 5.2**
 (step 3); the trace ideals `smul_traceIdeal_eq`, `traceIdeal_le_of_smul_eq`, `traceIdeal_mul_self`
 and `traceIdeal_isTwoSided` (step 5); the counterexample block, `corollary_5_5_two_unique` and
 `corollary_5_5_three_absorb` (step 6).
 
-Still open (7): Lemma 5.2(4); Theorem 5.3; Proposition 5.4 and its hereditary addendum;
+Still open (6): Theorem 5.3; Proposition 5.4 and its hereditary addendum;
 Corollary 5.5(1)(2)(3).
 
 New reusable infrastructure in the core files: `KMonoid.cmul_eq_sumOf`, `KMonoid.sumOf_indicator`,
 `KMonoid.sumOf_eq_sumOf_subset`, `KMonoid.sumOf_sumType`, `KMonoid.cmul_zero`, `KMonoid.cmul_cmul`,
-`KMonoid.IsKHom.map_add` (`Basic.lean`), `IsBraided.of_levels` (`Braiding.lean`),
+`KMonoid.IsKHom.map_add` (`Basic.lean`), `IsBraided.of_levels` and `BraidingData.telescope`
+(`Braiding.lean`),
 `IsBraidedOver.of_kIso_subset` (`Universal.lean`), `TrivExt.coe_nsmul`, `TrivExt.cmul_top_eq_top`
 (`Examples.lean`), `KMonoid.self_mem_addOf` (`Section4.lean`).
 
