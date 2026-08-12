@@ -277,6 +277,63 @@ theorem of_partition {x y : ι → X} (I J : ι × ℕ → Set ι)
      hI := fun _ => (zero_add _).symm
      hJ := fun p => (heq p).symm.trans (zero_add _).symm }⟩
 
+/-- **Braiding from two level functions.**
+
+The partitions built by hand in the paper — Lemma 5.2(3) writes down three interleaved partitions
+of `ℕ` — always park all the action on a single `ω`-chain `(a₀, k)_{k ∈ ℕ}` of the index type
+`ι × ℕ` and cut `ι` into the fibers of a *level function* `c : ι → ℕ`.  Fibers are automatically
+disjoint and cover, so the only obligations left are finiteness of each fiber and the two block
+equations, which is what this builder takes.
+
+`of_partition` is the special case `v ≡ 0` (and a different pair of partitions). -/
+theorem of_levels {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {x y : ι → X} (a₀ : ι)
+    (cI cJ : ι → ℕ) (hIfin : ∀ k, {i | cI i = k}.Finite) (hJfin : ∀ k, {i | cJ i = k}.Finite)
+    (u v : ℕ → X) (hv0 : v 0 = 0)
+    (hIeq : ∀ k, ∑ᶠ i ∈ {i | cI i = k}, x i = v k + u k)
+    (hJeq : ∀ k, ∑ᶠ i ∈ {i | cJ i = k}, y i = v (k + 1) + u k) :
+    IsBraided ℵ₀ x y := by
+  classical
+  have hdisj : ∀ (c : ι → ℕ) (p q : ι × ℕ), p ≠ q →
+      Disjoint (if p.1 = a₀ then {i | c i = p.2} else ∅)
+        (if q.1 = a₀ then {i | c i = q.2} else ∅) := by
+    intro c p q hpq
+    by_cases hp : p.1 = a₀
+    · by_cases hq : q.1 = a₀
+      · rw [if_pos hp, if_pos hq]
+        refine Set.disjoint_left.mpr fun i hi hi' => hpq ?_
+        exact Prod.ext (hp.trans hq.symm) (hi.symm.trans hi')
+      · rw [if_neg hq]; exact disjoint_bot_right
+    · rw [if_neg hp]; exact disjoint_bot_left
+  have hcov : ∀ c : ι → ℕ,
+      (⋃ p : ι × ℕ, if p.1 = a₀ then {i | c i = p.2} else ∅) = Set.univ := by
+    intro c
+    refine Set.eq_univ_of_forall fun i => Set.mem_iUnion.mpr ⟨(a₀, c i), ?_⟩
+    rw [if_pos rfl]
+    rfl
+  have hfin : ∀ (c : ι → ℕ), (∀ k, {i | c i = k}.Finite) →
+      ∀ p : ι × ℕ, (if p.1 = a₀ then {i | c i = p.2} else ∅).Finite := by
+    intro c hc p
+    by_cases hp : p.1 = a₀
+    · rw [if_pos hp]; exact hc p.2
+    · rw [if_neg hp]; exact Set.finite_empty
+  refine ⟨BraidingData.mk_finsum
+    (fun p => if p.1 = a₀ then {i | cI i = p.2} else ∅)
+    (fun p => if p.1 = a₀ then {i | cJ i = p.2} else ∅)
+    (hfin cI hIfin) (hfin cJ hJfin) (hdisj cI) (hdisj cJ) (hcov cI) (hcov cJ)
+    (fun p => if p.1 = a₀ then u p.2 else 0) (fun p => if p.1 = a₀ then v p.2 else 0)
+    (fun a => ?_) (fun p => ?_) (fun p => ?_)⟩
+  · by_cases ha : a = a₀
+    · rw [if_pos ha]; exact hv0
+    · rw [if_neg ha]
+  · by_cases hp : p.1 = a₀
+    · rw [if_pos hp, if_pos hp, if_pos hp]; exact hIeq p.2
+    · rw [if_neg hp, if_neg hp, if_neg hp, finsum_mem_empty, add_zero]
+  · by_cases hp : p.1 = a₀
+    · rw [if_pos hp, if_pos hp, show (bsucc p).1 = a₀ from hp, if_pos rfl]
+      exact hJeq p.2
+    · have hbp : ¬ ((bsucc p).1 = a₀) := hp
+      rw [if_neg hp, if_neg hp, if_neg hbp, finsum_mem_empty, add_zero]
+
 /-- Lemma 3.6(1): a family is braided to any reindexing of itself along a bijection — take the
 partition into singletons on both sides. -/
 theorem of_perm (x : ι → X) (π : ι ≃ ι) : IsBraided lam x (x ∘ π) := by
