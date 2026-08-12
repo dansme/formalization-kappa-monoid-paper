@@ -11,7 +11,7 @@ carries the two facts about generation that the rest of §5 runs on: `exists_for
 `H` has a form — the sentence opening §5) and `mem_of_divisorClosed_of_generates` (the paper's
 parenthetical from Lemma 5.1).
 -/
-import KappaMonoid.Section4
+import KappaMonoid.Section4.AddOf
 import KappaMonoid.ForMathlib.Finprod
 
 universe u v
@@ -293,7 +293,7 @@ def NoMixedForms (x₁ x₂ : H) : Prop :=
 
 The families take values in `H`; braiding is a statement about the `ℵ₀⁻`-monoid `add (x₁ + x₂)`,
 so the members must be produced there.  `hmem` is that side condition, discharged in practice by
-`KMonoid.addOf_isSaturated` from `Section4.lean`. -/
+`KMonoid.addOf_isSaturated` from `Section4/AddOf.lean`. -/
 def BraidedForms (x₁ x₂ : H) (F G : Form)
     (hF : ∀ n, familyOfForm x₁ x₂ F n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hG : ∀ n, familyOfForm x₁ x₂ G n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) : Prop :=

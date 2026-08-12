@@ -4,7 +4,7 @@ Examples 2.3 of
   Zahra Nazemian and Daniel Smertnig,
   *A monoid-theoretical approach to infinite direct-sum decompositions of modules*.
 
-The `κ`-monoid `V^κ(C)` of Examples 2.3(4) is built in `KappaMonoid/Modules.lean`; this file
+The `κ`-monoid `V^κ(C)` of Examples 2.3(4) is built in `KappaMonoid/ModuleClass.lean`; this file
 contains the other three examples, none of which is a monoid of modules:
 
 * 2.3(3) `Fcard κ`, the cardinals bounded by `κ`, with cardinal summation.  This is also the

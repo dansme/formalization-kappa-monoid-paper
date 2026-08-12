@@ -2,12 +2,12 @@
 
 *Realization to hereditary rings for two-generated `ℵ₀`-monoids.*
 
-Companion to `KappaMonoid/Section5.lean`; a record of the work, now finished.
+Companion to `KappaMonoid/Section5/`; a record of the work, now finished.
 
 ## Read this first
 
 **Section 5 is complete.** Every lemma, theorem, proposition and corollary is stated and proved,
-`sorry`-free, and `KappaMonoid/Section5.lean` is imported by `KappaMonoid.lean`. Theorem 5.3 and
+`sorry`-free, and `KappaMonoid/Section5/` is imported by `KappaMonoid.lean`. Theorem 5.3 and
 Corollary 5.5 use no axiom beyond A5, which enters through Corollary 4.7(1); Proposition 5.4 and
 its hereditary half use none at all.
 
@@ -229,7 +229,7 @@ already formalised as `TrivExt.instKMonoid` in `KappaMonoid/Examples.lean`, so t
 which is why both carry it as `_hgen`.
 `isConical_natSq`, `cex_incomparable`, `cex_absorb` and `cex_unique_infinite` are proved, on
 `TrivExt.cmul_top_eq_top` (`ℵ₀` copies of a nonzero element of a trivial extension are `∞`) and
-`TrivExt.coe_nsmul`, both added to `Examples.lean`.
+`TrivExt.coe_nsmul`, both added to `Section2/Examples.lean`.
 
 The three `corollary_5_5_*` statements are proved.  (1) is pure monoid theory on top of Theorem 5.3.
 (2) and (3) go through Proposition 5.4: for (2), each generator lying in `add` of the other makes
@@ -250,7 +250,7 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 
 ## Status
 
-No `sorry`s; `KappaMonoid/Section5.lean` is part of the root target.
+No `sorry`s; `KappaMonoid/Section5/` is part of the root target.
 
 Everything is closed with no axiom beyond the A5 already inside Corollary 4.7(1), which
 Theorem 5.3 and Corollary 5.5 inherit; `sumOf_familyOfForm`, `exists_form`, all of Lemma 5.2, the
@@ -261,8 +261,8 @@ New reusable infrastructure in the core files: `KMonoid.cmul_eq_sumOf`, `KMonoid
 `KMonoid.IsKHom.map_add`, `KMonoid.IsKHom.inv` (`Basic.lean`), `IsBraided.of_levels`,
 `IsBraided.comp_equiv` and `BraidingData.telescope` (`Braiding.lean`),
 `IsBraidedOver.of_kIso_subset` (`Universal.lean`), `TrivExt.coe_nsmul`, `TrivExt.cmul_top_eq_top`
-(`Examples.lean`), `KMonoid.self_mem_addOf` (`Section4.lean`).  `corollary_4_7_one_forward`
-(`Section4.lean`) now also returns `EveryProjectiveIsSumOfFG R`.
+(`Section2/Examples.lean`), `KMonoid.self_mem_addOf` (`Section4/AddOf.lean`).  `corollary_4_7_one_forward`
+(`Section4/AddOf.lean`) now also returns `EveryProjectiveIsSumOfFG R`.
 
 ### The six corrected statements
 

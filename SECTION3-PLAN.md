@@ -21,7 +21,7 @@ Paper source: `kappa_monoids.tex` / `kappa_monoids.pdf`.
 | Prop. 3.9 (extension along a braiding) | `extend_lhom` |
 | Def. 3.10, Theorem 3.11 | `IsUniversalKExtension`, `theorem_3_11`, `theorem_3_11_of_aleph0_lt` |
 
-And, in `Section32.lean`:
+And, in `Section3/Diophantine.lean`:
 
 | Paper | Where |
 |---|---|
@@ -41,7 +41,7 @@ scoped separately.
 
 | Prop. 3.14(1) | `isBraidedOver_pi_fcard`, `solutions_subset_kclosure`, `prop_3_14_one` |
 | Prop. 3.14(2) | `isBraidedOver_pi_lcard`, `alephPart_eq_ksum`, `prop_3_14_two` (with an added hypothesis, see below) |
-| Examples 3.3(2)(3), Examples 3.12 for `ℝ≥0`/`ℚ≥0` (in `Reals.lean`) | `esum`, `isBraided_nnreal_iff`, `not_isBraided_single2_geom`, `not_isBraided_geom_two_geom`, `RTilde`, `RTilde.instKMonoid`, `isBraidedOver_rtilde`, `isUniversalKExtension_rtilde`, `not_isBraidedOver_rtilde_self`, `isUniversalKExtension_ratSet`, `exists_ratSet_family`, `kclosure_ofReal_ratSet` |
+| Examples 3.3(2)(3), Examples 3.12 for `ℝ≥0`/`ℚ≥0` (in `Section3/Reals.lean`) | `esum`, `isBraided_nnreal_iff`, `not_isBraided_single2_geom`, `not_isBraided_geom_two_geom`, `RTilde`, `RTilde.instKMonoid`, `isBraidedOver_rtilde`, `isUniversalKExtension_rtilde`, `not_isBraidedOver_rtilde_self`, `isUniversalKExtension_ratSet`, `exists_ratSet_family`, `kclosure_ofReal_ratSet` |
 | The converse of Lemma 3.4(1) (in `Braiding.lean`) | `IsBraided.mk_support_lt` |
 | Saturation for systems of equations and congruences | `linEvalNat`, `val_linEval_eq_linEvalNat`, `isSaturatedFin_of_ineqs_empty`, `prop_3_14_two_of_ineqs_empty` |
 | The counterexample to Prop. 3.14(2) as printed | `ineqSystem`, `not_isSaturatedFin_ineqSystem` |
@@ -53,7 +53,7 @@ And, in `Universal.lean`:
 |---|---|
 | Theorem 3.11 read as an equivalence (universal ⟹ braided over) | `IsBraidedOver.of_iso`, `IsBraidedOver.of_base_iso`, `isBraidedOver_of_isUniversalKExtension` |
 
-`Section32.lean` is `sorry`-free and imported by `KappaMonoid.lean`.
+`Section3/Diophantine.lean` is `sorry`-free and imported by `KappaMonoid.lean`.
 
 ## What is missing
 
@@ -149,7 +149,7 @@ reaches the total) and `exists_psum_ge`.
 
 `ℚ≥0` needed no new *braiding* at all: `ℚ≥0` is a *saturated* `ℵ₀⁻`-submonoid of `ℝ≥0`, so
 Lemma 3.13(2) applies at `λ = ℵ₀`. That is a forward reference from §3.1 to §3.2 — hence
-`Reals.lean` importing `Section32.lean` — but it replaces a second run of the whole braiding
+`Section3/Reals.lean` importing `Section3/Diophantine.lean` — but it replaces a second run of the whole braiding
 argument. It did need one analytic fact: every positive real is the sum of a series of positive
 rationals (`exists_ratSet_family`). The cheap route is a case split — a rational value gets the
 geometric family already in hand, an irrational one the increments of its dyadic truncations

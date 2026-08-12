@@ -12,7 +12,7 @@ where `C₀ = {n u : n ∈ ℕ₀}` is the cyclic submonoid of size-zero element
 `{α u : α infinite}`, parametrised by the cardinal `α` itself.  Faithfulness is what makes the
 parametrisation injective and keeps the two parts disjoint.
 -/
-import KappaMonoid.OrderUnit
+import KappaMonoid.Section2.OrderUnit
 
 universe u v
 

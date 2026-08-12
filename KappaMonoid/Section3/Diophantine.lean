@@ -8,7 +8,7 @@ Every proof in this file is `sorry`.  The file is deliberately **not** imported 
 `KappaMonoid.lean`, so `lake build` continues to check a `sorry`-free development; build this
 file on its own with
 
-    lake build KappaMonoid.Section32
+    lake build KappaMonoid.Section3.Diophantine
 
 Its purpose is to fix the *statements* — which is the part of §3.2 that takes judgement — so that
 they are known to elaborate before anyone starts proving them.  See `SECTION3-PLAN.md` for the
@@ -22,10 +22,10 @@ Contents, in dependency order:
 * Proposition 3.14: universal extensions of monoids cut out by homogeneous linear equations,
   inequalities and congruences.
 -/
-import KappaMonoid.Free
+import KappaMonoid.Section2.Free
 import KappaMonoid.Universal
-import KappaMonoid.Examples
-import KappaMonoid.OrderUnit
+import KappaMonoid.Section2.Examples
+import KappaMonoid.Section2.OrderUnit
 
 universe u v w
 

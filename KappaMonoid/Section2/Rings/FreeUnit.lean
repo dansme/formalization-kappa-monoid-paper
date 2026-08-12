@@ -8,8 +8,8 @@ preparation for Proposition 2.16: the class of `R^{(s)}` in `V^κ(𝓕^κ)` depe
 and — for a nontrivial ring — determines `#s` when that is infinite.  The latter is invariance
 of infinite rank (axiom A1) once more, and is what makes `[R]` a *faithful* order-unit.
 -/
-import KappaMonoid.FreeModules
-import KappaMonoid.ProjOrderUnit
+import KappaMonoid.Section2.Rings.FreeModules
+import KappaMonoid.Section2.Rings.ProjOrderUnit
 
 universe u
 

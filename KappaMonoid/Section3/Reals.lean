@@ -11,9 +11,9 @@ universal `ℵ₀`-extension is instead `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, a secon
 recording that a sum was reached only with infinite support.
 -/
 import KappaMonoid.Braiding
-import KappaMonoid.Examples
+import KappaMonoid.Section2.Examples
 import KappaMonoid.Universal
-import KappaMonoid.Section32
+import KappaMonoid.Section3.Diophantine
 
 universe u v
 

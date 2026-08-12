@@ -153,17 +153,15 @@ re-deriving them.
 
 | File | Contents |
 |---|---|
-| `Basic.lean` | `LMonoid`/`KMonoid`, `SumData`, the `lsumOf` API (union, subset, sigma, pair, …), `IsConical`, `IsLHom`, `kclosure`, induced structures |
-| `Braiding.lean` | `BraidingData`/`IsBraided`, Lemmas 3.2–3.8, `mk_finsum`, `ℕ`-interval helpers, `IsBraided.mk_support_lt` |
-| `Universal.lean` | Prop. 3.9, Theorem 3.11 and its converse, the transports (`of_iso`, `of_base_iso`, `isLMonoidHom_aleph0_of_add`) |
-| `Examples.lean` | `TrivExt` (Examples 2.3(1)), `LCard`/`Fcard`, the `ℝ≥0∞` monoid |
-| `Free.lean`, `OrderUnit.lean`, `Cyclic.lean`, … | §2 |
-| `Section32.lean` | §3.2: Lemma 3.13, Prop. 3.14, Example 3.15 |
-| `Reals.lean` | Examples 3.3(2)(3): braiding in `ℝ≥0`, the monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, the `ℚ≥0` variant |
-| `Modules.lean` | §4 |
-| `Section4.lean` | §4: `add x`/`add_λ x`, `V(R) = add [R]`, Corollary 4.7, Examples 4.8(1) |
-| `Section5.lean` | §5 aggregator; the parts are `Section5/{Forms,Braided,Realization,Trace,Corollary55,Counterexample}.lean` |
-| `ForMathlib/` | material with no `κ`-monoid content and no repo dependencies: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx` and the fibres of `j ↦ j / d`), `Finprod.lean` |
+| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx` and the fibres of `j ↦ j / d`), `Finprod.lean` |
+| `Basic.lean` | `LMonoid`/`KMonoid`, `SumData`, the `lsumOf` API (union, subset, sigma, pair, …), `IsConical`, `IsLHom`, `kclosure`, induced structures, `IsLSubset` and its closure lemmas |
+| `Braiding.lean` | `BraidingData`/`IsBraided`, Lemmas 3.2–3.8, `mk_finsum`, `of_levels`, `comp_equiv`, `BraidingData.telescope`, `IsBraided.mk_support_lt` |
+| `Universal.lean` | Prop. 3.9, Theorem 3.11 and its converse, the transports (`of_iso`, `of_base_iso`, `of_kIso_subset`, `isLMonoidHom_aleph0_of_add`) |
+| `ModuleClass.lean` | Definition 2.4 and §4: `ModuleClass`, `IsLambdaSmall`, Theorem 4.3, Cor. 4.4/4.5.  Core, not §4-only — §2.3's ring examples build on it |
+| `Section2/` | `Examples.lean` (`TrivExt`, `LCard`/`Fcard`, `ℝ≥0∞`), `Free.lean`, `OrderUnit.lean`, `Cyclic.lean`, and `Rings/` for the ring-theoretic §2.2–2.3 material |
+| `Section3/` | `Diophantine.lean` (§3.2: Lemma 3.13, Prop. 3.14, Example 3.15), `Reals.lean` (Examples 3.3(2)(3)) |
+| `Section4/AddOf.lean` | `add x`/`add_λ x`, `V(R) = add [R]`, Corollary 4.7, Examples 4.8(1) |
+| `Section5/` | `Forms`, `Braided` (5.1, 5.2), `Realization` (5.3), `Trace` (5.4), `Corollary55`, `Counterexample`; `Section5.lean` is the aggregator |
 
 Before writing a new construction, check whether the analogous one exists: the `ℕ₀` and `ℝ≥0`
 braidings, the `Fcard`/`RTilde` `SumData`s, and the `TrivExt` extension are all templates.

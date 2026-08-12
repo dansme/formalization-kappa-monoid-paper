@@ -12,7 +12,7 @@ specialised by `λ = κ⁺`.
 Regularity of `λ` is carried as `[Fact lam.IsRegular]`, so that `F_{λ⁻}`, the product `F_{λ⁻}^B`
 and `F_{λ⁻}(B)` are `λ⁻`-monoids by instance search rather than by hand at every statement.
 -/
-import KappaMonoid.Examples
+import KappaMonoid.Section2.Examples
 
 universe u v
 

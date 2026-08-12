@@ -11,25 +11,21 @@ two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring) and al
 
 | File | Contents |
 |---|---|
+| `KappaMonoid/ForMathlib/` | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean` |
 | `KappaMonoid/Basic.lean` | §2: `LMonoid` (= `λ⁻`-monoid), `KMonoid`, sums over arbitrary small index types, products, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8, both at the `λ⁻` level), homomorphisms, `⟨S⟩_κ`, induced structures on sub-objects, `KMonoid.ofBare` and `PaperKMonoid` (Lemma 2.5, Def. 2.1 verbatim) |
-| `KappaMonoid/Examples.lean` | Examples 2.3(1)(2)(3): the trivial `κ`-extension `M ⊎ {∞}` of a reduced monoid, `ℝ≥0∞`, and `F_{λ⁻}` / `F_κ` (the cardinals below a bound) |
-| `KappaMonoid/Free.lean` | §2.1: **Proposition 2.9**, the free `λ⁻`-monoid `F_{λ⁻}(B)` and free `κ`-monoid `F_κ(B)`, with the universal property |
-| `KappaMonoid/OrderUnit.lean` | §2.2: Defs. 2.11–2.12, `size`, the filtration `H_α`, faithfulness ⟺ properness, **Lemma 2.14** |
-| `KappaMonoid/Cyclic.lean` | §2.3: **Lemma 2.15**, the structure of a cyclic `κ`-monoid with a faithful order-unit |
-| `KappaMonoid/ProjOrderUnit.lean` | §2.2: **Example 2.13**, `[R]` is a faithful order-unit of `V^κ(R)` |
-| `KappaMonoid/FreeModules.lean` | §2.3: `V^κ(𝓕^κ)`, the class of free modules, as a Definition 2.4 `ModuleClass` |
-| `KappaMonoid/FreeUnit.lean` | §2.3: ranks in `V^κ(𝓕^κ)`; `[R]` is a cyclic faithful order-unit |
-| `KappaMonoid/Realisation.lean` | §2.3: **Proposition 2.16**, cyclic `κ`-monoids are realised by rings of free modules |
-| `KappaMonoid/Semisimple.lean` | §2.3: multiplicities of semisimple modules and **Proposition 2.17**, `V^κ(R) ≅ F_κ^n` for semisimple `R`, and such rings exist for every `n` |
 | `KappaMonoid/Braiding.lean` | §3: `BraidingData`, `IsBraided`, Lemmas 3.2/3.4/3.6/3.7/3.8, `braidingSetoid`, `IsBraidedOver` (Def. 3.1(2)) |
 | `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** and its converse (`isBraidedOver_of_isUniversalKExtension`: universal ⟹ braided over), transport of braidedness along isomorphisms |
-| `KappaMonoid/Section32.lean` | §3.2: Examples 3.3(1) and Examples 3.12 for `ℕ₀`, **Lemma 3.13**(1) and (2), **Proposition 3.14**(1) and (2) (universal extensions of Diophantine monoids), saturation for inequality-free systems, **Example 3.15**, and the counterexample showing that (2) does need the saturation hypothesis |
-| `KappaMonoid/Reals.lean` | §3: **Examples 3.3(2)(3)** and their entries of Examples 3.12 — braiding in `ℝ≥0` (same series sum, supports both finite or both infinite), why neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`, the `ℵ₀`-monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` and its universal property, that it is not braided over itself, and the `ℚ≥0` variant with its extension identified as `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` |
-| `KappaMonoid/Modules.lean` | §4: Def. 4.1 (`λ⁻`-small), `ModuleClass` (= a class `C` with `V^κ(C)`), Examples 2.3(4) / Def. 2.4, (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5, Kaplansky (the `κ`-monoid form; the classical statement is axiom A6) |
-| `KappaMonoid/Section4.lean` | §4: `add x` and `add_λ x`, `V(R) = add [R]`, **Corollary 4.7**(1) (both directions) and (2), **Examples 4.8(1)** (ascent of KRSA) |
-| `KappaMonoid/Section5/` | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Braided` (**Lemma 5.1**, **Lemma 5.2**(1)–(5)), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
-| `KappaMonoid/ForMathlib/` | no `κ`-monoid content and no repo dependencies: `TraceIdeal.lean` (Mathlib has no trace ideal), `NatBlocks.lean`, `Finprod.lean` |
+| `KappaMonoid/ModuleClass.lean` | Definition 2.4 / Examples 2.3(4) and §4: `ModuleClass` (a class `C` with `V^κ(C)`), Def. 4.1 (`λ⁻`-small), (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5, Kaplansky (the `κ`-monoid form; the classical statement is axiom A6).  Core rather than §4-only: Definition 2.4 is what §2.3's ring examples are built on |
 | `KappaMonoid/Axioms.lean` | The six classical results assumed rather than proved — see below |
+| `KappaMonoid/Section2/Examples.lean` | Examples 2.3(1)(2)(3): the trivial `κ`-extension `M ⊎ {∞}` of a reduced monoid, `ℝ≥0∞`, and `F_{λ⁻}` / `F_κ` (the cardinals below a bound) |
+| `KappaMonoid/Section2/Free.lean` | §2.1: **Proposition 2.9**, the free `λ⁻`-monoid `F_{λ⁻}(B)` and free `κ`-monoid `F_κ(B)`, with the universal property |
+| `KappaMonoid/Section2/OrderUnit.lean` | §2.2: Defs. 2.11–2.12, `size`, the filtration `H_α`, faithfulness ⟺ properness, **Lemma 2.14** |
+| `KappaMonoid/Section2/Cyclic.lean` | §2.3: **Lemma 2.15**, the structure of a cyclic `κ`-monoid with a faithful order-unit |
+| `KappaMonoid/Section2/Rings/` | §2.2–2.3, the ring-theoretic examples: `ProjOrderUnit.lean` (**Example 2.13**, `[R]` is a faithful order-unit of `V^κ(R)`), `FreeModules.lean` (`V^κ(𝓕^κ)`, the class of free modules), `FreeUnit.lean` (ranks; `[R]` is a cyclic faithful order-unit), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**, `V^κ(R) ≅ F_κ^n`) |
+| `KappaMonoid/Section3/Diophantine.lean` | §3.2: Examples 3.3(1) and Examples 3.12 for `ℕ₀`, **Lemma 3.13**(1) and (2), **Proposition 3.14**(1) and (2) (universal extensions of Diophantine monoids), saturation for inequality-free systems, **Example 3.15**, and the counterexample showing that (2) does need the saturation hypothesis |
+| `KappaMonoid/Section3/Reals.lean` | §3: **Examples 3.3(2)(3)** and their entries of Examples 3.12 — braiding in `ℝ≥0`, why neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`, the `ℵ₀`-monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` and its universal property, and the `ℚ≥0` variant |
+| `KappaMonoid/Section4/AddOf.lean` | §4: `add x` and `add_λ x`, `V(R) = add [R]`, **Corollary 4.7**(1) (both directions) and (2), **Examples 4.8(1)** (ascent of KRSA) |
+| `KappaMonoid/Section5/` | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Braided` (**Lemma 5.1**, **Lemma 5.2**(1)–(5)), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
 proved, `sorry`-free, subject only to the four §2 axioms below (A1–A4; A5 is used nowhere in the
@@ -52,7 +48,7 @@ Proposition 3.14(2)" below.
 axiom A5 below. Corollary 4.7(2) needs no axiom either — Corollary 4.5(2) plus uniqueness of
 universal `κ`-extensions. Corollary 4.6 is Corollary 4.5(3) together with six results quoted from
 the literature, none of them monoid-theoretic and none in Mathlib, so it stays a documented stub in
-`Modules.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
+`ModuleClass.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
 statement corrected in Examples 4.8(1)" below.
 
 **Section 5 is complete.** Every lemma, theorem, proposition and corollary of §5 is stated and
@@ -191,7 +187,7 @@ not monoid theory and not in Mathlib, so this development does not derive it —
 the Bergman–Dicks data of axiom A5, as `BergmanDicksData.sumOfFG`, for the ring A5 produces. It is
 therefore not recoverable from `∀ I : Ideal R, Module.Projective R I` inside the formalisation. For
 a hereditary ring the extra conjunct is automatic, so the statements are the paper's; making it
-explicit is the same treatment Corollary 4.6 already gets in `Modules.lean`, where it is a
+explicit is the same treatment Corollary 4.6 already gets in `ModuleClass.lean`, where it is a
 documented stub rather than a formalised implication. `corollary_4_7_one_forward` was extended to
 return it, which it can because axiom A5 supplies it.
 

@@ -12,8 +12,8 @@ isomorphism class of simple modules is uniquely determined (axiom A3).  So a mod
 by its multiplicity function, and `V^κ(R)` is the `κ`-monoid of such functions with values
 `≤ κ`, which is `F_κ^n` when there are `n` classes.
 -/
-import KappaMonoid.Modules
-import KappaMonoid.Examples
+import KappaMonoid.ModuleClass
+import KappaMonoid.Section2.Examples
 import KappaMonoid.Axioms
 
 universe u

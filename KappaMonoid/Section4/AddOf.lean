@@ -4,7 +4,7 @@
   Zahra Nazemian and Daniel Smertnig,
   *A monoid-theoretical approach to infinite direct-sum decompositions of modules*:
 
-`add(x)` and `add_λ(x)`, Corollary 4.7 and Examples 4.8(1).  `Modules.lean` carries Section 4 up to
+`add(x)` and `add_λ(x)`, Corollary 4.7 and Examples 4.8(1).  `ModuleClass.lean` carries Section 4 up to
 Corollary 4.5; this file finishes it.
 
 * **Corollary 4.7(2)** (`corollary_4_7_two`) needs only Corollary 4.5(2) and uniqueness of universal
@@ -15,17 +15,17 @@ Corollary 4.5; this file finishes it.
   the only result here that uses an axiom: Bergman–Dicks realisation, A5 (`bergmanDicksData`).
   `corollary_4_7_one_backward` records the generation statement of the (iii) ⇒ (i) direction.
 * **Corollary 4.6** is Corollary 4.5(3) together with six results quoted from the literature; the
-  documented stub in `Modules.lean` is its treatment and nothing is added here.
+  documented stub in `ModuleClass.lean` is its treatment and nothing is added here.
 * **Examples 4.8(1)** is `krsa_ascent` and `krsa_ascent_free`; the statement had to be corrected for
   a universe reason recorded there and in `README.md`.
 
 See `SECTION4-PLAN.md`.
 -/
-import KappaMonoid.Modules
-import KappaMonoid.Free
-import KappaMonoid.OrderUnit
-import KappaMonoid.ProjOrderUnit
-import KappaMonoid.Section32
+import KappaMonoid.ModuleClass
+import KappaMonoid.Section2.Free
+import KappaMonoid.Section2.OrderUnit
+import KappaMonoid.Section2.Rings.ProjOrderUnit
+import KappaMonoid.Section3.Diophantine
 
 universe u v
 
@@ -116,7 +116,7 @@ end KMonoid
 
 /-! ## `ℵ₀⁻`-small classes are finitely generated
 
-The one module-theoretic input Corollary 4.7(1) needs beyond what `Modules.lean` has.  Both
+The one module-theoretic input Corollary 4.7(1) needs beyond what `ModuleClass.lean` has.  Both
 directions of the corollary want to move between *finitely generated* projective modules — which is
 what Bergman–Dicks realises and what `EveryProjectiveIsSumOfFG` produces — and the `ℵ₀⁻`-small
 classes of `V^κ(R)`, which is the base Corollary 4.5(3) braids over.  Example 4.2(2) gives one
@@ -333,7 +333,7 @@ follows from `corollary_4_5_three`, which is *proved*.
 
 Those six implications are the quoted results (Bergman; Warfield; Mueller; Hinohara;
 McGovern–Puninski–Rothmaler).  There is nothing further to formalise: Corollary 4.6 is exactly
-`corollary_4_5_three` plus six citations, so the documented stub in `Modules.lean` is the right
+`corollary_4_5_three` plus six citations, so the documented stub in `ModuleClass.lean` is the right
 treatment and this file adds nothing for it.  `EveryProjectiveIsSumOfFG` names the hypothesis so
 that the six implications can be stated if that module theory ever lands in Mathlib. -/
 

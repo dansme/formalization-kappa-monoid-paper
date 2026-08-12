@@ -15,8 +15,8 @@ exactly because the two relations agree: on infinite ranks both sides are inject
 of infinite rank on one side, faithfulness on the other), and on finite ranks the ring is chosen
 so that `R^k ≅ R^l` iff `k·u = l·u`.
 -/
-import KappaMonoid.FreeUnit
-import KappaMonoid.Cyclic
+import KappaMonoid.Section2.Rings.FreeUnit
+import KappaMonoid.Section2.Cyclic
 import KappaMonoid.Axioms
 
 universe u

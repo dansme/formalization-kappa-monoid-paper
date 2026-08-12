@@ -15,8 +15,8 @@ isomorphism classes are those subsets modulo `R^{(s)} ≅ R^{(t)}`.  Ranks are i
 rather than by cardinals because `ModuleClass.carrier` must live in `Type u`, whereas the
 cardinals `≤ κ` live in `Type (u+1)`.
 -/
-import KappaMonoid.Modules
-import KappaMonoid.Examples
+import KappaMonoid.ModuleClass
+import KappaMonoid.Section2.Examples
 
 universe u
 
