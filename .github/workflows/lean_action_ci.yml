@@ -18,4 +18,37 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
+
+      # `declaration uses `sorry`` is only a warning, so `lake build` stays green on a
+      # `sorry` in an imported file.  The root target must be sorry-free at every commit
+      # (a scaffold file joins `KappaMonoid.lean` only when its last `sorry` goes), so
+      # check for it explicitly.  This is a cached replay of the build above, not a rebuild;
+      # `KappaMonoid.Section5` is deliberately not part of the root target and not checked.
+      - name: The root target is sorry-free
+        run: |
+          lake build KappaMonoid 2>&1 | tee build.log
+          if grep -q 'declaration uses .sorry' build.log; then
+            echo "::error::the root target is not sorry-free"
+            grep 'declaration uses .sorry' build.log
+            exit 1
+          fi
+
+      # No new axioms without asking.  A deliberate addition means editing this list and the
+      # table in `README.md` in the same commit.
+      - name: The axiom list has not changed
+        run: |
+          cat > axioms.expected <<'EOF'
+          bergmanDicksData
+          cyclicMonoidClassification
+          kaplansky_classical
+          leavittData
+          mk_le_of_span_eq_top
+          mk_multiplicity_eq
+          EOF
+          grep -rhE '^axiom ' KappaMonoid/ | awk '{print $2}' | sort > axioms.actual
+          if ! diff -u axioms.expected axioms.actual; then
+            echo "::error::the set of axiom declarations under KappaMonoid/ has changed"
+            exit 1
+          fi
+
       - uses: leanprover-community/docgen-action@v1

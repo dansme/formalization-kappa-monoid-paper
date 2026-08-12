@@ -20,9 +20,15 @@ root build is always sorry-free.
 
 ## Working efficiently
 
-Most of the avoidable cost in a session is the edit/build/read loop, not the mathematics.
+Most of the avoidable cost in a session is the edit/build/read loop, not the mathematics. The
+`lean-lsp` MCP server (configured in `.mcp.json`, run via `uvx lean-lsp-mcp`) answers most of the
+questions a build would answer, without a build. Prefer it throughout.
 
-1. **Build once into a log, then grep the log.** Never run `lake build` twice in one message.
+1. **Ask the LSP, don't rebuild.** `lean_diagnostic_messages` returns the errors and warnings of one
+   file with no `lake build` at all; `lean_goal` the proof state at a position (omit `column` for
+   before/after a line); `lean_term_goal` the expected type. Keep `lake build` for what only it can
+   do: checking the *root target* end to end, and rechecking after an import change. When you do
+   build, build once into a log and grep the log — never run `lake build` twice in one message.
    ```fish
    lake build > /tmp/b.log 2>&1; grep -cE "^error|uses .sorry" /tmp/b.log   # one number
    grep -m1 -A12 "^error" /tmp/b.log                                       # only the first error
@@ -33,23 +39,31 @@ Most of the avoidable cost in a session is the edit/build/read loop, not the mat
    where the iterations go, and this catches all of them in a single pass. Then fill proofs 3–5 at
    a time, not one at a time. This is what the scaffold files do at file scale; do it at block
    scale too.
-3. **Batch Mathlib API lookups.** One scratch file with many `#check` / `example … := by exact?`
-   lines, one run. `grep` in `.lake/packages/mathlib/Mathlib/…` first — it is far cheaper than
-   `exact?` and usually enough. Import the specific Mathlib modules rather than all of `Mathlib`.
-   Guessed names are often stale (`Nat.dvd_sub'` → `Nat.dvd_sub`, `Cardinal.nat_lt_aleph0` →
+3. **Try tactics without editing the file.** `lean_multi_attempt` runs a list of candidate tactics
+   at a position and reports the resulting goal or error for each — much cheaper than an
+   edit/diagnose cycle per candidate. `lean_code_actions` resolves the `Try this` text of `exact?` /
+   `simp?` in place, and `lean_state_search` suggests closing lemmas from the goal.
+4. **Look Mathlib names up, do not guess them.** `lean_local_search` for a name you half-remember,
+   `lean_loogle` for a type pattern, `lean_leansearch` for a natural-language description,
+   `lean_hover_info` for a signature, `lean_declaration_file` for the source. `lean_run_code`
+   elaborates a self-contained snippet of `#check`s with no scratch file and no `lake env lean`;
+   import the specific Mathlib modules rather than all of `Mathlib`. Plain `grep` in
+   `.lake/packages/mathlib/Mathlib/…` remains the cheapest option when you know roughly where to
+   look. Guessed names are often stale (`Nat.dvd_sub'` → `Nat.dvd_sub`, `Cardinal.nat_lt_aleph0` →
    `Cardinal.natCast_lt_aleph0`): check before writing a block that depends on them.
-4. **Prefer `Edit` for small fixes.** The hook posts IDE diagnostics after every `Edit`, which is
+5. **Prefer `Edit` for small fixes.** The hook posts IDE diagnostics after every `Edit`, which is
    free error feedback with no build. Use bulk rewrites (python/`Write`) for whole blocks, `Edit`
    for the fix cycles.
-5. **Generalise before the second copy, not after.** Two near-identical 80-line `BraidingData`
+6. **Generalise before the second copy, not after.** Two near-identical 80-line `BraidingData`
    assemblies (`ℕ₀`, `ℝ≥0`) should have been one builder lemma.
-6. **Decide the encoding on paper first.** Ask: is the carrier reducible, and will I need to
+7. **Decide the encoding on paper first.** Ask: is the carrier reducible, and will I need to
    case-split *under* a projection of it? (See trap 8.) Two minutes here saved four build cycles
    in `RTilde`.
-7. **Read narrowly.** `grep -n` for the name, then `sed -n 'a,bp'` around it. Whole-file reads are
-   rarely worth it.
-8. **One step = one commit**, with the build green. Commit messages: what changed and why, a few
-   lines, not an essay.
+8. **Read narrowly.** `grep -n` for the name, then `sed -n 'a,bp'` around it. Whole-file reads are
+   rarely worth it. `lean_file_outline` is the cheap way to see a file's declarations.
+9. **One step = one commit**, with the build green. Commit messages: what changed and why, a few
+   lines, not an essay. Scratch files are called `Scratch.lean` and are gitignored anywhere in the
+   tree; do not commit one.
 
 ## Lean conventions
 
@@ -64,9 +78,11 @@ Most of the avoidable cost in a session is the edit/build/read loop, not the mat
 - **Instances**: defs producing them carry `@[instance_reducible]`. Instances that depend on
   hypotheses are threaded through statements with `letI`, repeated verbatim at the top of the
   tactic proof.
-- **No new axioms without asking.** The five assumed classical results live in
+- **No new axioms without asking.** The six assumed classical results (A1–A6) all live in
   `KappaMonoid/Axioms.lean` and are documented in `README.md`; run `#print axioms` on new headline
-  results and keep that table in step. §3 needs no axiom at all.
+  results and keep that table in step. §3 needs no axiom at all. CI enforces the list — `.github/workflows/lean_action_ci.yml` fails if the set of
+  `axiom` declarations under `KappaMonoid/` changes, so a deliberate addition means editing the
+  expected list there *and* the `README.md` table in the same commit.
 - **Deviations from the paper are documented twice**: in the docstring of the affected result and
   in a `README.md` section. Two exist so far — the `IsConical` hypothesis in Theorem 3.11 and the
   `IsSaturatedFin` hypothesis in Proposition 3.14(2), the latter with a formalised counterexample

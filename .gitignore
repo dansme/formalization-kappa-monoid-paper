@@ -1,2 +1,3 @@
 /.lake
-/Scratch.lean
+Scratch.lean
+.claude/settings.local.json
