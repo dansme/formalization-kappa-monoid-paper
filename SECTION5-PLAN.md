@@ -8,9 +8,9 @@ independently checkable.
 ## Read this first
 
 **The §4 blocker is gone.** Corollary 4.7(1) is proved (both directions, with axiom A5 for
-(i) ⇒ (ii)), so Lemma 5.1 and Theorem 5.3 have their input. Steps 1 and 6's counterexample are
-done, as are Lemma 5.2(1)(2), the trace ideals of step 5 and two claims of step 6;
-10 `sorry`s remain.
+(i) ⇒ (ii)), so Lemma 5.1 and Theorem 5.3 have their input. Steps 1, 2 and 6's counterexample are
+done, as are all of Lemma 5.2 except (4), the trace ideals of step 5 and two claims of step 6;
+7 `sorry`s remain.
 
 **§5 is the most expensive section per result.** Unlike §§2–4, its proofs are explicit
 combinatorial constructions — Lemma 5.2(3) writes down three interleaved partitions of `ℕ` by
@@ -94,24 +94,47 @@ non-cyclicity hypothesis, and is where `H` being non-cyclic first bites.
   the finitely many slots of their forms and have the same sum there. `coe_lsumOf_slots` is the
   bookkeeping — the coercion of a submonoid sum is the sum in `H` (`IsLSubset.coe_lsumOf` is `rfl`),
   and dropping the slots off which the family vanishes is `sumOf_eq_sumOf_subset`.
-- **(3)** the substantial one. `x_i ∈ add x_j` and no element has both a finite and an infinite
-  form ⟹ `α X_i + ℵ₀ X_j` and `β X_i + ℵ₀ X_j` are braided, for all `α, β ≤ ℵ₀`. The paper gives
-  the partitions explicitly — `I₀ = {0,…,α-1}`, `I_k = {α + n(k-1), …}`, `J_k = {nk, …}` with
-  `u_k = α x_i`, `v_k = t`, `v_0 = 0` — so transcribe them. Expect this to be the longest proof
-  in the section: it splits on `α` finite versus `α = ℵ₀`, and the second case re-derives
-  `m x_j = (m'+1) x_i + n' x_j` before building its partitions.
+- **(3) — done**, and it was the longest proof in the section, as expected. The partitions are not
+  transcribed as sets but as **level functions**: `IsBraided.of_levels` (new, in `Braiding.lean`)
+  builds a `BraidingData ℵ₀` from two maps `ι → ℕ` with finite fibres, parking all the action on a
+  single `ω`-chain of `ι × ℕ`. Fibres are disjoint and cover for free, so only finiteness and the
+  two block equations remain — exactly what the paper's hand-written partitions supply.
+  `of_partition` is the special case `v ≡ 0`.
+
+  For `α = A` finite, `A x₁ + t = n x₂` with `n ≥ 1` gives the levels
+  `(j ↦ if j < A then 0 else j - A + 1) ⊕ (j ↦ j / n + 1)` against `(j ↦ j) ⊕ (j ↦ j / n)`, with
+  `u ≡ A x₁`, `v 0 = 0`, `v (k+1) = t`. For `α = ℵ₀` one re-derives `m x₂ = (m'+1) x₁ + n' x₂` and
+  the block sums already agree, so `v ≡ 0`. The lemma itself is then symmetry and transitivity
+  through `β = 0`, as in the paper.
+
+  **This corrects the scaffold**: `lemma_5_2_three` now takes the generation hypothesis `hgen`. It
+  is a standing assumption of §5 and the `α = ℵ₀` case genuinely needs it — that is where
+  `t = m' x₁ + n' x₂` comes from, and with `NoMixedForms` that `m'`, `n'` are finite.
+
+  The supporting machinery is in `Section5.lean`: fibre splitting and counting on `FormIdx`
+  (`fiber_elim`, `finsum_fiber_const`, `ncard_nats_div`, …), `coe_finsum_mem` for computing a
+  submonoid `finsum` in `H`, and `addOf_add_mem` / `addOf_nsmul_mem`.
 - **(4)** `x_i ∉ add x_j`, no mixed forms, `m X_i + ℵ₀ X_j` braided with `n X_i + ℵ₀ X_j` ⟹
   `m x_i + k x_j = n x_i + k' x_j` for some finite `k, k'`.
-- **(5)** `H` braided over `add (x₁ + x₂)` ⟹ (`x_i ∈ add x_j` ↔ `ℵ₀ (x₁ + x₂) = ℵ₀ x_j`). The
-  forward direction is elementary: from `x₁ + z = n x₂` scale by `ℵ₀` (`cmul_top_distrib`,
-  `ℵ₀·n = ℵ₀`, `α + α = α`), with the case `n = 0` closed by reducedness. The backward direction is
-  where the work is, and the paper's "we conclude that there exist positive integers `m`, `n`" hides
-  a block induction: braid the constant families `(x₂)` and `(x₁+x₂)` (same `ℵ₀`-sum by hypothesis),
-  take the least level `k` in some block whose `I`-piece is nonempty, use reducedness to see that
-  `u`, `v` vanish below it, so `v (a,k)` is a *finite multiple of* `x₂`, and read
-  `x₁ ≼ m(x₁+x₂) = v(a,k) + u(a,k) ≼ (r + #J(a,k)) x₂` off the two braiding equations.
+- **(5) — done**. The forward direction is `cmul_top_absorb`. The backward direction is where the
+  work is, and the paper's "we conclude that there exist positive integers `m`, `n`" hides a block
+  induction, which the formal proof runs explicitly: braid the constant families `(x₁+x₂)` and
+  `(x₂)` (same `ℵ₀`-sum by hypothesis), take the least level `k` of a block whose `I`-piece is
+  nonempty, use reducedness to see that `u`, `v` vanish below it, so `v (a,k)` is a *finite multiple
+  of* `x₂`, and read `x₁ ≼ m(x₁+x₂) = v(a,k) + u(a,k) ≼ (r + #J(a,k)) x₂` off the two braiding
+  equations. `ksum_const` and `sumOf_const_finite` came out of it.
 
-Do (5) next: it is used by both later steps.
+Only (4) is left. Its shape is the same block bookkeeping as (5), but over a *finite family of
+chains* rather than one: the finitely many `x_i`-slots of the two families sit in finitely many
+blocks, so choose a finite set `A` of chains and a level `K` covering them all, telescope
+
+    Σ_{a∈A} Σ_{k≤K} Σ_{J(a,k)} y = Σ_{a∈A} Σ_{k≤K} Σ_{I(a,k)} x + Σ_{a∈A} v(a,K+1)
+
+(the `v`-terms cancel pairwise because `v(a,0) = 0`), read off `n x_i + n' x_j = m x_i + m' x_j + V`
+with `V = Σ_{a∈A} v(a,K+1)`, and finish as the paper does: `I(a,K+1)` contains no `x_i`-slot, so
+`v(a,K+1) ∈ add(x_j)`, hence has a form with zero `X_i`-coefficient (`x_i ∉ add x_j`) whose
+`X_j`-coefficient is finite (`NoMixedForms` applied to `r x_j`). The telescoping identity is worth
+stating in `Braiding.lean` as the finite-`λ = ℵ₀` counterpart of `BraidingData.block_lsumOf_eq`.
 
 ## Step 4 — Theorem 5.3 (`hereditarycasecor`)
 
@@ -192,7 +215,7 @@ which is why both carry it as `_hgen`.
 
 ```
 step 1 (forms) ──> step 2 (Lem 5.1) ──> step 3 (Lem 5.2) ──> step 4 (Thm 5.3) ──> step 6 (Cor 5.5)
-   done                                                                                 ▲
+   done                done              done but 5.2(4)                               ▲
                                         step 5 (trace ideals, Prop 5.4) ────────────────┘
 ```
 
@@ -200,19 +223,23 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 
 ## Status
 
-10 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
+7 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
 stays green and `sorry`-free because the file is not imported by `KappaMonoid.lean`.
 
-Closed so far, all without any axiom: `sumOf_familyOfForm` (step 1); Lemma 5.2(1)(2) (step 3); the
-trace ideals `smul_traceIdeal_eq`, `traceIdeal_le_of_smul_eq`, `traceIdeal_mul_self` and
-`traceIdeal_isTwoSided` (step 5); the counterexample block, `corollary_5_5_two_unique` and
+Closed so far, all without any axiom beyond the A5 already inside Corollary 4.7(1):
+`sumOf_familyOfForm` and `exists_form` (step 1); **Lemma 5.1** (step 2); Lemma 5.2(1)(2)(3)(5)
+(step 3); the trace ideals `smul_traceIdeal_eq`, `traceIdeal_le_of_smul_eq`, `traceIdeal_mul_self`
+and `traceIdeal_isTwoSided` (step 5); the counterexample block, `corollary_5_5_two_unique` and
 `corollary_5_5_three_absorb` (step 6).
 
-Still open (10): Lemma 5.1; Lemma 5.2(3)(4)(5); Theorem 5.3; Proposition 5.4 and its hereditary
-addendum; Corollary 5.5(1)(2)(3). New reusable infrastructure, in the core files: `KMonoid.cmul_eq_sumOf`,
-`KMonoid.sumOf_indicator`, `KMonoid.sumOf_eq_sumOf_subset`, `KMonoid.sumOf_sumType`,
-`KMonoid.cmul_zero`, `KMonoid.cmul_cmul` (`Basic.lean`), `TrivExt.coe_nsmul`,
-`TrivExt.cmul_top_eq_top` (`Examples.lean`), `KMonoid.self_mem_addOf` (`Section4.lean`).
+Still open (7): Lemma 5.2(4); Theorem 5.3; Proposition 5.4 and its hereditary addendum;
+Corollary 5.5(1)(2)(3).
+
+New reusable infrastructure in the core files: `KMonoid.cmul_eq_sumOf`, `KMonoid.sumOf_indicator`,
+`KMonoid.sumOf_eq_sumOf_subset`, `KMonoid.sumOf_sumType`, `KMonoid.cmul_zero`, `KMonoid.cmul_cmul`,
+`KMonoid.IsKHom.map_add` (`Basic.lean`), `IsBraided.of_levels` (`Braiding.lean`),
+`IsBraidedOver.of_kIso_subset` (`Universal.lean`), `TrivExt.coe_nsmul`, `TrivExt.cmul_top_eq_top`
+(`Examples.lean`), `KMonoid.self_mem_addOf` (`Section4.lean`).
 
 ## One thing to fix in the paper
 
