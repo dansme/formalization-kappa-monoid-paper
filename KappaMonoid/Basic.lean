@@ -1224,6 +1224,15 @@ theorem IsKHom.map_add {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom κ
   rw [← sumOf_two a b hUB, hf.map_sumOf hUB, ← sumOf_two (f a) (f b) hUB]
   exact congrArg _ (funext fun p => by rcases p with ⟨(_ | _)⟩ <;> rfl)
 
+/-- The inverse of a bijective `κ`-homomorphism is again a `κ`-homomorphism. -/
+theorem IsKHom.inv {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom κ f)
+    (hbij : Function.Bijective f) {g : K → H} (hfg : Function.RightInverse g f) :
+    IsKHom κ g := by
+  refine ⟨hbij.1 ?_, fun x => hbij.1 ?_⟩
+  · rw [hfg 0, hf.1]
+  · rw [hfg (ksum (κ := κ) x), hf.2 (g ∘ x)]
+    exact congrArg _ (funext fun i => (hfg (x i)).symm)
+
 /-- A `κ`-submonoid of a `κ`-monoid. -/
 structure IsKSubmonoid (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Prop where
   zero_mem : (0 : H) ∈ S

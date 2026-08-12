@@ -334,6 +334,63 @@ theorem of_levels {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {x y : ι → X}
     · have hbp : ¬ ((bsucc p).1 = a₀) := hp
       rw [if_neg hp, if_neg hp, if_neg hbp, finsum_mem_empty, add_zero]
 
+/-- **Braiding transports along a bijection of index types.**
+
+`IsBraided` is stated for two families over one index type, but §5 needs to compare families
+indexed by `FormIdx` with families indexed by `Idx ℵ₀`; both are countable, and this moves a
+braiding across such an identification.  The partitions are pulled back through `E`, which is
+harmless because `E` is a bijection: preimages of disjoint sets are disjoint, they still cover,
+and each has the same cardinality as the piece it comes from. -/
+theorem comp_equiv {ι' : Type u} (E : ι ≃ ι') {x y : ι' → X} (h : IsBraided lam x y) :
+    IsBraided lam (fun i => x (E i)) (fun i => y (E i)) := by
+  obtain ⟨d⟩ := h
+  have hpre : ∀ T : Set ι', #(E ⁻¹' T) = #T := fun T =>
+    Cardinal.mk_congr ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simpa using j.2⟩,
+      fun i => by simp, fun j => by simp⟩
+  have hdisj : ∀ (P : ι' × ℕ → Set ι'), (∀ p q, p ≠ q → Disjoint (P p) (P q)) →
+      ∀ p q : ι × ℕ, p ≠ q →
+        Disjoint (E ⁻¹' P (E p.1, p.2)) (E ⁻¹' P (E q.1, q.2)) := by
+    intro P hP p q hpq
+    have hpq' : ((E p.1, p.2) : ι' × ℕ) ≠ (E q.1, q.2) := by
+      obtain ⟨a, k⟩ := p
+      obtain ⟨b, l⟩ := q
+      intro hEq
+      simp only [Prod.mk.injEq] at hEq
+      exact hpq (by rw [E.injective hEq.1, hEq.2])
+    exact Set.disjoint_left.mpr fun i hi hi' =>
+      Set.disjoint_left.mp (hP (E p.1, p.2) (E q.1, q.2) hpq') hi hi'
+  have hcov : ∀ (P : ι' × ℕ → Set ι'), (⋃ q, P q) = Set.univ →
+      (⋃ p : ι × ℕ, E ⁻¹' P (E p.1, p.2)) = Set.univ := by
+    intro P hP
+    refine Set.eq_univ_of_forall fun i => ?_
+    obtain ⟨q, hq⟩ := Set.mem_iUnion.mp (by rw [hP]; exact Set.mem_univ (E i))
+    refine Set.mem_iUnion.mpr ⟨(E.symm q.1, q.2), ?_⟩
+    show E i ∈ P (E (E.symm q.1), q.2)
+    rw [Equiv.apply_symm_apply]
+    exact hq
+  have hsum : ∀ (P : ι' × ℕ → Set ι') (hs : ∀ q, #(P q) < lam) (p : ι × ℕ) (f : ι' → X),
+      lsumOf (lam := lam) (lt_of_eq_of_lt (hpre _) (hs (E p.1, p.2)))
+          (fun i : E ⁻¹' P (E p.1, p.2) => f (E i))
+        = lsumOf (lam := lam) (hs (E p.1, p.2)) (fun j : P (E p.1, p.2) => f j) := by
+    intro P hs p f
+    refine (lsumOf_equiv (lam := lam) (hs (E p.1, p.2))
+      (lt_of_eq_of_lt (hpre _) (hs (E p.1, p.2)))
+      ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simpa using j.2⟩, fun i => by simp,
+        fun j => by simp⟩ (fun j : P (E p.1, p.2) => f j)).symm
+  exact ⟨{ I := fun p => E ⁻¹' d.I (E p.1, p.2)
+           J := fun p => E ⁻¹' d.J (E p.1, p.2)
+           I_disjoint := hdisj d.I d.I_disjoint
+           J_disjoint := hdisj d.J d.J_disjoint
+           I_cover := hcov d.I d.I_cover
+           J_cover := hcov d.J d.J_cover
+           I_small := fun p => lt_of_eq_of_lt (hpre _) (d.I_small (E p.1, p.2))
+           J_small := fun p => lt_of_eq_of_lt (hpre _) (d.J_small (E p.1, p.2))
+           u := fun p => d.u (E p.1, p.2)
+           v := fun p => d.v (E p.1, p.2)
+           v_limit := fun a => d.v_limit (E a)
+           hI := fun p => (hsum d.I d.I_small p x).trans (d.hI (E p.1, p.2))
+           hJ := fun p => (hsum d.J d.J_small p y).trans (d.hJ (E p.1, p.2)) }⟩
+
 /-- Lemma 3.6(1): a family is braided to any reindexing of itself along a bijection — take the
 partition into singletons on both sides. -/
 theorem of_perm (x : ι → X) (π : ι ≃ ι) : IsBraided lam x (x ∘ π) := by

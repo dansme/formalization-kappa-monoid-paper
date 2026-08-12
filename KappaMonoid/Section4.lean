@@ -485,7 +485,8 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
     (k : Type u) [Field k] (x : H)
     (hbr : letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset hκ x)
       IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) H hκ (fun y => (y : H))) :
-    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (hR : ∀ I : Ideal R, Module.Projective R I),
+    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : ∀ I : Ideal R, Module.Projective R I),
+      EveryProjectiveIsSumOfFG R ∧
       letI := (projClass R κ hκ).instKMonoid hκ
       ∃ e : (projClass R κ hκ).carrier → H, KMonoid.IsKHom κ e ∧ Function.Bijective e := by
   classical
@@ -515,7 +516,7 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
     exact hzn
   -- Step 2: Bergman–Dicks (axiom A5) realises `add x` as `V(R)` for a hereditary `k`-algebra `R`
   have bd := bergmanDicksData k ↥(KMonoid.addOf (κ := κ) x) hred hunit
-  refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, ?_⟩
+  refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, bd.sumOfFG, ?_⟩
   letI := (projClass bd.R κ hκ).instKMonoid hκ
   letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
