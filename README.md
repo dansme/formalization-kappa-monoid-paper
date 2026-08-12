@@ -58,12 +58,13 @@ One file carries the part of §5 that is not yet proved: every statement type-ch
 are filled in as far as they go. It is not imported by `KappaMonoid.lean`, so `lake build` stays
 green and `sorry`-free; build it individually with `lake build KappaMonoid.Section5`.
 
-Six `sorry`s remain there. Proved so far: the theory of forms `α X₁ + β X₂` including
+Five `sorry`s remain there. Proved so far: the theory of forms `α X₁ + β X₂` including
 `exists_form` (every element of `H` has a form); **Lemma 5.1**, the braidedness of `H` over
-`add (x₁ + x₂)`; **all five parts of Lemma 5.2**; the trace ideals of Proposition 5.4; and the
-`ℕ₀² ∪ {∞}` counterexample with the two absorption claims of Corollary 5.5. Still open: Theorem
-5.3, Proposition 5.4 and its hereditary addendum, and the three parts of Corollary 5.5. See
-`SECTION5-PLAN.md`.
+`add (x₁ + x₂)`; **all five parts of Lemma 5.2**; **Theorem 5.3**, the section's main result, in
+both directions; the trace ideals of Proposition 5.4; and the `ℕ₀² ∪ {∞}` counterexample with the
+two absorption claims of Corollary 5.5. `theorem_5_3` uses no axiom beyond A5, which enters through
+Corollary 4.7(1); see "The hypothesis added to Theorem 5.3" below. Still open: Proposition 5.4 and
+its hereditary addendum, and the three parts of Corollary 5.5. See `SECTION5-PLAN.md`.
 
 | File | Contents | Plan |
 |---|---|---|
@@ -184,6 +185,22 @@ uniquely along the generators. That is what "`V^κ(C)` is the free `κ`-monoid o
 isomorphism itself, should it ever be wanted: make `universal` quantify over a test object in a
 fresh universe (`extend_lhom` already works in that generality, so this changes the definition and
 Theorem 3.11's statement but not its proof), or compare `ULift`s.
+
+## The hypothesis added to Theorem 5.3
+
+Theorem 5.3 characterises the non-cyclic two-generated `ℵ₀`-monoids isomorphic to `V^{ℵ₀}(R)` for a
+*hereditary* ring `R`. Both directions of the paper's proof reach `R` only through Corollary 4.6:
+over a hereditary ring every projective module is a direct sum of finitely generated ones. That
+implication is a quoted result (Albrecht; Bergman), not monoid theory and not in Mathlib, so this
+development does not derive it — it is bundled into the Bergman–Dicks data of axiom A5, as
+`BergmanDicksData.sumOfFG`, for the ring A5 produces. It therefore cannot be recovered from
+`∀ I : Ideal R, Module.Projective R I` inside the formalisation.
+
+`theorem_5_3` accordingly carries `EveryProjectiveIsSumOfFG R` alongside hereditariness on both
+sides of the equivalence. For a hereditary ring the extra conjunct is automatic, so the statement is
+the paper's; making it explicit is the same treatment Corollary 4.6 already gets in `Modules.lean`,
+where it is a documented stub rather than a formalised implication.
+`corollary_4_7_one_forward` was extended to return it, which it can because axiom A5 supplies it.
 
 ## Encoding decisions
 

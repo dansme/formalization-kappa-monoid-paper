@@ -9,8 +9,8 @@ independently checkable.
 
 **The §4 blocker is gone.** Corollary 4.7(1) is proved (both directions, with axiom A5 for
 (i) ⇒ (ii)), so Lemma 5.1 and Theorem 5.3 have their input. Steps 1, 2 and 6's counterexample are
-done, as is all of Lemma 5.2, the trace ideals of step 5 and two claims of step 6;
-6 `sorry`s remain.
+done, as is all of Lemma 5.2, **Theorem 5.3**, the trace ideals of step 5 and two claims of
+step 6; 5 `sorry`s remain.
 
 **§5 is the most expensive section per result.** Unlike §§2–4, its proofs are explicit
 combinatorial constructions — Lemma 5.2(3) writes down three interleaved partitions of `ℕ` by
@@ -133,25 +133,42 @@ non-cyclicity hypothesis, and is where `H` being non-cyclic first bites.
   of* `x₂`, and read `x₁ ≼ m(x₁+x₂) = v(a,k) + u(a,k) ≼ (r + #J(a,k)) x₂` off the two braiding
   equations. `ksum_const` and `sumOf_const_finite` came out of it.
 
-Step 3 is complete. Theorem 5.3 (step 4) now has all five parts of Lemma 5.2 available.
+Step 3 is complete, and feeds Theorem 5.3.
 
-## Step 4 — Theorem 5.3 (`hereditarycasecor`)
+## Step 4 — Theorem 5.3 (`hereditarycasecor`) — **done**
 
-The main result: a non-cyclic two-generated `ℵ₀`-monoid is `V^{ℵ₀}(R)` for a hereditary `R` iff
-(i) `n x_i + ℵ₀ x_j = ℵ₀ x_i + ℵ₀ x_j` with `n` finite implies `ℵ₀ x_j = ℵ₀ x_i + ℵ₀ x_j` and
-`x_i ∈ add x_j`; (ii) if `x_i ∉ add x_j` and `m x_i + ℵ₀ x_j = n x_i + ℵ₀ x_j` then
-`m x_i + k x_j = n x_i + k' x_j` for finite `k, k'`; (iii) no element has both a finite and an
-infinite form.
+The main result, in both directions, with the two indices symmetric (`Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧
+…`) rather than as `Fin 2` bookkeeping.
 
-Forward: Lemma 5.1 gives braidedness, then (iii) is 5.2(1), (ii) is 5.2(4), and (i) is the
-counting argument — cofinitely many blocks sum to `|I_μ| x_j`, so `x_i ∈ add x_j`, then 5.2(3).
+**The statement carries `EveryProjectiveIsSumOfFG R` alongside hereditariness.** The paper reaches
+that from Corollary 4.6, a quoted result which this development bundles into axiom A5 rather than
+derives, so it is not recoverable from `∀ I, Module.Projective R I` here. Both sides of the
+equivalence carry it; for a hereditary ring it is automatic. `corollary_4_7_one_forward` now returns
+it (`bd.sumOfFG`). Documented in `README.md` under "The hypothesis added to Theorem 5.3".
 
-Backward: verify braidedness over `add (x₁ + x₂)` by the four-case split the paper lists
-(`fin/fin`, `m,ℵ₀ / m',ℵ₀`, `ℵ₀,n / m,ℵ₀`, `m,ℵ₀ / ℵ₀,ℵ₀`), then apply Corollary 4.7(1).
+**Forward** (`theorem_5_3_forward`): Lemma 5.1 gives the braiding, (iii) is 5.2(1), (ii) is 5.2(4),
+and (i) is `cond1_of_braidedOver`, whose counting step `mem_addOf_of_braidedForms_top` is the
+paper's "all but finitely many blocks sum to `|I_μ| x_j`". Only finitely many `I`-blocks meet the
+`x₁`-slots of the finite form, but infinitely many `J`-blocks meet those of `ℵ₀X₁ + ℵ₀X₂`, so some
+`p` has `x₁` inside `J p` while neither `I p` nor `I (p+1)` meets an `x₁`-slot, and
+`x₁ ≼ v(p+1) + u p ≼ (r + r') x₂`.
 
-State it with the two indices symmetric — the paper's `1 ≤ i ≠ j ≤ 2` is best rendered as a
-hypothesis quantified over both orderings rather than as `Fin 2` bookkeeping, which would cost
-more than it saves.
+**Backward** (`theorem_5_3_backward`): two separate pieces.
+
+- `braidedForms_of_conditions` is the paper's four-case split, on *forms*: both finite (5.2(2));
+  both `_ X₁ + ℵ₀ X₂` (5.2(3) if `x₁ ∈ add x₂`, else both `X₁`-coefficients are finite and (ii)
+  gives the finite relation, which `braidedForms_of_finite_relation` turns into a braiding); the
+  mixed case `α X₁ + ℵ₀ X₂` against `ℵ₀ X₁ + n X₂` (braid both with `ℵ₀X₁ + ℵ₀X₂`); and both
+  `ℵ₀ X₁ + _ X₂`, which is the second case with the generators swapped (`braidedForms_swap`).
+- `exists_braided_form` is the step the paper compresses into "hence `add(x₁+x₂) = ⟨x₁,x₂⟩`": an
+  *arbitrary* family over `add (x₁ + x₂)` is braided with a form family. Each member has a finite
+  form (`exists_finite_form_of_mem`, from (iii)), and `blockIdx` cuts the slots of the total form
+  into consecutive blocks of `c k` copies of `x₁` and `d k` of `x₂` while the family is cut into
+  singletons, so `IsBraided.of_levels` applies with `v ≡ 0`.
+
+The two meet through `IsBraided.comp_equiv`, which moves a braiding between the index types
+`FormIdx` and `Idx ℵ₀`, and Lemma 3.2, which turns equality of the families' sums into equality of
+the two forms' values.
 
 ## Step 5 — trace ideals and Proposition 5.4 (7 sorries)
 
@@ -214,7 +231,7 @@ which is why both carry it as `_hgen`.
 
 ```
 step 1 (forms) ──> step 2 (Lem 5.1) ──> step 3 (Lem 5.2) ──> step 4 (Thm 5.3) ──> step 6 (Cor 5.5)
-   done                done                  done                                      ▲
+   done                done                  done               done                   ▲
                                         step 5 (trace ideals, Prop 5.4) ────────────────┘
 ```
 
@@ -222,22 +239,22 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 
 ## Status
 
-6 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
+5 `sorry`s in `KappaMonoid/Section5.lean`, all statements type-checked; the root `lake build`
 stays green and `sorry`-free because the file is not imported by `KappaMonoid.lean`.
 
 Closed so far, all without any axiom beyond the A5 already inside Corollary 4.7(1):
 `sumOf_familyOfForm` and `exists_form` (step 1); **Lemma 5.1** (step 2); **all of Lemma 5.2**
-(step 3); the trace ideals `smul_traceIdeal_eq`, `traceIdeal_le_of_smul_eq`, `traceIdeal_mul_self`
+(step 3); **Theorem 5.3** (step 4), which uses no axiom beyond the A5 inside Corollary 4.7(1);
+the trace ideals `smul_traceIdeal_eq`, `traceIdeal_le_of_smul_eq`, `traceIdeal_mul_self`
 and `traceIdeal_isTwoSided` (step 5); the counterexample block, `corollary_5_5_two_unique` and
 `corollary_5_5_three_absorb` (step 6).
 
-Still open (6): Theorem 5.3; Proposition 5.4 and its hereditary addendum;
-Corollary 5.5(1)(2)(3).
+Still open (5): Proposition 5.4 and its hereditary addendum; Corollary 5.5(1)(2)(3).
 
 New reusable infrastructure in the core files: `KMonoid.cmul_eq_sumOf`, `KMonoid.sumOf_indicator`,
 `KMonoid.sumOf_eq_sumOf_subset`, `KMonoid.sumOf_sumType`, `KMonoid.cmul_zero`, `KMonoid.cmul_cmul`,
-`KMonoid.IsKHom.map_add` (`Basic.lean`), `IsBraided.of_levels` and `BraidingData.telescope`
-(`Braiding.lean`),
+`KMonoid.IsKHom.map_add`, `KMonoid.IsKHom.inv` (`Basic.lean`), `IsBraided.of_levels`,
+`IsBraided.comp_equiv` and `BraidingData.telescope` (`Braiding.lean`),
 `IsBraidedOver.of_kIso_subset` (`Universal.lean`), `TrivExt.coe_nsmul`, `TrivExt.cmul_top_eq_top`
 (`Examples.lean`), `KMonoid.self_mem_addOf` (`Section4.lean`).
 

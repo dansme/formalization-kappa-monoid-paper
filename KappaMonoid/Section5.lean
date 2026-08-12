@@ -1987,27 +1987,354 @@ theorem braidedForms_of_conditions (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x�
       rw [eval_swap x₂ x₁, eval_swap x₂ x₁]
       exact heq
 
+/-! ### Cutting the slots of a form into the blocks of a sequence of partial sums
+
+The backward direction of Theorem 5.3 must braid an *arbitrary* family over `add (x₁ + x₂)` with a
+family of generators — the step the paper compresses into "hence `add (x₁ + x₂) = ⟨x₁, x₂⟩`".  Each
+member of the family is a finite form `c k · x₁ + d k · x₂`, and the slots of the total form have to
+be cut into consecutive blocks of `c k` copies of `x₁` and `d k` copies of `x₂`.  `blockIdx` is that
+cut: for the partial sums `s` of `c`, it sends `j` to the `k` with `s k ≤ j < s (k+1)`. -/
+
+section Blocks
+
+open Classical in
+/-- The block of `j` for a sequence of partial sums `s`: the largest `k` with `s k ≤ j`, and `j`
+itself for the leftover slots, those beyond every `s l`. -/
+noncomputable def blockIdx (s : ℕ → ℕ) (j : ℕ) : ℕ :=
+  if h : ∃ l, j < s l then Nat.find h - 1 else j
+
+/-- The fibre of `blockIdx` at `k`: the interval `[s k, s (k+1))`, together with `k` itself when
+`k` is a leftover slot. -/
+theorem blockIdx_fibre {s : ℕ → ℕ} (hs : Monotone s) (hs0 : s 0 = 0) (k : ℕ) :
+    {j : ℕ | blockIdx s j = k}
+      = Set.Ico (s k) (s (k + 1)) ∪ {j | (¬ ∃ l, j < s l) ∧ j = k} := by
+  classical
+  ext j
+  simp only [Set.mem_setOf_eq, Set.mem_union, Set.mem_Ico, blockIdx]
+  by_cases h : ∃ l, j < s l
+  · rw [dif_pos h]
+    have hf0 : ¬ (j < s 0) := by rw [hs0]; exact Nat.not_lt_zero j
+    have hfpos : 1 ≤ Nat.find h := by
+      by_contra hc
+      have hz : Nat.find h = 0 := by omega
+      exact hf0 (hz ▸ Nat.find_spec h)
+    constructor
+    · rintro rfl
+      refine Or.inl ⟨Nat.not_lt.mp (Nat.find_min h (by omega)), ?_⟩
+      rw [show Nat.find h - 1 + 1 = Nat.find h from by omega]
+      exact Nat.find_spec h
+    · rintro (⟨h1, h2⟩ | ⟨h1, -⟩)
+      · have hle : Nat.find h ≤ k + 1 := Nat.find_le h2
+        have hge : k + 1 ≤ Nat.find h := by
+          by_contra hc
+          exact absurd (lt_of_lt_of_le (Nat.find_spec h) (hs (by omega : Nat.find h ≤ k)))
+            (Nat.not_lt.mpr h1)
+        omega
+      · exact absurd h h1
+  · rw [dif_neg h]
+    constructor
+    · rintro rfl
+      exact Or.inr ⟨h, rfl⟩
+    · rintro (⟨-, h2⟩ | ⟨-, h2⟩)
+      · exact absurd ⟨k + 1, h2⟩ h
+      · exact h2
+
+theorem blockIdx_fibre_finite {s : ℕ → ℕ} (hs : Monotone s) (hs0 : s 0 = 0) (k : ℕ) :
+    {j : ℕ | blockIdx s j = k}.Finite := by
+  rw [blockIdx_fibre hs hs0]
+  exact (Set.finite_Ico _ _).union ((Set.finite_singleton k).subset fun j hj => hj.2)
+
+/-- A `finsum` over the fibre of a level function on `FormIdx` splits into its two halves. -/
+theorem finsum_fiber_elim_split {M : Type v} [AddCommMonoid M] {f g : Nats.{u} → ℕ} {k : ℕ}
+    (hf : {j : Nats.{u} | f j = k}.Finite) (hg : {j : Nats.{u} | g j = k}.Finite)
+    (F : FormIdx.{u} → M) :
+    ∑ᶠ i ∈ {i : FormIdx.{u} | Sum.elim f g i = k}, F i
+      = (∑ᶠ j ∈ {j : Nats.{u} | f j = k}, F (Sum.inl j))
+        + (∑ᶠ j ∈ {j : Nats.{u} | g j = k}, F (Sum.inr j)) := by
+  classical
+  have hdisj : Disjoint (Sum.inl '' {j : Nats.{u} | f j = k})
+      (Sum.inr '' {j : Nats.{u} | g j = k}) := by
+    refine Set.disjoint_left.mpr ?_
+    rintro i ⟨j, -, rfl⟩ ⟨j', -, hj'⟩
+    exact Sum.inl_ne_inr hj'.symm
+  rw [fiber_elim, finsum_mem_union hdisj (hf.image _) (hg.image _),
+    finsum_mem_image Sum.inl_injective.injOn, finsum_mem_image Sum.inr_injective.injOn]
+
+/-- **The block sum of a form's slots.**  On the fibre of `blockIdx` at `k` the family of a form
+with `A` copies of `v` takes the value `v` exactly on `[s k, s (k+1))` — the leftover slot carries
+`0`, since it lies beyond every `s l` — so the block sums to `s (k+1) - s k` copies of `v`. -/
+theorem finsum_blockIdx_fibre {s : ℕ → ℕ} (hs : Monotone s) (hs0 : s 0 = 0) {A : ℕ∞}
+    (hA : ∀ j : ℕ, ((j : ℕ) : ℕ∞) < A ↔ ∃ l, j < s l) (v : H) (k : ℕ) :
+    (∑ᶠ j ∈ {j : Nats.{u} | blockIdx s j.down = k},
+        (if ((j.down : ℕ) : ℕ∞) < A then v else 0)) = (s (k + 1) - s k) • v := by
+  classical
+  have hset : {j : Nats.{u} | blockIdx s j.down = k}
+      = {j : Nats.{u} | j.down ∈ Set.Ico (s k) (s (k + 1))}
+        ∪ {j : Nats.{u} | j.down ∈ {j | (¬ ∃ l, j < s l) ∧ j = k}} := by
+    ext j
+    show blockIdx s j.down = k ↔ _
+    rw [show (blockIdx s j.down = k) ↔ j.down ∈ {j : ℕ | blockIdx s j = k} from Iff.rfl,
+      blockIdx_fibre hs hs0]
+    exact Iff.rfl
+  have hfin₁ : {j : Nats.{u} | j.down ∈ Set.Ico (s k) (s (k + 1))}.Finite :=
+    finite_nats_setOf (Set.finite_Ico _ _)
+  have hfin₂ : {j : Nats.{u} | j.down ∈ {j | (¬ ∃ l, j < s l) ∧ j = k}}.Finite :=
+    finite_nats_setOf ((Set.finite_singleton k).subset fun j hj => hj.2)
+  have hdisj : Disjoint {j : Nats.{u} | j.down ∈ Set.Ico (s k) (s (k + 1))}
+      {j : Nats.{u} | j.down ∈ {j | (¬ ∃ l, j < s l) ∧ j = k}} := by
+    refine Set.disjoint_left.mpr fun j hj hj' => ?_
+    exact hj'.1 ⟨k + 1, hj.2⟩
+  rw [hset, finsum_mem_union hdisj hfin₁ hfin₂,
+    finsum_mem_congr rfl (fun j hj => if_pos ((hA j.down).mpr ⟨k + 1, hj.2⟩) :
+      ∀ j ∈ {j : Nats.{u} | j.down ∈ Set.Ico (s k) (s (k + 1))},
+        (if ((j.down : ℕ) : ℕ∞) < A then v else 0) = v),
+    finsum_mem_congr rfl (fun j hj => if_neg (fun hlt => hj.1 ((hA j.down).mp hlt)) :
+      ∀ j ∈ {j : Nats.{u} | j.down ∈ {j | (¬ ∃ l, j < s l) ∧ j = k}},
+        (if ((j.down : ℕ) : ℕ∞) < A then v else 0) = 0),
+    finsum_mem_const_finite hfin₁, finsum_mem_zero, add_zero, ncard_nats_setOf,
+    Set.ncard_Ico_nat]
+
+end Blocks
+
+/-- A fixed identification of the index type of an `ℵ₀`-sum with `ℕ`. -/
+noncomputable def idxEquivNats : Idx (ℵ₀ : Cardinal.{u}) ≃ Nats.{u} :=
+  (Cardinal.eq.mp ((mk_Idx (ℵ₀ : Cardinal.{u})).trans mk_nats.{u}.symm)).some
+
+/-- **Every element of `add (x₁ + x₂)` has a finite form**, given condition (iii).
+
+It is a summand of some `n (x₁ + x₂)`, which has the finite form `(n, n)`; a form of the sum is the
+sum of forms of the parts, so an infinite form of the summand would give `n (x₁ + x₂)` an infinite
+form alongside its finite one.  This is the paper's "elements of `add (x₁ + x₂)` can only have
+finite forms". -/
+theorem exists_finite_form_of_mem (hmix : NoMixedForms x₁ x₂)
+    (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
+    {y : H} (hy : y ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    ∃ F : Form, F.IsFinite ∧ eval x₁ x₂ F = y := by
+  obtain ⟨z, n, hzn⟩ := hy
+  obtain ⟨F, hF⟩ := exists_form x₁ x₂ hgen y
+  obtain ⟨G, hG⟩ := exists_form x₁ x₂ hgen z
+  refine ⟨F, ?_, hF⟩
+  by_contra hFfin
+  have hFinf : F.IsInfinite := by
+    by_contra h
+    exact hFfin ((Form.not_isInfinite_iff F).mp h)
+  -- the sum of the two forms evaluates to `n (x₁ + x₂)`, which also has the finite form `(n, n)`
+  have hsum : eval x₁ x₂ (F.1 + G.1, F.2 + G.2) = n • x₁ + n • x₂ := by
+    have h0 : y + z = n • x₁ + n • x₂ := by
+      rw [hzn, KMonoid.cmul_natCast, smul_add]
+    rw [eval, ecmul_add, ecmul_add, ← h0, ← hF, ← hG, eval, eval]
+    abel
+  have hfinite : HasFiniteForm x₁ x₂ (n • x₁ + n • x₂) := by
+    refine ⟨(((n : ℕ) : ℕ∞), ((n : ℕ) : ℕ∞)), ⟨ENat.coe_ne_top n, ENat.coe_ne_top n⟩, ?_⟩
+    rw [eval, ecmul_natCast, ecmul_natCast]
+  have hinfinite : HasInfiniteForm x₁ x₂ (n • x₁ + n • x₂) := by
+    refine ⟨(F.1 + G.1, F.2 + G.2), ?_, hsum⟩
+    rcases hFinf with h | h
+    · exact Or.inl (by rw [show (F.1 + G.1 : ℕ∞) = ⊤ + G.1 from by rw [h]]; exact top_add G.1)
+    · exact Or.inr (by rw [show (F.2 + G.2 : ℕ∞) = ⊤ + G.2 from by rw [h]]; exact top_add G.2)
+  exact hmix _ ⟨hfinite, hinfinite⟩
+
+/-- **The refinement step of Theorem 5.3's backward direction.**
+
+Every family over `add (x₁ + x₂)` is braided with the family of a single form: each member is a
+finite form `c k · x₁ + d k · x₂`, and the slots of the total form `(A, B)` — where `A`, `B` are the
+suprema of the partial sums — are cut into consecutive blocks of `c k` copies of `x₁` and `d k`
+copies of `x₂` by `blockIdx`.  The family itself is cut into singletons, so the two block sums agree
+and `IsBraided.of_levels` applies with `v ≡ 0`.
+
+This is the step the paper compresses into "hence `add (x₁ + x₂) = ⟨x₁, x₂⟩`". -/
+theorem exists_braided_form (hmix : NoMixedForms x₁ x₂)
+    (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
+    (a : Idx (ℵ₀ : Cardinal.{u}) → ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    ∃ A B : ℕ∞, IsBraided ℵ₀ a
+      (fun i => (⟨familyOfForm x₁ x₂ (A, B) (formIdxEquiv.{u}.symm i),
+        familyOfForm_mem x₁ x₂ _ _⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) := by
+  classical
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  -- a finite form for each member
+  choose F hFfin hFeq using fun μ => exists_finite_form_of_mem x₁ x₂ hmix hgen (a μ).2
+  set μof : ℕ → Idx (ℵ₀ : Cardinal.{u}) := fun k => idxEquivNats.{u}.symm (ULift.up k) with hμof
+  set c : ℕ → ℕ := fun k => (F (μof k)).1.toNat with hc
+  set d : ℕ → ℕ := fun k => (F (μof k)).2.toNat with hd
+  set s : ℕ → ℕ := fun k => ∑ l ∈ Finset.range k, c l with hs
+  set t : ℕ → ℕ := fun k => ∑ l ∈ Finset.range k, d l with ht
+  have hsmono : Monotone s := by
+    intro p q hpq
+    exact Finset.sum_le_sum_of_subset
+      (fun x hx => Finset.mem_range.mpr (lt_of_lt_of_le (Finset.mem_range.mp hx) hpq))
+  have htmono : Monotone t := by
+    intro p q hpq
+    exact Finset.sum_le_sum_of_subset
+      (fun x hx => Finset.mem_range.mpr (lt_of_lt_of_le (Finset.mem_range.mp hx) hpq))
+  have hs0 : s 0 = 0 := by simp [hs]
+  have ht0 : t 0 = 0 := by simp [ht]
+  have hsstep : ∀ k, s (k + 1) - s k = c k := by
+    intro k; rw [hs]; simp [Finset.sum_range_succ]
+  have htstep : ∀ k, t (k + 1) - t k = d k := by
+    intro k; rw [ht]; simp [Finset.sum_range_succ]
+  set A : ℕ∞ := ⨆ l, ((s l : ℕ) : ℕ∞) with hAdef
+  set B : ℕ∞ := ⨆ l, ((t l : ℕ) : ℕ∞) with hBdef
+  have hA : ∀ j : ℕ, ((j : ℕ) : ℕ∞) < A ↔ ∃ l, j < s l := by
+    intro j
+    rw [hAdef, lt_iSup_iff]
+    exact ⟨fun ⟨l, hl⟩ => ⟨l, by exact_mod_cast hl⟩, fun ⟨l, hl⟩ => ⟨l, by exact_mod_cast hl⟩⟩
+  have hB : ∀ j : ℕ, ((j : ℕ) : ℕ∞) < B ↔ ∃ l, j < t l := by
+    intro j
+    rw [hBdef, lt_iSup_iff]
+    exact ⟨fun ⟨l, hl⟩ => ⟨l, by exact_mod_cast hl⟩, fun ⟨l, hl⟩ => ⟨l, by exact_mod_cast hl⟩⟩
+  refine ⟨A, B, ?_⟩
+  set ψ : FormIdx.{u} → ℕ :=
+    Sum.elim (fun j : Nats.{u} => blockIdx s j.down) (fun j : Nats.{u} => blockIdx t j.down) with hψ
+  have hψfin : ∀ k, {p : FormIdx.{u} | ψ p = k}.Finite := fun k =>
+    finite_fiber_elim (finite_nats_setOf (blockIdx_fibre_finite hsmono hs0 k))
+      (finite_nats_setOf (blockIdx_fibre_finite htmono ht0 k))
+  have hIfib : ∀ k : ℕ, {i : Idx (ℵ₀ : Cardinal.{u}) | (idxEquivNats.{u} i).down = k}
+      = {μof k} := by
+    intro k
+    ext i
+    show (idxEquivNats.{u} i).down = k ↔ i = μof k
+    constructor
+    · intro h
+      show i = idxEquivNats.{u}.symm (ULift.up k)
+      rw [← h]
+      exact (idxEquivNats.{u}.symm_apply_apply i).symm
+    · rintro rfl
+      show (idxEquivNats.{u} (idxEquivNats.{u}.symm (ULift.up k))).down = k
+      rw [Equiv.apply_symm_apply]
+  have hJfib : ∀ k : ℕ,
+      {i : Idx (ℵ₀ : Cardinal.{u}) | ψ (formIdxEquiv.{u}.symm i) = k}
+        = formIdxEquiv.{u} '' {p : FormIdx.{u} | ψ p = k} := by
+    intro k
+    ext i
+    constructor
+    · intro h
+      exact ⟨formIdxEquiv.{u}.symm i, h, formIdxEquiv.{u}.apply_symm_apply i⟩
+    · rintro ⟨p, hp, rfl⟩
+      show ψ (formIdxEquiv.{u}.symm (formIdxEquiv.{u} p)) = k
+      rwa [formIdxEquiv.{u}.symm_apply_apply]
+  refine IsBraided.of_levels (idxEquivNats.{u}.symm (ULift.up 0))
+    (fun i => (idxEquivNats.{u} i).down) (fun i => ψ (formIdxEquiv.{u}.symm i))
+    (fun k => by rw [hIfib k]; exact Set.finite_singleton _)
+    (fun k => by rw [hJfib k]; exact (hψfin k).image _)
+    (fun k => a (μof k)) (fun _ => 0) rfl (fun k => ?_) (fun k => ?_)
+  · rw [hIfib k, finsum_mem_singleton]
+    exact (zero_add _).symm
+  · have hcongr : ∀ p ∈ {p : FormIdx.{u} | ψ p = k},
+        (⟨familyOfForm x₁ x₂ (A, B) (formIdxEquiv.{u}.symm (formIdxEquiv.{u} p)),
+            familyOfForm_mem x₁ x₂ _ _⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))
+          = ⟨familyOfForm x₁ x₂ (A, B) p, familyOfForm_mem x₁ x₂ _ _⟩ :=
+      fun p _ => Subtype.ext (by rw [Equiv.symm_apply_apply])
+    rw [hJfib k, finsum_mem_image (Set.injOn_of_injective formIdxEquiv.{u}.injective),
+      finsum_mem_congr rfl hcongr]
+    refine Subtype.ext ?_
+    have h1 : (∑ᶠ j ∈ {j : Nats.{u} | blockIdx s j.down = k},
+        familyOfForm x₁ x₂ (A, B) (Sum.inl j)) = c k • x₁ := by
+      rw [← hsstep k]
+      exact finsum_blockIdx_fibre hsmono hs0 hA x₁ k
+    have h2 : (∑ᶠ j ∈ {j : Nats.{u} | blockIdx t j.down = k},
+        familyOfForm x₁ x₂ (A, B) (Sum.inr j)) = d k • x₂ := by
+      rw [← htstep k]
+      exact finsum_blockIdx_fibre htmono ht0 hB x₂ k
+    rw [coe_finsum_mem x₁ x₂ (hψfin k) _ (familyOfForm_mem x₁ x₂ _), hψ,
+      finsum_fiber_elim_split (finite_nats_setOf (blockIdx_fibre_finite hsmono hs0 k))
+        (finite_nats_setOf (blockIdx_fibre_finite htmono ht0 k)), h1, h2]
+    show c k • x₁ + d k • x₂ = (0 : H) + (a (μof k) : H)
+    rw [zero_add, ← hFeq (μof k), eval,
+      show (F (μof k)).1 = ((c k : ℕ) : ℕ∞) from (ENat.natCast_toNat (hFfin (μof k)).1).symm,
+      show (F (μof k)).2 = ((d k : ℕ) : ℕ∞) from (ENat.natCast_toNat (hFfin (μof k)).2).symm,
+      ecmul_natCast, ecmul_natCast]
+
+/-- **Theorem 5.3, backward direction**: under the three conditions `H` is braided over
+`add (x₁ + x₂)`, and Corollary 4.7(1) then realises it.
+
+`exists_braided_form` replaces an arbitrary pair of families over `add (x₁ + x₂)` by a pair of
+form families; Lemma 3.2 turns the hypothesis on their sums into an equality of the two forms'
+values; and `braidedForms_of_conditions` braids those.  Transitivity finishes. -/
+theorem theorem_5_3_backward (k : Type u) [Field k]
+    (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
+    (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁) (hc2 : Cond2 x₁ x₂) (hc2' : Cond2 x₂ x₁)
+    (hmix : NoMixedForms x₁ x₂) :
+    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : ∀ I : Ideal R, Module.Projective R I),
+      EveryProjectiveIsSumOfFG R ∧
+      letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+      ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+        KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e := by
+  classical
+  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+  letI := KMonoid.toLMonoidOfLE H Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{u}))
+  refine corollary_4_7_one_forward le_rfl k (x₁ + x₂) ?_
+  -- `add (x₁ + x₂)` contains both generators, hence generates `H`
+  have hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+    KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₁ x₂ rfl
+  have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+    KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₂ x₁ (add_comm x₁ x₂)
+  have hTgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) (KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) := by
+    refine Set.eq_univ_of_univ_subset ?_
+    rw [← hgen]
+    refine KMonoid.kclosure_le ?_ (KMonoid.isKSubmonoid_kclosure _ _)
+    rintro w (rfl | rfl)
+    · exact KMonoid.subset_kclosure hx₁T
+    · exact KMonoid.subset_kclosure hx₂T
+  -- the inclusion is a homomorphism of `ℵ₀⁻`-monoids, so braided families keep their sums
+  have hcoehom : IsLMonoidHom (ℵ₀ : Cardinal.{u})
+      (fun y : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) => (y : H)) := fun {ι} h x => rfl
+  have hksum : ∀ (y : Idx (ℵ₀ : Cardinal.{u}) → ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))
+      (C D : ℕ∞), IsBraided ℵ₀ y (fun i => (⟨familyOfForm x₁ x₂ (C, D) (formIdxEquiv.{u}.symm i),
+        familyOfForm_mem x₁ x₂ _ _⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) →
+      KMonoid.ksum (κ := ℵ₀) (fun i => (y i : H)) = eval x₁ x₂ (C, D) := by
+    intro y C D hy
+    rw [← ksum_familyOfForm x₁ x₂ (C, D), ← KMonoid.sumOf_Idx, ← KMonoid.sumOf_Idx]
+    exact sumOf_eq_of_isBraided Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{u}))
+      (le_of_eq (mk_Idx _)) _ _ (hy.map_lmonoidHom hcoehom)
+  refine ⟨⟨rfl, fun {ι} h x => rfl⟩, Subtype.val_injective, fun h => ?_, fun a b hab => ?_⟩
+  · obtain ⟨z, hzT, rfl⟩ := (KMonoid.mem_kclosure_iff
+      (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂)).zero_mem h).mp
+      (KMonoid.kGenerates_iff.mp hTgen h)
+    exact ⟨fun i => ⟨z i, hzT i⟩, rfl⟩
+  · -- refine both families to form families, braid the forms, and compose
+    obtain ⟨A, B, hA⟩ := exists_braided_form x₁ x₂ hmix hgen a
+    obtain ⟨A', B', hB⟩ := exists_braided_form x₁ x₂ hmix hgen b
+    have heval : eval x₁ x₂ (A, B) = eval x₁ x₂ (A', B') := by
+      rw [← hksum a A B hA, ← hksum b A' B' hB]
+      exact hab
+    have hform := (braidedForms_of_conditions x₁ x₂ hc1 hc1' hc2 hc2' hmix hgen (A, B) (A', B')
+      heval (familyOfForm_mem x₁ x₂ _) (familyOfForm_mem x₁ x₂ _)).comp_equiv formIdxEquiv.{u}.symm
+    exact hA.trans_aleph0 (hform.trans_aleph0 hB.symm)
+
 /-- **Theorem 5.3**: a non-cyclic `ℵ₀`-monoid on two generators is `V^{ℵ₀}(R)` for a hereditary
 ring exactly when conditions (i), (ii) and (iii) hold for both orderings of the generators.
 
 The paper's `1 ≤ i ≠ j ≤ 2` is rendered as a conjunction over the two orderings rather than as
 `Fin 2` bookkeeping, which would cost more than it saves.
 
-Forward: Lemma 5.1 gives braidedness, then (iii) is 5.2(1), (ii) is 5.2(4), and (i) is the
-counting argument — cofinitely many blocks sum to `|I_μ| x_j`, so `x_i ∈ add x_j`, then 5.2(3).
+**The statement carries `EveryProjectiveIsSumOfFG R` alongside hereditariness.**  The paper gets
+that from Corollary 4.6, which in this development is a *quoted* result (Albrecht; Bergman) with no
+counterpart in Mathlib — it is bundled into the Bergman–Dicks data of axiom A5 rather than derived,
+so it cannot be recovered from `∀ I : Ideal R, Module.Projective R I` inside the formalisation.
+Adding it to both sides of the equivalence keeps the statement faithful: for a hereditary ring the
+extra conjunct is automatic.
 
-Backward: verify braidedness over `add (x₁ + x₂)` by the four-case split of the paper
-(`fin/fin`; `m,ℵ₀` vs `m',ℵ₀`; `ℵ₀,n` vs `m,ℵ₀`; `m,ℵ₀` vs `ℵ₀,ℵ₀`), then apply Corollary 4.7(1)
-— `corollary_4_7_one_forward`, which is where axiom A5 enters. -/
+Forward: Lemma 5.1 gives braidedness, then (iii) is 5.2(1), (ii) is 5.2(4), and (i) is the counting
+argument.  Backward: `exists_braided_form` reduces arbitrary families to forms and
+`braidedForms_of_conditions` runs the paper's four-case split; Corollary 4.7(1) then realises `H`,
+which is where axiom A5 enters. -/
 theorem theorem_5_3 (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : ∀ I : Ideal R, Module.Projective R I),
+        EveryProjectiveIsSumOfFG R ∧
         letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
       (Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂) := by
-  sorry
+  constructor
+  · rintro ⟨R, _, _, -, hfg, e, hhom, hbij⟩
+    exact theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
+  · rintro ⟨hc1, hc1', hc2, hc2', hmix⟩
+    exact theorem_5_3_backward x₁ x₂ k hgen hc1 hc1' hc2 hc2' hmix
 
 end Theorem53
 
