@@ -383,7 +383,7 @@ theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M
 
 Given `x ∈ H` with `H` braided over `add x`, and a field `k`, the monoid `add x` is reduced with
 order-unit `x` — steps 1 and 2 of the plan — so A5 supplies a hereditary `k`-algebra `R` with
-`V(R) ≅ add x`.  `BergmanDicksData.sumOfFG` feeds `corollary_4_5_three`, making `V^κ(R)` braided
+`V(R) ≅ add x`.  Albrecht's theorem (A7) feeds `corollary_4_5_three`, making `V^κ(R)` braided
 over `V(R)`; `isKIso_of_braidedOver_same` then identifies `V^κ(R)` with `H`. -/
 theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ κ)
     (k : Type u) [Field k] (x : H)
@@ -421,12 +421,12 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
     exact hzn
   -- Step 2: Bergman–Dicks (axiom A5) realises `add x` as `V(R)` for a hereditary `k`-algebra `R`
   have bd := bergmanDicksData k ↥(KMonoid.addOf (κ := κ) x) ⟨x, hxmem⟩ hred hunit
-  refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, bd.sumOfFG, ?_⟩
+  refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, albrecht_classical bd.hereditary, ?_⟩
   letI := (projClass bd.R κ hκ).instKMonoid hκ
   letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
-  -- Step 3: `BergmanDicksData.sumOfFG` is the hypothesis of Corollary 4.5(3)
-  obtain ⟨hbr₂, -⟩ := corollary_4_5_three.{u, u} bd.R κ hκ bd.sumOfFG
+  -- Step 3: Albrecht's theorem (A7) for the hereditary `R` is the hypothesis of Corollary 4.5(3)
+  obtain ⟨hbr₂, -⟩ := corollary_4_5_three.{u, u} bd.R κ hκ (albrecht_classical bd.hereditary)
   -- Step 4: transport that braiding along `add x ≅ V(R)`
   obtain ⟨Φ, hΦhom, hΦinj, hΦsurj⟩ := bd.exists_isLMonoidHom_bijective κ hκ
   have hΦΦ' : ∀ a, Function.invFun Φ (Φ a) = a := Function.leftInverse_invFun hΦinj

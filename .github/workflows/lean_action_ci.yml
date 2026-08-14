@@ -44,6 +44,7 @@ jobs:
       - name: The axiom list has not changed
         run: |
           cat > axioms.expected <<'EOF'
+          albrecht_classical
           bergmanDicksData
           kaplansky_classical
           EOF
