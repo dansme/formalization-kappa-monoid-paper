@@ -24,9 +24,9 @@ import KappaMonoid.Paper.Section5
 
 namespace KappaMonoid
 
-/-! ## §2 — the only section that uses A2 -/
+/-! ## §2 — Proposition 2.16 reaches A5 through Leavitt's theorem, which is derived from it -/
 
-#assert_axioms prop_2_16 [leavittData]
+#assert_axioms prop_2_16 [bergmanDicksData]
 #assert_axioms prop_2_17_one []
 #assert_axioms Projective.isFaithful_unitClass []
 #assert_axioms Projective.isOrderUnit_unitClass []

@@ -25,10 +25,7 @@ and use no axiom; `Paper/` is what to read against the PDF.
 import KappaMonoid.ForMathlib.CyclicMonoid
 import KappaMonoid.ForMathlib.Finprod
 import KappaMonoid.ForMathlib.FreeRank
-import KappaMonoid.ForMathlib.FreeTrace
-import KappaMonoid.ForMathlib.Leavitt
 import KappaMonoid.ForMathlib.HomDirectSum
-import KappaMonoid.ForMathlib.ModuleType
 import KappaMonoid.ForMathlib.SimpleMultiplicity
 import KappaMonoid.ForMathlib.NatBlocks
 import KappaMonoid.ForMathlib.TraceIdeal
@@ -45,6 +42,7 @@ import KappaMonoid.Modules
 import KappaMonoid.Modules.Rings.ProjOrderUnit
 import KappaMonoid.Modules.Rings.FreeModules
 import KappaMonoid.Modules.Rings.FreeUnit
+import KappaMonoid.Modules.Rings.Leavitt
 import KappaMonoid.Modules.Rings.Realisation
 import KappaMonoid.Modules.Rings.Semisimple
 import KappaMonoid.Modules.Corollary47

@@ -23,6 +23,11 @@ The first is what makes `N` the multiples of `n` rather than merely a submonoid 
 import Mathlib.Algebra.Group.Defs
 import Mathlib.Data.Nat.Find
 import Mathlib.Data.Int.Basic
+import Mathlib.GroupTheory.Congruence.Defs
+import Mathlib.Algebra.Ring.Int.Defs
+import Mathlib.Algebra.Ring.Divisibility.Basic
+import Mathlib.Algebra.Group.Nat.Defs
+import Mathlib.Algebra.Group.ULift
 
 universe u
 
@@ -45,6 +50,134 @@ theorem CyclicRel.symm {m n k l : ℕ} (h : CyclicRel m n k l) : CyclicRel m n l
   obtain rfl | ⟨hk, hl, hd⟩ := h
   · exact Or.inl rfl
   · exact Or.inr ⟨hl, hk, natCast_dvd_sub_comm.mp hd⟩
+
+/-! ## `C_{m,n}` as a monoid
+
+`∼_{m,n}` is an additive congruence on `ℕ`, so the cyclic monoid it defines is a quotient monoid.
+This is what gets handed to a realisation theorem, which wants a monoid rather than a relation. -/
+
+theorem CyclicRel.refl (m n k : ℕ) : CyclicRel m n k k := Or.inl rfl
+
+theorem CyclicRel.trans {m n a b c : ℕ} (hab : CyclicRel m n a b) (hbc : CyclicRel m n b c) :
+    CyclicRel m n a c := by
+  obtain rfl | ⟨ha, hb, hd⟩ := hab
+  · exact hbc
+  obtain rfl | ⟨hb', hc, hd'⟩ := hbc
+  · exact Or.inr ⟨ha, hb, hd⟩
+  refine Or.inr ⟨ha, hc, ?_⟩
+  have h := dvd_add hd hd'
+  rwa [sub_add_sub_cancel] at h
+
+theorem CyclicRel.add {m n a b c d : ℕ} (hab : CyclicRel m n a b) (hcd : CyclicRel m n c d) :
+    CyclicRel m n (a + c) (b + d) := by
+  obtain rfl | ⟨ha, hb, hd⟩ := hab
+  · obtain rfl | ⟨hc, hd, hdd⟩ := hcd
+    · exact Or.inl rfl
+    · exact Or.inr ⟨by omega, by omega, by push_cast; rwa [add_sub_add_left_eq_sub]⟩
+  · obtain rfl | ⟨hc, hd', hdd⟩ := hcd
+    · exact Or.inr ⟨by omega, by omega, by push_cast; rwa [add_sub_add_right_eq_sub]⟩
+    · refine Or.inr ⟨by omega, by omega, ?_⟩
+      push_cast
+      rw [← sub_add_sub_comm]
+      exact dvd_add hd hdd
+
+/-- `∼_{m,n}` as an additive congruence on `ℕ`. -/
+def cyclicCon (m n : ℕ) : AddCon ℕ where
+  r := CyclicRel m n
+  iseqv := ⟨CyclicRel.refl m n, CyclicRel.symm, CyclicRel.trans⟩
+  add' := CyclicRel.add
+
+/-- **The cyclic monoid `C_{m,n}`**: `ℕ₀` modulo `∼_{m,n}`. -/
+abbrev CyclicMonoid (m n : ℕ) : Type := (cyclicCon m n).Quotient
+
+/-- The class of `k` in `C_{m,n}`. -/
+def CyclicMonoid.mk (m n : ℕ) (k : ℕ) : CyclicMonoid m n := (cyclicCon m n).toQuotient k
+
+@[simp] theorem CyclicMonoid.mk_eq_mk_iff {m n k l : ℕ} :
+    CyclicMonoid.mk m n k = CyclicMonoid.mk m n l ↔ CyclicRel m n k l :=
+  AddCon.eq _
+
+theorem CyclicMonoid.mk_add (m n k l : ℕ) :
+    CyclicMonoid.mk m n (k + l) = CyclicMonoid.mk m n k + CyclicMonoid.mk m n l := rfl
+
+/-- Every class is a multiple of the class of `1`, which is therefore an order-unit. -/
+theorem CyclicMonoid.nsmul_mk_one (m n k : ℕ) :
+    k • CyclicMonoid.mk m n 1 = CyclicMonoid.mk m n k := by
+  induction k with
+  | zero => rfl
+  | succ k ih => rw [succ_nsmul, ih, ← CyclicMonoid.mk_add]
+
+theorem CyclicMonoid.surjective_mk (m n : ℕ) (y : CyclicMonoid m n) :
+    ∃ k : ℕ, y = CyclicMonoid.mk m n k :=
+  Quotient.inductionOn y fun k => ⟨k, rfl⟩
+
+/-- `C_{m,n}` is conical for `m ≥ 1`: nothing but `0` is a summand of `0`.  This is where `m ≥ 1`
+is needed — `C_{0,n}` is a group. -/
+theorem CyclicMonoid.eq_zero_of_add_eq_zero {m n : ℕ} (hm : 1 ≤ m) (a b : CyclicMonoid m n)
+    (h : a + b = 0) : a = 0 := by
+  obtain ⟨k, rfl⟩ := CyclicMonoid.surjective_mk m n a
+  obtain ⟨l, rfl⟩ := CyclicMonoid.surjective_mk m n b
+  rw [← CyclicMonoid.mk_add] at h
+  have h0 : CyclicMonoid.mk m n 0 = 0 := rfl
+  rw [← h0, CyclicMonoid.mk_eq_mk_iff] at h ⊢
+  obtain h | ⟨-, h2, -⟩ := h
+  · exact Or.inl (by omega)
+  · omega
+
+/-- `0 ≠ 1` in `C_{m,n}` for `m ≥ 1`: the monoid is not trivial. -/
+theorem CyclicMonoid.mk_one_ne_zero {m n : ℕ} (hm : 1 ≤ m) :
+    CyclicMonoid.mk m n 1 ≠ CyclicMonoid.mk m n 0 := by
+  rw [Ne, CyclicMonoid.mk_eq_mk_iff]
+  rintro (h | ⟨-, h2, -⟩) <;> omega
+
+/-! ## `C_{m,n}` in an arbitrary universe
+
+A realisation theorem wants the monoid in the universe of the ring it produces, and the quotient of
+`ℕ` lives in `Type 0`. -/
+
+/-- `C_{m,n}`, lifted to `Type u`. -/
+abbrev CyclicMonoidU (m n : ℕ) : Type u := ULift.{u} (CyclicMonoid m n)
+
+/-- The class of `k` in the lifted `C_{m,n}`. -/
+def CyclicMonoidU.mk (m n k : ℕ) : CyclicMonoidU.{u} m n := ULift.up (CyclicMonoid.mk m n k)
+
+@[simp] theorem CyclicMonoidU.mk_eq_mk_iff {m n k l : ℕ} :
+    CyclicMonoidU.mk.{u} m n k = CyclicMonoidU.mk.{u} m n l ↔ CyclicRel m n k l := by
+  rw [CyclicMonoidU.mk, CyclicMonoidU.mk, ULift.up_inj, CyclicMonoid.mk_eq_mk_iff]
+
+theorem CyclicMonoidU.zero_def (m n : ℕ) :
+    (0 : CyclicMonoidU.{u} m n) = CyclicMonoidU.mk m n 0 := rfl
+
+theorem CyclicMonoidU.mk_add (m n k l : ℕ) :
+    CyclicMonoidU.mk.{u} m n (k + l) = CyclicMonoidU.mk m n k + CyclicMonoidU.mk m n l := rfl
+
+/-- The class of `1` is an order-unit: every class is a multiple of it. -/
+theorem CyclicMonoidU.nsmul_mk_one (m n : ℕ) :
+    ∀ k : ℕ, k • CyclicMonoidU.mk.{u} m n 1 = CyclicMonoidU.mk m n k
+  | 0 => rfl
+  | (k + 1) => by rw [succ_nsmul, CyclicMonoidU.nsmul_mk_one m n k, ← CyclicMonoidU.mk_add]
+
+theorem CyclicMonoidU.surjective_mk (m n : ℕ) (y : CyclicMonoidU.{u} m n) :
+    ∃ k : ℕ, y = CyclicMonoidU.mk m n k := by
+  obtain ⟨y⟩ := y
+  obtain ⟨k, hk⟩ := CyclicMonoid.surjective_mk m n y
+  exact ⟨k, congrArg ULift.up hk⟩
+
+/-- Conical for `m ≥ 1`, which is what a realisation theorem needs. -/
+theorem CyclicMonoidU.eq_zero_of_add_eq_zero {m n : ℕ} (hm : 1 ≤ m) (a b : CyclicMonoidU.{u} m n)
+    (h : a + b = 0) : a = 0 := by
+  obtain ⟨k, rfl⟩ := CyclicMonoidU.surjective_mk m n a
+  obtain ⟨l, rfl⟩ := CyclicMonoidU.surjective_mk m n b
+  rw [← CyclicMonoidU.mk_add, CyclicMonoidU.zero_def, CyclicMonoidU.mk_eq_mk_iff] at h
+  rw [CyclicMonoidU.zero_def, CyclicMonoidU.mk_eq_mk_iff]
+  obtain h | ⟨-, h2, -⟩ := h
+  · exact Or.inl (by omega)
+  · omega
+
+theorem CyclicMonoidU.mk_one_ne_zero {m n : ℕ} (hm : 1 ≤ m) :
+    CyclicMonoidU.mk.{u} m n 1 ≠ 0 := by
+  rw [CyclicMonoidU.zero_def, Ne, CyclicMonoidU.mk_eq_mk_iff]
+  rintro (h | ⟨-, h2, -⟩) <;> omega
 
 /-! ## The kernel of `n ↦ n • u` -/
 

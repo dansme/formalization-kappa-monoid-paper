@@ -19,8 +19,9 @@ namespace KappaMonoid
 finitely generated projective modules.
 
 `P a` is the module realising `a ∈ M`; the four conditions `iso_zero`, `iso_add`, `inj` and
-`surj` say exactly that `a ↦ [P a]` is a monoid isomorphism `M ≅ V(R)`. -/
-structure BergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M] where
+`surj` say exactly that `a ↦ [P a]` is a monoid isomorphism `M ≅ V(R)`, and `iso_unit` says that
+it carries the given order-unit `u` to the class of `R` itself. -/
+structure BergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M] (u : M) where
   /-- The realising algebra. -/
   R : Type u
   [ring : Ring R]
@@ -50,6 +51,9 @@ structure BergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M]
   /-- `a ↦ [P a]` is onto the finitely generated projectives. -/
   surj : ∀ (Q : Type u) (_ : AddCommGroup Q) (_ : Module R Q), Module.Projective R Q →
     Module.Finite R Q → ∃ a, Nonempty (Q ≃ₗ[R] P a)
+  /-- The order-unit is the class of the ring itself: `[R] = u`.  Bergman's construction gives
+  this, and it is what makes the *free* modules over `R` visible in `M`: `R^k` realises `k • u`. -/
+  iso_unit : Nonempty (P u ≃ₗ[R] R)
 
 attribute [instance] BergmanDicksData.ring BergmanDicksData.algebra
   BergmanDicksData.addCommGroup BergmanDicksData.module
@@ -64,10 +68,10 @@ The proof is a construction by universal localisation and is far out of reach he
 neither hereditary rings nor universal localisation.  The statement bundles the realisation
 theorem with the hereditary case of Corollary 4.6 — see `BergmanDicksData.sumOfFG` — because both
 are quoted results and Corollary 4.7(1) uses them together. -/
-axiom bergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M]
+axiom bergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M] (u : M)
     (_hred : ∀ a b : M, a + b = 0 → a = 0)
-    (_hunit : ∃ u : M, ∀ y : M, ∃ (z : M) (n : ℕ), y + z = n • u) :
-    BergmanDicksData.{u} k M
+    (_hunit : ∀ y : M, ∃ (z : M) (n : ℕ), y + z = n • u) :
+    BergmanDicksData.{u} k M u
 
 /-! ## A6: Kaplansky's theorem -/
 

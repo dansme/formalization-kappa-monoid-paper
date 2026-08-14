@@ -19,7 +19,7 @@ import KappaMonoid.Modules.Rings.FreeUnit
 import KappaMonoid.Core.Cyclic
 import KappaMonoid.ForMathlib.FreeRank
 import KappaMonoid.ForMathlib.CyclicMonoid
-import KappaMonoid.Axioms.Monoid
+import KappaMonoid.Modules.Rings.Leavitt
 
 universe u
 

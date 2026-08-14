@@ -332,7 +332,7 @@ Only `isLMonoidHom_aleph0_of_add` is needed for the multiplicativity: for `λ = 
 `λ⁻`-monoids is just an additive map.  Surjectivity is where `finite_of_isLambdaSmall_aleph0` enters:
 an `ℵ₀⁻`-small class has a finitely generated representative, so `surj` applies to it. -/
 theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M : Type u}
-    [LMonoid (ℵ₀ : Cardinal.{u}) M] (bd : BergmanDicksData k M) (κ : Cardinal.{u})
+    [LMonoid (ℵ₀ : Cardinal.{u}) M] {u : M} (bd : BergmanDicksData k M u) (κ : Cardinal.{u})
     (hκ : ℵ₀ ≤ κ) :
     letI := (projClass bd.R κ hκ).instKMonoid hκ
     letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
@@ -409,9 +409,10 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
     induction m with
     | zero => rw [zero_nsmul, zero_nsmul]; rfl
     | succ p hp => rw [succ_nsmul, succ_nsmul, hcoe, hp]
-  have hunit : ∃ u : ↥(KMonoid.addOf (κ := κ) x), ∀ y : ↥(KMonoid.addOf (κ := κ) x),
-      ∃ (z : ↥(KMonoid.addOf (κ := κ) x)) (n : ℕ), y + z = n • u := by
-    refine ⟨⟨x, hxmem⟩, fun y => ?_⟩
+  have hunit : ∀ y : ↥(KMonoid.addOf (κ := κ) x),
+      ∃ (z : ↥(KMonoid.addOf (κ := κ) x)) (n : ℕ), y + z = n • (⟨x, hxmem⟩ :
+        ↥(KMonoid.addOf (κ := κ) x)) := by
+    refine fun y => ?_
     obtain ⟨z, n, hzn⟩ := y.2
     -- the complementary summand is again a summand of a multiple of `x`
     refine ⟨⟨z, ⟨(y : H), n, by rw [add_comm]; exact hzn⟩⟩, n, Subtype.ext ?_⟩
@@ -419,7 +420,7 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
     rw [hnsmul, ← KMonoid.cmul_natCast]
     exact hzn
   -- Step 2: Bergman–Dicks (axiom A5) realises `add x` as `V(R)` for a hereditary `k`-algebra `R`
-  have bd := bergmanDicksData k ↥(KMonoid.addOf (κ := κ) x) hred hunit
+  have bd := bergmanDicksData k ↥(KMonoid.addOf (κ := κ) x) ⟨x, hxmem⟩ hred hunit
   refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, bd.sumOfFG, ?_⟩
   letI := (projClass bd.R κ hκ).instKMonoid hκ
   letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0

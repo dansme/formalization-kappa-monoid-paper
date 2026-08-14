@@ -27,5 +27,4 @@ nothing in this development:
 * A4 — the classification of cyclic monoids — is `ForMathlib/CyclicMonoid.lean`, which is also where
   `CyclicRel` now lives.
 -/
-import KappaMonoid.Axioms.Monoid
 import KappaMonoid.Axioms.Modules

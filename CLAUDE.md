@@ -86,7 +86,7 @@ questions a build would answer, without a build. Prefer it throughout.
 - **Instances**: defs producing them carry `@[instance_reducible]`. Instances that depend on
   hypotheses are threaded through statements with `letI`, repeated verbatim at the top of the
   tactic proof.
-- **No new axioms without asking.** The three assumed classical results (A2, A5, A6) all live in
+- **No new axioms without asking.** The two assumed classical results (A5, A6) both live in
   `KappaMonoid/Axioms/` and are documented in `README.md`. A new headline result gets a line in
   `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo [bergmanDicksData]`, or `[]` for the
   usual case — which is checked by the build and fails in both directions, so it also tells you when
@@ -94,8 +94,8 @@ questions a build would answer, without a build. Prefer it throughout.
   `axiom` declarations under `KappaMonoid/` changes, so a deliberate addition means editing the
   expected list there *and* the `README.md` table in the same commit.
 - **Deviations from the paper are documented twice**: in the docstring of the affected result and
-  in a `README.md` section. Four exist — the `m ≥ 1` hypothesis added to Leavitt's theorem (A2),
-  without which the axiom is *false* and `False` was derivable from it; the `IsConical` hypothesis
+  in a `README.md` section. Four exist — the `m ≥ 1` hypothesis added to Leavitt's theorem,
+  without which it is *false*, and was an axiom from which `False` was derivable; the `IsConical` hypothesis
   in Theorem 3.11; the
   `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a formalised counterexample showing the
   paper's claim is false; and the six statements corrected in §5, chiefly `EveryProjectiveIsSumOfFG
@@ -180,13 +180,13 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 
 | Layer | Contents |
 |---|---|
-| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4), `ModuleType.lean` (the proved half of A2) |
+| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid) |
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop39`, `UnivExt` (Thm 3.11), `Saturated` (Lemma 3.13) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
 | `Examples/` | `TrivExt`, `ENNReal`, `Diophantine` (§3.2), `Reals` |
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`.  Everything but `Lemma51` and after is monoid theory |
-| `Axioms/` | `Monoid` (A2), `Modules` (A5, A6).  A1, A3 and A4 were here until they were proved — they are now `ForMathlib/FreeRank.lean`, `ForMathlib/SimpleMultiplicity.lean` and `ForMathlib/CyclicMonoid.lean` |
+| `Axioms/` | `Modules` (A5, A6).  A1, A3 and A4 were here until they were proved — `ForMathlib/{FreeRank,SimpleMultiplicity,CyclicMonoid}.lean` — and A2 until it was derived from A5 in `Modules/Rings/Leavitt.lean` |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it |
 
 **When adding a result, put it in the lowest layer that can state it.**  A monoid-theoretic lemma
