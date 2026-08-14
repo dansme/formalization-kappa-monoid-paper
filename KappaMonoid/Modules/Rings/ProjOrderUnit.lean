@@ -14,7 +14,7 @@ theorem and is already proved in `ModuleClass.lean` as `kGenerates_of_countablyG
 -/
 import KappaMonoid.Modules
 import KappaMonoid.Core.OrderUnit
-import KappaMonoid.Axioms.Rank
+import KappaMonoid.ForMathlib.FreeRank
 
 universe u
 

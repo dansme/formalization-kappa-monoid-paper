@@ -24,11 +24,11 @@ import KappaMonoid.Paper.Section5
 
 namespace KappaMonoid
 
-/-! ## §2 — the only section that uses A1–A4 -/
+/-! ## §2 — the only section that uses A2–A4 -/
 
-#assert_axioms prop_2_16 [mk_le_of_span_eq_top, leavittData, cyclicMonoidClassification]
+#assert_axioms prop_2_16 [leavittData, cyclicMonoidClassification]
 #assert_axioms prop_2_17_one [mk_multiplicity_eq]
-#assert_axioms Projective.isFaithful_unitClass [mk_le_of_span_eq_top]
+#assert_axioms Projective.isFaithful_unitClass []
 #assert_axioms Projective.isOrderUnit_unitClass []
 #assert_axioms KMonoid.lemma_2_15 []
 #assert_axioms exists_unique_lift []

@@ -218,8 +218,8 @@ countably but not finitely generated projectives are free on a countable basis �
 has both a mixed infinite form and another form.
 
 The freeness clause ranges over the classes of `V^{ℵ₀}(R)`, the countably generated projectives,
-not over all projective modules: for those it is false, `R^{(ℵ₁)}` being a counterexample by
-axiom A1. -/
+not over all projective modules: for those it is false — `R^{(ℵ₁)}` is a counterexample, by
+invariance of infinite rank (`mk_le_of_span_eq_top`). -/
 theorem corollary_5_5_two (S : Setting5 H) :
     (addOf (κ := ℵ₀) S.x₁ = addOf (κ := ℵ₀) S.x₂ ∧ NoMixedForms S.x₁ S.x₂) ↔
       (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧

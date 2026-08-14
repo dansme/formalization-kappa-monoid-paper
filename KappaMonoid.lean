@@ -23,6 +23,7 @@ The development is layered by subject, and each layer is an entry point of its o
 and use no axiom; `Paper/` is what to read against the PDF.
 -/
 import KappaMonoid.ForMathlib.Finprod
+import KappaMonoid.ForMathlib.FreeRank
 import KappaMonoid.ForMathlib.NatBlocks
 import KappaMonoid.ForMathlib.TraceIdeal
 import KappaMonoid.Core

@@ -12,9 +12,12 @@ only `propext`, `Quot.sound` and `Classical.choice`.
 Universe conventions match the rest of the development — everything lives in `Type u`, so no
 `Cardinal.lift` appears.
 
-Split by layer: `Rank.lean` (A1), `Monoid.lean` (A2, A4) and `Modules.lean` (A3, A5, A6), so that
-a file needing only the monoid-theoretic assumptions does not import the module-theoretic ones.
+Split by layer: `Monoid.lean` (A2, A4) and `Modules.lean` (A3, A5, A6), so that a file needing only
+the monoid-theoretic assumptions does not import the module-theoretic ones.
+
+A1 — invariance of infinite rank — used to live here as `Rank.lean`.  It is now *proved*, in
+`ForMathlib/FreeRank.lean`: for an infinite basis the rank condition Mathlib's `Basis.le_span`
+assumes is not needed, and the support argument goes through over any nontrivial ring.
 -/
-import KappaMonoid.Axioms.Rank
 import KappaMonoid.Axioms.Monoid
 import KappaMonoid.Axioms.Modules

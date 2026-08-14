@@ -86,7 +86,7 @@ questions a build would answer, without a build. Prefer it throughout.
 - **Instances**: defs producing them carry `@[instance_reducible]`. Instances that depend on
   hypotheses are threaded through statements with `letI`, repeated verbatim at the top of the
   tactic proof.
-- **No new axioms without asking.** The six assumed classical results (A1–A6) all live in
+- **No new axioms without asking.** The five assumed classical results (A2–A6) all live in
   `KappaMonoid/Axioms/` and are documented in `README.md`. A new headline result gets a line in
   `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo [bergmanDicksData]`, or `[]` for the
   usual case — which is checked by the build and fails in both directions, so it also tells you when
@@ -184,7 +184,7 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
 | `Examples/` | `TrivExt`, `ENNReal`, `Diophantine` (§3.2), `Reals` |
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`.  Everything but `Lemma51` and after is monoid theory |
-| `Axioms/` | `Rank` (A1), `Monoid` (A2, A4), `Modules` (A3, A5, A6) |
+| `Axioms/` | `Monoid` (A2, A4), `Modules` (A3, A5, A6).  A1 was here until it was proved — it is now `ForMathlib/FreeRank.lean` |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it |
 
 **When adding a result, put it in the lowest layer that can state it.**  A monoid-theoretic lemma

@@ -17,7 +17,7 @@ so that `R^k ≅ R^l` iff `k·u = l·u`.
 -/
 import KappaMonoid.Modules.Rings.FreeUnit
 import KappaMonoid.Core.Cyclic
-import KappaMonoid.Axioms.Rank
+import KappaMonoid.ForMathlib.FreeRank
 import KappaMonoid.Axioms.Monoid
 
 universe u

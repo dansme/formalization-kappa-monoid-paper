@@ -48,10 +48,12 @@ jobs:
           cyclicMonoidClassification
           kaplansky_classical
           leavittData
-          mk_le_of_span_eq_top
           mk_multiplicity_eq
           EOF
-          grep -rhE '^axiom ' KappaMonoid/ | awk '{print $2}' | sort > axioms.actual
+          # the identifier must be followed by a binder or a colon, so that a docstring line
+          # wrapping onto the word "axiom" is not counted as one
+          grep -rhE "^axiom [A-Za-z_][A-Za-z0-9_']*[ ({:]" KappaMonoid/ | awk '{print $2}' \
+            | sort > axioms.actual
           if ! diff -u axioms.expected axioms.actual; then
             echo "::error::the set of axiom declarations under KappaMonoid/ has changed"
             exit 1

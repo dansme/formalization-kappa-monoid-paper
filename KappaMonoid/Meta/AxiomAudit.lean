@@ -7,7 +7,7 @@ nothing about who depends on them, so a proof that quietly starts using Bergmanâ
 stale â€” one of its entries already had.
 
     #assert_axioms KappaMonoid.theorem_3_11 []
-    #assert_axioms KappaMonoid.prop_2_16 [mk_le_of_span_eq_top, leavittData, cyclicMonoidClassification]
+    #assert_axioms KappaMonoid.prop_2_16 [leavittData, cyclicMonoidClassification]
 
 `propext`, `Classical.choice` and `Quot.sound` are always permitted and never listed; everything
 else must be declared, and a mismatch in either direction is an error.  The point of failing on a
