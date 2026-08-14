@@ -3,7 +3,13 @@
 *Two goals: make the development reusable outside this paper, and make its agreement with the paper
 checkable by a human in an afternoon.*
 
-Companion to `CLAUDE.md`, which keeps the conventions and the traps. Nothing here is started.
+Companion to `CLAUDE.md`, which keeps the conventions and the traps.
+
+**Steps 0–6 are done** (commits `796ffcf`, `6aad810`, `0232619`, `a364042`), with two deliberate
+departures from the plan as written: the paper's `\label`s were left alone, so the `@[paper]`
+attribute and the generated index (steps 3 and 6 as planned) gave way to a `Paper/` layer written
+once by hand; and `Paper/Section{2,3,4}.lean` are `alias` indices rather than full restatements,
+which only §5 got.  Steps 7–9 remain.
 
 ## Read this first
 
@@ -53,7 +59,7 @@ Two of §5's six corrected statements were *dropped standing hypotheses* (`hgen`
 
 ---
 
-## Step 0 — split `Section4/AddOf.lean`, the proof of concept — **not started** (R)
+## Step 0 — split `Section4/AddOf.lean`, the proof of concept — **done** (R)
 
 The smallest change with a measurable result. [`Section4/AddOf.lean`](KappaMonoid/Section4/AddOf.lean)
 holds two unrelated things:
@@ -71,7 +77,7 @@ the three `cex_*` counterexample results reports only `propext`, `Classical.choi
 *and no longer depends on the `Axioms.lean` module at all* — check with `lake build` after deleting
 the import, not with `#print axioms`, which was already clean.
 
-## Step 1 — layer the tree by subject — **not started** (R, V)
+## Step 1 — layer the tree by subject — **done** (R, V)
 
 ```
 KappaMonoid/
@@ -85,16 +91,17 @@ KappaMonoid/
   Paper/        Section2.lean … Section5.lean — statements only
 ```
 
-Mapping, with cut points taken from the `/-! ##` headers that are already in the files:
+Mapping, with cut points taken from the `/-! ##` headers that are already in the files (this is
+what was actually done; the cut points held, and only the file names drifted from the sketch):
 
 | Now | After |
 |---|---|
-| `Basic.lean` (2251) | `Core/Index.lean` (39–123), `Core/SumData.lean` (124–236), `Core/Defs.lean` (237–349), `Core/Sums.lean` (350–615), `Core/Cmul.lean` (616–796), `Core/Kappa.lean` (797–1189), `Core/Hom.lean` (1190–1402), `Core/Subobject.lean` (1403–1646), `Core/Bare.lean` (1647–2007), `Core/Aleph0.lean` (2144–2251), and **`Paper/Definition21.lean`** (2008–2143, `PaperKMonoid`) |
-| `Braiding.lean` (2575) | `Braiding/Defs.lean` (106–697), `Braiding/Trans.lean` (698–1511), `Braiding/Sums.lean` (1512–2047), `Braiding/TransUncountable.lean` (2048–2558), `Braiding/Over.lean` (2559–end); the finsum bridge (44–105) to `ForMathlib/` |
-| `Universal.lean` | `Braiding/Prop39.lean` (–847), `Braiding/UnivExt.lean` (848–end) |
+| `Basic.lean` (2251) | `Core/Index.lean` (39–123), `Core/SumData.lean` (124–335), `Core/LMonoid.lean` (336–796), `Core/KMonoid.lean` (797–1401), `Core/Subobject.lean` (1402–1646), `Core/Bare.lean` (1647–2007), `Core/LHom.lean` (2144–2250), and **`Paper/Definition21.lean`** (2008–2143, `PaperKMonoid`) |
+| `Braiding.lean` (2575) | `Braiding/Prelim.lean` (28–105, keeping the finsum bridge — `Aux` is a reserved file name on Windows), `Braiding/Defs.lean` (106–523), `Braiding/TransAleph0.lean` (524–1510), `Braiding/Sums.lean` (1512–2046), `Braiding/TransUncountable.lean` (2048–2557), `Braiding/Over.lean` (2559–end) |
+| `Universal.lean` | `Braiding/UnivAux.lean` (51–489), `Braiding/Prop39.lean` (491–847), `Braiding/UnivExt.lean` (848–end) |
 | `ModuleClass.lean` (2115) | `Modules/Small.lean`, `Modules/DirectSum.lean`, `Modules/Class.lean`, `Modules/Theorem43.lean` (490–1674), `Modules/Projective.lean` (1739–end) |
 | `Section2/{Free,OrderUnit,Cyclic}.lean` | `Core/{Free,OrderUnit,Cyclic}.lean` |
-| `Section2/Examples.lean` | `Examples/{Cardinal,TrivExt,ENNReal}.lean` |
+| `Section2/Examples.lean` | `Core/Cardinal.lean` (`F_κ` — the free monoid is built from it, so not an example) and `Examples/{TrivExt,ENNReal}.lean` |
 | `Section2/Rings/*` | `Modules/Rings/*` |
 | `Section3/Diophantine.lean` (2149) | `Braiding/Saturated.lean` (Lemma 3.13, general), `Examples/Diophantine.lean` (linear systems, Prop. 3.14, Example 3.15) |
 | `Section3/Reals.lean` | `Examples/Reals.lean` |
@@ -117,7 +124,7 @@ claim true.
 **Cost:** two sessions, mechanical. The risk is import cycles that only appear on the build; do the
 moves one layer at a time, bottom up, and build between.
 
-## Step 2 — narrow the imports — **not started** (R)
+## Step 2 — narrow the imports — **done** (R)
 
 `Basic.lean` and `Axioms.lean` say `import Mathlib`. Replace with the minimum, using
 `Mathlib.Tactic.MinImports`:
@@ -137,7 +144,7 @@ genuine Mathlib gap (`Module.trace` is unrelated), `Nat.blockIdx` and the `finsu
 **Payoff, both directions:** a reuser gets the core without analysis and topology, and the local
 edit/build loop over `Braiding/` stops re-elaborating Mathlib's import closure.
 
-## Step 3 — the `@[paper]` attribute — **not started** (V)
+## Step 3 — the `@[paper]` attribute — **dropped** (V)
 
 `KappaMonoid/Meta/PaperRef.lean`, roughly 40 lines. Key on the **`\label`**, not the number: the
 paper is still being revised, and a renumbering would silently invalidate all ≈ 90 docstrings.
@@ -163,7 +170,7 @@ is one line each in a paper we control, and it is worth doing before the attribu
 unlabelled result would have to be keyed by position, which is exactly the fragility the labels are
 there to avoid. Do it as its own commit, touching only `kappa_monoids.tex`.
 
-## Step 4 — `Paper/SectionN.lean` — **not started** (V)
+## Step 4 — `Paper/SectionN.lean` — **done for §5, indices for §§2–4** (V)
 
 One file per section containing **only** the paper's numbered results, each restated as faithfully
 as the library allows, each proved by one line, each tagged:
@@ -185,7 +192,7 @@ three plan documents.
 under a new name checks nothing. The point is that the statement is written from the PDF and then
 *discharged* by the library, so a mismatch is a build error.
 
-## Step 5 — the `Setting` structures — **not started** (V)
+## Step 5 — the `Setting` structures — **done for §5** (V)
 
 The paper's standing assumptions are prose: *"Throughout the section, let `H` be a non-cyclic
 `ℵ₀`-monoid generated by two elements `x₁` and `x₂`"* (`kappa_monoids.tex:1893`). Formalise each one
@@ -203,7 +210,7 @@ structure Setting5 (H : Type v) [KMonoid (ℵ₀ : Cardinal.{u}) H] where
 silently drop a standing hypothesis, which is how two of the six §5 corrections arose. §2.2's "let
 `H` be a `κ`-monoid with order-unit `u`" (`:675`) gets the same treatment.
 
-## Step 6 — the generated index — **not started** (V)
+## Step 6 — the generated index — **dropped** (V)
 
 `lake exe paper_index`, a Lean executable that imports `KappaMonoid` and does three things:
 
@@ -291,6 +298,23 @@ while the layering is in flight; step 8 should wait for step 7, which is its saf
 
 ## Status
 
-Nothing started. `README.md` and `CLAUDE.md` describe the tree as it is today; each step above
-updates them in its own commit, and step 6 replaces their correspondence tables with generated
-output.
+Steps 0–2 (reuse) and 4–5 (verification) are done; steps 3 and 6 were dropped when the paper's
+`\label`s were left alone — the correspondence is taken once, by hand, in `Paper/`, rather than
+generated and checked against the `.tex`.  The cost of that choice: if the paper is renumbered, the
+`Paper/` docstrings go stale silently, and there is no check that a numbered result has an entry.
+
+What the four commits achieved, measured on the tree afterwards:
+
+| | before | after |
+|---|---|---|
+| Files reaching the six axioms | all of §5's monoid material | `Modules/`, `TwoGen/Lemma51` and after |
+| Mathlib surface of `Core/` + `Braiding/` | all of Mathlib | 16 named modules |
+| `import Mathlib` | `Basic.lean`, `Axioms.lean` | `Axioms/*`, `Modules/Small.lean`, both deliberate |
+| Files | 27 | 58 |
+| Largest file | 2575 lines | 1160 |
+| Enforced invariants in CI | sorry-free, axiom list | + the layering |
+| Paper correspondence | three prose tables, two entries stale | `Paper/`, 97 checked index entries and §5 restated |
+
+Steps 7 (axiom provenance as code), 8 (bundled subobjects and homomorphisms, the redundant `hκ`
+and `hlam` hypotheses) and 9 (universe-generalise `universal`) remain.  Step 8 is the one that
+rewrites proofs, and the one with the largest remaining payoff for both goals.

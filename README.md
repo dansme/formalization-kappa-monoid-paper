@@ -9,28 +9,24 @@ Theorem 3.11 (universal `κ`-extensions), Proposition 3.14 (universal extensions
 monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`), Theorem 5.3 (which
 two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring) and all of §§2–5.
 
-`KappaMonoid.lean` is the root target and imports everything below it. The core — the definitions
-every section runs on — is at the top level; each section's own material sits under `Section2/`,
-`Section3/`, `Section4/`, `Section5/`; and `ForMathlib/` is at the bottom, depending on nothing in
-the development.
+The development is layered by subject, and each layer is an entry point of its own: importing
+`KappaMonoid.Core` or `KappaMonoid.Braiding` gets the monoid theory without the module theory, the
+assumed classical results, or — since the core no longer says `import Mathlib` — most of Mathlib.
+`scripts/check_layering.sh` enforces this in CI; Lake would not.
 
-| File | Contents |
-|---|---|
-| `KappaMonoid/ForMathlib/` | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean` |
-| `KappaMonoid/Basic.lean` | §2: `LMonoid` (= `λ⁻`-monoid), `KMonoid`, sums over arbitrary small index types, products, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8, both at the `λ⁻` level), homomorphisms, `⟨S⟩_κ`, induced structures on sub-objects, `KMonoid.ofBare` and `PaperKMonoid` (Lemma 2.5, Def. 2.1 verbatim) |
-| `KappaMonoid/Braiding.lean` | §3: `BraidingData`, `IsBraided`, Lemmas 3.2/3.4/3.6/3.7/3.8, `braidingSetoid`, `IsBraidedOver` (Def. 3.1(2)) |
-| `KappaMonoid/Universal.lean` | §3.1: Prop. 3.9, Def. 3.10, the construction `X^κ/≈`, **Theorem 3.11** and its converse (`isBraidedOver_of_isUniversalKExtension`: universal ⟹ braided over), transport of braidedness along isomorphisms |
-| `KappaMonoid/ModuleClass.lean` | Definition 2.4 / Examples 2.3(4) and §4: `ModuleClass` (a class `C` with `V^κ(C)`), Def. 4.1 (`λ⁻`-small), (M1)/(M2), **Theorem 4.3**, Cor. 4.4, Cor. 4.5, Kaplansky (the `κ`-monoid form; the classical statement is axiom A6).  Core rather than §4-only: Definition 2.4 is what §2.3's ring examples are built on |
-| `KappaMonoid/Axioms.lean` | The six classical results assumed rather than proved — see below |
-| `KappaMonoid/Section2/Examples.lean` | Examples 2.3(1)(2)(3): the trivial `κ`-extension `M ⊎ {∞}` of a reduced monoid, `ℝ≥0∞`, and `F_{λ⁻}` / `F_κ` (the cardinals below a bound) |
-| `KappaMonoid/Section2/Free.lean` | §2.1: **Proposition 2.9**, the free `λ⁻`-monoid `F_{λ⁻}(B)` and free `κ`-monoid `F_κ(B)`, with the universal property |
-| `KappaMonoid/Section2/OrderUnit.lean` | §2.2: Defs. 2.11–2.12, `size`, the filtration `H_α`, faithfulness ⟺ properness, **Lemma 2.14** |
-| `KappaMonoid/Section2/Cyclic.lean` | §2.3: **Lemma 2.15**, the structure of a cyclic `κ`-monoid with a faithful order-unit |
-| `KappaMonoid/Section2/Rings/` | §2.2–2.3, the ring-theoretic examples: `ProjOrderUnit.lean` (**Example 2.13**, `[R]` is a faithful order-unit of `V^κ(R)`), `FreeModules.lean` (`V^κ(𝓕^κ)`, the class of free modules), `FreeUnit.lean` (ranks; `[R]` is a cyclic faithful order-unit), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**, `V^κ(R) ≅ F_κ^n`) |
-| `KappaMonoid/Section3/Diophantine.lean` | §3.2: Examples 3.3(1) and Examples 3.12 for `ℕ₀`, **Lemma 3.13**(1) and (2), **Proposition 3.14**(1) and (2) (universal extensions of Diophantine monoids), saturation for inequality-free systems, **Example 3.15**, and the counterexample showing that (2) does need the saturation hypothesis |
-| `KappaMonoid/Section3/Reals.lean` | §3: **Examples 3.3(2)(3)** and their entries of Examples 3.12 — braiding in `ℝ≥0`, why neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`, the `ℵ₀`-monoid `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` and its universal property, and the `ℚ≥0` variant |
-| `KappaMonoid/Section4/AddOf.lean` | §4: `add x` and `add_λ x`, `V(R) = add [R]`, **Corollary 4.7**(1) (both directions) and (2), **Examples 4.8(1)** (ascent of KRSA) |
-| `KappaMonoid/Section5/` | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Braided` (**Lemma 5.1**, **Lemma 5.2**(1)–(5)), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`); `KappaMonoid/Section5.lean` is the aggregator that imports the six |
+| Layer | Depends on | Contents |
+|---|---|---|
+| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean` |
+| `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
+| `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
+| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
+| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `Diophantine` (**Examples 3.3(1)**, §3.2: **Proposition 3.14**, **Example 3.15**), `Reals` (**Examples 3.3(2)(3)**) |
+| `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
+| `KappaMonoid/Axioms/` | Mathlib | The six classical results assumed rather than proved, split by layer: `Rank` (A1), `Monoid` (A2, A4), `Modules` (A3, A5, A6) — see below |
+| `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
+
+`Forms`, `Prelim`, `Lemma52` and `Counterexample` are pure monoid theory: §5's braiding material
+mentions no module and uses no axiom.  The module theory enters at `Lemma51`.
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
 proved, `sorry`-free, subject only to the four §2 axioms below (A1–A4; A5 is used nowhere in the
@@ -53,7 +49,7 @@ Proposition 3.14(2)" below.
 axiom A5 below. Corollary 4.7(2) needs no axiom either — Corollary 4.5(2) plus uniqueness of
 universal `κ`-extensions. Corollary 4.6 is Corollary 4.5(3) together with six results quoted from
 the literature, none of them monoid-theoretic and none in Mathlib, so it stays a documented stub in
-`ModuleClass.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
+`Modules/Projective.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
 statement corrected in Examples 4.8(1)" below.
 
 **Section 5 is complete.** Every lemma, theorem, proposition and corollary of §5 is stated and
@@ -63,17 +59,40 @@ correcting before they could be proved — the scaffold had dropped hypotheses t
 standing assumptions supply, and in two places the quantifier was too wide; all six are recorded in
 "The statements corrected in Section 5" below.
 
+## Reading the formalisation against the paper
+
+`KappaMonoid/Paper/` is what to read with the PDF open; nothing else depends on it.
+
+* `Paper/Section5.lean` restates **every numbered result of §5** in the paper's own terms and
+  discharges it from `TwoGen/`.  Two things it adds that the library statements lack.  `Setting5`
+  bundles the section's standing assumption — *"throughout the section, let `H` be a non-cyclic
+  `ℵ₀`-monoid generated by two elements `x₁` and `x₂`"* — which in the library travels as two loose
+  arguments, and which the scaffold dropped from Lemma 5.2(3) and 5.2(4): two of the six corrected
+  statements below were exactly that mistake.  And `IsRealizableAsV` names the nine-line
+  "`H ≅ V^{ℵ₀}(R)` for a ring whose projectives are sums of finitely generated modules" that
+  Theorem 5.3 and all three parts of Corollary 5.5 repeat.
+* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 97 entries between them,
+  one per numbered result, each an `alias` naming the declaration that formalises it and the file
+  it lives in.  The alias fails to compile if the declaration goes, so the index cannot rot the way
+  the tables in this file did.  Each closes with what the development deliberately does *not*
+  formalise, and why: Lemma 3.4(2)(3), Lemma 3.5, Remark 3.16, Corollary 4.6, Examples 4.8(2).
+* `Paper/Definition21.lean` transcribes **Definition 2.1** literally and proves it agrees with the
+  `KMonoid` the development works with.
+
 ## Conventions
 
 `CLAUDE.md` collects what a contributor (human or model) needs before touching the files: the build
 commands, the Lean house style, the axiom and deviation discipline, the recurring elaboration traps
-of this development, and the workflow that keeps the edit/build loop cheap. The three plan
-documents defer to it and only record what is specific to their section.
+of this development, and the workflow that keeps the edit/build loop cheap. The plan documents —
+`SECTION{3,4,5}-PLAN.md` for the sections, `REFACTOR-PLAN.md` for the reorganisation — defer to it
+and only record what is specific to their subject.
 
 ## The assumed results
 
-Six classical theorems are taken as axioms in `KappaMonoid/Axioms.lean`, each with the
-standard proof sketch it stands for:
+Six classical theorems are taken as axioms in `KappaMonoid/Axioms/`, split by layer — `Rank.lean`
+(A1), `Monoid.lean` (A2, A4), `Modules.lean` (A3, A5, A6), so that a file needing only the
+monoid-theoretic assumptions does not import the module-theoretic ones.  Each carries the standard
+proof sketch it stands for:
 
 | Axiom | Statement | Used by |
 |---|---|---|
@@ -192,7 +211,7 @@ not monoid theory and not in Mathlib, so this development does not derive it —
 the Bergman–Dicks data of axiom A5, as `BergmanDicksData.sumOfFG`, for the ring A5 produces. It is
 therefore not recoverable from `∀ I : Ideal R, Module.Projective R I` inside the formalisation. For
 a hereditary ring the extra conjunct is automatic, so the statements are the paper's; making it
-explicit is the same treatment Corollary 4.6 already gets in `ModuleClass.lean`, where it is a
+explicit is the same treatment Corollary 4.6 already gets in `Modules/Projective.lean`, where it is a
 documented stub rather than a formalised implication. `corollary_4_7_one_forward` was extended to
 return it, which it can because axiom A5 supplies it.
 
@@ -342,7 +361,12 @@ lake build           # the root target, KappaMonoid
 `.github/workflows/update.yml` (`mathlib-update-action`, triggered by hand): it opens a pull request
 for a new Mathlib tag and files an issue if the update does not build.
 
-CI (`.github/workflows/lean_action_ci.yml`) does three things on every push: it builds the root
-target, fails if any declaration in it uses `sorry`, and fails if the set of `axiom` declarations
-under `KappaMonoid/` differs from the six in the table above. Documentation is generated by
-`docgen-action`.
+CI (`.github/workflows/lean_action_ci.yml`) does four things on every push: it builds the root
+target, fails if any declaration in it uses `sorry`, runs `scripts/check_layering.sh`, and fails if
+the set of `axiom` declarations under `KappaMonoid/` differs from the six in the table above.
+Documentation is generated by `docgen-action`.
+
+`scripts/check_layering.sh` is what keeps the layers honest — Lake resolves modules package-wide,
+so `Core/` importing `Modules/` would build fine. It checks the import discipline between layers,
+that no module theory appears below `Modules/`, and that only `Axioms/*` and `Modules/Small.lean`
+import all of Mathlib.

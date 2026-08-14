@@ -4,15 +4,20 @@ A Lean 4 formalisation of Nazemian–Smertnig, *A monoid-theoretical approach to
 decompositions of modules*. The paper is in the repo: `kappa_monoids.tex` (source of truth for
 statements) and `kappa_monoids.pdf`.
 
-`README.md` is the status and provenance document. `SECTION{3,4,5}-PLAN.md` are the work plans;
-§§2–5 are done.
+`README.md` is the status and provenance document. `SECTION{3,4,5}-PLAN.md` are the work plans and
+`REFACTOR-PLAN.md` the reorganisation plan; §§2–5 are done, and steps 0–6 of the refactor.
 
 ## Build
 
 ```fish
 lake build                          # root target: must stay green and sorry-free
 lake exe cache get                  # after any manifest bump, before lake build
+./scripts/check_layering.sh         # the layer discipline; CI runs it too
 ```
+
+`lake build` on a fresh checkout rebuilds Mathlib from source if the cache is missing — hours.
+Run `lake exe cache get` first and check that `.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/`
+is populated.
 
 The toolchain and Mathlib are pinned to `v4.33.0`; do not run `lake update` — bumps go through
 `.github/workflows/update.yml`, by hand, as their own commit.
@@ -82,7 +87,7 @@ questions a build would answer, without a build. Prefer it throughout.
   hypotheses are threaded through statements with `letI`, repeated verbatim at the top of the
   tactic proof.
 - **No new axioms without asking.** The six assumed classical results (A1–A6) all live in
-  `KappaMonoid/Axioms.lean` and are documented in `README.md`; run `#print axioms` on new headline
+  `KappaMonoid/Axioms/` and are documented in `README.md`; run `#print axioms` on new headline
   results and keep that table in step. §3 needs no axiom at all. CI enforces the list — `.github/workflows/lean_action_ci.yml` fails if the set of
   `axiom` declarations under `KappaMonoid/` changes, so a deliberate addition means editing the
   expected list there *and* the `README.md` table in the same commit.
@@ -157,17 +162,29 @@ re-deriving them.
 
 ## Where things live
 
-| File | Contents |
+The tree is layered by subject, not by paper section, and the layering is enforced by
+`scripts/check_layering.sh` in CI: each layer may import only the layers below it, nothing below
+`Modules/` may mention a module, and only `Axioms/*` and `Modules/Small.lean` may `import Mathlib`.
+
+| Layer | Contents |
 |---|---|
-| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx` and the fibres of `j ↦ j / d`), `Finprod.lean` |
-| `Basic.lean` | `LMonoid`/`KMonoid`, `SumData`, the `lsumOf` API (union, subset, sigma, pair, …), `IsConical`, `IsLHom`, `kclosure`, induced structures, `IsLSubset` and its closure lemmas |
-| `Braiding.lean` | `BraidingData`/`IsBraided`, Lemmas 3.2–3.8, `mk_finsum`, `of_levels`, `comp_equiv`, `BraidingData.telescope`, `IsBraided.mk_support_lt` |
-| `Universal.lean` | Prop. 3.9, Theorem 3.11 and its converse, the transports (`of_iso`, `of_base_iso`, `of_kIso_subset`, `isLMonoidHom_aleph0_of_add`) |
-| `ModuleClass.lean` | Definition 2.4 and §4: `ModuleClass`, `IsLambdaSmall`, Theorem 4.3, Cor. 4.4/4.5.  Core, not §4-only — §2.3's ring examples build on it |
-| `Section2/` | `Examples.lean` (`TrivExt`, `LCard`/`Fcard`, `ℝ≥0∞`), `Free.lean`, `OrderUnit.lean`, `Cyclic.lean`, and `Rings/` for the ring-theoretic §2.2–2.3 material |
-| `Section3/` | `Diophantine.lean` (§3.2: Lemma 3.13, Prop. 3.14, Example 3.15), `Reals.lean` (Examples 3.3(2)(3)) |
-| `Section4/AddOf.lean` | `add x`/`add_λ x`, `V(R) = add [R]`, Corollary 4.7, Examples 4.8(1) |
-| `Section5/` | `Forms`, `Braided` (5.1, 5.2), `Realization` (5.3), `Trace` (5.4), `Corollary55`, `Counterexample`; `Section5.lean` is the aggregator |
+| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean` |
+| `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
+| `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop39`, `UnivExt` (Thm 3.11), `Saturated` (Lemma 3.13) |
+| `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
+| `Examples/` | `TrivExt`, `ENNReal`, `Diophantine` (§3.2), `Reals` |
+| `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`.  Everything but `Lemma51` and after is monoid theory |
+| `Axioms/` | `Rank` (A1), `Monoid` (A2, A4), `Modules` (A3, A5, A6) |
+| `Paper/` | the paper's numbered results and nothing else; nothing depends on it |
+
+**When adding a result, put it in the lowest layer that can state it.**  A monoid-theoretic lemma
+in a `Modules/` or `TwoGen/` file is how `add x` ended up behind axiom A5, and the layering check
+will not catch that — it only catches imports.
+
+**`Paper/` is the deliverable for a reader.**  `Paper/Section5.lean` restates §5 over `Setting5`,
+which bundles the section's standing assumptions; `Paper/Section{2,3,4}.lean` are `alias` indices.
+A new headline result belongs there too, and a numbered result that stops being formalised must
+move to that file's "not formalised" section with a reason.
 
 Before writing a new construction, check whether the analogous one exists: the `ℕ₀` and `ℝ≥0`
 braidings, the `Fcard`/`RTilde` `SumData`s, and the `TrivExt` extension are all templates.
