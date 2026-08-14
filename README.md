@@ -16,7 +16,7 @@ assumed classical results, or — since the core no longer says `import Mathlib`
 
 | Layer | Depends on | Contents |
 |---|---|---|
-| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, and the three retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4) |
+| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, the three retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4), and `ModuleType.lean`, the half of A2 that is proved |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
@@ -98,7 +98,7 @@ stands for:
 
 | Axiom | Statement | Used by |
 |---|---|---|
-| `leavittData` (A2) | Leavitt's realisation of the cyclic monoids `C_{m,n}`, for `m ≥ 1` and `n ≥ 1` | `prop_2_16` |
+| `leavittData` (A2) | Leavitt's realisation of the cyclic monoids `C_{m,n}`, for `m ≥ 1` and `n ≥ 1`. Only the hard half is assumed — see below | `prop_2_16` |
 | `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` |
 | `kaplansky_classical` (A6) | Kaplansky's theorem: every projective module is a direct sum of countably generated projective modules | `kaplansky`, and through it Cor. 4.5 and Cor. 4.7 |
 
@@ -161,6 +161,23 @@ A5 is used by exactly one result: `corollary_4_7_one_forward`, the implication (
 Corollary 4.7(1). Everything else in §4 — including the identification `V(R) = add [R]`
 (`addOf_unitClass_eq`), the other direction of Corollary 4.7(1), Corollary 4.7(2) and Examples
 4.8(1) — reports only `propext`, `Classical.choice` and `Quot.sound`.
+
+**A2 is half proved, and the assumed half is the irreducible one.**  `LeavittData` used to assume
+the equivalence `R^k ≅ R^l ↔ k ∼_{m,n} l` outright.  The `←` direction is elementary and is now
+proved, in `KappaMonoid/ForMathlib/ModuleType.lean`: adding `R^j` to both sides of `R^m ≅ R^{m+n}`
+moves the relation above `m`, and iterating adds `n` as often as wanted, so every isomorphism
+`∼_{m,n}` demands follows from the single defining one.  What the axiom now assumes is the two
+fields `iso` (`R^m ≅ R^{m+n}`) and `iso_imp` (`R^k ≅ R^l → k ∼_{m,n} l`) — the existence of a ring
+with those isomorphisms and *no others*, which is the whole content of Leavitt's theorem.
+
+Eliminating that half is a different order of task from A1, A3 and A4, and is not attempted here.
+It means constructing the Leavitt algebra `L_K(m, m+n)` — a free algebra modulo the matrix
+relations `XY = I_m`, `YX = I_{m+n}` — and proving it has no unwanted isomorphisms, which needs a
+normal form for its elements (Bergman's diamond lemma, or Leavitt's basis argument).  Mathlib has
+`FreeAlgebra` and `RingQuot` but neither a diamond lemma nor any example of a ring without
+invariant basis number, so it would all be new material.  Nor does A5 help: Bergman–Dicks as stated
+here realises a monoid as `V(R)` without saying that `[R]` is the chosen order-unit, so it cannot
+produce a *free*-module realisation.
 
 ## The hypothesis added to Leavitt's theorem
 

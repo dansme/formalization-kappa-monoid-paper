@@ -100,7 +100,7 @@ questions a build would answer, without a build. Prefer it throughout.
   `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a formalised counterexample showing the
   paper's claim is false; and the six statements corrected in §5, chiefly `EveryProjectiveIsSumOfFG
   R` carried alongside hereditariness, because Corollary 4.6 is quoted rather than formalised.
-  (Examples 4.8(1) was a fourth until the test universe of `IsUniversalKExtension` became a
+  (Examples 4.8(1) was a fifth until the test universe of `IsUniversalKExtension` became a
   parameter; `krsa_ascent_iso` is now the paper's statement.) When the paper is wrong, formalise the
   repaired statement and say so; do not quietly weaken or restate it.
 
@@ -180,7 +180,7 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 
 | Layer | Contents |
 |---|---|
-| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean` |
+| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4), `ModuleType.lean` (the proved half of A2) |
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop39`, `UnivExt` (Thm 3.11), `Saturated` (Lemma 3.13) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |

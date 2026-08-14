@@ -26,6 +26,7 @@ import KappaMonoid.ForMathlib.CyclicMonoid
 import KappaMonoid.ForMathlib.Finprod
 import KappaMonoid.ForMathlib.FreeRank
 import KappaMonoid.ForMathlib.HomDirectSum
+import KappaMonoid.ForMathlib.ModuleType
 import KappaMonoid.ForMathlib.SimpleMultiplicity
 import KappaMonoid.ForMathlib.NatBlocks
 import KappaMonoid.ForMathlib.TraceIdeal
