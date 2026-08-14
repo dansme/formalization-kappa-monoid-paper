@@ -67,6 +67,50 @@ def equivOfMatrices {k l : ℕ} (A : Matrix (Fin k) (Fin l) R) (B : Matrix (Fin 
   left_inv v := by simp [Matrix.vecMul_vecMul, hAB]
   right_inv w := by simp [Matrix.vecMul_vecMul, hBA]
 
+/-- **Leavitt's matrix criterion** (p. 115: "well known and easily shown"): a module with bases of
+length `k` and `l` exists exactly when there are matrices `A`, `B` over the ring with `AB = Iₖ` and
+`BA = I_l`.  Being symmetric in the two sides, it is also why left and right module types agree. -/
+theorem nonempty_equiv_iff_exists_matrices {k l : ℕ} :
+    Nonempty ((Fin k → R) ≃ₗ[R] (Fin l → R)) ↔
+      ∃ (A : Matrix (Fin k) (Fin l) R) (B : Matrix (Fin l) (Fin k) R), A * B = 1 ∧ B * A = 1 := by
+  constructor
+  · rintro ⟨e⟩
+    refine ⟨toMat (e : (Fin k → R) →ₗ[R] (Fin l → R)),
+      toMat (e.symm : (Fin l → R) →ₗ[R] (Fin k → R)), ?_, ?_⟩
+    · rw [← toMat_comp]
+      rw [show (e.symm : (Fin l → R) →ₗ[R] (Fin k → R)).comp (e : (Fin k → R) →ₗ[R] (Fin l → R))
+        = LinearMap.id from by ext v; simp, toMat_id]
+    · rw [← toMat_comp]
+      rw [show (e : (Fin k → R) →ₗ[R] (Fin l → R)).comp (e.symm : (Fin l → R) →ₗ[R] (Fin k → R))
+        = LinearMap.id from by ext v; simp, toMat_id]
+  · rintro ⟨A, B, hAB, hBA⟩
+    exact ⟨equivOfMatrices A B hAB hBA⟩
+
+/-- **Leavitt, Theorem 3** — the `∪` of the type lattice, in the form used to reduce type `(m,n)`
+to types `(m,1)` and `(1,n)`.  Free modules over a product ring are isomorphic exactly when they
+are isomorphic over each factor, so the product realises the *intersection* of the two relations:
+`(m,1) ∪ (1,n) = (m,n)`. -/
+theorem nonempty_prod_iff {S : Type u} [Ring S] {k l : ℕ} :
+    Nonempty ((Fin k → R × S) ≃ₗ[R × S] (Fin l → R × S)) ↔
+      Nonempty ((Fin k → R) ≃ₗ[R] (Fin l → R)) ∧ Nonempty ((Fin k → S) ≃ₗ[S] (Fin l → S)) := by
+  simp only [nonempty_equiv_iff_exists_matrices]
+  constructor
+  · rintro ⟨A, B, hAB, hBA⟩
+    refine ⟨⟨A.map (RingHom.fst R S), B.map (RingHom.fst R S), ?_, ?_⟩,
+      ⟨A.map (RingHom.snd R S), B.map (RingHom.snd R S), ?_, ?_⟩⟩
+    · rw [← Matrix.map_mul, hAB, Matrix.map_one _ (map_zero _) (map_one _)]
+    · rw [← Matrix.map_mul, hBA, Matrix.map_one _ (map_zero _) (map_one _)]
+    · rw [← Matrix.map_mul, hAB, Matrix.map_one _ (map_zero _) (map_one _)]
+    · rw [← Matrix.map_mul, hBA, Matrix.map_one _ (map_zero _) (map_one _)]
+  · rintro ⟨⟨A₁, B₁, hAB₁, hBA₁⟩, ⟨A₂, B₂, hAB₂, hBA₂⟩⟩
+    refine ⟨Matrix.of fun i j => (A₁ i j, A₂ i j), Matrix.of fun i j => (B₁ i j, B₂ i j), ?_, ?_⟩
+    · ext i j
+      · simpa [Matrix.mul_apply, Prod.fst_sum, Matrix.one_apply, apply_ite Prod.fst] using congrFun₂ hAB₁ i j
+      · simpa [Matrix.mul_apply, Prod.snd_sum, Matrix.one_apply, apply_ite Prod.snd] using congrFun₂ hAB₂ i j
+    · ext i j
+      · simpa [Matrix.mul_apply, Prod.fst_sum, Matrix.one_apply, apply_ite Prod.fst] using congrFun₂ hBA₁ i j
+      · simpa [Matrix.mul_apply, Prod.snd_sum, Matrix.one_apply, apply_ite Prod.snd] using congrFun₂ hBA₂ i j
+
 /-- `tr(AB)` and `tr(BA)` differ by a sum of commutators, for rectangular `A` and `B`. -/
 theorem trace_mul_sub_mem {k l : ℕ} (A : Matrix (Fin k) (Fin l) R) (B : Matrix (Fin l) (Fin k) R) :
     (A * B).trace - (B * A).trace ∈ commutators R := by
