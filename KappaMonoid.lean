@@ -6,28 +6,41 @@ A formalisation of
 
 covering Sections 2–5.
 
-The core — the definitions every section runs on — is at the top level; each section's own material
-sits under `Section2/`, `Section3/`, `Section4/`, `Section5/`.  `ForMathlib/` holds the pieces with
-no `κ`-monoid content and no dependence on the rest, so they compile once.
+The development is layered by subject, and each layer is an entry point of its own:
+
+| Layer | Depends on | Contents |
+|---|---|---|
+| `ForMathlib/` | Mathlib | no `κ`-monoid content: trace ideals, `ℕ` blocks, `finsum` |
+| `Core/` | ForMathlib | `LMonoid`, `KMonoid`, sums, homomorphisms, sub-objects, `add x`, order units, free and cyclic monoids |
+| `Braiding/` | Core | braidings (Def. 3.1), Prop. 3.9, universal `κ`-extensions, Thm 3.11, Lemma 3.13 |
+| `Modules/` | Braiding | `ModuleClass`, Thm 4.3, projectives, Cor. 4.5–4.7, the ring examples of §2.2–2.3 |
+| `Examples/` | Braiding | the concrete monoids: `TrivExt`, `ℝ≥0∞`, linear systems, `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` |
+| `TwoGen/` | Modules | §5: forms, Lemmas 5.1–5.2, Thm 5.3, Prop. 5.4, Cor. 5.5 |
+| `Axioms/` | Mathlib | the six assumed classical results, split by layer |
+| `Paper/` | everything | the paper's numbered statements, and nothing else |
+
+`Core/` and the monoid-theoretic half of `Braiding/`, `Examples/` and `TwoGen/` mention no module
+and use no axiom; `Paper/` is what to read against the PDF.
 -/
 import KappaMonoid.ForMathlib.Finprod
 import KappaMonoid.ForMathlib.NatBlocks
 import KappaMonoid.ForMathlib.TraceIdeal
-import KappaMonoid.Basic
+import KappaMonoid.Core
+import KappaMonoid.Core.Cardinal
+import KappaMonoid.Core.Free
+import KappaMonoid.Core.OrderUnit
+import KappaMonoid.Core.Cyclic
+import KappaMonoid.Core.AddOf
 import KappaMonoid.Braiding
-import KappaMonoid.Universal
-import KappaMonoid.ModuleClass
+import KappaMonoid.Braiding.Saturated
 import KappaMonoid.Axioms
-import KappaMonoid.Section2.Examples
-import KappaMonoid.Section2.Free
-import KappaMonoid.Section2.OrderUnit
-import KappaMonoid.Section2.Cyclic
-import KappaMonoid.Section2.Rings.ProjOrderUnit
-import KappaMonoid.Section2.Rings.FreeModules
-import KappaMonoid.Section2.Rings.FreeUnit
-import KappaMonoid.Section2.Rings.Realisation
-import KappaMonoid.Section2.Rings.Semisimple
-import KappaMonoid.Section3.Diophantine
-import KappaMonoid.Section3.Reals
-import KappaMonoid.Section4.AddOf
-import KappaMonoid.Section5
+import KappaMonoid.Modules
+import KappaMonoid.Modules.Rings.ProjOrderUnit
+import KappaMonoid.Modules.Rings.FreeModules
+import KappaMonoid.Modules.Rings.FreeUnit
+import KappaMonoid.Modules.Rings.Realisation
+import KappaMonoid.Modules.Rings.Semisimple
+import KappaMonoid.Modules.Corollary47
+import KappaMonoid.Examples
+import KappaMonoid.TwoGen
+import KappaMonoid.Paper.Definition21
