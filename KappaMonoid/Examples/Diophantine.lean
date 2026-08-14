@@ -5,6 +5,8 @@ equations, inequalities and congruences, and **Example 3.15**.
 import KappaMonoid.Braiding.Saturated
 import KappaMonoid.Core.OrderUnit
 import KappaMonoid.Examples.ENNReal
+import Mathlib.Data.Nat.Nth
+import Mathlib.Algebra.BigOperators.Fin
 
 universe u v w
 

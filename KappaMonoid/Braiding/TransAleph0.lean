@@ -3,6 +3,7 @@
 scaffolding, the left-saturation closure, and the transfinite recursion the paper's proof runs.
 -/
 import KappaMonoid.Braiding.Defs
+import Mathlib.Order.Interval.Finset.Nat
 
 universe u v w
 

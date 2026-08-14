@@ -3,6 +3,7 @@ Homomorphisms and sub-objects at the `λ⁻`-level, and the structures they indu
 `IsLMonoidHom`, `IsLSubmonoid`, `IsLSubset` and the `LMonoid` instance on a `λ⁻`-closed subset.
 -/
 import KappaMonoid.Core.KMonoid
+import Mathlib.Algebra.Group.Submonoid.Basic
 
 universe u v w
 

@@ -2,7 +2,17 @@
 Preliminaries: cardinal arithmetic, the canonical index type `Idx κ`, and the two-element
 index types that binary sums are built on.
 -/
-import Mathlib
+import Mathlib.SetTheory.Cardinal.Regular
+import Mathlib.SetTheory.Cardinal.Arithmetic
+import Mathlib.SetTheory.Cardinal.HasCardinalLT
+import Mathlib.SetTheory.Ordinal.Basic
+import Mathlib.Algebra.Group.Support
+import Mathlib.Algebra.Module.Defs
+import Mathlib.Algebra.BigOperators.Finprod
+import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Push
+import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Abel
 
 universe u v w
 

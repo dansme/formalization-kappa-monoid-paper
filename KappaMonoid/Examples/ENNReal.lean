@@ -3,6 +3,7 @@
 -/
 import KappaMonoid.Examples.TrivExt
 import Mathlib.Topology.Algebra.InfiniteSum.ENNReal
+import Mathlib.Analysis.SpecificLimits.Basic
 
 universe u v
 

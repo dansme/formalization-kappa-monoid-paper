@@ -3,6 +3,7 @@
 set of indices — which is how smallness is witnessed throughout §4.
 -/
 import KappaMonoid.Braiding
+import Mathlib
 
 universe u v w
 

@@ -12,6 +12,7 @@ but not antisymmetric â€” `not_antisymm` reproduces the paper's counterexample â
 Mathlib's canonically-ordered monoid classes applies.
 -/
 import KappaMonoid.Core
+import Mathlib.Data.ZMod.Basic
 
 universe u v
 

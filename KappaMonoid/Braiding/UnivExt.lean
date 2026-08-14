@@ -3,6 +3,8 @@ The construction `Ĥ = X^κ / (λ⁻-braiding)` and **Theorem 3.11**, with the `
 hypothesis the paper omits, and its converse.
 -/
 import KappaMonoid.Braiding.Prop39
+import Mathlib.Algebra.Group.ULift
+import Mathlib.Algebra.Group.Int.Defs
 
 universe u v w z
 

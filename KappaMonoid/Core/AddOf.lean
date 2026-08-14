@@ -6,7 +6,7 @@ import KappaMonoid.Core
 
 universe u v
 
-open Cardinal Function Set DirectSum
+open Cardinal Function Set
 
 namespace KappaMonoid
 
