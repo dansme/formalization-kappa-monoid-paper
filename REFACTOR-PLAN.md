@@ -5,11 +5,14 @@ checkable by a human in an afternoon.*
 
 Companion to `CLAUDE.md`, which keeps the conventions and the traps.
 
-**Steps 0–6 are done** (commits `796ffcf`, `6aad810`, `0232619`, `a364042`), with two deliberate
-departures from the plan as written: the paper's `\label`s were left alone, so the `@[paper]`
+**Steps 0–7 and 9 are done**, and step 8 in the one place it paid.  Two deliberate departures from
+the plan as written: the paper's `\label`s were left alone, so the `@[paper]`
 attribute and the generated index (steps 3 and 6 as planned) gave way to a `Paper/` layer written
 once by hand; and `Paper/Section{2,3,4}.lean` are `alias` indices rather than full restatements,
-which only §5 got.  Steps 7–9 remain.
+which only §5 got.
+
+**Step 8(a) turned out not to exist.**  See its entry below: the "137 redundant hypotheses" in the
+measurement table was a count of a string, not of a redundancy.
 
 ## Read this first
 
@@ -36,8 +39,8 @@ Taken on the tree at `0cb5519`:
 | Files with **zero** module-theoretic content (`Basic`, `Braiding`, `Universal`, `Section2/{Free,OrderUnit,Cyclic,Examples}`, `Section3/*`, `Section5/{Forms,Braided,Counterexample}`) | 13 files, ≈ 11 600 of 19 000 lines |
 | Yet `Section5/Forms.lean` → `Section4/AddOf.lean` → `ModuleClass.lean` → `Axioms.lean` | pure monoid theory imports all six axioms |
 | `import Mathlib` in the core (`Basic.lean`, `Axioms.lean`) | everything inherits all of Mathlib |
-| `(hκ : ℵ₀ ≤ κ)` in statements — though `KMonoid.aleph0_le` is a field of the class | 137 |
-| `(hlam : lam.IsRegular)` — though `LMonoid.isRegular` is a field | 47 |
+| ~~`(hκ : ℵ₀ ≤ κ)` in statements — though `KMonoid.aleph0_le` is a field of the class~~ **wrong: see step 8** | ~~137~~ 6 apparent, 0 real |
+| ~~`(hlam : lam.IsRegular)` — though `LMonoid.isRegular` is a field~~ **same error** | ~~47~~ |
 | `letI` (of which inside statements) | 602 (456) |
 | `(κ := …)` explicit arguments | 804 |
 | Numbered environments in `kappa_monoids.tex` (14 lemma, 10 defi, 6 prop, 5 cor, 4 examples, 3 teor, 3 example, 3 remark) | 48, of which **15 carry no `\label`** |
@@ -228,7 +231,7 @@ and a docstring whose bold number no longer matches what its label resolves to.
 This retires the correspondence tables in `README.md` and the three plan documents — which is where
 today's two stale names were.
 
-## Step 7 — axiom provenance as code — **not started** (V)
+## Step 7 — axiom provenance as code — **done** (V)
 
 CI checks only that the six `axiom` declarations exist; it does not check *who uses them*. Add
 `#assert_axioms` (again over `collectAxioms`) and a `Paper/AxiomAudit.lean`:
@@ -242,28 +245,44 @@ CI checks only that the six `axiom` declarations exist; it does not check *who u
 The `README.md` provenance table becomes generated output. This is also what makes step 8 safe: an
 accidental axiom dependency introduced while rewriting proofs breaks the build immediately.
 
-## Step 8 — retire the plumbing — **not started** (R, V)
+## Step 8 — retire the plumbing — **(a) does not exist, (b) done where it concentrates, (c) not started** (R, V)
 
 The only step that rewrites proofs. One notion per commit, old names kept as `@[deprecated]`
 abbreviations until the last use is gone.
 
-1. **Redundant hypotheses.** Where an instance is in scope, `hκ` is `KMonoid.aleph0_le` and `hlam`
-   is `LMonoid.isRegular`. Try it on `Core/OrderUnit.lean` (29 declarations) and measure before
-   committing to the sweep; it should also account for a good share of the 804 `(κ := …)`.
-2. **Bundled subobjects.** `LSubmonoid lam X` and `KSubmonoid κ H` as structures with `SetLike` and
-   an `LMonoid` instance on the coercion, replacing `IsLSubset` plus `letI … .lmonoid`. This is the
-   single biggest readability win: `lemma_5_1`'s statement is currently eight lines, three of them
+1. ~~**Redundant hypotheses.**~~ **This was a mistake in the diagnosis, and there is nothing to do.**
+   The measurement counted occurrences of the string `hκ : ℵ₀ ≤ κ`. Classifying them instead: of the
+   106 in declarations, 100 are needed outright, and the six a classifier flags are false positives —
+   each uses `hκ` to *build* the very instance it would be redundant against (`projClass R κ hκ`,
+   `instKMonoidFreeK κ hκ B`, `freeClass Rl.R κ hκ`). `Core/OrderUnit.lean`, the file the plan named
+   as the pilot, contains no `hκ` at all: its `variable [KMonoid κ H]` already supplies it, which is
+   precisely the pattern the sweep was meant to introduce. The lesson is the obvious one — measure
+   the property, not a string that correlates with it.
+2. **Bundled subobjects — the concentrated half is done.** 42 of the 49
+   `letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (…)` sites were the *same* subset,
+   `add (x₁ + x₂)` at `κ = ℵ₀`, written out in every §5 statement and again in its proof.
+   `KMonoid.instLMonoidAddOf` makes it an instance and 39 copies go, leaving 18 sites over genuinely
+   different subsets. Sound because `IsLSubset` is a `Prop` (trap 13), so the instance is
+   definitionally what the `letI`s produced.
+
+   **Still to do:** `LSubmonoid lam X` and `KSubmonoid κ H` as structures with `SetLike` and an
+   `LMonoid` instance on the coercion, replacing `IsLSubset` generally — 80 `IsLSubset` and 18
+   `IsLSubmonoid` mentions across 17 files. This is the single biggest readability win left: `lemma_5_1`'s statement is currently eight lines, three of them
    instance plumbing, and the reader has to decode them before comparing with the paper. Note
    trap 13 — `IsLSubset` being a `Prop` is what makes `of_set_eq` a one-line `subst`; check the
    bundled version keeps that.
-3. **Bundled homomorphisms.** `IsLHom`/`IsKHom`/`IsLMonoidHom` become structures with `FunLike`,
-   `comp`, `id`, `ext`. This removes traps 7 and 12 outright — both are consequences of a `def` that
-   unfolds to a `∀` — and gives downstream users an API they can compose. 84 use sites.
+3. **Bundled homomorphisms — not started.** `IsLHom`/`IsKHom`/`IsLMonoidHom` become structures with
+   `FunLike`, `comp`, `id`, `ext`. This removes traps 7 and 12 outright — both are consequences of a
+   `def` that unfolds to a `∀` — and gives downstream users an API they can compose. Sized: 119
+   mentions (`IsKHom` 61, `IsLMonoidHom` 35, `IsLHom` 23) across 11 files, but only 6 anonymous
+   constructors; the bulk of the work is renaming `.1`/`.2` to `map_zero`/`map_ksum` and turning
+   `IsLMonoidHom`'s direct application `hf hι x` into `hf.map_lsumOf hι x`. `IsKHom.comp` and
+   `IsKHom.id'` already exist, added by step 9.
 
 **Cost:** three or four sessions, and the only step where a proof can break. Steps 6–7 exist partly
 to make it verifiable: the index and the axiom assertions both have to keep passing.
 
-## Step 9 — universe-generalise `IsUniversalKExtension` — **not started** (R)
+## Step 9 — universe-generalise `IsUniversalKExtension` — **done** (R)
 
 `universal` quantifies over test objects in the same universe as the extension (trap 8). `README.md`
 already records that `extend_lhom` works for a `K` in any universe, so this is a change to the
@@ -315,6 +334,16 @@ What the four commits achieved, measured on the tree afterwards:
 | Enforced invariants in CI | sorry-free, axiom list | + the layering |
 | Paper correspondence | three prose tables, two entries stale | `Paper/`, 97 checked index entries and §5 restated |
 
-Steps 7 (axiom provenance as code), 8 (bundled subobjects and homomorphisms, the redundant `hκ`
-and `hlam` hypotheses) and 9 (universe-generalise `universal`) remain.  Step 8 is the one that
-rewrites proofs, and the one with the largest remaining payoff for both goals.
+Steps 7 and 9 are done, and step 8 in the one place it concentrated.  What remains is the general
+bundling — subobjects (`IsLSubset` → a `SetLike` structure) and homomorphisms (`IsKHom` and friends
+→ structures with `FunLike`) — which is a proof-rewriting job of about 200 sites across 17 files,
+and wants its own session now that the axiom audit of step 7 is there to catch a proof that quietly
+changes what it depends on.
+
+| | before steps 7–9 | after |
+|---|---|---|
+| Axiom provenance | prose in `README.md` | 43 `#assert_axioms`, checked, non-vacuous |
+| Test objects of a universal property | the extension's own universe | a parameter |
+| Examples 4.8(1) | a documented deviation | `krsa_ascent_iso`, the paper's statement |
+| Documented deviations | four | three |
+| `letI := IsLSubset.lmonoid …` | 55 | 18 |

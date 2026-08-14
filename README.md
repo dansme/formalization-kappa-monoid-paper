@@ -103,9 +103,12 @@ proof sketch it stands for:
 | `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` |
 | `kaplansky_classical` (A6) | Kaplansky's theorem: every projective module is a direct sum of countably generated projective modules | `kaplansky`, and through it Cor. 4.5 and Cor. 4.7 |
 
-The list is enforced: `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
+The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
 declarations under `KappaMonoid/` differs from the six above, so adding one means editing the
-workflow and this table in the same commit.
+workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 43
+headline results, exactly which of the six each one uses — with `#assert_axioms`, a command over
+`collectAxioms` that fails both when a result gains an axiom and when it loses one. The paragraphs
+below are therefore checked, not merely written.
 
 A1 is stated in the *generation* form rather than the two-bases form because the complement
 appearing in Example 2.13 is merely projective, not free, so there is no second basis to compare

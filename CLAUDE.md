@@ -87,8 +87,10 @@ questions a build would answer, without a build. Prefer it throughout.
   hypotheses are threaded through statements with `letI`, repeated verbatim at the top of the
   tactic proof.
 - **No new axioms without asking.** The six assumed classical results (A1–A6) all live in
-  `KappaMonoid/Axioms/` and are documented in `README.md`; run `#print axioms` on new headline
-  results and keep that table in step. §3 needs no axiom at all. CI enforces the list — `.github/workflows/lean_action_ci.yml` fails if the set of
+  `KappaMonoid/Axioms/` and are documented in `README.md`. A new headline result gets a line in
+  `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo [bergmanDicksData]`, or `[]` for the
+  usual case — which is checked by the build and fails in both directions, so it also tells you when
+  a refactor has *removed* a dependency. §3 needs no axiom at all. CI enforces the list — `.github/workflows/lean_action_ci.yml` fails if the set of
   `axiom` declarations under `KappaMonoid/` changes, so a deliberate addition means editing the
   expected list there *and* the `README.md` table in the same commit.
 - **Deviations from the paper are documented twice**: in the docstring of the affected result and
@@ -161,6 +163,12 @@ re-deriving them.
 14. **`tsum` is cross-universe friendly**: `Equiv.tsum_eq` and the `ENNReal.tsum_*` lemmas accept
     index types in different universes, which is what lets an `ℕ`-indexed construction be
     transported to `ι : Type u`.
+
+15. **Carry a repeated `letI` as an instance.** `add x` at `κ = ℵ₀` had its `LMonoid` structure
+    written out by hand in 42 statements before `KMonoid.instLMonoidAddOf`. Because `IsLSubset` is a
+    `Prop` (trap 13), two such structures are definitionally equal, so promoting one to an instance
+    is free — no proof that relied on the defeq moves. Check the head is specific enough (`↥(addOf
+    …)`) that instance search is not slowed.
 
 ## Where things live
 
