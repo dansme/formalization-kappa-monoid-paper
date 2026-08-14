@@ -110,9 +110,11 @@ non-cyclicity hypothesis, and is where `H` being non-cyclic first bites.
   is a standing assumption of §5 and the `α = ℵ₀` case genuinely needs it — that is where
   `t = m' x₁ + n' x₂` comes from, and with `NoMixedForms` that `m'`, `n'` are finite.
 
-  The supporting machinery is in `Section5.lean`: fibre splitting and counting on `FormIdx`
+  The supporting machinery is in `Section5/Braided.lean`: fibre splitting and counting on `FormIdx`
   (`fiber_elim`, `finsum_fiber_const`, `ncard_nats_div`, …), `coe_finsum_mem` for computing a
-  submonoid `finsum` in `H`, and `addOf_add_mem` / `addOf_nsmul_mem`.
+  submonoid `finsum` in `H`, and `addOf_add_mem` / `addOf_nsmul_mem`. What of it is general — the
+  fibres of `j ↦ j / d` and three `finsum` facts — was later lifted into
+  `ForMathlib/NatBlocks.lean` and `ForMathlib/Finprod.lean`.
 - **(4) — done**, and it also needed the generation hypothesis `hgen` added to the scaffold's
   statement. The paper cuts its single well-order at one ordinal `α`; `BraidingData` has countably
   many `ω`-chains instead, so the cut becomes a **rectangle**: choose a finite set `A` of chains and
@@ -143,7 +145,7 @@ The main result, in both directions, with the two indices symmetric (`Cond1 x₁
 that from Corollary 4.6, a quoted result which this development bundles into axiom A5 rather than
 derives, so it is not recoverable from `∀ I, Module.Projective R I` here. Both sides of the
 equivalence carry it; for a hereditary ring it is automatic. `corollary_4_7_one_forward` now returns
-it (`bd.sumOfFG`). Documented in `README.md` under "The hypothesis added to Theorem 5.3".
+it (`bd.sumOfFG`). Documented in `README.md` under "The statements corrected in Section 5".
 
 **Forward** (`theorem_5_3_forward`): Lemma 5.1 gives the braiding, (iii) is 5.2(1), (ii) is 5.2(4),
 and (i) is `cond1_of_braidedOver`, whose counting step `mem_addOf_of_braidedForms_top` is the
@@ -219,8 +221,9 @@ bookkeeping on top of Theorem 5.3, plus Proposition 5.4 for part (3)'s trace for
 
 Two of the parts assert **"the converse is not true"** with the same witness: `H := ℕ₀² ∪ {∞}`,
 the trivial `ℵ₀`-extension of `ℕ₀²` with `x₁ = (1,0)`, `x₂ = (0,1)`. That is Example 2.3(1),
-already formalised as `TrivExt.instKMonoid` in `KappaMonoid/Examples.lean`, so the scaffold builds
-`H` outright and leaves only `cex_incomparable`, `cex_absorb` and `cex_unique_infinite` open.
+already formalised as `TrivExt.instKMonoid` in `KappaMonoid/Section2/Examples.lean`, so the
+scaffold builds `H` outright and leaves only `cex_incomparable`, `cex_absorb` and
+`cex_unique_infinite` open.
 
 **Done** — and they paid for themselves: they are what exposed the encoding error in step 1.
 `corollary_5_5_two_unique` and `corollary_5_5_three_absorb` are proved too, both from
@@ -234,9 +237,10 @@ which is why both carry it as `_hgen`.
 The three `corollary_5_5_*` statements are proved.  (1) is pure monoid theory on top of Theorem 5.3.
 (2) and (3) go through Proposition 5.4: for (2), each generator lying in `add` of the other makes
 both trace ideals `R`, and the hereditary half then gives freeness; for (3), Theorem 5.3(i) for the
-ordered pair `(x₂, x₁)` is what forces `β` finite.  Helpers introduced here: `map_cmul_of_isKHom`,
-`addOf_subset_of_mem`, `rep_cmul_top_dsum`, `traceIdeal_eq_top_of_addLe` and
-`cmul_top_eq_unitClass_of_free`.
+ordered pair `(x₂, x₁)` is what forces `β` finite.  Helpers introduced here:
+`KMonoid.IsKHom.map_cmul` (`Basic.lean`), `addOf_subset_of_mem` (`Section5/Braided.lean`), and
+`rep_cmul_top_dsum`, `traceIdeal_eq_top_of_addLe`, `cmul_top_eq_unitClass_of_free`
+(`Section5/Trace.lean`).
 
 ## Dependency order
 
@@ -251,6 +255,16 @@ Step 5 is independent of steps 1–4 and can be done in parallel; it only meets 
 ## Status
 
 No `sorry`s; `KappaMonoid/Section5/` is part of the root target.
+
+The section was written as one 3500-line `Section5.lean` and split afterwards, along the steps
+above: `Forms.lean` (step 1), `Braided.lean` (steps 2–3), `Realization.lean` (step 4),
+`Trace.lean` (step 5), `Corollary55.lean` and `Counterexample.lean` (step 6), with
+`KappaMonoid/Section5.lean` reduced to the header and the six imports. Three pieces with no
+`κ`-monoid content came out of it at the same time and now live in `KappaMonoid/ForMathlib/`, where
+they no longer rebuild with the development: `TraceIdeal.lean` (step 5), `NatBlocks.lean`
+(`Nat.blockIdx` and the fibres of `j ↦ j / d`, from steps 3–4) and `Finprod.lean`. Leaving them in
+a §5 leaf file to dodge a `Basic.lean` rebuild was the wrong trade, and undoing it cost a refactor —
+the lesson is recorded at the foot of `CLAUDE.md`.
 
 Everything is closed with no axiom beyond the A5 already inside Corollary 4.7(1), which
 Theorem 5.3 and Corollary 5.5 inherit; `sumOf_familyOfForm`, `exists_form`, all of Lemma 5.2, the

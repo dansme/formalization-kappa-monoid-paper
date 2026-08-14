@@ -2,8 +2,10 @@
 
 A record of how §3 of Nazemian–Smertnig was formalised, and of what was left out.
 
-Baseline: branch `simplify`. `lake build` is green and `sorry`-free with every §3 file imported —
-§3 is complete; see "What is missing" for the two deliberate omissions and one loose end.
+`lake build` is green and `sorry`-free with every §3 file imported — §3 is complete; see "What is
+missing" for the two deliberate omissions and one loose end. The §3-specific material is in
+`KappaMonoid/Section3/` (`Diophantine.lean`, `Reals.lean`); the braiding theory it rests on is core,
+in `Braiding.lean` and `Universal.lean`.
 
 Paper source: `kappa_monoids.tex` / `kappa_monoids.pdf`.
 
@@ -57,8 +59,8 @@ And, in `Universal.lean`:
 
 ## What is missing
 
-Nothing: §3 is complete and `sorry`-free, `KappaMonoid/Reals.lean` included. Two things are left
-open on purpose, and one is a loose end worth recording:
+Nothing: §3 is complete and `sorry`-free, `KappaMonoid/Section3/Reals.lean` included. Two things
+are left open on purpose, and one is a loose end worth recording:
 
 1. **Lemma 3.4(2)(3), Lemma 3.5, Remark 3.16** — deliberately absent, see above and below.
 2. The *braiding* half of the counterexample to Prop. 3.14(2) — only the failure of saturation is

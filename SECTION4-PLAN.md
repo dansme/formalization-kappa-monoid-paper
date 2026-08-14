@@ -97,6 +97,12 @@ induced `LMonoid ℵ₀` instances are definitionally equal and `subst` closes t
 
 (ii) ⇒ (iii) is trivial and needs no separate statement.
 
+§5 later **widened the conclusion**: `corollary_4_7_one_forward` now also returns
+`EveryProjectiveIsSumOfFG R`, which costs nothing because `bd.sumOfFG` is already in hand at step 3
+and is exactly what Theorem 5.3 and Corollary 5.5 need alongside hereditariness — Corollary 4.6,
+the implication that would supply it from hereditariness alone, is quoted here rather than
+formalised (step 5). See `README.md`, "The statements corrected in Section 5".
+
 Two elaboration lessons from this step, both now trap entries in `CLAUDE.md` (12, 13): a term whose
 type is a `def` that unfolds to a `∀` gets its implicit arguments inserted eagerly when the expected
 type is not syntactically a `∀`, which breaks `exact h` against an `∈`-goal (`show` the unfolded form

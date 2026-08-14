@@ -14,8 +14,12 @@ lake build                          # root target: must stay green and sorry-fre
 lake exe cache get                  # after any manifest bump, before lake build
 ```
 
+The toolchain and Mathlib are pinned to `v4.33.0`; do not run `lake update` — bumps go through
+`.github/workflows/update.yml`, by hand, as their own commit.
+
 A scaffold file joins `KappaMonoid.lean` in the same commit that removes its last `sorry`, so the
-root build is always sorry-free.  As of §5 there is no scaffold left: every file is imported.
+root build is always sorry-free.  As of §5 there is no scaffold left: every file is imported, and
+CI rejects a `sorry` in the root target.
 
 ## Working efficiently
 
@@ -83,10 +87,12 @@ questions a build would answer, without a build. Prefer it throughout.
   `axiom` declarations under `KappaMonoid/` changes, so a deliberate addition means editing the
   expected list there *and* the `README.md` table in the same commit.
 - **Deviations from the paper are documented twice**: in the docstring of the affected result and
-  in a `README.md` section. Two exist so far — the `IsConical` hypothesis in Theorem 3.11 and the
-  `IsSaturatedFin` hypothesis in Proposition 3.14(2), the latter with a formalised counterexample
-  showing the paper's claim is false. When the paper is wrong, formalise the repaired statement and
-  say so; do not quietly weaken or restate it.
+  in a `README.md` section. Four exist so far — the `IsConical` hypothesis in Theorem 3.11; the
+  `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a formalised counterexample showing the
+  paper's claim is false; the universe-corrected form of Examples 4.8(1) (trap 8); and the six
+  statements corrected in §5, chiefly `EveryProjectiveIsSumOfFG R` carried alongside hereditariness,
+  because Corollary 4.6 is quoted rather than formalised. When the paper is wrong, formalise the
+  repaired statement and say so; do not quietly weaken or restate it.
 
 ## Elaboration traps
 
