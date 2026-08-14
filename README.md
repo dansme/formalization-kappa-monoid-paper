@@ -22,15 +22,15 @@ assumed classical results, or — since the core no longer says `import Mathlib`
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
 | `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `Diophantine` (**Examples 3.3(1)**, §3.2: **Proposition 3.14**, **Example 3.15**), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
-| `KappaMonoid/Axioms/` | Mathlib | The five classical results assumed rather than proved, split by layer: `Monoid` (A2, A4), `Modules` (A3, A5, A6) — see below |
+| `KappaMonoid/Axioms/` | Mathlib | The four classical results assumed rather than proved, split by layer: `Monoid` (A2, A4), `Modules` (A5, A6) — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
 
 `Forms`, `Prelim`, `Lemma52` and `Counterexample` are pure monoid theory: §5's braiding material
 mentions no module and uses no axiom.  The module theory enters at `Lemma51`.
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
-proved, `sorry`-free, subject only to the three §2 axioms below (A2–A4; A5 is used nowhere in the
-checked build).  A1 was a fourth until it was proved — see "The assumed results".
+proved, `sorry`-free, subject only to the two §2 axioms below (A2 and A4; A5 is used nowhere in the
+checked build).  A1 and A3 were assumed until they were proved — see "The assumed results".
 
 **Section 3 is complete.** Every definition, lemma, proposition and example of §3 is stated and
 proved, `sorry`-free and axiom-free — including Theorem 3.11 and its converse, all of Examples 3.3,
@@ -89,8 +89,8 @@ and only record what is specific to their subject.
 
 ## The assumed results
 
-Five classical theorems are taken as axioms in `KappaMonoid/Axioms/`, split by layer —
-`Monoid.lean` (A2, A4) and `Modules.lean` (A3, A5, A6), so that a file needing only the
+Four classical theorems are taken as axioms in `KappaMonoid/Axioms/`, split by layer —
+`Monoid.lean` (A2, A4) and `Modules.lean` (A5, A6), so that a file needing only the
 monoid-theoretic assumptions does not import the module-theoretic ones.  Each carries the standard
 proof sketch it stands for:
 
@@ -98,14 +98,13 @@ proof sketch it stands for:
 |---|---|---|
 | `leavittData` (A2) | Leavitt's realisation of the cyclic monoids `C_{m,n}` | `prop_2_16` |
 | `cyclicMonoidClassification` (A4) | every cyclic monoid is `ℕ₀` or `C_{m,n}` | `prop_2_16` |
-| `mk_multiplicity_eq` (A3) | uniqueness of the multiplicities of simple modules, infinite multiplicities included | `prop_2_17_one` |
 | `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` |
 | `kaplansky_classical` (A6) | Kaplansky's theorem: every projective module is a direct sum of countably generated projective modules | `kaplansky`, and through it Cor. 4.5 and Cor. 4.7 |
 
 The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
-declarations under `KappaMonoid/` differs from the five above, so adding one means editing the
+declarations under `KappaMonoid/` differs from the four above, so adding one means editing the
 workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 43
-headline results, exactly which of the five each one uses — with `#assert_axioms`, a command over
+headline results, exactly which of the four each one uses — with `#assert_axioms`, a command over
 `collectAxioms` that fails both when a result gains an axiom and when it loses one. The paragraphs
 below are therefore checked, not merely written.
 
@@ -125,9 +124,20 @@ against; the familiar two-bases statement is `mk_eq_mk_of_infinite`, derived fro
 depends on nothing in this development and is the natural shape for upstreaming: a
 `RankCondition`-free `Basis.le_span` for infinite bases.
 
-The assumptions are contained.  `#print axioms prop_2_16` reports exactly A2 and A4;
-`prop_2_17_one` reports exactly A3; Example 2.13's `isFaithful_unitClass` now reports **no axiom at
-all**, which is what retiring A1 bought.
+**A3 was the fifth, and is now proved too.**  Uniqueness of the multiplicities of simple modules —
+if `⨁ A i ≅ ⨁ B j` with all summands simple, each isomorphism class occurs the same number of
+times on both sides, infinite multiplicities included — is
+`SimpleMultiplicity.mk_multiplicity_eq` in `KappaMonoid/ForMathlib/SimpleMultiplicity.lean`.  The
+argument is the classical one: apply `Hom_R(S, -)` for a simple `S`.  It turns the direct sum into
+a direct sum (`ForMathlib/HomDirectSum.lean` — Hom out of a *cyclic* module commutes with direct
+sums, which Mathlib does not have; it has only the easy direction, Hom out of a sum being a
+product), each summand contributes `End_R(S)` or `0` by Schur, and rank over the division ring
+`End_R(S)` is well defined.  `Module.End R S` acts on `S →ₗ[R] M` on the right, so the rank is
+taken over `(Module.End R S)ᵐᵒᵖ`.
+
+The assumptions are contained.  `#print axioms prop_2_16` reports exactly A2 and A4; and
+`prop_2_17_one`, along with Example 2.13's `isFaithful_unitClass`, now reports **no axiom at all** —
+which is what retiring A1 and A3 bought.
 Note that `multMap_injective` needs *no* axiom: the converse of A3 — that equal multiplicities
 force an isomorphism — is proved, not assumed.  **Everything else — including
 Theorems 3.11 and 4.3, Proposition 2.9, Lemmas 2.14 and 2.15, and even

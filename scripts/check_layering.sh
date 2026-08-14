@@ -14,7 +14,7 @@ fail=0
 # 1. Import discipline: which layers a file may import from.
 allowed() {                      # $1 = layer of the importing file
   case "$1" in
-    ForMathlib) echo "" ;;
+    ForMathlib) echo "ForMathlib" ;;
     Core)       echo "ForMathlib Core" ;;
     Braiding)   echo "ForMathlib Core Braiding" ;;
     Examples)   echo "ForMathlib Core Braiding Examples" ;;

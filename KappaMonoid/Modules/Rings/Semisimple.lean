@@ -14,7 +14,7 @@ by its multiplicity function, and `V^κ(R)` is the `κ`-monoid of such functions
 -/
 import KappaMonoid.Modules
 import KappaMonoid.Core.Cardinal
-import KappaMonoid.Axioms.Modules
+import KappaMonoid.ForMathlib.SimpleMultiplicity
 
 universe u
 
@@ -89,7 +89,7 @@ theorem multOf_eq {J J' : Type u} {A : J → Type u} {B : J' → Type u}
     (hA : ∀ j, IsSimpleModule R (A j)) (hB : ∀ j, IsSimpleModule R (B j))
     (e : (⨁ j, A j) ≃ₗ[R] (⨁ j, B j)) (i : Fin n) :
     multOf L A i = multOf L B i :=
-  mk_multiplicity_eq hA hB e (L.S i)
+  SimpleMultiplicity.mk_multiplicity_eq hA hB e (L.S i)
 
 end Mult
 

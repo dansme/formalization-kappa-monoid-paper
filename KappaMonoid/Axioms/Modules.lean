@@ -1,6 +1,8 @@
 /-
-**A3** uniqueness of the multiplicities of simple modules, **A5** the Bergman-Dicks realisation
-theorem, and **A6** Kaplansky's theorem.
+**A5** the Bergman-Dicks realisation theorem and **A6** Kaplansky's theorem.
+
+A3 — uniqueness of the multiplicities of simple modules — was here until it was proved, in
+`ForMathlib/SimpleMultiplicity.lean`.
 -/
 import Mathlib
 
@@ -10,21 +12,6 @@ open Cardinal DirectSum
 
 namespace KappaMonoid
 
-
-/-! ## A3: uniqueness of the multiplicities of simple modules -/
-
-/-- **Assumed**: in a decomposition into simple modules the multiplicity of each isomorphism
-class is uniquely determined, infinite multiplicities included.
-
-Jordan–Hölder gives the finite case; the infinite case is the classical cardinal-counting
-extension.  Only *uniqueness* is assumed here — the companion existence statement, that every
-module over a semisimple ring is a direct sum of simple modules, is available in Mathlib. -/
-axiom mk_multiplicity_eq {R : Type u} [Ring R] {I J : Type u} {A : I → Type u} {B : J → Type u}
-    [∀ i, AddCommGroup (A i)] [∀ i, Module R (A i)]
-    [∀ j, AddCommGroup (B j)] [∀ j, Module R (B j)]
-    (_hA : ∀ i, IsSimpleModule R (A i)) (_hB : ∀ j, IsSimpleModule R (B j))
-    (_e : (⨁ i, A i) ≃ₗ[R] (⨁ j, B j)) (S : Type u) [AddCommGroup S] [Module R S] :
-    #{i // Nonempty (A i ≃ₗ[R] S)} = #{j // Nonempty (B j ≃ₗ[R] S)}
 
 /-! ## A5: the Bergman–Dicks realisation theorem -/
 

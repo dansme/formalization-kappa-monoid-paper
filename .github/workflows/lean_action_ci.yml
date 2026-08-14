@@ -48,7 +48,6 @@ jobs:
           cyclicMonoidClassification
           kaplansky_classical
           leavittData
-          mk_multiplicity_eq
           EOF
           # the identifier must be followed by a binder or a colon, so that a docstring line
           # wrapping onto the word "axiom" is not counted as one
