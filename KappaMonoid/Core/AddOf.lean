@@ -54,6 +54,22 @@ theorem addOf_isLSubset (hκ : ℵ₀ ≤ κ) (x : H) : IsLSubset ℵ₀ hκ (ad
         (fun _ => le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ) (le_trans hlt.le hκ) x]
     exact cmul_congr hm _ hmκ x
 
+/-- The `ℵ₀⁻`-monoid structure on `add x`, as an instance.
+
+Section 5 states nearly everything over `add (x₁ + x₂)`, and each such statement used to open with
+
+    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
+repeated verbatim in the statement and again at the top of the proof — 42 times across the
+development.  Since `IsLSubset` is a `Prop` (trap 13), any two such structures are *definitionally*
+equal, so making this an instance changes nothing about the mathematics and lets instance search
+carry what the `letI`s were carrying by hand. -/
+noncomputable instance instLMonoidAddOf {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H] (x : H) :
+    LMonoid ℵ₀ ↥(addOf (κ := (ℵ₀ : Cardinal.{u})) x) :=
+  IsLSubset.lmonoid Cardinal.isRegular_aleph0 (addOf_isLSubset le_rfl x)
+
+
 /-- `x ∈ add x`: take one copy of `x` and the summand `0`. -/
 theorem self_mem_addOf (x : H) : x ∈ addOf (κ := κ) x :=
   ⟨0, 1, by rw [add_zero, cmul_natCast, one_nsmul]⟩

@@ -299,7 +299,7 @@ so the members must be produced there.  `hmem` is that side condition, discharge
 def BraidedForms (x₁ x₂ : H) (F G : Form)
     (hF : ∀ n, familyOfForm x₁ x₂ F n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hG : ∀ n, familyOfForm x₁ x₂ G n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) : Prop :=
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   IsBraided ℵ₀ (ι := FormIdx.{u})
     (fun n => (⟨familyOfForm x₁ x₂ F n, hF n⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
     (fun n => (⟨familyOfForm x₁ x₂ G n, hG n⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))

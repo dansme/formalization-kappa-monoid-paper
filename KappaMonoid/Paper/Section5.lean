@@ -85,7 +85,6 @@ theorem lemma_5_1 (S : Setting5 H) (R : Type u) [Ring R] (hfg : EveryProjectiveI
     (e : H → (projClass R ℵ₀ le_rfl).carrier)
     (hhom : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl; IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
-    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (addOf_isLSubset (κ := ℵ₀) le_rfl (S.x₁ + S.x₂))
     IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H le_rfl (fun y => (y : H)) :=
   TwoGen.lemma_5_1 R hfg S.x₁ S.x₂ S.gen S.noncyclic e hhom hbij
 
@@ -138,8 +137,7 @@ theorem lemma_5_2_four (S : Setting5 H) (hmem : S.x₁ ∉ addOf (κ := ℵ₀) 
 
 /-- **Lemma 5.2(5)**.  Given the braiding of Lemma 5.1, `x₁ ∈ add x₂` iff `ℵ₀(x₁+x₂) = ℵ₀x₂`. -/
 theorem lemma_5_2_five (S : Setting5 H)
-    (hbr : letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (addOf_isLSubset (κ := ℵ₀) le_rfl (S.x₁ + S.x₂))
-      IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H le_rfl (fun y => (y : H))) :
+    (hbr :      IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H le_rfl (fun y => (y : H))) :
     S.x₁ ∈ addOf (κ := ℵ₀) S.x₂ ↔
       cmul (κ := ℵ₀) ℵ₀ le_rfl (S.x₁ + S.x₂) = cmul (κ := ℵ₀) ℵ₀ le_rfl S.x₂ :=
   TwoGen.lemma_5_2_five S.x₁ S.x₂ hbr

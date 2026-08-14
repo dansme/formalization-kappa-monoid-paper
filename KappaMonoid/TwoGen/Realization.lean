@@ -74,14 +74,13 @@ theorem ksum_familyOfForm (F : Form) :
 This is what turns the hypothesis of Theorem 5.3's forward direction into the input of Lemma
 5.2. -/
 theorem braidedForms_of_braidedOver
-    (hbr : letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    (hbr :
       IsBraidedOver ℵ₀ ℵ₀ ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) H le_rfl (fun y => (y : H)))
     (F G : Form) (heq : eval x₁ x₂ F = eval x₁ x₂ G)
     (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hGm : ∀ i, familyOfForm x₁ x₂ G i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
     BraidedForms x₁ x₂ F G hFm hGm := by
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   have hsum : (KMonoid.ksum (κ := ℵ₀) fun i =>
         ((⟨familyOfForm x₁ x₂ F (formIdxEquiv.{u}.symm i), hFm _⟩ :
           ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H))
@@ -130,8 +129,7 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
     (hbr : BraidedForms x₁ x₂ ((n : ℕ∞), ⊤) ((⊤ : ℕ∞), ⊤) hFm hGm) :
     x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂ := by
   classical
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₂ x₁ (add_comm x₁ x₂)
   obtain ⟨D⟩ := hbr
@@ -210,7 +208,7 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
 /-- Condition (i) of Theorem 5.3 holds as soon as `H` is braided over `add (x₁ + x₂)`: the
 counting step gives `x₁ ∈ add x₂`, and then `ℵ₀ x₂` absorbs `ℵ₀ x₁`. -/
 theorem cond1_of_braidedOver
-    (hbr : letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+    (hbr :
       IsBraidedOver ℵ₀ ℵ₀ ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) H le_rfl (fun y => (y : H))) :
     Cond1 x₁ x₂ := by
   intro n hn
@@ -241,8 +239,7 @@ theorem theorem_5_3_forward (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfF
     Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂ := by
   classical
   letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   -- invert the isomorphism and feed Lemma 5.1
   obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
       Function.LeftInverse g e ∧ Function.RightInverse g e :=
@@ -295,8 +292,7 @@ theorem braidedForms_swap {F G : Form}
     (hFm' : ∀ i, familyOfForm x₁ x₂ (F.2, F.1) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hGm' : ∀ i, familyOfForm x₁ x₂ (G.2, G.1) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
     BraidedForms x₁ x₂ (F.2, F.1) (G.2, G.1) hFm' hGm' := by
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   have hmemF : ∀ i, familyOfForm x₂ x₁ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) := by
     intro i
     rw [← addOf_add_swap x₁ x₂]
@@ -336,8 +332,7 @@ theorem braidedForms_of_finite_relation (m k m' k' : ℕ)
     (hGm : ∀ i, familyOfForm x₁ x₂ ((m' : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
     BraidedForms x₁ x₂ ((m : ℕ∞), ⊤) ((m' : ℕ∞), ⊤) hFm hGm := by
   classical
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   have hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₁ x₂ rfl
   have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
@@ -447,8 +442,7 @@ theorem braidedForms_of_snd_top (hc1 : Cond1 x₁ x₂) (hc2 : Cond2 x₁ x₂)
     (hFm : ∀ i, familyOfForm x₁ x₂ (α, ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hGm : ∀ i, familyOfForm x₁ x₂ (β, ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
     BraidedForms x₁ x₂ (α, ⊤) (β, ⊤) hFm hGm := by
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   by_cases hmem : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂
   · exact lemma_5_2_three x₁ x₂ hmem hmix hgen α β hFm hGm
   -- an infinite coefficient against a finite one would force `x₁ ∈ add x₂`
@@ -481,8 +475,7 @@ theorem braidedForms_of_mixed (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁)
     (hFm : ∀ i, familyOfForm x₁ x₂ (α, ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hGm : ∀ i, familyOfForm x₁ x₂ ((⊤ : ℕ∞), (n : ℕ∞)) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
     BraidedForms x₁ x₂ (α, ⊤) ((⊤ : ℕ∞), (n : ℕ∞)) hFm hGm := by
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₂, x₁} : Set H) := by
     rwa [Set.pair_comm]
   have hmix' := noMixedForms_swap x₁ x₂ hmix
@@ -531,8 +524,7 @@ theorem braidedForms_of_conditions (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x�
     (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hGm : ∀ i, familyOfForm x₁ x₂ G i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
     BraidedForms x₁ x₂ F G hFm hGm := by
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₂, x₁} : Set H) := by
     rwa [Set.pair_comm]
   have hmix' := noMixedForms_swap x₁ x₂ hmix
@@ -689,13 +681,12 @@ This is the step the paper compresses into "hence `add (x₁ + x₂) = ⟨x₁, 
 theorem exists_braided_form (hmix : NoMixedForms x₁ x₂)
     (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
     (a : Idx (ℵ₀ : Cardinal.{u}) → ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
-    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
     ∃ A B : ℕ∞, IsBraided ℵ₀ a
       (fun i => (⟨familyOfForm x₁ x₂ (A, B) (formIdxEquiv.{u}.symm i),
         familyOfForm_mem x₁ x₂ _ _⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) := by
   classical
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   -- a finite form for each member
   choose F hFfin hFeq using fun μ => exists_finite_form_of_mem x₁ x₂ hmix hgen (a μ).2
   set μof : ℕ → Idx (ℵ₀ : Cardinal.{u}) := fun k => idxEquivNats.{u}.symm (ULift.up k) with hμof
@@ -805,8 +796,7 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
       ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
         KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e := by
   classical
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
+
   letI := KMonoid.toLMonoidOfLE H Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{u}))
   refine corollary_4_7_one_forward le_rfl k (x₁ + x₂) ?_
   -- `add (x₁ + x₂)` contains both generators, hence generates `H`
