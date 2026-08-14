@@ -43,4 +43,4 @@ import KappaMonoid.Modules.Rings.Semisimple
 import KappaMonoid.Modules.Corollary47
 import KappaMonoid.Examples
 import KappaMonoid.TwoGen
-import KappaMonoid.Paper.Definition21
+import KappaMonoid.Paper
