@@ -22,6 +22,7 @@ The development is layered by subject, and each layer is an entry point of its o
 `Core/` and the monoid-theoretic half of `Braiding/`, `Examples/` and `TwoGen/` mention no module
 and use no axiom; `Paper/` is what to read against the PDF.
 -/
+import KappaMonoid.ForMathlib.CyclicMonoid
 import KappaMonoid.ForMathlib.Finprod
 import KappaMonoid.ForMathlib.FreeRank
 import KappaMonoid.ForMathlib.HomDirectSum

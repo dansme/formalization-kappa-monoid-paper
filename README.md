@@ -16,21 +16,21 @@ assumed classical results, or — since the core no longer says `import Mathlib`
 
 | Layer | Depends on | Contents |
 |---|---|---|
-| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean` |
+| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, and the three retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4) |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
 | `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `Diophantine` (**Examples 3.3(1)**, §3.2: **Proposition 3.14**, **Example 3.15**), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
-| `KappaMonoid/Axioms/` | Mathlib | The four classical results assumed rather than proved, split by layer: `Monoid` (A2, A4), `Modules` (A5, A6) — see below |
+| `KappaMonoid/Axioms/` | Mathlib, ForMathlib | The three classical results assumed rather than proved, split by layer: `Monoid` (A2), `Modules` (A5, A6) — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
 
 `Forms`, `Prelim`, `Lemma52` and `Counterexample` are pure monoid theory: §5's braiding material
 mentions no module and uses no axiom.  The module theory enters at `Lemma51`.
 
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
-proved, `sorry`-free, subject only to the two §2 axioms below (A2 and A4; A5 is used nowhere in the
-checked build).  A1 and A3 were assumed until they were proved — see "The assumed results".
+proved, `sorry`-free, subject only to the one §2 axiom below (A2; A5 is used nowhere in the
+checked build).  A1, A3 and A4 were assumed until they were proved — see "The assumed results".
 
 **Section 3 is complete.** Every definition, lemma, proposition and example of §3 is stated and
 proved, `sorry`-free and axiom-free — including Theorem 3.11 and its converse, all of Examples 3.3,
@@ -89,22 +89,21 @@ and only record what is specific to their subject.
 
 ## The assumed results
 
-Four classical theorems are taken as axioms in `KappaMonoid/Axioms/`, split by layer —
-`Monoid.lean` (A2, A4) and `Modules.lean` (A5, A6), so that a file needing only the
-monoid-theoretic assumptions does not import the module-theoretic ones.  Each carries the standard
-proof sketch it stands for:
+Three classical theorems are taken as axioms in `KappaMonoid/Axioms/`, split by layer —
+`Monoid.lean` (A2) and `Modules.lean` (A5, A6), so that a file needing only the monoid-theoretic
+assumption does not import the module-theoretic ones.  Each carries the standard proof sketch it
+stands for:
 
 | Axiom | Statement | Used by |
 |---|---|---|
 | `leavittData` (A2) | Leavitt's realisation of the cyclic monoids `C_{m,n}` | `prop_2_16` |
-| `cyclicMonoidClassification` (A4) | every cyclic monoid is `ℕ₀` or `C_{m,n}` | `prop_2_16` |
 | `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` |
 | `kaplansky_classical` (A6) | Kaplansky's theorem: every projective module is a direct sum of countably generated projective modules | `kaplansky`, and through it Cor. 4.5 and Cor. 4.7 |
 
 The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
-declarations under `KappaMonoid/` differs from the four above, so adding one means editing the
+declarations under `KappaMonoid/` differs from the three above, so adding one means editing the
 workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 43
-headline results, exactly which of the four each one uses — with `#assert_axioms`, a command over
+headline results, exactly which of the three each one uses — with `#assert_axioms`, a command over
 `collectAxioms` that fails both when a result gains an axiom and when it loses one. The paragraphs
 below are therefore checked, not merely written.
 
@@ -135,9 +134,21 @@ product), each summand contributes `End_R(S)` or `0` by Schur, and rank over the
 `End_R(S)` is well defined.  `Module.End R S` acts on `S →ₗ[R] M` on the right, so the rank is
 taken over `(Module.End R S)ᵐᵒᵖ`.
 
-The assumptions are contained.  `#print axioms prop_2_16` reports exactly A2 and A4; and
-`prop_2_17_one`, along with Example 2.13's `isFaithful_unitClass`, now reports **no axiom at all** —
-which is what retiring A1 and A3 bought.
+**A4 was the fourth, and is now proved too.**  The classification of cyclic monoids — the map
+`k ↦ k • u` is either injective, or its kernel is the congruence `∼_{m,n}` of `C_{m,n}` — is
+`cyclicMonoidClassification` in `KappaMonoid/ForMathlib/CyclicMonoid.lean`, which is also where
+`CyclicRel` now lives.  Mathlib has nothing on the subject: `IsCyclic` is about groups.  The proof
+is the one the axiom's docstring described, with the step that argument glosses over made explicit:
+the set of periods at `m` is closed under *differences*, not merely under addition, so division with
+remainder and the minimality of `n` make it exactly the multiples of `n` — a submonoid of `ℕ`
+containing `n` would not be enough.  The formalised statement drops the generation hypothesis the
+axiom carried, since it is a statement about the kernel of `k ↦ k • u` and holds for any element of
+any commutative monoid; `prop_2_16` accordingly applies it to `u` itself rather than to the
+submonoid `u` generates.
+
+The assumptions are contained.  `#print axioms prop_2_16` reports exactly A2; and `prop_2_17_one`,
+along with Example 2.13's `isFaithful_unitClass`, now reports **no axiom at all** — which is what
+retiring A1, A3 and A4 bought.
 Note that `multMap_injective` needs *no* axiom: the converse of A3 — that equal multiplicities
 force an isomorphism — is proved, not assumed.  **Everything else — including
 Theorems 3.11 and 4.3, Proposition 2.9, Lemmas 2.14 and 2.15, and even
@@ -391,7 +402,7 @@ for a new Mathlib tag and files an issue if the update does not build.
 
 CI (`.github/workflows/lean_action_ci.yml`) does four things on every push: it builds the root
 target, fails if any declaration in it uses `sorry`, runs `scripts/check_layering.sh`, and fails if
-the set of `axiom` declarations under `KappaMonoid/` differs from the six in the table above.
+the set of `axiom` declarations under `KappaMonoid/` differs from the three in the table above.
 Documentation is generated by `docgen-action`.
 
 `scripts/check_layering.sh` is what keeps the layers honest — Lake resolves modules package-wide,

@@ -24,9 +24,9 @@ import KappaMonoid.Paper.Section5
 
 namespace KappaMonoid
 
-/-! ## §2 — the only section that uses A2 and A4 -/
+/-! ## §2 — the only section that uses A2 -/
 
-#assert_axioms prop_2_16 [leavittData, cyclicMonoidClassification]
+#assert_axioms prop_2_16 [leavittData]
 #assert_axioms prop_2_17_one []
 #assert_axioms Projective.isFaithful_unitClass []
 #assert_axioms Projective.isOrderUnit_unitClass []

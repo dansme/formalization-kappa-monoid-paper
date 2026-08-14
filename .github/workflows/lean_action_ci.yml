@@ -45,7 +45,6 @@ jobs:
         run: |
           cat > axioms.expected <<'EOF'
           bergmanDicksData
-          cyclicMonoidClassification
           kaplansky_classical
           leavittData
           EOF

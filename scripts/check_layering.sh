@@ -18,7 +18,7 @@ allowed() {                      # $1 = layer of the importing file
     Core)       echo "ForMathlib Core" ;;
     Braiding)   echo "ForMathlib Core Braiding" ;;
     Examples)   echo "ForMathlib Core Braiding Examples" ;;
-    Axioms)     echo "Axioms" ;;
+    Axioms)     echo "ForMathlib Axioms" ;;
     Modules)    echo "ForMathlib Core Braiding Axioms Modules" ;;
     TwoGen)     echo "ForMathlib Core Braiding Examples Axioms Modules TwoGen" ;;
     Paper)      echo "ForMathlib Core Braiding Examples Axioms Modules TwoGen Paper Meta" ;;
