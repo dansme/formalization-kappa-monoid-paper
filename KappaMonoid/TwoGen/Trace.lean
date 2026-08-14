@@ -335,7 +335,7 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
     fun a ha b c habc =>
       (projClass R ℵ₀ le_rfl).lambdaSmallPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
   obtain ⟨hp₁W, hp₂W⟩ := mem_of_divisorClosed_of_generates p₁ p₂ hWsat
-    ((corollary_4_5_three R ℵ₀ le_rfl hfg).1.kGenerates_coe) hgen hnoncyclic
+    ((corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1.kGenerates_coe) hgen hnoncyclic
   -- `V(R)` is closed under binary sums and finite multiples
   constructor
   · -- `Tr(P₁) = Tr(P₂)` forces both to be `R`, and every infinite form to be `ℵ₀ [R]`

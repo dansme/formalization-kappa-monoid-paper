@@ -67,8 +67,17 @@ alias corollary_4_7_1_corollary_4_7_one_forward := KappaMonoid.corollary_4_7_one
 /-- **Corollary 4.7(2)** — `KappaMonoid.corollary_4_7_two`, in `Modules/Corollary47.lean`. -/
 alias corollary_4_7_2_corollary_4_7_two := KappaMonoid.corollary_4_7_two
 
-/-- **Example 4.8(1)** — `KappaMonoid.krsa_ascent`, in `Modules/Corollary47.lean`. -/
+/-- **Example 4.8(1)** — `KappaMonoid.krsa_ascent`, in `Modules/Corollary47.lean`: `V^κ(C)` is
+`λ⁻`-braided over `F_{λ⁻}(B)`. -/
 alias example_4_8_1_krsa_ascent := KappaMonoid.krsa_ascent
+
+/-- **Example 4.8(1)**, the isomorphism `V^κ(C) ≅ F_κ(B)` the paper states —
+`KappaMonoid.krsa_ascent_iso`, in `Modules/Corollary47.lean`.  Expressible only since the test
+universe of `IsUniversalKExtension` became a parameter; the two sides live one universe apart. -/
+alias example_4_8_1_iso := KappaMonoid.krsa_ascent_iso
+
+/-- **Example 4.8(1)**, the `B`-indexed universal property — `KappaMonoid.krsa_ascent_free`. -/
+alias example_4_8_1_free := KappaMonoid.krsa_ascent_free
 
 
 /-! ## Not formalised, deliberately
@@ -79,10 +88,11 @@ alias example_4_8_1_krsa_ascent := KappaMonoid.krsa_ascent
   dimension (McGovern–Puninski–Rothmaler) — none of them monoid-theoretic and none in Mathlib.
   `corollary_4_6` is a documented stub, and `EveryProjectiveIsSumOfFG` is the hypothesis the six
   would supply.
-* **Examples 4.8(1)** is proved in a universe-corrected form: `V^κ(C) ≅ F_κ(B)` is not
-  expressible, since `F_κ(B)` lives one universe up.  `krsa_ascent` and `krsa_ascent_free` deliver
-  the universal property instead.  See `README.md`, "The statement corrected in Examples 4.8(1)".
-* **Examples 4.8(2)** is not formalised. -/
+* **Examples 4.8(2)** is not formalised.
+
+Examples 4.8(1) *is* formalised as printed, `V^κ(C) ≅ F_κ(B)` included (`krsa_ascent_iso`).  It was
+a documented deviation until the test universe of `IsUniversalKExtension` became a parameter: the
+two sides live one universe apart, and the old definition could not compare them. -/
 
 end Paper
 

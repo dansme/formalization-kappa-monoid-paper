@@ -5,7 +5,7 @@
 -/
 import KappaMonoid.Modules.Class
 
-universe u v w
+universe u v w t
 
 open Cardinal Function Set DirectSum
 open scoped Classical
@@ -1156,7 +1156,7 @@ theorem corollary_4_4 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ �
     letI := C.instKMonoid hκ
     letI := hSsub.lmonoid hlam
     IsBraidedOver lam κ S C.carrier hlk (fun a => (a : C.carrier)) ∧
-      IsUniversalKExtension lam κ S C.carrier hlk (fun a => (a : C.carrier)) := by
+      IsUniversalKExtension.{u, u, u, t} lam κ S C.carrier hlk (fun a => (a : C.carrier)) := by
   letI := C.instKMonoid hκ
   letI := hSsub.lmonoid hlam
   have h0S : (0 : C.carrier) ∈ S := hSsub.zero_mem

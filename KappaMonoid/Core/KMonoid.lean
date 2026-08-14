@@ -5,7 +5,7 @@ generation.
 -/
 import KappaMonoid.Core.LMonoid
 
-universe u v w
+universe u v w t
 
 open Cardinal Function Set
 
@@ -414,6 +414,19 @@ variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
 def IsKHom (κ : Cardinal.{u}) {H : Type v} {K : Type w} [KMonoid κ H] [KMonoid κ K]
     (f : H → K) : Prop :=
   f 0 = 0 ∧ ∀ x : Idx κ → H, f (ksum (κ := κ) x) = ksum (κ := κ) (f ∘ x)
+
+/-- `κ`-homomorphisms compose.  Stated across three independent universes, which is what
+`isUniversalKExtension_unique'` needs: a `have` inside a proof cannot be universe-polymorphic, so
+this has to be a lemma. -/
+theorem IsKHom.comp {K : Type w} {L : Type t} [KMonoid κ K] [KMonoid κ L] {g : H → K} {h : K → L}
+    (hg : IsKHom κ g) (hh : IsKHom κ h) : IsKHom κ (fun a => h (g a)) := by
+  refine ⟨by show h (g 0) = 0; rw [hg.1, hh.1], fun x => ?_⟩
+  show h (g (ksum (κ := κ) x)) = ksum (κ := κ) (fun i => h (g (x i)))
+  rw [hg.2 x, hh.2 (g ∘ x)]
+  rfl
+
+/-- The identity is a `κ`-homomorphism. -/
+theorem IsKHom.id' : IsKHom κ (fun a : H => a) := ⟨rfl, fun _ => rfl⟩
 
 /-- A `κ`-homomorphism commutes with sums over arbitrary small index types, not just `Idx κ`:
 pad along an embedding into `Idx κ` and use that `f 0 = 0`. -/

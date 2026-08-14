@@ -178,25 +178,28 @@ finite, so every linear form has a natural-number shadow and the cancellation ha
 and `prop_3_14_two_of_ineqs_empty` is Proposition 3.14(2) for such a system with no hypothesis
 beyond `sys.ineqs = ∅`. So the correction to the paper is confined to inequalities.
 
-## The statement corrected in Examples 4.8(1)
+## Examples 4.8(1), and the universe that used to block it
 
-Examples 4.8(1) concludes `V^κ(C) ≅ F_κ(B)`: if every module in `C` is a direct sum of `λ⁻`-small
-ones and `V^{λ⁻}(C_{λ⁻})` is free on `B`, then `V^κ(C)` is the free `κ`-monoid on `B`. That
-*isomorphism* is not expressible here. `F_κ(B)` is cut out of `B → F_κ`, so it lives in
-`Type (u+1)`, while `V^κ(C)` lives in `Type u`; and the `universal` field of
-`IsUniversalKExtension` quantifies over test objects in the *same* universe as the extension, so
-`isUniversalKExtension_unique` compares two extensions in one universe only (trap 8 of
-`CLAUDE.md`).
+Examples 4.8(1) concludes `V^κ(C) ≅ F_κ(B)`. That isomorphism was **not expressible** until the
+universal property was generalised, and the README recorded it as a deviation. `F_κ(B)` is cut out
+of `B → F_κ`, so it lives in `Type (u+1)`, while `V^κ(C)` lives in `Type u`; the `universal` field
+of `IsUniversalKExtension` quantified over test objects in the *extension's own* universe, so
+`isUniversalKExtension_unique` could compare two extensions in one universe only, and the two sides
+of the isomorphism were incomparable.
 
-What is proved instead is the universe-correct content of the example, in two steps:
-`krsa_ascent` — `V^κ(C)` *is* the universal `κ`-extension of `F_{λ⁻}(B)`, by transporting Theorem
-4.3's braiding along the isomorphism of bases — and `krsa_ascent_free`, which turns that into the
-`B`-indexed universal property of the free `κ`-monoid: every map `B → K` into a `κ`-monoid extends
-uniquely along the generators. That is what "`V^κ(C)` is the free `κ`-monoid on `B`" says, and its
-`λ⁻`-level input, `Free.exists_unique_lift`, has a free target universe. Two ways to recover the
-isomorphism itself, should it ever be wanted: make `universal` quantify over a test object in a
-fresh universe (`extend_lhom` already works in that generality, so this changes the definition and
-Theorem 3.11's statement but not its proof), or compare `ULift`s.
+The test universe is now a **parameter** of `IsUniversalKExtension` — Lean cannot quantify over
+universes inside a term, so this is the only way to say "for every `κ`-monoid `K`" — and
+`extend_lhom` was generalised to match, which cost nothing: its proof never used the restriction.
+Both sides are then universal at both universes, since `krsa_ascent` delivers a *braiding* and a
+braiding is universal at every test universe (`IsBraidedOver.isUniversalKExtension`), and
+`isUniversalKExtension_unique'` compares extensions across universes.
+
+So the deviation is gone. `krsa_ascent_iso` is the paper's statement, and `krsa_ascent_free` — the
+`B`-indexed universal property, every map `B → K` extending uniquely along the generators, now for
+`K` in **any** universe — is the stronger companion. The price is that statements mentioning
+`IsUniversalKExtension` must pin the test universe: it appears in no argument, so Lean would leave
+it a metavariable (trap 5 in `CLAUDE.md`). That is why `isBraidedOver_of_isUniversalKExtension`,
+`lemma_3_13_free` and their kin now carry explicit `.{u, v, w, t}` annotations.
 
 ## The statements corrected in Section 5
 

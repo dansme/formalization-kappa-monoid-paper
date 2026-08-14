@@ -5,7 +5,7 @@
 import KappaMonoid.Braiding.UnivExt
 import KappaMonoid.Core.Free
 
-universe u v w
+universe u v w t
 
 open Cardinal Function Set
 
@@ -72,7 +72,8 @@ theorem lemma_3_13_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     letI := instKMonoidFreeK κ hκ B
-    IsUniversalKExtension lam κ ↥(FreeL lam B) ↥(FreeK κ B) hlk (freeIncl hlam hκ hlk) := by
+    IsUniversalKExtension.{u, u + 1, u + 1, t} lam κ ↥(FreeL lam B) ↥(FreeK κ B) hlk
+      (freeIncl hlam hκ hlk) := by
   letI : Fact lam.IsRegular := ⟨hlam⟩
   letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
   letI := instKMonoidFreeK κ hκ B
@@ -197,7 +198,7 @@ theorem lemma_3_13_sub_of_subset [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ 
     (hfT : ∀ s ∈ S, f s ∈ T) (hTgen : T ⊆ KMonoid.kclosure κ (f '' S)) :
     letI := hS.lmonoid
     letI := hT.kmonoid
-    IsUniversalKExtension lam κ ↥S ↥T hlk (fun s => ⟨f (s : X), hfT (s : X) s.2⟩) := by
+    IsUniversalKExtension.{u, v, w, t} lam κ ↥S ↥T hlk (fun s => ⟨f (s : X), hfT (s : X) s.2⟩) := by
   letI := hS.lmonoid
   letI := hT.kmonoid
   exact (isBraidedOver_of_isLSubmonoid hlk hbr S hS hsat hT hfT hTgen).isUniversalKExtension hlk
@@ -208,7 +209,7 @@ theorem lemma_3_13_sub [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X
     (hsat : lam ≠ ℵ₀ ∨ IsSaturated S) :
     letI := hS.lmonoid
     letI := (KMonoid.isKSubmonoid_kclosure κ (f '' S)).kmonoid
-    IsUniversalKExtension lam κ ↥S ↥(KMonoid.kclosure κ (f '' S)) hlk
+    IsUniversalKExtension.{u, v, w, t} lam κ ↥S ↥(KMonoid.kclosure κ (f '' S)) hlk
       (fun s => ⟨f (s : X), KMonoid.subset_kclosure ⟨(s : X), s.2, rfl⟩⟩) :=
   lemma_3_13_sub_of_subset hlk hbr S hS hsat (KMonoid.isKSubmonoid_kclosure κ (f '' S))
     (fun s hs => KMonoid.subset_kclosure ⟨s, hs, rfl⟩) subset_rfl

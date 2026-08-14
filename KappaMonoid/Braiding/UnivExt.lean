@@ -503,7 +503,7 @@ two extensions in the same universe; for `X : Type u` this is no restriction, an
 `X : Type (u+1)` — the case of `F_κ` and its powers — it reads `Type (u+1)`. -/
 theorem isBraidedOver_of_isUniversalKExtension (hlam : lam.IsRegular) (hlk : lam ≤ κ)
     {X : Type v} [LMonoid lam X] (hred : IsConical X) {H : Type (max u v)} [KMonoid κ H]
-    {f : X → H} (hu : IsUniversalKExtension lam κ X H hlk f) :
+    {f : X → H} (hu : IsUniversalKExtension.{u, v, max u v, max u v} lam κ X H hlk f) :
     IsBraidedOver lam κ X H hlk f := by
   obtain ⟨Hh, _, g, _, hgbr, hgu⟩ := theorem_3_11 hlam hlk X hred
   obtain ⟨e, ⟨hehom, hecomm, hebij⟩, -⟩ := isUniversalKExtension_unique hlk hgu hu

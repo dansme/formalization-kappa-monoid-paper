@@ -9,7 +9,7 @@ import KappaMonoid.Core.OrderUnit
 import KappaMonoid.Modules.Rings.ProjOrderUnit
 import KappaMonoid.Braiding.Saturated
 
-universe u v
+universe u v t
 
 open Cardinal Function Set DirectSum
 
@@ -264,8 +264,11 @@ theorem isKIso_of_braidedOver_same {lam : Cardinal.{u}} {S : Type u} [LMonoid la
     {f : S → H₁} {g : S → H₂}
     (hbr₁ : IsBraidedOver lam κ S H₁ hlk f) (hbr₂ : IsBraidedOver lam κ S H₂ hlk g) :
     ∃ e : H₁ → H₂, KMonoid.IsKHom κ e ∧ (∀ s, e (f s) = g s) ∧ Function.Bijective e :=
-  (isUniversalKExtension_unique hlk (hbr₁.isUniversalKExtension hlk)
-    (hbr₂.isUniversalKExtension hlk)).exists
+  -- the test universe of the universal property is now a parameter, so it has to be pinned:
+  -- here both extensions live in `Type u` and are compared against test objects there.
+  have h₁ : IsUniversalKExtension.{u, u, u, u} lam κ S H₁ hlk f := hbr₁.isUniversalKExtension hlk
+  have h₂ : IsUniversalKExtension.{u, u, u, u} lam κ S H₂ hlk g := hbr₂.isUniversalKExtension hlk
+  (isUniversalKExtension_unique hlk h₁ h₂).exists
 
 /-- **Corollary 4.7(2)**: for a ring `R` and a `κ`-monoid `H`, if `H` is `ℵ₁⁻`-braided over a
 `λ⁻`-monoid `S` and `V^{ℵ₀}(R)` is too — which is Corollary 4.5(2) — then `V^κ(R) ≅ H`.
@@ -298,7 +301,7 @@ theorem corollary_4_7_one_backward (R : Type u) [Ring R] (hκ : ℵ₀ ≤ κ)
   obtain ⟨k⟩ := nonempty_Idx hκ
   refine ⟨Projective.unitClass R κ hκ k, ?_⟩
   rw [addOf_unitClass_eq R κ hκ k]
-  exact (corollary_4_5_three R κ hκ hfg).1.kGenerates_coe
+  exact (corollary_4_5_three.{u, u} R κ hκ hfg).1.kGenerates_coe
 
 /-- **Corollary 4.7(1)**, (iii) ⇒ (i) in the form the paper states it: `V^κ(R)` is `ℵ₀⁻`-braided
 over `add [R]`.  This is Corollary 4.5(3) — which braids `V^κ(R)` over `V(R)` — moved along the
@@ -318,7 +321,7 @@ theorem corollary_4_7_one_backward_braided (R : Type u) [Ring R] (hκ : ℵ₀ �
   exact IsBraidedOver.of_set_eq Cardinal.isRegular_aleph0
     (KMonoid.addOf_isLSubset hκ (Projective.unitClass R κ hκ k))
     ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
-    (addOf_unitClass_eq R κ hκ k) (corollary_4_5_three R κ hκ hfg).1
+    (addOf_unitClass_eq R κ hκ k) (corollary_4_5_three.{u, u} R κ hκ hfg).1
 
 /-- **The isomorphism `M ≅ V(R)` packaged by `BergmanDicksData`.**  The four conditions
 `iso_zero`, `iso_add`, `inj`, `surj` say that `a ↦ [P a]` is a monoid isomorphism from `M` onto the
@@ -422,7 +425,7 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
   letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
   -- Step 3: `BergmanDicksData.sumOfFG` is the hypothesis of Corollary 4.5(3)
-  obtain ⟨hbr₂, -⟩ := corollary_4_5_three bd.R κ hκ bd.sumOfFG
+  obtain ⟨hbr₂, -⟩ := corollary_4_5_three.{u, u} bd.R κ hκ bd.sumOfFG
   -- Step 4: transport that braiding along `add x ≅ V(R)`
   obtain ⟨Φ, hΦhom, hΦinj, hΦsurj⟩ := bd.exists_isLMonoidHom_bijective κ hκ
   have hΦΦ' : ∀ a, Function.invFun Φ (Φ a) = a := Function.leftInverse_invFun hΦinj
@@ -474,7 +477,7 @@ theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI := C.instKMonoid hκ
     ∃ f : ↥(FreeL lam B) → C.carrier,
-      IsUniversalKExtension lam κ ↥(FreeL lam B) C.carrier hlk f := by
+      IsBraidedOver lam κ ↥(FreeL lam B) C.carrier hlk f := by
   letI : Fact lam.IsRegular := ⟨hlam⟩
   letI := C.instKMonoid hκ
   letI := IsLSubset.lmonoid hlam (C.lambdaSmallPart_isLSubset hκ lam hlam hlk)
@@ -487,8 +490,7 @@ theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤
   have he'hom : IsLMonoidHom lam e' := hehom.inv hee' he'e
   -- `V^κ(C)` is the universal `κ`-extension of `V^{λ⁻}(C_{λ⁻})`, hence of `F_{λ⁻}(B)`
   refine ⟨fun b => ((e' b : ↥(C.lambdaSmallPart lam)) : C.carrier), ?_⟩
-  exact IsUniversalKExtension.of_base_iso hlk (hbr.isUniversalKExtension hlk) e' e he'hom hehom
-    he'e hee'
+  exact IsBraidedOver.of_base_iso hlk hbr he'hom hehom he'e hee'
 
 /-- The `B`-indexed form: `V^κ(C)` has the universal property of the free `κ`-monoid on `B`.  Every
 map from `B` into a `κ`-monoid extends uniquely along the generators `ι(b)`. -/
@@ -497,10 +499,10 @@ theorem krsa_ascent_free (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ�
     {f : letI : Fact lam.IsRegular := ⟨hlam⟩; ↥(FreeL lam B) → C.carrier}
     (huniv : letI : Fact lam.IsRegular := ⟨hlam⟩
       letI := C.instKMonoid hκ
-      IsUniversalKExtension lam κ ↥(FreeL lam B) C.carrier hlk f) :
+      IsUniversalKExtension.{u, u + 1, u, t} lam κ ↥(FreeL lam B) C.carrier hlk f) :
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI := C.instKMonoid hκ
-    ∀ (K : Type u) [KMonoid κ K] (g : B → K),
+    ∀ (K : Type t) [KMonoid κ K] (g : B → K),
       ∃! ψ : C.carrier → K, KMonoid.IsKHom κ ψ ∧ ∀ b, ψ (f (iota b)) = g b := by
   letI : Fact lam.IsRegular := ⟨hlam⟩
   letI := C.instKMonoid hκ
@@ -527,5 +529,41 @@ theorem krsa_ascent_free (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ�
   exact congrFun heq x
 
 end KRSA
+
+/-- **Examples 4.8(1)**, as the paper states it: `V^κ(C) ≅ F_κ(B)`.
+
+This is the isomorphism that could not be expressed before step 9 of `REFACTOR-PLAN.md`.  `F_κ(B)`
+is cut out of `B → F_κ` and so lives in `Type (u+1)`, while `V^κ(C)` lives in `Type u`; the
+`universal` field of `IsUniversalKExtension` used to quantify over test objects in the extension's
+*own* universe, so `isUniversalKExtension_unique` could only compare two extensions in one universe
+and the two sides were incomparable.  With the test universe a parameter, both sides are universal
+at both universes — `krsa_ascent` gives a braiding, and a braiding is universal at every test
+universe — and `isUniversalKExtension_unique'` compares them.
+
+So the deviation recorded in `README.md` under "The statement corrected in Examples 4.8(1)" is
+gone: what remains is the *stronger* pair, this isomorphism and the `B`-indexed universal property
+`krsa_ascent_free`. -/
+theorem krsa_ascent_iso {R : Type u} [Ring R] {κ : Cardinal.{u}}
+    (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
+    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (B : Type u)
+    {f : letI : Fact lam.IsRegular := ⟨hlam⟩
+      letI := C.instKMonoid hκ
+      ↥(FreeL lam B) → C.carrier}
+    (hbrF : letI : Fact lam.IsRegular := ⟨hlam⟩
+      letI := C.instKMonoid hκ
+      IsBraidedOver lam κ ↥(FreeL lam B) C.carrier hlk f) :
+    letI : Fact lam.IsRegular := ⟨hlam⟩
+    letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+    letI := C.instKMonoid hκ
+    letI := instKMonoidFreeK κ hκ B
+    ∃! e : C.carrier → ↥(FreeK κ B),
+      KMonoid.IsKHom κ e ∧ (∀ x, e (f x) = freeIncl hlam hκ hlk x) ∧ Function.Bijective e := by
+  letI : Fact lam.IsRegular := ⟨hlam⟩
+  letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+  letI := C.instKMonoid hκ
+  letI := instKMonoidFreeK κ hκ B
+  exact isUniversalKExtension_unique'.{u, u + 1, u, u + 1} hlk
+    (hbrF.isUniversalKExtension hlk) (hbrF.isUniversalKExtension hlk)
+    (lemma_3_13_free hlam hκ hlk) (lemma_3_13_free hlam hκ hlk)
 
 end KappaMonoid

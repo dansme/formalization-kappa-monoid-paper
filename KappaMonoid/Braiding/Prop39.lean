@@ -4,7 +4,7 @@
 -/
 import KappaMonoid.Braiding.UnivAux
 
-universe u v w z
+universe u v w z t
 
 open Cardinal Function Set
 
@@ -27,7 +27,7 @@ of `φ̄ (Σᵢ xᵢ) := Σᵢ φ (xᵢ)` follows by telescoping along a braidin
 `Σᵢ xᵢ = Σⱼ yⱼ`. -/
 theorem extend_lhom {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
     (hlk : lam ≤ κ) (f : X → H) (hbr : IsBraidedOver lam κ X H hlk f)
-    {K : Type w} [KMonoid κ K] (φ : X → K) (hφ : IsLHom hlk φ) :
+    {K : Type t} [KMonoid κ K] (φ : X → K) (hφ : IsLHom hlk φ) :
     ∃! ψ : H → K, IsKHom κ ψ ∧ ∀ x, ψ (f x) = φ x := by
   classical
   have hκ : ℵ₀ ≤ κ := KMonoid.aleph0_le (κ := κ) (H := H)
@@ -93,21 +93,29 @@ theorem extend_lhom {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
 /-! ## Definition 3.10 -/
 
 /-- Definition 3.10: `Ĥ` (with structure map `f`) is a *universal `κ`-extension* of the
-`λ⁻`-monoid `X`. -/
+`λ⁻`-monoid `X`.
+
+The universe `z` of the test objects is a **parameter**, independent of `Ĥ`'s own universe `w`.
+Lean cannot quantify over universes inside a term, so this is the only way to say "for every
+`κ`-monoid `K`" without silently meaning "for every `K` in `Ĥ`'s universe" — which is what this
+definition used to say, and which is why Examples 4.8(1) could not state
+`V^κ(C) ≅ F_κ(B)`: `V^κ(C)` lives in `Type u` and `F_κ(B)`, being built from cardinals, in
+`Type (u+1)`.  The construction never needed the restriction: `extend_lhom` already extends into a
+`K` in any universe. -/
 structure IsUniversalKExtension (lam κ : Cardinal.{u}) (X : Type v) (Hh : Type w)
     [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) (f : X → Hh) : Prop where
   isLHom : IsLHom hlk f
-  universal : ∀ (K : Type w) [KMonoid κ K] (φ : X → K), IsLHom hlk φ →
+  universal : ∀ (K : Type t) [KMonoid κ K] (φ : X → K), IsLHom hlk φ →
     ∃! ψ : Hh → K, IsKHom κ ψ ∧ ∀ x, ψ (f x) = φ x
 
 /-- Being a universal `κ`-extension transports along an isomorphism of the base — a purely formal
 consequence of the universal property, needing no reducedness. -/
 theorem IsUniversalKExtension.of_base_iso {X₁ : Type v} {X₂ : Type z} {Hh : Type w}
     [LMonoid lam X₁] [LMonoid lam X₂] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X₁ → Hh}
-    (h : IsUniversalKExtension lam κ X₁ Hh hlk f) (g : X₂ → X₁) (g' : X₁ → X₂)
+    (h : IsUniversalKExtension.{u, v, w, t} lam κ X₁ Hh hlk f) (g : X₂ → X₁) (g' : X₁ → X₂)
     (hg : IsLMonoidHom lam g) (hg' : IsLMonoidHom lam g')
     (hgg' : ∀ x, g' (g x) = x) (hg'g : ∀ x, g (g' x) = x) :
-    IsUniversalKExtension lam κ X₂ Hh hlk (fun x => f (g x)) where
+    IsUniversalKExtension.{u, z, w, t} lam κ X₂ Hh hlk (fun x => f (g x)) where
   isLHom := by
     refine ⟨show f (g 0) = 0 by rw [hg.map_zero, h.isLHom.1], fun {ι} hι x => ?_⟩
     show f (g (lsumOf (lam := lam) hι x)) = _
@@ -134,8 +142,8 @@ defined by a universal property. -/
 theorem isUniversalKExtension_unique {X : Type v} {H₁ H₂ : Type w}
     [LMonoid lam X] [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ κ)
     {f₁ : X → H₁} {f₂ : X → H₂}
-    (h₁ : IsUniversalKExtension lam κ X H₁ hlk f₁)
-    (h₂ : IsUniversalKExtension lam κ X H₂ hlk f₂) :
+    (h₁ : IsUniversalKExtension.{u, v, w, w} lam κ X H₁ hlk f₁)
+    (h₂ : IsUniversalKExtension.{u, v, w, w} lam κ X H₂ hlk f₂) :
     ∃! e : H₁ → H₂, IsKHom κ e ∧ (∀ x, e (f₁ x) = f₂ x) ∧ Function.Bijective e := by
   have hcomp : ∀ {A B C : Type w} [KMonoid κ A] [KMonoid κ B] [KMonoid κ C] (g : A → B) (h : B → C),
       IsKHom κ g → IsKHom κ h → IsKHom κ (fun a => h (g a)) := by
@@ -152,17 +160,55 @@ theorem isUniversalKExtension_unique {X : Type v} {H₁ H₂ : Type w}
   obtain ⟨w₂, _, hw₂⟩ := h₂.universal H₂ f₂ h₂.isLHom
   have hleft : ∀ a, e21 (e12 a) = a := by
     have hA : (fun a => e21 (e12 a)) = w₁ :=
-      hw₁ _ ⟨hcomp e12 e21 he12hom he21hom, fun x => by
+      hw₁ _ ⟨he12hom.comp he21hom, fun x => by
         show e21 (e12 (f₁ x)) = f₁ x
         rw [he12 x, he21 x]⟩
-    have hB : (fun a : H₁ => a) = w₁ := hw₁ _ ⟨hid, fun _ => rfl⟩
+    have hB : (fun a : H₁ => a) = w₁ := hw₁ _ ⟨IsKHom.id', fun _ => rfl⟩
     exact fun a => congrFun (hA.trans hB.symm) a
   have hright : ∀ b, e12 (e21 b) = b := by
     have hA : (fun b => e12 (e21 b)) = w₂ :=
-      hw₂ _ ⟨hcomp e21 e12 he21hom he12hom, fun x => by
+      hw₂ _ ⟨he21hom.comp he12hom, fun x => by
         show e12 (e21 (f₂ x)) = f₂ x
         rw [he21 x, he12 x]⟩
-    have hB : (fun b : H₂ => b) = w₂ := hw₂ _ ⟨hid, fun _ => rfl⟩
+    have hB : (fun b : H₂ => b) = w₂ := hw₂ _ ⟨IsKHom.id', fun _ => rfl⟩
+    exact fun b => congrFun (hA.trans hB.symm) b
+  refine ⟨e12, ⟨he12hom, he12, Function.bijective_iff_has_inverse.mpr ⟨e21, hleft, hright⟩⟩, ?_⟩
+  rintro e ⟨hehom, hecomm, -⟩
+  exact hu12 e ⟨hehom, hecomm⟩
+
+/-- **Uniqueness across universes.**  Two universal `κ`-extensions of the same base are uniquely
+isomorphic even when they live in *different* universes — which is what the old definition, with
+its test objects fixed to the extension's own universe, could not express.
+
+Each extension is needed twice over: `h₁` extends into `H₂` and `h₂` into `H₁`, while `h₁'` and
+`h₂'` supply the two identity-uniqueness steps.  Both are available in practice, because the
+constructions that produce universal extensions — `IsBraidedOver.isUniversalKExtension` and hence
+`theorem_3_11`, `lemma_3_13_free`, `krsa_ascent` — are polymorphic in the test universe. -/
+theorem isUniversalKExtension_unique' {X : Type v} {H₁ : Type w} {H₂ : Type t}
+    [LMonoid lam X] [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ κ)
+    {f₁ : X → H₁} {f₂ : X → H₂}
+    (h₁ : IsUniversalKExtension.{u, v, w, t} lam κ X H₁ hlk f₁)
+    (h₁' : IsUniversalKExtension.{u, v, w, w} lam κ X H₁ hlk f₁)
+    (h₂ : IsUniversalKExtension.{u, v, t, w} lam κ X H₂ hlk f₂)
+    (h₂' : IsUniversalKExtension.{u, v, t, t} lam κ X H₂ hlk f₂) :
+    ∃! e : H₁ → H₂, IsKHom κ e ∧ (∀ x, e (f₁ x) = f₂ x) ∧ Function.Bijective e := by
+  obtain ⟨e12, ⟨he12hom, he12⟩, hu12⟩ := h₁.universal H₂ f₂ h₂.isLHom
+  obtain ⟨e21, ⟨he21hom, he21⟩, _⟩ := h₂.universal H₁ f₁ h₁.isLHom
+  obtain ⟨w₁, _, hw₁⟩ := h₁'.universal H₁ f₁ h₁.isLHom
+  obtain ⟨w₂, _, hw₂⟩ := h₂'.universal H₂ f₂ h₂.isLHom
+  have hleft : ∀ a, e21 (e12 a) = a := by
+    have hA : (fun a => e21 (e12 a)) = w₁ :=
+      hw₁ _ ⟨he12hom.comp he21hom, fun x => by
+        show e21 (e12 (f₁ x)) = f₁ x
+        rw [he12 x, he21 x]⟩
+    have hB : (fun a : H₁ => a) = w₁ := hw₁ _ ⟨IsKHom.id', fun _ => rfl⟩
+    exact fun a => congrFun (hA.trans hB.symm) a
+  have hright : ∀ b, e12 (e21 b) = b := by
+    have hA : (fun b => e12 (e21 b)) = w₂ :=
+      hw₂ _ ⟨he21hom.comp he12hom, fun x => by
+        show e12 (e21 (f₂ x)) = f₂ x
+        rw [he21 x, he12 x]⟩
+    have hB : (fun b : H₂ => b) = w₂ := hw₂ _ ⟨IsKHom.id', fun _ => rfl⟩
     exact fun b => congrFun (hA.trans hB.symm) b
   refine ⟨e12, ⟨he12hom, he12, Function.bijective_iff_has_inverse.mpr ⟨e21, hleft, hright⟩⟩, ?_⟩
   rintro e ⟨hehom, hecomm, -⟩

@@ -92,11 +92,12 @@ questions a build would answer, without a build. Prefer it throughout.
   `axiom` declarations under `KappaMonoid/` changes, so a deliberate addition means editing the
   expected list there *and* the `README.md` table in the same commit.
 - **Deviations from the paper are documented twice**: in the docstring of the affected result and
-  in a `README.md` section. Four exist so far — the `IsConical` hypothesis in Theorem 3.11; the
+  in a `README.md` section. Three exist — the `IsConical` hypothesis in Theorem 3.11; the
   `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a formalised counterexample showing the
-  paper's claim is false; the universe-corrected form of Examples 4.8(1) (trap 8); and the six
-  statements corrected in §5, chiefly `EveryProjectiveIsSumOfFG R` carried alongside hereditariness,
-  because Corollary 4.6 is quoted rather than formalised. When the paper is wrong, formalise the
+  paper's claim is false; and the six statements corrected in §5, chiefly `EveryProjectiveIsSumOfFG
+  R` carried alongside hereditariness, because Corollary 4.6 is quoted rather than formalised.
+  (Examples 4.8(1) was a fourth until the test universe of `IsUniversalKExtension` became a
+  parameter; `krsa_ascent_iso` is now the paper's statement.) When the paper is wrong, formalise the
   repaired statement and say so; do not quietly weaken or restate it.
 
 ## Elaboration traps
@@ -129,13 +130,14 @@ re-deriving them.
    *conclusion* determines the maps (`hom_ext`, `of_base_iso`), state the expected type of the
    `have` — named arguments alone are not enough, because the arguments get elaborated before the
    metavariables are assigned.
-8. **Universal properties do not cross universes.** `IsUniversalKExtension`'s `universal` field
-   quantifies over test objects `K : Type w` in the *same* universe as the extension, so
-   `isUniversalKExtension_unique` compares two extensions in one universe only. This is why
-   Example 4.8(1) cannot say `V^κ(C) ≅ F_κ(B)`: `F_κ(B)` lives in `Type (u+1)` (it is built from
-   cardinals) and `V^κ(C)` in `Type u`. Deliver the universal property instead, or lift. By
-   contrast the *bases* of a braiding or a universal extension may live in different universes —
-   both `of_base_iso` lemmas allow it.
+8. **The test universe of `IsUniversalKExtension` is a parameter, and must be pinned.** It appears
+   in no argument of the structure, so a statement that merely mentions `IsUniversalKExtension`
+   leaves it a metavariable and fails with *"contains universe level metavariables"*. Write
+   `IsUniversalKExtension.{u, v, w, t} lam κ X Hh hlk f` — `u` for the cardinals, `v` for the base,
+   `w` for the extension, `t` for the test objects. Prefer stating a **braiding** where you can:
+   `IsBraidedOver.isUniversalKExtension` then gives universality at every `t`, which is what makes
+   `krsa_ascent_iso` (`V^κ(C) ≅ F_κ(B)`, across a universe gap) provable via
+   `isUniversalKExtension_unique'`.
 9. **Do not case-split inside a projection of an opaque carrier.** A three-branch `dite` whose
    branches carry dependent proofs makes every `val`/`flag` lemma fight the motive, because the
    carrier `def` cannot be unfolded at `implicit` transparency. Compute the components separately

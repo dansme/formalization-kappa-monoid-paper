@@ -5,7 +5,7 @@
 import KappaMonoid.Modules.SmallPart
 import KappaMonoid.Axioms.Modules
 
-universe u v w
+universe u v w t
 
 open Cardinal Function Set DirectSum
 open scoped Classical
@@ -333,7 +333,7 @@ theorem corollary_4_5 (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (hlam : lam.IsR
     letI := IsLSubset.lmonoid hlam ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ lam hlam hlk)
     IsBraidedOver lam κ ((projClass R κ hκ).lambdaSmallPart lam)
         (projClass R κ hκ).carrier hlk (fun a => (a : (projClass R κ hκ).carrier)) ∧
-      IsUniversalKExtension lam κ ((projClass R κ hκ).lambdaSmallPart lam)
+      IsUniversalKExtension.{u, u, u, t} lam κ ((projClass R κ hκ).lambdaSmallPart lam)
         (projClass R κ hκ).carrier hlk (fun a => (a : (projClass R κ hκ).carrier)) := by
   letI := (projClass R κ hκ).instKMonoid hκ
   exact corollary_4_4 (projClass R κ hκ) hκ lam hlam hlk _
@@ -355,7 +355,7 @@ theorem corollary_4_5_three (hκ : ℵ₀ ≤ κ)
       ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
     IsBraidedOver ℵ₀ κ ((projClass R κ hκ).lambdaSmallPart ℵ₀)
         (projClass R κ hκ).carrier hκ (fun a => (a : (projClass R κ hκ).carrier)) ∧
-      IsUniversalKExtension ℵ₀ κ ((projClass R κ hκ).lambdaSmallPart ℵ₀)
+      IsUniversalKExtension.{u, u, u, t} ℵ₀ κ ((projClass R κ hκ).lambdaSmallPart ℵ₀)
         (projClass R κ hκ).carrier hκ (fun a => (a : (projClass R κ hκ).carrier)) := by
   refine corollary_4_4 (projClass R κ hκ) hκ ℵ₀ Cardinal.isRegular_aleph0 hκ _
     ((projClass R κ hκ).lambdaSmallPart_small ℵ₀)

@@ -8,7 +8,7 @@ import KappaMonoid.Examples.ENNReal
 import Mathlib.Data.Nat.Nth
 import Mathlib.Algebra.BigOperators.Fin
 
-universe u v w
+universe u v w t
 
 open Cardinal Function Set
 
@@ -400,7 +400,7 @@ Theorem 3.11(2), the universal `ℵ₀`-extension of `ℕ₀` is its trivial `�
 theorem isUniversalKExtension_withTop_nat :
     letI := LMonoid.ofAddCommMonoid ℕ
     letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
-    IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) le_rfl
+    IsUniversalKExtension.{u, 0, 0, t} (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) le_rfl
       (fun a => (a : WithTop ℕ)) := by
   letI := LMonoid.ofAddCommMonoid ℕ
   letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl

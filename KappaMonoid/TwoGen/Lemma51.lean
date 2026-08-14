@@ -41,7 +41,7 @@ theorem lemma_5_1 (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
   letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂))
   -- Corollary 4.5(3): `V^{ℵ₀}(R)` is braided over `V(R)`, the `ℵ₀⁻`-small classes
-  have hbrV := (corollary_4_5_three R ℵ₀ le_rfl hfg).1
+  have hbrV := (corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1
   -- `S = e⁻¹(V(R))` is the set of elements of `H` corresponding to finitely generated modules
   set S : Set H := e ⁻¹' ((projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀) with hSdef
   have hWsub := (projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀
