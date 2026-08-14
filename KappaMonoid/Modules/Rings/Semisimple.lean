@@ -13,7 +13,7 @@ by its multiplicity function, and `V^κ(R)` is the `κ`-monoid of such functions
 `≤ κ`, which is `F_κ^n` when there are `n` classes.
 -/
 import KappaMonoid.Modules
-import KappaMonoid.Examples.ENNReal
+import KappaMonoid.Core.Cardinal
 import KappaMonoid.Axioms.Modules
 
 universe u

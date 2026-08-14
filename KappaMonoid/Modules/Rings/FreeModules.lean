@@ -16,7 +16,7 @@ rather than by cardinals because `ModuleClass.carrier` must live in `Type u`, wh
 cardinals `≤ κ` live in `Type (u+1)`.
 -/
 import KappaMonoid.Modules
-import KappaMonoid.Examples.ENNReal
+import KappaMonoid.Core.Cardinal
 
 universe u
 
