@@ -57,10 +57,12 @@ noncomputable def realiserEq : Realiser.{u} (· = ·) where
     · rintro rfl
       exact ⟨LinearEquiv.refl _ _⟩
 
-/-- Leavitt's theorem, as a `Realiser` for `CyclicRel m n`. -/
-noncomputable def realiserCyclicRel (m n : ℕ) (hn : 1 ≤ n) : Realiser.{u} (CyclicRel m n) where
-  R := (leavittData m n hn).R
-  iso_iff := (leavittData m n hn).iso_iff
+/-- Leavitt's theorem, as a `Realiser` for `CyclicRel m n`.  `1 ≤ m` is necessary: `C_{0,n}` is a
+group, and only the zero ring could realise it. -/
+noncomputable def realiserCyclicRel (m n : ℕ) (hm : 1 ≤ m) (hn : 1 ≤ n) :
+    Realiser.{u} (CyclicRel m n) where
+  R := (leavittData m n hm hn).R
+  iso_iff := (leavittData m n hm hn).iso_iff
 
 /-! ## Comparing the two relations
 
@@ -228,14 +230,20 @@ theorem prop_2_16 {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) (H : Type u) [KMonoi
         exact (hinj k l).mp h
     exact ⟨isKHom_toH hκ hu hmatch, toH_injective hκ hu hmatch,
       toH_surjective hκ hu hmatch hgen⟩
-  · -- `C₀ = C_{m,n}`: Leavitt
-    refine ⟨CyclicRel m n, realiserCyclicRel m n hn, toH hκ u, ?_⟩
+  · -- `C₀ = C_{m,n}`: Leavitt.  `m ≥ 1`, since `u` is faithful and `m = 0` would mean `n u = 0`
+    have hm : 1 ≤ m := by
+      by_contra hm0
+      refine KMonoid.nsmul_ne_zero_of_faithful hu hn ?_
+      have h := (hrel n 0).mpr (Or.inr ⟨by omega, by omega, ⟨1, by push_cast; omega⟩⟩)
+      simpa using h
+    refine ⟨CyclicRel m n, realiserCyclicRel m n hm hn, toH hκ u, ?_⟩
     have hmatch : ∀ k l : ℕ,
-        Nonempty ((⨁ _ : Fin k, (realiserCyclicRel.{u} m n hn).R)
-            ≃ₗ[(realiserCyclicRel.{u} m n hn).R] (⨁ _ : Fin l, (realiserCyclicRel.{u} m n hn).R))
+        Nonempty ((⨁ _ : Fin k, (realiserCyclicRel.{u} m n hm hn).R)
+            ≃ₗ[(realiserCyclicRel.{u} m n hm hn).R]
+              (⨁ _ : Fin l, (realiserCyclicRel.{u} m n hm hn).R))
           ↔ k • u = l • u := by
       intro k l
-      rw [(realiserCyclicRel m n hn).iso_iff k l, ← hrel k l]
+      rw [(realiserCyclicRel m n hm hn).iso_iff k l, ← hrel k l]
     exact ⟨isKHom_toH hκ hu hmatch, toH_injective hκ hu hmatch,
       toH_surjective hκ hu hmatch hgen⟩
 

@@ -90,6 +90,33 @@ def IsFaithful (u : H) : Prop :=
   IsOrderUnit (κ := κ) u ∧ ∀ (α β : Cardinal.{u}) (hα : α ≤ κ) (hβ : β ≤ κ), α < β → ℵ₀ ≤ β →
     ¬ (cmul (κ := κ) β hβ u ≼ cmul (κ := κ) α hα u)
 
+/-- A faithful order-unit satisfies no finite relation with `0`: `n • u = 0` is impossible for
+`n ≥ 1`, so the cyclic monoid it generates is never a group.
+
+Paper proof: `ℵ₀ u = (ℵ₀ · n) u = ℵ₀ (n u) = ℵ₀ · 0 = 0 = 0 · u`, and faithfulness forbids
+`ℵ₀ u ≼ 0 u`.
+
+This is what rules out `C_{0,n}` in Proposition 2.16, and with it the zero ring: `C_{0,n}` is a
+group, and a nonzero ring never has `R^0 ≅ R^n`. -/
+theorem nsmul_ne_zero_of_faithful {u : H} (hu : IsFaithful (κ := κ) u) {n : ℕ} (hn : 1 ≤ n) :
+    n • u ≠ 0 := by
+  intro h
+  have hℵ₀ : (ℵ₀ : Cardinal.{u}) ≤ κ := aleph0_le (κ := κ) (H := H)
+  have hnκ : ((n : ℕ) : Cardinal.{u}) ≤ κ := le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hℵ₀
+  have hmul : (ℵ₀ : Cardinal.{u}) * (n : Cardinal.{u}) = ℵ₀ :=
+    Cardinal.mul_eq_left le_rfl (le_of_lt Cardinal.natCast_lt_aleph0)
+      (Nat.cast_ne_zero.mpr (by omega))
+  have hz : cmul (κ := κ) ℵ₀ hℵ₀ u = 0 :=
+    calc cmul (κ := κ) ℵ₀ hℵ₀ u
+        = cmul (κ := κ) (ℵ₀ * (n : Cardinal.{u})) (hmul.le.trans hℵ₀) u :=
+          cmul_congr hmul.symm _ _ u
+      _ = cmul (κ := κ) ℵ₀ hℵ₀ (cmul (κ := κ) (n : Cardinal.{u}) hnκ u) :=
+          (cmul_cmul hℵ₀ hnκ _ u).symm
+      _ = cmul (κ := κ) ℵ₀ hℵ₀ (n • u) := congrArg _ (cmul_natCast u n)
+      _ = 0 := by rw [h, cmul_zero]
+  exact hu.2 0 ℵ₀ zero_le hℵ₀ Cardinal.aleph0_pos le_rfl
+    (AddLe.of_eq (hz.trans (cmul_zero_cardinal u).symm))
+
 /-! ## Lemma 2.14 -/
 
 /-- **Lemma 2.14**: if `t = κ u + l` then `t = κ u`.

@@ -31,6 +31,8 @@ mentions no module and uses no axiom.  The module theory enters at `Lemma51`.
 **Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
 proved, `sorry`-free, subject only to the one §2 axiom below (A2; A5 is used nowhere in the
 checked build).  A1, A3 and A4 were assumed until they were proved — see "The assumed results".
+A2 carries one added hypothesis, `m ≥ 1`, without which it is not merely too strong but false; see
+"The hypothesis added to Leavitt's theorem" below.
 
 **Section 3 is complete.** Every definition, lemma, proposition and example of §3 is stated and
 proved, `sorry`-free and axiom-free — including Theorem 3.11 and its converse, all of Examples 3.3,
@@ -96,7 +98,7 @@ stands for:
 
 | Axiom | Statement | Used by |
 |---|---|---|
-| `leavittData` (A2) | Leavitt's realisation of the cyclic monoids `C_{m,n}` | `prop_2_16` |
+| `leavittData` (A2) | Leavitt's realisation of the cyclic monoids `C_{m,n}`, for `m ≥ 1` and `n ≥ 1` | `prop_2_16` |
 | `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit is `V(R)` for a hereditary `k`-algebra. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward` |
 | `kaplansky_classical` (A6) | Kaplansky's theorem: every projective module is a direct sum of countably generated projective modules | `kaplansky`, and through it Cor. 4.5 and Cor. 4.7 |
 
@@ -159,6 +161,33 @@ A5 is used by exactly one result: `corollary_4_7_one_forward`, the implication (
 Corollary 4.7(1). Everything else in §4 — including the identification `V(R) = add [R]`
 (`addOf_unitClass_eq`), the other direction of Corollary 4.7(1), Corollary 4.7(2) and Examples
 4.8(1) — reports only `propext`, `Classical.choice` and `Quot.sound`.
+
+## The hypothesis added to Leavitt's theorem
+
+The paper quotes Leavitt as: *for every cyclic monoid `C` there exists a ring `R` with
+`V(𝓕) ≅ C`*, and an earlier version of `Axioms/Monoid.lean` transcribed that verbatim, as
+`leavittData (m n : ℕ) (_hn : 1 ≤ n) : LeavittData m n`.
+
+**That axiom is false, and `False` was derivable from it.** `C_{0,n}` identifies `0` with `n`, so a
+ring realising it has `R^0 ≅ R^n` with `n ≥ 1` — that is `0 ≅ R^n`, forcing `R = 0` and
+contradicting the `Nontrivial R` field of `LeavittData`. Concretely, `(leavittData 0 1 _).iso_iff 0
+1` produces an isomorphism `0 ≅ R` over a nontrivial ring. The underlying mathematics is not in
+doubt: `V(𝓕)` of a ring is conical, so no cyclic monoid that is a group can be realised, and
+Leavitt's theorem is stated for `m ≥ 1`. It is the blanket quotation that is wrong, for `C_{0,n}`
+with `n ≥ 2`.
+
+The axiom now reads `leavittData (m n : ℕ) (_hm : 1 ≤ m) (_hn : 1 ≤ n)`, and Proposition 2.16
+supplies the hypothesis rather than assuming it: a faithful order-unit satisfies no relation
+`n u = 0` for `n ≥ 1`, because `ℵ₀ u = (ℵ₀ · n) u = ℵ₀ (n u) = 0 = 0 · u` would give `ℵ₀ u ≼ 0 u`.
+That is `KMonoid.nsmul_ne_zero_of_faithful` in `Core/OrderUnit.lean`, and it is the formal content
+of the paper's remark that a faithful generator "fixes the realization issue" — the size-zero
+submonoid of a cyclic `κ`-monoid with faithful order-unit is never a group, so `m ≥ 1` always holds
+where the paper applies Leavitt.
+
+This is the hazard the axiom discipline exists for, and it is worth being explicit that the two CI
+checks did not catch it: they check *which* axioms exist and *who* uses them, not whether an axiom
+is true. Only the `Nontrivial R` field made the falsity visible at all; a `LeavittData` without it
+would have been consistent and merely useless.
 
 ## The hypothesis added to Theorem 3.11
 

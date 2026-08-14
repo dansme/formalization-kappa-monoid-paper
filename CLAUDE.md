@@ -94,7 +94,9 @@ questions a build would answer, without a build. Prefer it throughout.
   `axiom` declarations under `KappaMonoid/` changes, so a deliberate addition means editing the
   expected list there *and* the `README.md` table in the same commit.
 - **Deviations from the paper are documented twice**: in the docstring of the affected result and
-  in a `README.md` section. Three exist — the `IsConical` hypothesis in Theorem 3.11; the
+  in a `README.md` section. Four exist — the `m ≥ 1` hypothesis added to Leavitt's theorem (A2),
+  without which the axiom is *false* and `False` was derivable from it; the `IsConical` hypothesis
+  in Theorem 3.11; the
   `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a formalised counterexample showing the
   paper's claim is false; and the six statements corrected in §5, chiefly `EveryProjectiveIsSumOfFG
   R` carried alongside hereditariness, because Corollary 4.6 is quoted rather than formalised.
