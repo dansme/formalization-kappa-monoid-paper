@@ -290,18 +290,11 @@ theorem exists_directSum_fg_of_countablyGenerated [IsLeftHereditary R]
   obtain ⟨h, hsurj⟩ := exists_surjective_of_countable hs hsp
   obtain ⟨ι, hι⟩ := Module.projective_lifting_property (Finsupp.linearCombination R h)
     LinearMap.id hsurj
-  set t := Finsupp.linearCombination R h with ht
-  have hts : ∀ q, t (ι q) = q := fun q => congrFun (congrArg DFunLike.coe hι) q
-  set π := ι ∘ₗ t with hπdef
-  have hπ : ∀ x, π (π x) = π x := fun x => congrArg ι (hts (t x))
-  have hrange : LinearMap.range π = LinearMap.range ι := by
-    refine le_antisymm (LinearMap.range_comp_le_range _ _) ?_
-    rintro _ ⟨q, rfl⟩
-    exact ⟨ι q, congrArg ι (hts q)⟩
+  obtain ⟨π, hπ, -, ⟨eQ⟩⟩ := ForMathlib.exists_idempotent_of_leftInverse
+    (Finsupp.linearCombination R h) ι (fun q => congrFun (congrArg DFunLike.coe hι) q)
   obtain ⟨C, hprojC, hfinC, ⟨e⟩⟩ := exists_directSum_fg_of_idempotent π hπ
-  have hιinj : Function.Injective ι := fun p q hpq => by rw [← hts p, ← hts q, hpq]
   exact ⟨fun n => C n, fun _ => inferInstance, fun _ => inferInstance, hprojC, hfinC,
-    ⟨((LinearEquiv.ofInjective ι hιinj).trans (LinearEquiv.ofEq _ _ hrange.symm)).trans e⟩⟩
+    ⟨eQ.trans e⟩⟩
 
 /-- **Albrecht's theorem** (Albrecht 1961; Bergman 1972): over a ring all of whose left ideals are
 projective — a left hereditary ring — every projective module is a direct sum of *finitely

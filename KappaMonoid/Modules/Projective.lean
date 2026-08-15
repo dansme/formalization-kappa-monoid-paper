@@ -6,6 +6,7 @@ Corollary 4.6.
 import KappaMonoid.Modules.SmallPart
 import KappaMonoid.Axioms.Modules
 import KappaMonoid.ForMathlib.Kaplansky
+import KappaMonoid.ForMathlib.ProjectiveSplit
 
 universe u v w t
 
@@ -185,23 +186,9 @@ theorem exists_summand_of_projective (Q : Type u) [AddCommGroup Q] [Module R Q]
     intro x hx
     exact ⟨freeGen R κ (emb hs ⟨x, hx⟩), by
       rw [hπgen, hgs ⟨x, hx⟩]⟩
-  obtain ⟨σ, hσ⟩ := Module.projective_lifting_property π LinearMap.id hπsurj
-  have hσπ : ∀ q, π (σ q) = q := fun q => LinearMap.congr_fun hσ q
-  have hσinj : Function.Injective σ := by
-    intro q q' h
-    rw [← hσπ q, ← hσπ q', h]
-  refine ⟨⟨LinearMap.range σ, ⟨LinearMap.ker π, ?_⟩⟩,
+  obtain ⟨σ, -, hσinj, hcompl⟩ := ForMathlib.exists_isCompl_range_of_surjective π hπsurj
+  exact ⟨⟨LinearMap.range σ, ⟨LinearMap.ker π, hcompl⟩⟩,
     ⟨(LinearEquiv.ofInjective σ hσinj).symm⟩⟩
-  constructor
-  · rw [Submodule.disjoint_def]
-    rintro x ⟨q, rfl⟩ hker
-    have : q = 0 := by rw [← hσπ q]; exact hker
-    rw [this, map_zero]
-  · rw [codisjoint_iff, eq_top_iff]
-    intro x _
-    refine Submodule.mem_sup.mpr ⟨σ (π x), ⟨π x, rfl⟩, x - σ (π x), ?_, by abel⟩
-    show π (x - σ (π x)) = 0
-    rw [map_sub, hσπ, sub_self]
 
 /-- Direct summands of `R^{(κ)}` are projective. -/
 theorem summand_projective (P : Summand R κ) : Module.Projective R ↥P.1 :=

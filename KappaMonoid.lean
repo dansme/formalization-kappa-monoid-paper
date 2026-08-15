@@ -31,6 +31,7 @@ import KappaMonoid.ForMathlib.Hereditary
 import KappaMonoid.ForMathlib.Kaplansky
 import KappaMonoid.ForMathlib.SimpleMultiplicity
 import KappaMonoid.ForMathlib.NatBlocks
+import KappaMonoid.ForMathlib.ProjectiveSplit
 import KappaMonoid.ForMathlib.TraceIdeal
 import KappaMonoid.Core
 import KappaMonoid.Core.Cardinal

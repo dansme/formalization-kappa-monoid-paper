@@ -4,6 +4,7 @@ countably generated projective modules.
 -/
 import Mathlib.Algebra.DirectSum.Module
 import Mathlib.Algebra.Module.Projective
+import KappaMonoid.ForMathlib.ProjectiveSplit
 import Mathlib.LinearAlgebra.DFinsupp
 import Mathlib.LinearAlgebra.Finsupp.Supported
 import Mathlib.LinearAlgebra.FreeModule.Basic
@@ -523,19 +524,11 @@ theorem Module.Projective.exists_directSum_countablyGenerated {R : Type u} [Ring
           Nonempty (P ≃ₗ[R] ⨁ i, Q i) := by
   classical
   obtain ⟨sec, hsec⟩ := Module.projective_def'.1 ‹Module.Projective R P›
-  set t := Finsupp.linearCombination R (id : P → P) with ht
-  have hts : ∀ p : P, t (sec p) = p := fun p => congrFun (congrArg DFunLike.coe hsec) p
-  set π := sec ∘ₗ t with hπdef
-  have hπ : ∀ x, π (π x) = π x := fun x => congrArg sec (hts (t x))
-  have hrange : LinearMap.range π = LinearMap.range sec := by
-    refine le_antisymm (LinearMap.range_comp_le_range _ _) ?_
-    rintro _ ⟨p, rfl⟩
-    exact ⟨sec p, congrArg sec (hts p)⟩
+  obtain ⟨π, hπ, -, ⟨eP⟩⟩ := ForMathlib.exists_idempotent_of_leftInverse
+    (Finsupp.linearCombination R (id : P → P)) sec
+    (fun p => congrFun (congrArg DFunLike.coe hsec) p)
   obtain ⟨Q, iAG, iMod, hproj, hgen, ⟨e⟩⟩ := Kaplansky.exists_decomposition_of_idempotent π hπ
-  refine ⟨P, Q, iAG, iMod, hproj, hgen, ⟨?_⟩⟩
-  have hsecinj : Function.Injective sec := fun p q h => by
-    rw [← hts p, ← hts q, h]
-  exact ((LinearEquiv.ofInjective sec hsecinj).trans (LinearEquiv.ofEq _ _ hrange.symm)).trans e
+  exact ⟨P, Q, iAG, iMod, hproj, hgen, ⟨eP.trans e⟩⟩
 
 /-- **A projective module is a direct sum of finitely generated projective modules**, as soon as
 every *countably generated* projective module is one.
