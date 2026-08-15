@@ -44,7 +44,6 @@ jobs:
       - name: The axiom list has not changed
         run: |
           cat > axioms.expected <<'EOF'
-          albrecht_classical
           bergmanDicksData
           EOF
           # the identifier must be followed by a binder or a colon, so that a docstring line

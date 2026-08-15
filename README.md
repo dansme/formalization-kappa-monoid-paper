@@ -16,13 +16,13 @@ assumed classical results, or — since the core no longer says `import Mathlib`
 
 | Layer | Depends on | Contents |
 |---|---|---|
-| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid, which A2's deduction needs) and `Kaplansky.lean` (A6) |
+| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid, which A2's deduction needs), `Kaplansky.lean` (A6) and `Albrecht.lean` (A7) |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
 | `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `Diophantine` (**Examples 3.3(1)**, §3.2: **Proposition 3.14**, **Example 3.15**), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
-| `KappaMonoid/Axioms/` | Mathlib | The two classical results assumed rather than proved, A5 and A7 — see below |
+| `KappaMonoid/Axioms/` | Mathlib | The one classical result assumed rather than proved, A5 — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
 
 `Forms`, `Prelim`, `Lemma52` and `Counterexample` are pure monoid theory: §5's braiding material
@@ -49,8 +49,9 @@ Proposition 3.14(2)" below.
 4.7(1) is an equivalence: (iii) ⇒ (i) is Corollary 4.5(3) moved along the identification
 `V(R) = add [R]` (`addOf_unitClass_eq`) and needs no axiom; (i) ⇒ (ii)
 (`corollary_4_7_one_forward`) is the only result in the build that uses Bergman–Dicks realisation,
-axiom A5 below. Corollary 4.7(2) needs no axiom either — Corollary 4.5(2) plus uniqueness of
-universal `κ`-extensions — and neither does `kaplansky`, since Kaplansky's theorem is proved. Corollary 4.6 is Corollary 4.5(3) together with six results quoted from
+axiom A5 below — Albrecht's theorem, which it also invokes, is proved. Corollary 4.7(2) needs no
+axiom either — Corollary 4.5(2) plus uniqueness of universal `κ`-extensions — and neither does
+`kaplansky`, since Kaplansky's theorem is proved. Corollary 4.6 is Corollary 4.5(3) together with six results quoted from
 the literature, none of them monoid-theoretic and none in Mathlib, so it stays a documented stub in
 `Modules/Projective.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
 statement corrected in Examples 4.8(1)" below.
@@ -92,20 +93,19 @@ and only record what is specific to their subject.
 
 ## The assumed results
 
-Two classical theorems are taken as axioms, both in `KappaMonoid/Axioms/Modules.lean`.  Each
-carries the standard proof sketch it stands for:
+One classical theorem is taken as an axiom, in `KappaMonoid/Axioms/Modules.lean`.  It carries the
+standard proof sketch it stands for:
 
 | Axiom | Statement | Used by |
 |---|---|---|
 | `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit `u` is `V(R)` for a hereditary `k`-algebra, with `[R] = u` | `corollary_4_7_one_forward`, and `prop_2_16` through Leavitt's theorem |
-| `albrecht_classical` (A7) | Albrecht's theorem: over a hereditary ring every projective module is a direct sum of finitely generated projective ones — the hereditary case of Cor. 4.6 | `corollary_4_7_one_forward` |
 
 The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
-declarations under `KappaMonoid/` differs from the two above, so adding one means editing the
+declarations under `KappaMonoid/` differs from the one above, so adding one means editing the
 workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 43
-headline results, exactly which of the two each one uses — with `#assert_axioms`, a command over
-`collectAxioms` that fails both when a result gains an axiom and when it loses one. The paragraphs
-below are therefore checked, not merely written.
+headline results, whether each one uses it — with `#assert_axioms`, a command over `collectAxioms`
+that fails both when a result gains an axiom and when it loses one. The paragraphs below are
+therefore checked, not merely written.
 
 **A1 was the sixth, and is now proved.**  Invariance of infinite rank — a free module with an
 infinite basis is not generated by fewer elements than its rank — is `mk_le_of_span_eq_top` in
@@ -172,6 +172,30 @@ is projective because `π` is injective on the range of an idempotent of a free 
 countably generated because the block is; the `Cpart π b` are independent, since the sum of those
 below `b` is exactly `π (Jlt π b)`, and their supremum is the whole of `π`'s image.
 
+**A7 was the fourth, and is now proved too.**  Albrecht's theorem — over a hereditary ring every
+projective module is a direct sum of *finitely generated* projective modules — is
+`Albrecht.exists_directSum_fg` in `KappaMonoid/ForMathlib/Albrecht.lean`.  It was split out of A5's
+data one commit before it was proved, which is what made it visible as a separate assumption at
+all.
+
+Two ingredients.  First, over a ring all of whose left ideals are projective, a module embedding in
+`Rⁿ` is projective (`projective_of_injective_fin`): peel off one coordinate, and the image there is
+a left ideal, so the projection splits.  Second, Kaplansky's theorem reduces the statement to a
+countably generated projective `Q`, which is the image of an idempotent `π` on the free module
+`ℕ →₀ R`.  Filter that image by `Npart π n`, its part supported on the first `n` coordinates.  Each
+`Npart π n` is *finitely* generated, because `Fpart R n / Npart π n` is the image of `1 − π` on
+`Fpart R n` — finitely generated, hence projective by the first ingredient — so the quotient map
+splits and `Npart π n` is a direct summand of `Rⁿ`.  And `Npart π (n+1) / Npart π n` embeds in `R`
+through the `n`-th coordinate, so it is a finitely generated left ideal: projective again, and that
+step of the filtration splits off a finitely generated projective complement.  The complements are
+independent and sum to the whole image — the same assembly lemma `iSupIndep_of_disjoint_lt` that
+Kaplansky's proof uses.
+
+The hypothesis is *hereditary*, all left ideals projective, which is what `corollary_4_7_one_forward`
+has from A5.  Albrecht's own theorem is for semihereditary rings, where only the finitely generated
+ideals are assumed projective; that is a genuine strengthening, and the proof above would need the
+first ingredient restated for finitely generated submodules to reach it.  Nothing here needs it.
+
 The assumptions are contained.  `#print axioms prop_2_16` reports exactly A5, reached through
 Leavitt's theorem; and `prop_2_17_one`, along with Example 2.13's `isFaithful_unitClass`, reports
 **no axiom at all** — which is what retiring A1, A3 and A4 bought.
@@ -182,12 +206,10 @@ Theorems 3.11 and 4.3, Proposition 2.9, Lemmas 2.14 and 2.15, and even
 `Quot.sound`.**
 
 A5 is used by exactly two results: `corollary_4_7_one_forward`, the implication (i) ⇒ (ii) of
-Corollary 4.7(1), and — since Leavitt's theorem is now deduced from it — `prop_2_16`. A7 is used
-by `corollary_4_7_one_forward` alone, and `prop_2_16` does *not* use it: the audit distinguishes
-them, which is the point of having split A7 out of A5's data. Everything else in §4 — including the identification `V(R) = add [R]`
-(`addOf_unitClass_eq`), Kaplansky's theorem in its `κ`-monoid form, the other direction of
-Corollary 4.7(1), Corollary 4.7(2) and Examples 4.8(1) — reports only `propext`,
-`Classical.choice` and `Quot.sound`.
+Corollary 4.7(1), and — since Leavitt's theorem is now deduced from it — `prop_2_16`. Everything
+else in §4 — including the identification `V(R) = add [R]` (`addOf_unitClass_eq`), Kaplansky's
+theorem in its `κ`-monoid form, the other direction of Corollary 4.7(1), Corollary 4.7(2) and
+Examples 4.8(1) — reports only `propext`, `Classical.choice` and `Quot.sound`.
 
 **A2 was the fifth, and is now derived rather than assumed.**  Leavitt's realisation theorem —
 every cyclic monoid `C_{m,n}` with `m, n ≥ 1` is the monoid of finitely generated free modules over
@@ -325,14 +347,22 @@ way. Each correction is also recorded in the docstring of the affected result.
 **Hereditariness is carried together with `EveryProjectiveIsSumOfFG R`** — in Theorem 5.3,
 Proposition 5.4's hereditary half and all three parts of Corollary 5.5. Both directions of the
 paper's proofs reach `R` only through Corollary 4.6: over a hereditary ring every projective module
-is a direct sum of finitely generated ones. That implication is a quoted result (Albrecht; Bergman),
-not monoid theory and not in Mathlib, so this development does not derive it — it is axiom A7,
-Albrecht's theorem, which `corollary_4_7_one_forward` applies to the hereditary ring A5 produces. It is
-therefore not recoverable from `∀ I : Ideal R, Module.Projective R I` inside the formalisation. For
-a hereditary ring the extra conjunct is automatic, so the statements are the paper's; making it
-explicit is the same treatment Corollary 4.6 already gets in `Modules/Projective.lean`, where it is a
-documented stub rather than a formalised implication. `corollary_4_7_one_forward` was extended to
-return it, which it can because axiom A5 supplies it.
+is a direct sum of finitely generated ones.
+
+This deviation is *no longer forced*, and is the one item in this section that could now be
+removed. When it was written, that implication was quoted rather than formalised, so it could not
+be recovered from `∀ I : Ideal R, Module.Projective R I` inside the development. It now can:
+Albrecht's theorem is `ForMathlib/Albrecht.lean`, and `corollary_4_7_one_forward` applies it to the
+hereditary ring A5 produces. In Theorem 5.3, whose existential already records hereditariness, the
+extra conjunct is therefore redundant and could simply be dropped; in Corollary 5.5, which does not
+mention `Ideal R`, it could be replaced by hereditariness, which `theorem_5_3_backward` supplies.
+Both restatements are exactly the paper's. They have not been made — that is a change to six
+headline statements, not a consequence of proving the theorem — and every affected docstring says
+so.
+
+For a hereditary ring the extra conjunct is automatic, so the statements as they stand are
+faithful. `corollary_4_7_one_forward` was extended to return it, which it can because axiom A5
+supplies the hereditary ring and Albrecht's theorem does the rest.
 
 **Lemma 5.2(3) and 5.2(4) take the generation hypothesis `hgen`.** It is a standing assumption of
 §5 ("let `H` be a non-cyclic `ℵ₀`-monoid generated by two elements") and both proofs genuinely need
@@ -482,7 +512,7 @@ for a new Mathlib tag and files an issue if the update does not build.
 
 CI (`.github/workflows/lean_action_ci.yml`) does four things on every push: it builds the root
 target, fails if any declaration in it uses `sorry`, runs `scripts/check_layering.sh`, and fails if
-the set of `axiom` declarations under `KappaMonoid/` differs from the two in the table above.
+the set of `axiom` declarations under `KappaMonoid/` differs from the one in the table above.
 Documentation is generated by `docgen-action`.
 
 `scripts/check_layering.sh` is what keeps the layers honest — Lake resolves modules package-wide,

@@ -17,6 +17,39 @@ universe u
 
 open Cardinal DirectSum
 
+/-- A family of submodules indexed by a linear order is independent as soon as each member is
+disjoint from a submodule containing all its predecessors.  This is the shape a filtration
+produces: `A b` is the sum of the pieces below `b`, and `C b` is a complement of it. -/
+theorem iSupIndep_of_disjoint_lt {R : Type*} [Ring R] {M : Type*} [AddCommGroup M] [Module R M]
+    {ι : Type*} [LinearOrder ι] {C A : ι → Submodule R M}
+    (hdisj : ∀ b, Disjoint (A b) (C b)) (hle : ∀ {c b : ι}, c < b → C c ≤ A b) :
+    iSupIndep C := by
+  rw [iSupIndep_iff_finsetSum_eq_zero_imp_eq_zero]
+  intro s
+  induction s using Finset.strongInductionOn with
+  | _ s ih =>
+    intro v hv hsum i hi
+    have hne : s.Nonempty := ⟨i, hi⟩
+    set d := s.max' hne with hd
+    have hdmem : d ∈ s := s.max'_mem hne
+    have hlt : ∀ j ∈ s.erase d, j < d := fun j hj =>
+      lt_of_le_of_ne (s.le_max' j (Finset.mem_of_mem_erase hj)) (Finset.ne_of_mem_erase hj)
+    have hrest : ∑ j ∈ s.erase d, v j ∈ A d :=
+      Submodule.sum_mem _ fun j hj => hle (hlt j hj) (hv j (Finset.mem_of_mem_erase hj))
+    have hvd : v d = 0 := by
+      rw [← Finset.add_sum_erase _ v hdmem] at hsum
+      have hmem : v d ∈ A d := by
+        rw [eq_neg_of_add_eq_zero_left hsum]
+        exact neg_mem hrest
+      exact Submodule.disjoint_def.1 (hdisj d) _ hmem (hv d hdmem)
+    have hsum' : ∑ j ∈ s.erase d, v j = 0 := by
+      rw [← Finset.add_sum_erase _ v hdmem, hvd, zero_add] at hsum
+      exact hsum
+    rcases eq_or_ne i d with rfl | hid
+    · exact hvd
+    · exact ih (s.erase d) (Finset.erase_ssubset hdmem) v
+        (fun j hj => hv j (Finset.mem_of_mem_erase hj)) hsum' i (Finset.mem_erase.2 ⟨hid, hi⟩)
+
 namespace Kaplansky
 
 /-! ## Restricting the support of a finitely supported function -/
@@ -441,34 +474,9 @@ theorem iSup_Cpart (hπ : ∀ x, π (π x) = π x) :
     ⟨Finsupp.single b 1, Finsupp.single_mem_supported R 1 (subset_cl _ _ (le_refl b)), rfl⟩
 
 omit [WellFoundedLT B] in
-theorem iSupIndep_Cpart (hπ : ∀ x, π (π x) = π x) : iSupIndep (Cpart π) := by
-  rw [iSupIndep_iff_finsetSum_eq_zero_imp_eq_zero]
-  intro s
-  induction s using Finset.strongInductionOn with
-  | _ s ih =>
-    intro v hv hsum i hi
-    have hne : s.Nonempty := ⟨i, hi⟩
-    set d := s.max' hne with hd
-    have hdmem : d ∈ s := s.max'_mem hne
-    have hlt : ∀ j ∈ s.erase d, j < d := fun j hj =>
-      lt_of_le_of_ne (s.le_max' j (Finset.mem_of_mem_erase hj)) (Finset.ne_of_mem_erase hj)
-    have hrest : ∑ j ∈ s.erase d, v j ∈ Altpart π d :=
-      Submodule.sum_mem _ fun j hj =>
-        Apart_le_Altpart π (hlt j hj)
-          (Cpart_le_Apart π j (hv j (Finset.mem_of_mem_erase hj)))
-    have hvd : v d = 0 := by
-      rw [← Finset.add_sum_erase _ v hdmem] at hsum
-      have hmem : v d ∈ Altpart π d := by
-        rw [eq_neg_of_add_eq_zero_left hsum]
-        exact neg_mem hrest
-      exact Submodule.disjoint_def.1 (disjoint_Altpart_Cpart π hπ d) _ hmem (hv d hdmem)
-    have hsum' : ∑ j ∈ s.erase d, v j = 0 := by
-      rw [← Finset.add_sum_erase _ v hdmem, hvd, zero_add] at hsum
-      exact hsum
-    rcases eq_or_ne i d with rfl | hid
-    · exact hvd
-    · exact ih (s.erase d) (Finset.erase_ssubset hdmem) v
-        (fun j hj => hv j (Finset.mem_of_mem_erase hj)) hsum' i (Finset.mem_erase.2 ⟨hid, hi⟩)
+theorem iSupIndep_Cpart (hπ : ∀ x, π (π x) = π x) : iSupIndep (Cpart π) :=
+  iSupIndep_of_disjoint_lt (disjoint_Altpart_Cpart π hπ)
+    fun hcb => (Cpart_le_Apart π _).trans (Apart_le_Altpart π hcb)
 
 end Main
 

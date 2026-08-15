@@ -87,7 +87,8 @@ alias example_4_8_1_free := KappaMonoid.krsa_ascent_free
   semiperfect (Mueller), weakly noetherian commutative (Hinohara), Bézout with one-sided Krull
   dimension (McGovern–Puninski–Rothmaler) — none of them monoid-theoretic and none in Mathlib.
   `corollary_4_6` is a documented stub, and `EveryProjectiveIsSumOfFG` is the hypothesis the six
-  would supply.
+  would supply.  The *hereditary* case of the second — Albrecht's theorem — is proved, in
+  `ForMathlib/Albrecht.lean`, and is the one §4 and §5 actually use; the other five stay quoted.
 * **Examples 4.8(2)** is not formalised.
 
 Examples 4.8(1) *is* formalised as printed, `V^κ(C) ≅ F_κ(B)` included (`krsa_ascent_iso`).  It was

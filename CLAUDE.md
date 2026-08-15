@@ -86,8 +86,8 @@ questions a build would answer, without a build. Prefer it throughout.
 - **Instances**: defs producing them carry `@[instance_reducible]`. Instances that depend on
   hypotheses are threaded through statements with `letI`, repeated verbatim at the top of the
   tactic proof.
-- **No new axioms without asking.** The two assumed classical results (A5, A7) both live in
-  `KappaMonoid/Axioms/` and are documented in `README.md`. A new headline result gets a line in
+- **No new axioms without asking.** The one assumed classical result (A5) lives in
+  `KappaMonoid/Axioms/` and is documented in `README.md`. A new headline result gets a line in
   `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo [bergmanDicksData]`, or `[]` for the
   usual case — which is checked by the build and fails in both directions, so it also tells you when
   a refactor has *removed* a dependency. §3 needs no axiom at all. CI enforces the list — `.github/workflows/lean_action_ci.yml` fails if the set of
@@ -99,7 +99,9 @@ questions a build would answer, without a build. Prefer it throughout.
   in Theorem 3.11; the
   `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a formalised counterexample showing the
   paper's claim is false; and the six statements corrected in §5, chiefly `EveryProjectiveIsSumOfFG
-  R` carried alongside hereditariness, because Corollary 4.6 is quoted rather than formalised.
+  R` carried alongside hereditariness, which was forced when Corollary 4.6 was quoted rather than
+  formalised and is now removable — see the `README.md` section, which says what the two
+  restatements would be.
   (Examples 4.8(1) was a fifth until the test universe of `IsUniversalKExtension` became a
   parameter; `krsa_ascent_iso` is now the paper's statement.) When the paper is wrong, formalise the
   repaired statement and say so; do not quietly weaken or restate it.
@@ -180,13 +182,13 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 
 | Layer | Contents |
 |---|---|
-| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid), `Kaplansky.lean` (A6) |
+| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid), `Kaplansky.lean` (A6), `Albrecht.lean` (A7) |
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop39`, `UnivExt` (Thm 3.11), `Saturated` (Lemma 3.13) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
 | `Examples/` | `TrivExt`, `ENNReal`, `Diophantine` (§3.2), `Reals` |
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`.  Everything but `Lemma51` and after is monoid theory |
-| `Axioms/` | `Modules` (A5, A7).  A1, A3, A4 and A6 were here until they were proved — `ForMathlib/{FreeRank,SimpleMultiplicity,CyclicMonoid,Kaplansky}.lean` — and A2 until it was derived from A5 in `Modules/Rings/Leavitt.lean` |
+| `Axioms/` | `Modules` (A5 alone).  A1, A3, A4, A6 and A7 were here until they were proved — `ForMathlib/{FreeRank,SimpleMultiplicity,CyclicMonoid,Kaplansky,Albrecht}.lean` — and A2 until it was derived from A5 in `Modules/Rings/Leavitt.lean` |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it |
 
 **When adding a result, put it in the lowest layer that can state it.**  A monoid-theoretic lemma

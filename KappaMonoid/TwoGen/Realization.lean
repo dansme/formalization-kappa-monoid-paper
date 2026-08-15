@@ -844,11 +844,11 @@ The paper's `1 ≤ i ≠ j ≤ 2` is rendered as a conjunction over the two orde
 `Fin 2` bookkeeping, which would cost more than it saves.
 
 **The statement carries `EveryProjectiveIsSumOfFG R` alongside hereditariness.**  The paper gets
-that from Corollary 4.6, which in this development is a *quoted* result (Albrecht; Bergman) with no
-counterpart in Mathlib — it is bundled into the Bergman–Dicks data of axiom A5 rather than derived,
-so it cannot be recovered from `∀ I : Ideal R, Module.Projective R I` inside the formalisation.
-Adding it to both sides of the equivalence keeps the statement faithful: for a hereditary ring the
-extra conjunct is automatic.
+that from Corollary 4.6, whose hereditary case is Albrecht's theorem — which is *proved*, in
+`ForMathlib/Albrecht.lean`.  So here the conjunct is redundant: `Albrecht.exists_directSum_fg`
+turns the hereditariness in the same existential into it.  It is spelled out because §5 is stated
+uniformly, and Corollary 5.5 does not mention `Ideal R` at all.  Either way the statement is the
+paper's: for a hereditary ring the extra conjunct is automatic.
 
 Forward: Lemma 5.1 gives braidedness, then (iii) is 5.2(1), (ii) is 5.2(4), and (i) is the counting
 argument.  Backward: `exists_braided_form` reduces arbitrary families to forms and

@@ -202,7 +202,8 @@ realizability by a ring whose countably (non finitely) generated projectives are
 `corollary_5_5_one`: the freeness clause is over the classes of `V^{ℵ₀}(R)` — the countably
 generated projectives — rather than over all projective modules, for which it is false; and
 `EveryProjectiveIsSumOfFG R` is carried explicitly, since the paper reaches it from Theorem 5.3
-through the quoted Corollary 4.6.
+through Corollary 4.6 — whose hereditary case, Albrecht's theorem, is `ForMathlib/Albrecht.lean` —
+and this statement, unlike Theorem 5.3, does not mention `Ideal R`.
 
 (i) ⇒ (ii): each generator lies in `add` of the other, so conditions (i) and (ii) of Theorem 5.3
 hold — the first because `ℵ₀ x_j` absorbs `ℵ₀ x_i`, the second vacuously — and (iii) is assumed;

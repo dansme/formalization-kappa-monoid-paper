@@ -8,6 +8,7 @@ import KappaMonoid.Core.Free
 import KappaMonoid.Core.OrderUnit
 import KappaMonoid.Modules.Rings.ProjOrderUnit
 import KappaMonoid.Braiding.Saturated
+import KappaMonoid.ForMathlib.Albrecht
 
 universe u v t
 
@@ -233,10 +234,11 @@ every projective module is a direct sum of finitely generated modules, and the c
 follows from `corollary_4_5_three`, which is *proved*.
 
 Those six implications are the quoted results (Bergman; Warfield; Mueller; Hinohara;
-McGovern–Puninski–Rothmaler).  There is nothing further to formalise: Corollary 4.6 is exactly
-`corollary_4_5_three` plus six citations, so the documented stub in `ModuleClass.lean` is the right
-treatment and this file adds nothing for it.  `EveryProjectiveIsSumOfFG` names the hypothesis so
-that the six implications can be stated if that module theory ever lands in Mathlib. -/
+McGovern–Puninski–Rothmaler), and Corollary 4.6 is exactly `corollary_4_5_three` plus those
+citations, so the documented stub in `ModuleClass.lean` is the right treatment and this file adds
+nothing for it.  `EveryProjectiveIsSumOfFG` names the hypothesis they supply — and the one case
+this development needs, the *hereditary* one, is not quoted but proved:
+`Albrecht.exists_directSum_fg` in `ForMathlib/Albrecht.lean`. -/
 
 /-- The property quoted from the literature for each of the six classes of Corollary 4.6. -/
 def EveryProjectiveIsSumOfFG (R : Type u) [Ring R] : Prop :=
@@ -421,12 +423,12 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
     exact hzn
   -- Step 2: Bergman–Dicks (axiom A5) realises `add x` as `V(R)` for a hereditary `k`-algebra `R`
   have bd := bergmanDicksData k ↥(KMonoid.addOf (κ := κ) x) ⟨x, hxmem⟩ hred hunit
-  refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, albrecht_classical bd.hereditary, ?_⟩
+  refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, Albrecht.exists_directSum_fg bd.hereditary, ?_⟩
   letI := (projClass bd.R κ hκ).instKMonoid hκ
   letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
   -- Step 3: Albrecht's theorem (A7) for the hereditary `R` is the hypothesis of Corollary 4.5(3)
-  obtain ⟨hbr₂, -⟩ := corollary_4_5_three.{u, u} bd.R κ hκ (albrecht_classical bd.hereditary)
+  obtain ⟨hbr₂, -⟩ := corollary_4_5_three.{u, u} bd.R κ hκ (Albrecht.exists_directSum_fg bd.hereditary)
   -- Step 4: transport that braiding along `add x ≅ V(R)`
   obtain ⟨Φ, hΦhom, hΦinj, hΦsurj⟩ := bd.exists_isLMonoidHom_bijective κ hκ
   have hΦΦ' : ∀ a, Function.invFun Φ (Φ a) = a := Function.leftInverse_invFun hΦinj

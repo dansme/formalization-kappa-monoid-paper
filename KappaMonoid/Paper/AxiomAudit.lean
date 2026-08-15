@@ -54,7 +54,7 @@ namespace KappaMonoid
 #assert_axioms kaplansky []
 #assert_axioms addOf_unitClass_eq []
 #assert_axioms corollary_4_7_one_backward []
-#assert_axioms corollary_4_7_one_forward [albrecht_classical, bergmanDicksData]
+#assert_axioms corollary_4_7_one_forward [bergmanDicksData]
 #assert_axioms corollary_4_7_two []
 #assert_axioms krsa_ascent []
 #assert_axioms krsa_ascent_free []
@@ -70,20 +70,20 @@ namespace KappaMonoid
 #assert_axioms TwoGen.lemma_5_2_four []
 #assert_axioms TwoGen.lemma_5_2_five []
 #assert_axioms TwoGen.theorem_5_3_forward []
-#assert_axioms TwoGen.theorem_5_3_backward [albrecht_classical, bergmanDicksData]
-#assert_axioms TwoGen.theorem_5_3 [albrecht_classical, bergmanDicksData]
+#assert_axioms TwoGen.theorem_5_3_backward [bergmanDicksData]
+#assert_axioms TwoGen.theorem_5_3 [bergmanDicksData]
 #assert_axioms TwoGen.prop_5_4 []
 #assert_axioms TwoGen.prop_5_4_hereditary []
-#assert_axioms TwoGen.corollary_5_5_one [albrecht_classical, bergmanDicksData]
-#assert_axioms TwoGen.corollary_5_5_two [albrecht_classical, bergmanDicksData]
-#assert_axioms TwoGen.corollary_5_5_three [albrecht_classical, bergmanDicksData]
+#assert_axioms TwoGen.corollary_5_5_one [bergmanDicksData]
+#assert_axioms TwoGen.corollary_5_5_two [bergmanDicksData]
+#assert_axioms TwoGen.corollary_5_5_three [bergmanDicksData]
 #assert_axioms TwoGen.cex_incomparable []
 #assert_axioms TwoGen.cex_absorb []
 
 /-! ## The paper layer restates §5, so it must report the same axioms -/
 
 #assert_axioms Paper.lemma_5_2_three []
-#assert_axioms Paper.theorem_5_3_backward [albrecht_classical, bergmanDicksData]
-#assert_axioms Paper.corollary_5_5_three [albrecht_classical, bergmanDicksData]
+#assert_axioms Paper.theorem_5_3_backward [bergmanDicksData]
+#assert_axioms Paper.corollary_5_5_three [bergmanDicksData]
 
 end KappaMonoid

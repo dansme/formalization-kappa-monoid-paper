@@ -1,12 +1,12 @@
 /-
-**A5**, the Bergman-Dicks realisation theorem, and **A7**, Albrecht's theorem on projectives over
-a hereditary ring.  A7 was a field of `BergmanDicksData` until it was given its own name: it is
-about hereditary rings in general, and separating it lets the provenance audit say which of the
-two a result actually uses.
+**A5**, the Bergman-Dicks realisation theorem: the one classical result this development still
+assumes.
 
-Two of the axioms that used to live here have since been proved, in files that depend on nothing
-in this development: A3 — uniqueness of the multiplicities of simple modules — in
-`ForMathlib/SimpleMultiplicity.lean`, and A6 — Kaplansky's theorem — in `ForMathlib/Kaplansky.lean`.
+Three of the axioms that used to live here have since been proved, in files that depend on
+nothing in this development: A3 — uniqueness of the multiplicities of simple modules — in
+`ForMathlib/SimpleMultiplicity.lean`, A6 — Kaplansky's theorem — in `ForMathlib/Kaplansky.lean`,
+and A7 — Albrecht's theorem — in `ForMathlib/Albrecht.lean`.  A7 was a field of
+`BergmanDicksData` before it was split out and then proved.
 -/
 import Mathlib
 
@@ -88,34 +88,12 @@ Two differences from the sources, both checked:
 
 The proof is a construction by universal localisation and is far out of reach here; Mathlib has
 neither hereditary rings nor universal localisation.  The statement used to bundle Albrecht's
-theorem as a `sumOfFG` field, since Corollary 4.7(1) uses the two together; that is now A7
-below, which is where it belongs — it is a statement about hereditary rings in general, not
-about the one this axiom produces. -/
+theorem as a `sumOfFG` field, since Corollary 4.7(1) uses the two together; that was split out as
+A7 — a statement about hereditary rings in general, not about the one this axiom produces — and is
+now proved, in `ForMathlib/Albrecht.lean`. -/
 axiom bergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M] (u : M)
     (_hred : ∀ a b : M, a + b = 0 → a = 0)
     (_hunit : ∀ y : M, ∃ (z : M) (n : ℕ), y + z = n • u) :
     BergmanDicksData.{u} k M u
-
-/-! ## A7: projective modules over a hereditary ring -/
-
-/-- **Assumed** (Albrecht 1961; Bergman 1972).  Over a hereditary ring every projective module is
-a direct sum of finitely generated projective modules.
-
-Albrecht proves it for semihereditary rings, which is more than is needed here.  Mathlib has
-neither hereditary rings nor this decomposition, and the argument — a transfinite filtration of a
-free module compatible with the projective summand, as for Kaplansky's theorem — is not monoid
-theory, so it is assumed rather than proved.
-
-This is exactly the content of Corollary 4.6 in the hereditary case, which is why the shape below
-matches `EveryProjectiveIsSumOfFG` and the hypothesis of `corollary_4_5_three` verbatim: applied
-to a hereditary ring it plugs straight into both.  It was a field of `BergmanDicksData` until it
-was moved here; carrying it separately is what lets a result say which of the two quoted theorems
-it actually uses. -/
-axiom albrecht_classical {R : Type u} [Ring R]
-    (_hered : ∀ I : Ideal R, Module.Projective R I) :
-    ∀ (Q : Type u) (_ : AddCommGroup Q) (_ : Module R Q), Module.Projective R Q →
-      ∃ (ι : Type u) (S : ι → Type u) (_ : ∀ i, AddCommGroup (S i)) (_ : ∀ i, Module R (S i)),
-        (∀ i, Module.Projective R (S i)) ∧ (∀ i, Module.Finite R (S i)) ∧
-          Nonempty (Q ≃ₗ[R] ⨁ i, S i)
 
 end KappaMonoid

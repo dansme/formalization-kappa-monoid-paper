@@ -59,9 +59,10 @@ structure Setting5 (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] where
 `H` is isomorphic, as an `ℵ₀`-monoid, to `V^{ℵ₀}(R)` for a ring `R` over which every projective
 module is a direct sum of finitely generated ones.
 
-The paper says "for a hereditary ring".  `EveryProjectiveIsSumOfFG R` is carried alongside
-hereditariness because the implication between them is Corollary 4.6, a quoted result which this
-development does not derive; for a hereditary ring the extra conjunct is automatic.  See
+The paper says "for a hereditary ring", and the implication from that to this is Corollary 4.6,
+whose hereditary case — Albrecht's theorem — is proved in `ForMathlib/Albrecht.lean`.  So this
+condition is implied by the paper's, and equal to it wherever hereditariness is also recorded, as
+in Theorem 5.3; Corollary 5.5 states only this half, since it does not mention `Ideal R`.  See
 `README.md`, "The statements corrected in Section 5". -/
 def IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
   ∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
