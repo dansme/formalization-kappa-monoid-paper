@@ -65,10 +65,8 @@ too, by Albrecht's theorem (`ForMathlib/Albrecht.lean`), which is how Theorem 5.
 direction — stated for a hereditary ring, as in the paper — feeds these corollaries; the forward
 direction is stated for this weaker condition, because 5.5(2) has nothing stronger to offer it.
 See `README.md`, "The statements corrected in Section 5". -/
-def IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
-  ∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-    ∃ e : V(R).carrier → H,
-      IsKHom ℵ₀ e ∧ Function.Bijective e
+abbrev IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
+  TwoGen.IsRealizableAsV H
 
 /-- The `ℵ₀⁻`-monoid structure on `add (x₁ + x₂)`, which the braiding statements of §5 live
 over. -/
@@ -225,13 +223,7 @@ and needs none: the freeness clause gives `EveryProjectiveIsSumOfFG R` through K
 with. -/
 theorem corollary_5_5_two (S : Setting5 H) :
     (add(S.x₁) = add(S.x₂) ∧ NoMixedForms S.x₁ S.x₂) ↔
-      (∃ (R : Type u) (_ : Ring R),
-        (∀ q : V(R).carrier,
-            ¬ Module.Finite R (V(R).rep q) →
-            ∃ ι : Type u, #ι ≤ ℵ₀ ∧
-              Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-        ∃ e : V(R).carrier → H,
-          IsKHom ℵ₀ e ∧ Function.Bijective e) :=
+      TwoGen.IsRealizableAsVFree H :=
   TwoGen.corollary_5_5_two S.x₁ S.x₂ S.gen S.noncyclic
 
 /-- **Corollary 5.5(3)**.  When `add x₁ ⊊ add x₂`, `H` is realizable iff every form equal to
@@ -242,10 +234,7 @@ The paper's part (3) is a three-way equivalence; the other two clauses are
 `corollary_5_5_three_nonfree` and `corollary_5_5_three_trace` below. -/
 theorem corollary_5_5_three (S : Setting5 H) (h₁ : S.x₁ ∈ add(S.x₂))
     (h₂ : S.x₂ ∉ add(S.x₁)) :
-    (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
-        β ≠ ⊤ ∧ ∃ m m' : ℕ,
-          eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
-      ∧ NoMixedForms S.x₁ S.x₂ ↔ IsRealizableAsV H :=
+    TwoGen.Relations3 S.x₁ S.x₂ ∧ NoMixedForms S.x₁ S.x₂ ↔ IsRealizableAsV H :=
   TwoGen.corollary_5_5_three S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
 
 /-- **Corollary 5.5(3)**, second clause: the same relation condition is equivalent to
@@ -253,17 +242,8 @@ realizability by a ring which in addition carries a finitely generated projectiv
 `P^{(ℵ₀)}` not free. -/
 theorem corollary_5_5_three_nonfree (S : Setting5 H) (h₁ : S.x₁ ∈ add(S.x₂))
     (h₂ : S.x₂ ∉ add(S.x₁)) :
-    (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
-        β ≠ ⊤ ∧ ∃ m m' : ℕ,
-          eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
-      ∧ NoMixedForms S.x₁ S.x₂ ↔
-      (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        (∃ p : V(R).carrier,
-            Module.Finite R (V(R).rep p) ∧
-            ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => V(R).rep p)
-              ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-          ∃ e : V(R).carrier → H,
-            IsKHom ℵ₀ e ∧ Function.Bijective e) :=
+    TwoGen.Relations3 S.x₁ S.x₂ ∧ NoMixedForms S.x₁ S.x₂ ↔
+      TwoGen.IsRealizableAsVNonfree H :=
   TwoGen.corollary_5_5_three_nonfree S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
 
 /-- **Corollary 5.5(3)**, third clause: equivalently, `H ≅ V^{ℵ₀}(R)` for a ring with two finitely
@@ -271,19 +251,8 @@ generated projective modules `P₁`, `P₂` generating `V^{ℵ₀}(R)` and satis
 `Tr(P₁) ⊊ Tr(P₂)`. -/
 theorem corollary_5_5_three_trace (S : Setting5 H) (h₁ : S.x₁ ∈ add(S.x₂))
     (h₂ : S.x₂ ∉ add(S.x₁)) :
-    (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
-        β ≠ ⊤ ∧ ∃ m m' : ℕ,
-          eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
-      ∧ NoMixedForms S.x₁ S.x₂ ↔
-      (∃ (R : Type u) (_ : Ring R),
-        ∃ p₁ p₂ : V(R).carrier,
-          Module.Finite R (V(R).rep p₁) ∧
-            Module.Finite R (V(R).rep p₂) ∧
-            KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier) ∧
-            traceIdeal R (V(R).rep p₁)
-              < traceIdeal R (V(R).rep p₂) ∧
-            ∃ e : V(R).carrier → H,
-              IsKHom ℵ₀ e ∧ Function.Bijective e) :=
+    TwoGen.Relations3 S.x₁ S.x₂ ∧ NoMixedForms S.x₁ S.x₂ ↔
+      TwoGen.IsRealizableAsVTracePair H :=
   TwoGen.corollary_5_5_three_trace S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
 
 end Paper

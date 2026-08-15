@@ -21,6 +21,55 @@ namespace TwoGen
 -- *different* universes (trap 5 of `CLAUDE.md`).
 variable {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H]
 
+/-! ### The statements Corollary 5.5 compares
+
+Each part of the corollary equates a condition on the relations of `H` with realizability of `H`
+as `V^{ℵ₀}(R)` for a ring carrying some extra structure.  Both sides are named here, so that the
+three parts read as the paper writes them instead of repeating a ten-line existential. -/
+
+/-- `H ≅ V^{ℵ₀}(R)` for a ring whose projective modules are direct sums of finitely generated
+ones.  This is the paper's own phrasing of realizability in Corollary 5.5(1) and (3). -/
+def IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
+  ∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
+    ∃ e : V(R).carrier → H, KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e
+
+/-- `H ≅ V^{ℵ₀}(R)` for a ring whose countably (non finitely) generated projective modules are
+free — the realizability of Corollary 5.5(2).  The freeness clause is over the classes of
+`V^{ℵ₀}(R)`, not over all projective modules, for which it is false; and it needs no condition on
+decompositions of projectives, because it implies one (`everyProjectiveIsSumOfFG_of_free`). -/
+def IsRealizableAsVFree (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
+  ∃ (R : Type u) (_ : Ring R),
+    (∀ q : V(R).carrier, ¬ Module.Finite R (V(R).rep q) →
+        ∃ ι : Type u, #ι ≤ ℵ₀ ∧ Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
+      ∃ e : V(R).carrier → H, KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e
+
+/-- `IsRealizableAsV` with, in addition, a finitely generated projective `P` whose `P^{(ℵ₀)}` is
+not free — the first clause of Corollary 5.5(3). -/
+def IsRealizableAsVNonfree (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
+  ∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
+    (∃ p : V(R).carrier, Module.Finite R (V(R).rep p) ∧
+        ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => V(R).rep p)
+          ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
+      ∃ e : V(R).carrier → H, KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e
+
+/-- `H ≅ V^{ℵ₀}(R)` for a ring with two finitely generated projective generators `P₁`, `P₂` of
+`V^{ℵ₀}(R)` satisfying `Tr(P₁) ⊊ Tr(P₂)` — the third clause of Corollary 5.5(3).  No condition on
+decompositions of projectives appears: generation by finitely generated classes supplies it
+(`everyProjectiveIsSumOfFG_of_kGenerates_finite`). -/
+def IsRealizableAsVTracePair (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
+  ∃ (R : Type u) (_ : Ring R), ∃ p₁ p₂ : V(R).carrier,
+    Module.Finite R (V(R).rep p₁) ∧ Module.Finite R (V(R).rep p₂) ∧
+      KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier) ∧
+        traceIdeal R (V(R).rep p₁) < traceIdeal R (V(R).rep p₂) ∧
+          ∃ e : V(R).carrier → H, KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e
+
+/-- The relation condition of Corollary 5.5(3) (the paper's `hc:sub:relations`): if
+`ℵ₀x₁ + nx₂ = ℵ₀x₁ + βx₂` with `n` finite, then `β` is finite too, and the two forms already agree
+after replacing the infinite `x₁`-coefficient by finite ones. -/
+def Relations3 (x₁ x₂ : H) : Prop :=
+  ∀ (n : ℕ) (β : ℕ∞), eval x₁ x₂ (⊤, (n : ℕ∞)) = eval x₁ x₂ (⊤, β) →
+    β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞))
+
 /-! ## Corollary 5.5 (`hereditarycase`)
 
 Case analysis on how `add x₁` and `add x₂` compare.  All three parts are bookkeeping on top of
@@ -51,9 +100,7 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ add(x₂))
     (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
-    (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        ∃ e : V(R).carrier → H,
-          KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
+    IsRealizableAsV H ↔
       ((∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G → (F.1 = ⊤ ↔ G.1 = ⊤) ∧ (F.2 = ⊤ ↔ G.2 = ⊤)) ∧
         (∀ F G : Form, F.1 = ⊤ → G.1 = ⊤ → eval x₁ x₂ F = eval x₁ x₂ G →
           ∃ m₁ m₂ : ℕ, eval x₁ x₂ ((m₁ : ℕ∞), F.2) = eval x₁ x₂ ((m₂ : ℕ∞), G.2)) ∧
@@ -219,13 +266,7 @@ so Proposition 5.4's hereditary half gives freeness.  (ii) ⇒ (i): freeness mak
 theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (add(x₁) = add(x₂) ∧ NoMixedForms x₁ x₂) ↔
-      (∃ (R : Type u) (_ : Ring R),
-        (∀ q : V(R).carrier,
-            ¬ Module.Finite R (V(R).rep q) →
-            ∃ ι : Type u, #ι ≤ ℵ₀ ∧
-              Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-        ∃ e : V(R).carrier → H,
-          KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
+      IsRealizableAsVFree H := by
   classical
   constructor
   · rintro ⟨heq, hmix⟩
@@ -350,12 +391,8 @@ theorem corollary_5_5_three (h₁ : x₁ ∈ add(x₂))
     (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
-    (∀ (n : ℕ) (β : ℕ∞), eval x₁ x₂ (⊤, (n : ℕ∞)) = eval x₁ x₂ (⊤, β) →
-        β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
-      ∧ NoMixedForms x₁ x₂ ↔
-      (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        ∃ e : V(R).carrier → H,
-          KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
+    Relations3 x₁ x₂ ∧ NoMixedForms x₁ x₂ ↔
+      IsRealizableAsV H := by
   classical
   -- the two readings of `ℵ₀ x₁ + a x₂`
   have hev : ∀ a : ℕ, eval x₁ x₂ ((⊤ : ℕ∞), ((a : ℕ) : ℕ∞))
@@ -525,16 +562,8 @@ theorem corollary_5_5_three_nonfree (h₁ : x₁ ∈ add(x₂))
     (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
-    (∀ (n : ℕ) (β : ℕ∞), eval x₁ x₂ (⊤, (n : ℕ∞)) = eval x₁ x₂ (⊤, β) →
-        β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
-      ∧ NoMixedForms x₁ x₂ ↔
-      (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        (∃ p : V(R).carrier,
-            Module.Finite R (V(R).rep p) ∧
-            ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => V(R).rep p)
-              ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-          ∃ e : V(R).carrier → H,
-            KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
+    Relations3 x₁ x₂ ∧ NoMixedForms x₁ x₂ ↔
+      IsRealizableAsVNonfree H := by
   refine ⟨fun h => ?_, fun h => (corollary_5_5_three x₁ x₂ h₁ h₂ hgen hnoncyclic).mpr ?_⟩
   · obtain ⟨R, hring, hfg, e, hhom, hbij⟩ :=
       (corollary_5_5_three x₁ x₂ h₁ h₂ hgen hnoncyclic).mp h
@@ -554,18 +583,8 @@ theorem corollary_5_5_three_trace (h₁ : x₁ ∈ add(x₂))
     (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
-    (∀ (n : ℕ) (β : ℕ∞), eval x₁ x₂ (⊤, (n : ℕ∞)) = eval x₁ x₂ (⊤, β) →
-        β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
-      ∧ NoMixedForms x₁ x₂ ↔
-      (∃ (R : Type u) (_ : Ring R),
-        ∃ p₁ p₂ : V(R).carrier,
-          Module.Finite R (V(R).rep p₁) ∧
-            Module.Finite R (V(R).rep p₂) ∧
-            KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier) ∧
-            traceIdeal R (V(R).rep p₁)
-              < traceIdeal R (V(R).rep p₂) ∧
-            ∃ e : V(R).carrier → H,
-              KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
+    Relations3 x₁ x₂ ∧ NoMixedForms x₁ x₂ ↔
+      IsRealizableAsVTracePair H := by
   refine ⟨fun h => ?_, fun h => (corollary_5_5_three x₁ x₂ h₁ h₂ hgen hnoncyclic).mpr ?_⟩
   · obtain ⟨R, hring, hfg, e, hhom, hbij⟩ :=
       (corollary_5_5_three x₁ x₂ h₁ h₂ hgen hnoncyclic).mp h
