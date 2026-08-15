@@ -79,6 +79,28 @@ section Cor55
 
 variable (x₁ x₂ : H)
 
+/-- **Transporting the standing hypotheses along a realization.**  Given an isomorphism
+`e : V^{ℵ₀}(R) ≅ H`, its inverse is again an `ℵ₀`-homomorphism, the two generators of `H` pull
+back to generators of `V^{ℵ₀}(R)`, and no single class generates `V^{ℵ₀}(R)`.  All three parts of
+Corollary 5.5 open with this. -/
+theorem exists_inv_generators (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
+    (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) (R : Type u) [Ring R]
+    (e : V(R).carrier → H) (hhom : KMonoid.IsKHom ℵ₀ e) (hbij : Function.Bijective e) :
+    ∃ e' : H → V(R).carrier, Function.LeftInverse e' e ∧ Function.RightInverse e' e ∧
+      KMonoid.IsKHom (ℵ₀ : Cardinal.{u}) e' ∧
+      KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({e' x₁, e' x₂} : Set V(R).carrier) ∧
+      ∀ p : V(R).carrier, ¬ KMonoid.KGenerates ℵ₀ ({p} : Set V(R).carrier) := by
+  refine ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
+    (Equiv.ofBijective e hbij).right_inv, hhom.inv hbij (Equiv.ofBijective e hbij).right_inv,
+    ?_, ?_⟩
+  · have := KMonoid.KGenerates.map (hhom.inv hbij (Equiv.ofBijective e hbij).right_inv)
+      (Equiv.ofBijective e hbij).left_inv.surjective hgen
+    rwa [Set.image_pair] at this
+  · intro p hp
+    refine hnoncyclic (e p) ?_
+    have := KMonoid.KGenerates.map hhom hbij.2 hp
+    rwa [Set.image_singleton] at this
+
 /-- **Corollary 5.5(1)**: for incomparable generators, realizability is equivalent to an explicit
 condition on the relations of `H`.
 
@@ -292,22 +314,8 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
         (fun hnot => absurd hx₁ hnot) (fun hnot => absurd hx₂ hnot) hmix
     refine ⟨R, hring, ?_, e, hhom, hbij⟩
     -- transport the generators back along the isomorphism
-    obtain ⟨e', hleft, hright⟩ : ∃ g : H → V(R).carrier,
-        Function.LeftInverse g e ∧ Function.RightInverse g e :=
-      ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
-        (Equiv.ofBijective e hbij).right_inv⟩
-    have he' : KMonoid.IsKHom (ℵ₀ : Cardinal.{u}) e' := hhom.inv hbij hright
-    have he'surj : Function.Surjective e' := hleft.surjective
-    have hgenp : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
-        ({e' x₁, e' x₂} : Set V(R).carrier) := by
-      have := KMonoid.KGenerates.map he' he'surj hgen
-      rwa [Set.image_pair] at this
-    have hncp : ∀ x : V(R).carrier,
-        ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier) := by
-      intro x hx
-      refine hnoncyclic (e x) ?_
-      have := KMonoid.KGenerates.map hhom hbij.2 hx
-      rwa [Set.image_singleton] at this
+    obtain ⟨e', hleft, hright, he', hgenp, hncp⟩ :=
+      exists_inv_generators x₁ x₂ hgen hnoncyclic R e hhom hbij
     -- both trace ideals are `R`
     have hkey : ∀ a b : H, b ∈ add(a) →
         e' b ≼ ℵ₀∙(e' a) := by
@@ -329,21 +337,8 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
     -- Theorem 5.3's forward direction needs `EveryProjectiveIsSumOfFG`; freeness supplies it
     have hfg : EveryProjectiveIsSumOfFG R := everyProjectiveIsSumOfFG_of_free R hfree
     obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
-    obtain ⟨e', hleft, hright⟩ : ∃ g : H → V(R).carrier,
-        Function.LeftInverse g e ∧ Function.RightInverse g e :=
-      ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
-        (Equiv.ofBijective e hbij).right_inv⟩
-    have he' : KMonoid.IsKHom (ℵ₀ : Cardinal.{u}) e' := hhom.inv hbij hright
-    have hgenp : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
-        ({e' x₁, e' x₂} : Set V(R).carrier) := by
-      have := KMonoid.KGenerates.map he' hleft.surjective hgen
-      rwa [Set.image_pair] at this
-    have hncp : ∀ x : V(R).carrier,
-        ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier) := by
-      intro x hx
-      refine hnoncyclic (e x) ?_
-      have := KMonoid.KGenerates.map hhom hbij.2 hx
-      rwa [Set.image_singleton] at this
+    obtain ⟨e', hleft, hright, he', hgenp, hncp⟩ :=
+      exists_inv_generators x₁ x₂ hgen hnoncyclic R e hhom hbij
     obtain ⟨hne₁, hne₂⟩ := ne_zero_of_not_cyclic (e' x₁) (e' x₂) hgenp hncp
     -- both `ℵ₀ [P_i]` are `ℵ₀ [R]`, hence equal
     have hcm : ℵ₀∙x₁ = ℵ₀∙x₂ := by
@@ -480,21 +475,8 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
-  obtain ⟨e', hleft, hright⟩ : ∃ g : H → V(R).carrier,
-      Function.LeftInverse g e ∧ Function.RightInverse g e :=
-    ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
-      (Equiv.ofBijective e hbij).right_inv⟩
-  have he' : KMonoid.IsKHom (ℵ₀ : Cardinal.{u}) e' := hhom.inv hbij hright
-  have hgenp : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
-      ({e' x₁, e' x₂} : Set V(R).carrier) := by
-    have := KMonoid.KGenerates.map he' hleft.surjective hgen
-    rwa [Set.image_pair] at this
-  have hncp : ∀ x : V(R).carrier,
-      ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier) := by
-    intro x hx
-    refine hnoncyclic (e x) ?_
-    have := KMonoid.KGenerates.map hhom hbij.2 hx
-    rwa [Set.image_singleton] at this
+  obtain ⟨e', hleft, hright, he', hgenp, hncp⟩ :=
+    exists_inv_generators x₁ x₂ hgen hnoncyclic R e hhom hbij
   obtain ⟨hne₁, hne₂⟩ := ne_zero_of_not_cyclic (e' x₁) (e' x₂) hgenp hncp
   -- Theorem 5.3(i) for the ordered pair `(x₂, x₁)`
   obtain ⟨-, hc1', -, -, -⟩ := theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
