@@ -140,7 +140,7 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ add(x₂))
       have hadd : eval x₁ x₂ F + ℵ₀∙x₂
           = eval x₁ x₂ G + ℵ₀∙x₂ := by rw [hFG]
       rw [eval, eval, hF, hm, add_assoc, add_assoc, ecmul_add_cmul_top, ecmul_add_cmul_top,
-        ecmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₁ m] at hadd
+        ecmul_top, ecmul_natCast] at hadd
       exact hadd.symm
     -- and symmetrically for the `X₂`-coefficient
     have key2 : ∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G → F.2 = ⊤ → G.2 ≠ ⊤ → False := by
@@ -156,16 +156,13 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ add(x₂))
             = (ecmul F.1 x₁ + ℵ₀∙x₁) + ecmul (⊤ : ℕ∞) x₂ := by abel
           _ = ℵ₀∙x₂ + ℵ₀∙x₁ := by
               rw [ecmul_add_cmul_top, ecmul_top, add_comm]
-      have hR : eval x₁ x₂ G + ℵ₀∙x₁
-          = KMonoid.cmul (κ := ℵ₀) (n : Cardinal.{u})
-              (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂
-            + ℵ₀∙x₁ := by
+      have hR : eval x₁ x₂ G + ℵ₀∙x₁ = n • x₂ + ℵ₀∙x₁ := by
         rw [eval, hn]
         calc ecmul G.1 x₁ + ecmul ((n : ℕ) : ℕ∞) x₂ + ℵ₀∙x₁
             = (ecmul G.1 x₁ + ℵ₀∙x₁)
               + ecmul ((n : ℕ) : ℕ∞) x₂ := by abel
           _ = _ := by
-              rw [ecmul_add_cmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₂ n, add_comm]
+              rw [ecmul_add_cmul_top, ecmul_natCast, add_comm]
       rw [hL, hR] at hadd
       exact hadd.symm
     have hcl1 : ∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G →
@@ -210,7 +207,7 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ add(x₂))
       refine absurd ((hcl1 (((n : ℕ) : ℕ∞), ⊤) ((⊤ : ℕ∞), ⊤) ?_).1.mpr rfl) (ENat.natCast_ne_top n)
       show ecmul ((n : ℕ) : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
         = ecmul (⊤ : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
-      rw [ecmul_natCast, ecmul_top, ecmul_top, ← KMonoid.cmul_natCast x₁ n]
+      rw [ecmul_natCast, ecmul_top, ecmul_top]
       exact hn
     have hc1' : Cond1 x₂ x₁ := by
       intro n hn
@@ -218,10 +215,7 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ add(x₂))
         (ENat.natCast_ne_top n)
       show ecmul (⊤ : ℕ∞) x₁ + ecmul ((n : ℕ) : ℕ∞) x₂
         = ecmul (⊤ : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
-      rw [ecmul_natCast, ecmul_top, ecmul_top, ← KMonoid.cmul_natCast x₂ n,
-        add_comm (ℵ₀∙x₁)
-          (KMonoid.cmul (κ := ℵ₀) (n : Cardinal.{u})
-            (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂),
+      rw [ecmul_natCast, ecmul_top, ecmul_top, add_comm (ℵ₀∙x₁) (n • x₂),
         add_comm (ℵ₀∙x₁) (ℵ₀∙x₂)]
       exact hn
     have hmix : NoMixedForms x₁ x₂ := by
@@ -352,12 +346,9 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
     obtain ⟨hc1, hc1', -, -, hmix⟩ :=
       theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
     have habs : ∀ a b : H, ℵ₀∙a
-        = ℵ₀∙b →
-        KMonoid.cmul (κ := ℵ₀) (0 : ℕ) (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) a
-          + ℵ₀∙b
-        = ℵ₀∙a + ℵ₀∙b := by
+        = ℵ₀∙b → (0 : ℕ) • a + ℵ₀∙b = ℵ₀∙a + ℵ₀∙b := by
       intro a b hab
-      rw [KMonoid.cmul_natCast, zero_nsmul, zero_add, hab, cmul_top_add_self]
+      rw [zero_nsmul, zero_add, hab, cmul_top_add_self]
     refine ⟨le_antisymm (addOf_subset_of_mem ((hc1 0 (habs x₁ x₂ hcm)).2))
       (addOf_subset_of_mem ((hc1' 0 (habs x₂ x₁ hcm.symm)).2)), hmix⟩
 
@@ -390,12 +381,9 @@ theorem corollary_5_5_three (h₁ : x₁ ∈ add(x₂))
       IsRealizableAsV H := by
   classical
   -- the two readings of `ℵ₀ x₁ + a x₂`
-  have hev : ∀ a : ℕ, eval x₁ x₂ ((⊤ : ℕ∞), ((a : ℕ) : ℕ∞))
-      = KMonoid.cmul (κ := ℵ₀) (a : Cardinal.{u})
-          (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂
-        + ℵ₀∙x₁ := by
+  have hev : ∀ a : ℕ, eval x₁ x₂ ((⊤ : ℕ∞), ((a : ℕ) : ℕ∞)) = a • x₂ + ℵ₀∙x₁ := by
     intro a
-    rw [eval, ecmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₂ a, add_comm]
+    rw [eval, ecmul_top, ecmul_natCast, add_comm]
   have hevtop : eval x₁ x₂ ((⊤ : ℕ∞), (⊤ : ℕ∞))
       = ℵ₀∙x₂ + ℵ₀∙x₁ := by
     rw [eval, ecmul_top, ecmul_top, add_comm]
@@ -487,7 +475,7 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
         = ℵ₀∙x₁ := by
       rw [← KMonoid.cmul_top_distrib, hc, KMonoid.cmul_top_idem]
     refine h₂ (hc1' 0 ?_).2
-    rw [KMonoid.cmul_natCast, zero_nsmul, zero_add, KMonoid.add_cmul_top_eq habs]
+    rw [zero_nsmul, zero_add, KMonoid.add_cmul_top_eq habs]
   -- transporting `≼ ℵ₀ ·` in both directions along the isomorphism
   have hdown : ∀ a b : H, b ∈ add(a) →
       e' b ≼ ℵ₀∙(e' a) := by

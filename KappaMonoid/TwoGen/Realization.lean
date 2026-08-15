@@ -37,13 +37,7 @@ variable (x₁ x₂ : H)
 
 /-- Condition (i) of Theorem 5.3, for the ordered pair `(a, b)` of generators. -/
 def Cond1 (a b : H) : Prop :=
-  ∀ n : ℕ, KMonoid.cmul (κ := ℵ₀) (n : Cardinal.{u})
-        (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) a
-      + ℵ₀∙b
-    = ℵ₀∙a + ℵ₀∙b →
-      ℵ₀∙b
-          = ℵ₀∙a + ℵ₀∙b
-        ∧ a ∈ add(b)
+  ∀ n : ℕ, n • a + ℵ₀∙b = ℵ₀∙a + ℵ₀∙b → ℵ₀∙b = ℵ₀∙a + ℵ₀∙b ∧ a ∈ add(b)
 
 /-- Condition (ii) of Theorem 5.3, for the ordered pair `(a, b)` of generators. -/
 def Cond2 (a b : H) : Prop :=
@@ -214,7 +208,7 @@ theorem cond1_of_braidedOver
   intro n hn
   have heval : eval x₁ x₂ ((n : ℕ∞), ⊤) = eval x₁ x₂ ((⊤ : ℕ∞), ⊤) := by
     show ecmul ((n : ℕ) : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂ = ecmul (⊤ : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
-    rw [ecmul_natCast, ecmul_top, ecmul_top, ← KMonoid.cmul_natCast x₁ n]
+    rw [ecmul_natCast, ecmul_top, ecmul_top]
     exact hn
   have hmem : x₁ ∈ add(x₂) :=
     mem_addOf_of_braidedForms_top x₁ x₂ n (familyOfForm_mem x₁ x₂ _) (familyOfForm_mem x₁ x₂ _)
@@ -457,7 +451,7 @@ theorem braidedForms_of_snd_top (hc1 : Cond1 x₁ x₂) (hc2 : Cond2 x₁ x₂)
     refine hmem (hc1 d ?_).2
     have h0 : ecmul ((d : ℕ) : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
         = ecmul (⊤ : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂ := hd.symm
-    rwa [ecmul_natCast, ecmul_top, ecmul_top, ← KMonoid.cmul_natCast x₁ d] at h0
+    rwa [ecmul_natCast, ecmul_top, ecmul_top] at h0
   rcases eq_or_ne α ⊤ with rfl | hα
   · rcases eq_or_ne β ⊤ with rfl | hβ
     · exact IsBraided.refl _
@@ -499,7 +493,7 @@ theorem braidedForms_of_mixed (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁)
     rw [← add_assoc, add_comm (ℵ₀∙x₁) (ecmul α x₁),
       ecmul_add_cmul_top, ← add_assoc, cmul_top_add_self] at h1
     rw [ecmul_natCast] at h1
-    rw [KMonoid.cmul_natCast x₂ n, add_comm (n • x₂), ← h1, add_comm]
+    rw [add_comm (n • x₂), ← h1, add_comm]
   -- the second form is braided with `ℵ₀ X₁ + ℵ₀ X₂`
   have hG : BraidedForms x₁ x₂ ((⊤ : ℕ∞), (n : ℕ∞)) ((⊤ : ℕ∞), (⊤ : ℕ∞))
       hGm (familyOfForm_mem x₁ x₂ _) :=
@@ -517,7 +511,7 @@ theorem braidedForms_of_mixed (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁)
         = (ℵ₀∙x₁ + ecmul ((n : ℕ) : ℕ∞) x₂)
           + ℵ₀∙x₂ := by
       rw [← heval, add_assoc, cmul_top_add_self]
-    rw [add_assoc, ecmul_add_cmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₁ m] at h1
+    rw [add_assoc, ecmul_add_cmul_top, ecmul_natCast] at h1
     exact h1
   exact IsBraided.trans_aleph0 hF (IsBraided.symm hG)
 
