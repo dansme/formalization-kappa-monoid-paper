@@ -316,7 +316,7 @@ theorem lcmul_congr {α β : Cardinal.{u}} (h : α = β) (hα : α < lam) (hβ :
     Cardinal.le_one_iff_subsingleton.mp (le_of_eq (mk_Idx 1))
   have hne : Nonempty (Idx (1 : Cardinal.{u})) := by
     rw [← Cardinal.mk_ne_zero_iff, mk_Idx]; exact one_ne_zero
-  letI : Unique (Idx (1 : Cardinal.{u})) := uniqueOfSubsingleton hne.some
+  let : Unique (Idx (1 : Cardinal.{u})) := uniqueOfSubsingleton hne.some
   exact lsumOf_unique _ _
 
 /-- `α` many copies of `0` sum to `0`. -/

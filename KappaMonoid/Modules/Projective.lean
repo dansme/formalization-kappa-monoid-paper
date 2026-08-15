@@ -86,7 +86,7 @@ noncomputable def projClass (hκ : ℵ₀ ≤ κ) : ModuleClass R κ where
     exact Quotient.sound ⟨e⟩
   zero := ⟦⟨⊥, ⟨⊤, isCompl_bot_top⟩⟩⟧
   subsingleton_rep_zero := by
-    haveI : Subsingleton ↥(⊥ : Submodule R (freeMod R κ)) := inferInstance
+    have : Subsingleton ↥(⊥ : Submodule R (freeMod R κ)) := inferInstance
     exact Equiv.subsingleton
       (Quotient.mk_out (s := summandSetoid R κ) ⟨⊥, ⟨⊤, isCompl_bot_top⟩⟩).some.toEquiv
   dsum := fun f => ⟦projDsum R κ hκ f⟧
@@ -247,11 +247,11 @@ theorem kGenerates_of_decomposition (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (
             Nonempty (P ≃ₗ[R] ⨁ i, Q i)) :
     letI := (projClass R κ hκ).instKMonoid hκ
     KGenerates κ ((projClass R κ hκ).lambdaSmallPart lam) := by
-  letI := (projClass R κ hκ).instKMonoid hκ
+  let := (projClass R κ hκ).instKMonoid hκ
   apply Set.eq_univ_of_forall
   intro a
   -- Kaplansky's theorem applied to the projective module `rep a`
-  haveI : Module.Projective R ((projClass R κ hκ).rep a) := summand_projective R κ a.out
+  have : Module.Projective R ((projClass R κ hκ).rep a) := summand_projective R κ a.out
   obtain ⟨ι, Q, iAG, iMod, hproj, hgen, ⟨e⟩⟩ :=
     hdec ((projClass R κ hκ).rep a) inferInstance inferInstance inferInstance
   -- at most `κ` of the summands are non-trivial
@@ -260,7 +260,7 @@ theorem kGenerates_of_decomposition (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (
   have hQi : ∀ i : T, ∃ P : Summand R κ, Nonempty (↥P.1 ≃ₗ[R] Q i.1) := by
     intro i
     obtain ⟨s, _, hsκ, hsp⟩ := hgen i.1
-    haveI := hproj i.1
+    have := hproj i.1
     exact exists_summand_of_projective R κ (Q i.1) s hsκ hsp
   choose Pfam hPfam using hQi
   -- the corresponding family of classes, padded by zeros
@@ -304,7 +304,7 @@ theorem kGenerates_of_decomposition (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (
         rw [hbc i]
         exact IsLambdaSmall.of_equiv hsmall (hrepc i).some.symm
       exact hfinal
-    · haveI := hbsub k hk
+    · have := hbsub k hk
       exact isLambdaSmall_of_subsingleton hlam.pos ((projClass R κ hκ).rep (b k))
   have hksum : a = ksum (κ := κ) b := by
     rw [(projClass R κ hκ).instKMonoid_ksum hκ b, hdsum]
@@ -338,7 +338,7 @@ theorem corollary_4_5 (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (hlam : lam.IsR
         (projClass R κ hκ).carrier hlk (fun a => (a : (projClass R κ hκ).carrier)) ∧
       IsUniversalKExtension.{u, u, u, t} lam κ ((projClass R κ hκ).lambdaSmallPart lam)
         (projClass R κ hκ).carrier hlk (fun a => (a : (projClass R κ hκ).carrier)) := by
-  letI := (projClass R κ hκ).instKMonoid hκ
+  let := (projClass R κ hκ).instKMonoid hκ
   exact corollary_4_4 (projClass R κ hκ) hκ lam hlam hlk _
     ((projClass R κ hκ).lambdaSmallPart_small lam)
     ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ lam hlam hlk)

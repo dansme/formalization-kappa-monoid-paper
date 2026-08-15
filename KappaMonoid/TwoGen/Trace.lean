@@ -34,7 +34,7 @@ theorem rep_cmul_top_dsum (p : (projClass R ℵ₀ le_rfl).carrier) :
     letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     Nonempty ((projClass R ℵ₀ le_rfl).rep (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)
       ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u})) (fun _ => (projClass R ℵ₀ le_rfl).rep p)) := by
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   rw [show KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p
       = KMonoid.sumOf (κ := ℵ₀) (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u})))
         (fun _ : Idx (ℵ₀ : Cardinal.{u}) => p) from
@@ -59,7 +59,7 @@ theorem addLe_cmul_of_traceIdeal_eq_top (p₁ : (projClass R ℵ₀ le_rfl).carr
       ≼ KMonoid.cmul (κ := ℵ₀) ((n : ℕ) : Cardinal.{u})
           (le_of_lt Cardinal.natCast_lt_aleph0) p₁ := by
   classical
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   set P := (projClass R ℵ₀ le_rfl).rep p₁ with hP
   obtain ⟨n, f, x, hfx⟩ := exists_sum_eq_one_of_traceIdeal_eq_top R P h
   refine ⟨n, ?_⟩
@@ -128,7 +128,7 @@ theorem eq_top_of_traceIdeal_generators (p₁ p₂ : (projClass R ℵ₀ le_rfl)
     (h₁ : traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁) ≤ I)
     (h₂ : traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂) ≤ I) : I = ⊤ := by
   classical
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   -- the classes whose trace ideal fits inside `I` form a `κ`-submonoid
   have hsub : KMonoid.IsKSubmonoid (ℵ₀ : Cardinal.{u})
@@ -136,7 +136,7 @@ theorem eq_top_of_traceIdeal_generators (p₁ p₂ : (projClass R ℵ₀ le_rfl)
         traceIdeal R ((projClass R ℵ₀ le_rfl).rep a) ≤ I} := by
     constructor
     · show traceIdeal R ((projClass R ℵ₀ le_rfl).rep 0) ≤ I
-      haveI := (projClass R ℵ₀ le_rfl).subsingleton_rep_of_eq_zero
+      have := (projClass R ℵ₀ le_rfl).subsingleton_rep_of_eq_zero
         ((projClass R ℵ₀ le_rfl).instKMonoid_zero le_rfl)
       refine iSup_le fun f => ?_
       rintro y ⟨m, rfl⟩
@@ -165,7 +165,7 @@ theorem cmul_top_unitClass_addLe (p : (projClass R ℵ₀ le_rfl).carrier)
     letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (Projective.unitClass R ℵ₀ le_rfl k)
       ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p := by
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   obtain ⟨n, c, hc⟩ := addLe_cmul_of_traceIdeal_eq_top R p k h
   obtain ⟨t, ht⟩ : Projective.unitClass R ℵ₀ le_rfl k
       ≼ KMonoid.cmul (κ := ℵ₀) (((n + 1 : ℕ)) : Cardinal.{u})
@@ -202,7 +202,7 @@ theorem prop_5_4 (p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier)
           Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁) ≃ₗ[R]
             (projClass R ℵ₀ le_rfl).rep p₂ × Q)) := by
   classical
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   -- the free module on `ℕ` and on `Idx ℵ₀` agree
   have hIdxNat : Idx (ℵ₀ : Cardinal.{u}) ≃ ℕ := idxEquivNats.{u}.trans Equiv.ulift
@@ -233,8 +233,8 @@ theorem prop_5_4 (p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier)
     exact ⟨(e2.symm.trans e1.symm).trans e3⟩
   · -- a summand of `P₁^{(ℕ)}` has a smaller trace ideal
     obtain ⟨Q, hQ₁, hQ₂, e⟩ := h
-    letI := hQ₁
-    letI := hQ₂
+    let := hQ₁
+    let := hQ₂
     obtain ⟨e'⟩ := e
     have s1 : traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂)
         ≤ traceIdeal R (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁)) :=
@@ -264,7 +264,7 @@ theorem eq_zero_of_finite_cmul_top {p : (projClass R ℵ₀ le_rfl).carrier}
     letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     p = 0 := by
   classical
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   -- the decomposition of `ℵ₀ p`
   have e : (projClass R ℵ₀ le_rfl).rep (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)
       ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u})) (fun _ => (projClass R ℵ₀ le_rfl).rep p) := by
@@ -274,7 +274,7 @@ theorem eq_zero_of_finite_cmul_top {p : (projClass R ℵ₀ le_rfl).carrier}
     (fun _ => inferInstance) (fun _ => inferInstance) (e : _ →ₗ[R] _)
   -- some index escapes the finite support
   have hsfin : s.Finite := Cardinal.lt_aleph0_iff_set_finite.mp hs
-  haveI : Infinite (Idx (ℵ₀ : Cardinal.{u})) :=
+  have : Infinite (Idx (ℵ₀ : Cardinal.{u})) :=
     Cardinal.infinite_iff.mpr (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u})).symm)
   obtain ⟨i₀, hi₀⟩ := hsfin.infinite_compl.nonempty
   -- so that component of `rep p` vanishes identically
@@ -299,7 +299,7 @@ theorem traceIdeal_eq_top_of_iso_free {p : (projClass R ℵ₀ le_rfl).carrier}
         ≃ₗ[R] DirectSum ι (fun _ => R))) :
     traceIdeal R ((projClass R ℵ₀ le_rfl).rep p) = ⊤ := by
   classical
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   -- the basis is nonempty, since `ℵ₀ p ≠ 0`
   have hιne : Nonempty ι := by
     by_contra hcon
@@ -369,8 +369,8 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
         ∃ ι : Type u, #ι ≤ ℵ₀ ∧
           Nonempty ((projClass R ℵ₀ le_rfl).rep q ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
-  letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     ((projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
@@ -407,7 +407,7 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
     -- a finite form would make `q` finitely generated
     have hinf : F.1 = ⊤ ∨ F.2 = ⊤ := by
       by_contra hcon
-      push_neg at hcon
+      push Not at hcon
       obtain ⟨a, ha⟩ : ∃ a : ℕ, F.1 = (a : ℕ∞) := ⟨F.1.toNat, (ENat.natCast_toNat hcon.1).symm⟩
       obtain ⟨b, hb⟩ : ∃ b : ℕ, F.2 = (b : ℕ∞) := ⟨F.2.toNat, (ENat.natCast_toNat hcon.2).symm⟩
       refine hq (finite_of_isLambdaSmall_aleph0 R ℵ₀ q.out
@@ -448,7 +448,7 @@ theorem traceIdeal_eq_top_of_addLe (p₁ p₂ : (projClass R ℵ₀ le_rfl).carr
     (h : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
       p₂ ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p₁) :
     traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁) = ⊤ := by
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   obtain ⟨c, hc⟩ := h
   refine (prop_5_4 R p₁ p₂ hgen hnoncyclic).2.mpr
     ⟨(projClass R ℵ₀ le_rfl).rep c, inferInstance, inferInstance, ?_⟩
@@ -475,16 +475,16 @@ theorem cmul_top_eq_unitClass_of_free (k : Idx (ℵ₀ : Cardinal.{u}))
     KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p
       = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (Projective.unitClass R ℵ₀ le_rfl k) := by
   classical
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   have hnf : ¬ Module.Finite R ((projClass R ℵ₀ le_rfl).rep
       (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)) := fun hfin => hp (eq_zero_of_finite_cmul_top R hfin)
   obtain ⟨ι, hι, e⟩ := hfree _ hnf
   -- the basis cannot be finite
-  haveI : Infinite ι := by
+  have : Infinite ι := by
     by_contra hcon
     rw [not_infinite_iff_finite] at hcon
-    haveI := hcon
-    haveI := Fintype.ofFinite ι
+    have := hcon
+    have := Fintype.ofFinite ι
     refine hnf (Module.Finite.equiv (e.some.trans (DirectSum.linearEquivFunOnFintype R ι
       (fun _ => R))).symm)
   have hmk : #ι = (ℵ₀ : Cardinal.{u}) :=

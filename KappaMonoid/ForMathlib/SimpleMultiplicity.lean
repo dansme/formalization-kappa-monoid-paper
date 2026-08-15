@@ -110,7 +110,7 @@ theorem rank_hom_eq_one [IsSimpleModule R S] {A : Type u} [AddCommGroup A] [Modu
 theorem rank_hom_eq_zero [IsSimpleModule R S] {A : Type u} [AddCommGroup A] [Module R A]
     [IsSimpleModule R A] (h : ¬ Nonempty (A ≃ₗ[R] S)) :
     Module.rank (Module.End R S)ᵐᵒᵖ (S →ₗ[R] A) = 0 := by
-  haveI := subsingleton_hom_of_not_iso (S := S) (A := A) h
+  have := subsingleton_hom_of_not_iso (S := S) (A := A) h
   exact rank_subsingleton' _ _
 
 /-- **The multiplicity of `S`, read off the rank.** -/
@@ -120,17 +120,17 @@ theorem rank_hom_directSum [IsSimpleModule R S] (hA : ∀ i, IsSimpleModule R (A
   have hcomp : ∀ i, Module.rank (Module.End R S)ᵐᵒᵖ (S →ₗ[R] A i)
       = #(ULift.{u} (PLift (Nonempty (A i ≃ₗ[R] S)))) := by
     intro i
-    haveI := hA i
+    have := hA i
     by_cases h : Nonempty (A i ≃ₗ[R] S)
-    · haveI : Inhabited (ULift.{u} (PLift (Nonempty (A i ≃ₗ[R] S)))) := ⟨ULift.up (PLift.up h)⟩
-      haveI : Unique (ULift.{u} (PLift (Nonempty (A i ≃ₗ[R] S)))) := Unique.mk' _
+    · have : Inhabited (ULift.{u} (PLift (Nonempty (A i ≃ₗ[R] S)))) := ⟨ULift.up (PLift.up h)⟩
+      have : Unique (ULift.{u} (PLift (Nonempty (A i ≃ₗ[R] S)))) := Unique.mk' _
       rw [Cardinal.mk_eq_one]
       exact rank_hom_eq_one h.some
-    · haveI : IsEmpty (ULift.{u} (PLift (Nonempty (A i ≃ₗ[R] S)))) := ⟨fun x => h x.down.down⟩
+    · have : IsEmpty (ULift.{u} (PLift (Nonempty (A i ≃ₗ[R] S)))) := ⟨fun x => h x.down.down⟩
       rw [Cardinal.mk_eq_zero]
       exact rank_hom_eq_zero h
   classical
-  haveI : ∀ i, Module.Free (Module.End R S)ᵐᵒᵖ (S →ₗ[R] A i) := fun i => inferInstance
+  have : ∀ i, Module.Free (Module.End R S)ᵐᵒᵖ (S →ₗ[R] A i) := fun i => inferInstance
   rw [(homDirectSumEquiv hs).rank_eq, rank_directSum]
   simp_rw [hcomp]
   rw [← Cardinal.mk_sigma]
@@ -146,8 +146,8 @@ theorem mk_multiplicity_eq {J : Type u} {B : J → Type u} [∀ j, AddCommGroup 
   classical
   by_cases hS : IsSimpleModule R S
   · -- a simple module is cyclic: any nonzero element generates
-    haveI := hS
-    haveI := IsSimpleModule.nontrivial R S
+    have := hS
+    have := IsSimpleModule.nontrivial R S
     obtain ⟨s, hs0⟩ := exists_ne (0 : S)
     have hs : Submodule.span R {s} = ⊤ :=
       (eq_bot_or_eq_top _).resolve_left fun h => hs0 <| by
@@ -158,9 +158,9 @@ theorem mk_multiplicity_eq {J : Type u} {B : J → Type u} [∀ j, AddCommGroup 
     have hempty : ∀ {K : Type u} {C : K → Type u} [∀ k, AddCommGroup (C k)] [∀ k, Module R (C k)],
         (∀ k, IsSimpleModule R (C k)) → IsEmpty {k // Nonempty (C k ≃ₗ[R] S)} := by
       intro K C _ _ hC
-      exact ⟨fun k => hS (by haveI := hC k.1; exact IsSimpleModule.congr k.2.some.symm)⟩
-    haveI := hempty hA
-    haveI := hempty hB
+      exact ⟨fun k => hS (by have := hC k.1; exact IsSimpleModule.congr k.2.some.symm)⟩
+    have := hempty hA
+    have := hempty hB
     simp
 
 end SimpleMultiplicity

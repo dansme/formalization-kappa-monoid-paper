@@ -274,8 +274,8 @@ noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ κ) :
     (A : Idx κ → UnivExt lam κ X) :
     letI := instKMonoid (lam := lam) (κ := κ) (X := X) hlam hlk
     ksum (κ := κ) A = ksumQ (hlam.aleph0_le.trans hlk) A := by
-  letI hκ : ℵ₀ ≤ κ := hlam.aleph0_le.trans hlk
-  letI := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
+  let hκ : ℵ₀ ≤ κ := hlam.aleph0_le.trans hlk
+  let := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
   exact KMonoid.ofKsum_ksum
     { aleph0_le := hκ
       ksum := ksumQ hκ
@@ -328,7 +328,7 @@ theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ κ) {X : Ty
     rw [LMonoid.lsumOf_of_subset hS hsingle (Set.singleton_subset_iff.mpr hmem)
       (fun i => if i = i₀ then c else 0)
       (fun i _ hi => if_neg (fun h : i = i₀ => hi (by rw [h]; rfl)))]
-    letI : Unique ({i₀} : Set (Idx κ)) := Set.uniqueSingleton i₀
+    let : Unique ({i₀} : Set (Idx κ)) := Set.uniqueSingleton i₀
     rw [lsumOf_unique hsingle (fun i : ({i₀} : Set (Idx κ)) => (if (i : Idx κ) = i₀ then c else 0))]
     exact if_pos rfl
   have hsum0 : ∀ (S : Set (Idx κ)) (hS : #S < lam) (c : X), i₀ ∉ S →
@@ -421,7 +421,7 @@ theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type v) [LMo
   classical
   have hκ : ℵ₀ ≤ κ := hlam.aleph0_le.trans hlk
   obtain ⟨i₀⟩ := nonempty_Idx hκ
-  letI inst : KMonoid κ (UnivExt lam κ X) := UnivExt.instKMonoid hlam hlk
+  let inst : KMonoid κ (UnivExt lam κ X) := UnivExt.instKMonoid hlam hlk
   have hgen : ∀ w : Idx κ → X,
       ksum (κ := κ) (fun i => UnivExt.of (lam := lam) i₀ (w i)) = UnivExt.mk w :=
     fun w => (UnivExt.instKMonoid_ksum hlam hlk _).trans (UnivExt.ksumQ_of hκ i₀ w)
@@ -453,7 +453,7 @@ theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type v) [LMo
         rw [Cardinal.mk_range_eq g g.injective]; exact h
       refine isBraided_of_small_sets hsingle hrange (fun i hi => if_neg (fun hc => hi hc))
         (fun j hj => Function.extend_apply' z (0 : Idx κ → X) j (fun ⟨i, hi⟩ => hj ⟨i, hi⟩)) ?_
-      letI : Unique ({i₀} : Set (Idx κ)) := Set.uniqueSingleton i₀
+      let : Unique ({i₀} : Set (Idx κ)) := Set.uniqueSingleton i₀
       rw [lsumOf_unique hsingle
         (fun i : ({i₀} : Set (Idx κ)) => (if (i : Idx κ) = i₀ then lsumOf h z else 0))]
       have hdef : ((default : ({i₀} : Set (Idx κ))) : Idx κ) = i₀ := rfl
@@ -526,7 +526,7 @@ addition is arbitrary as well, and then `1 + (-1) = 0` is not available. -/
 example (hlk : (ℵ₀ : Cardinal.{u}) ≤ κ) {Hh : Type w} [KMonoid κ Hh]
     (f : ULift.{u} ℤ → Hh) (hf : Function.Injective f)
     (hhom : letI := LMonoid.ofAddCommMonoid (ULift.{u} ℤ); IsLHom hlk f) : False := by
-  letI := LMonoid.ofAddCommMonoid (ULift.{u} ℤ)
+  let := LMonoid.ofAddCommMonoid (ULift.{u} ℤ)
   have hcon := isConical_of_isUniversalKExtension (lam := ℵ₀) hlk hf hhom
   have h0 : (⟨1⟩ : ULift.{u} ℤ) + ⟨(-1 : ℤ)⟩ = 0 := by
     apply ULift.ext

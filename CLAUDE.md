@@ -82,8 +82,10 @@ questions a build would answer, without a build. Prefer it throughout.
   and, when the argument is not obvious, carry a `Paper proof:` paragraph paraphrasing the source.
   This is the main navigation aid in the repo; keep it up.
 - **Instances**: defs producing them carry `@[instance_reducible]`. Instances that depend on
-  hypotheses are threaded through statements with `letI`, repeated verbatim at the top of the
-  tactic proof.
+  hypotheses are threaded through statements with `letI`, repeated at the top of the tactic proof —
+  there as `let`, not `letI`, which Mathlib's `haveILetI` linter insists on inside a proof of a
+  proposition. An anonymous `let := f x` sometimes leaves a universe metavariable where `letI :=`
+  did not, because nothing inlines it into the goal; ascribe the type when that happens.
 - **No new axioms without asking.** The one assumed classical result, Bergman–Dicks realisation
   (A1), lives in `KappaMonoid/Axioms/` and is documented in `README.md`. A new headline result gets
   a line in `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo [bergmanDicksData]`, or `[]`
@@ -145,7 +147,7 @@ re-deriving them.
    (`RTilde.sigmaFlag`) so the constructor application is a single term and the projections are
    `rfl`.
 10. **Term-mode proofs of `letI`-in-statement results fail.** Use tactic mode and repeat the
-   `letI`s.
+   instances there as `let`s.
 11. **Cardinality of unions**: `Cardinal.mk_iUnion_le_sum_mk` then
     `Cardinal.sum_lt_of_isRegular` gives `< λ` for a `< λ`-indexed union of `< λ` sets — this works
     uniformly at `λ = ℵ₀`, where a bound like `#Bad * ℵ₀` does not. For plain finiteness,

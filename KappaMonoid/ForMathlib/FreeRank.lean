@@ -59,7 +59,7 @@ theorem mk_le_of_span_eq_top {R : Type u} [Ring R] [Nontrivial R] {M : Type u} [
   have hcover : (univ : Set ι) ⊆ spanSupport b S := range_subset_spanSupport b hS
   rcases finite_or_infinite S with hfin | hinf
   · -- a finite spanning set gives a finite union of finite supports, so `ι` would be finite
-    haveI : Finite S := hfin
+    have : Finite S := hfin
     have hfinite : (spanSupport b S).Finite :=
       Set.finite_iUnion fun s => (b.repr (s : M)).support.finite_toSet
     exact absurd (hfinite.subset hcover) (Set.infinite_univ (α := ι)).not_finite
@@ -68,7 +68,7 @@ theorem mk_le_of_span_eq_top {R : Type u} [Ring R] [Nontrivial R] {M : Type u} [
       refine le_trans Cardinal.mk_iUnion_le_sum_mk ?_
       refine le_trans (Cardinal.sum_le_sum _ (fun _ => ℵ₀) fun s =>
         (Cardinal.lt_aleph0_of_finite _).le) ?_
-      simp [Cardinal.sum_const, Cardinal.mk_univ]
+      simp [Cardinal.sum_const]
     have huniv : #ι ≤ #(spanSupport b S) := by
       rw [← Cardinal.mk_univ (α := ι)]
       exact Cardinal.mk_le_mk_of_subset hcover
@@ -82,7 +82,7 @@ theorem mk_eq_mk_of_infinite {R : Type u} [Ring R] [Nontrivial R] {M : Type u} [
     [Infinite ι] : #ι = #ι' := by
   have h₁ : #ι ≤ #(Set.range (b' : ι' → M)) := mk_le_of_span_eq_top b b'.span_eq
   have h₁' : #ι ≤ #ι' := h₁.trans Cardinal.mk_range_le
-  haveI : Infinite ι' :=
+  have : Infinite ι' :=
     Cardinal.infinite_iff.mpr ((Cardinal.infinite_iff.mp ‹Infinite ι›).trans h₁')
   have h₂ : #ι' ≤ #(Set.range (b : ι → M)) := mk_le_of_span_eq_top b' b.span_eq
   exact le_antisymm h₁' (h₂.trans Cardinal.mk_range_le)

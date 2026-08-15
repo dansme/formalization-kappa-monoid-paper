@@ -239,7 +239,7 @@ theorem isBraided_nnreal_of_finite_support {ι : Type u} (x y : ι → ℝ≥0)
     (hsum : esum x = esum y) :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     IsBraided (ℵ₀ : Cardinal.{u}) x y := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  let := LMonoid.ofAddCommMonoid ℝ≥0
   have hx' : #(Function.support x) < ℵ₀ := Cardinal.lt_aleph0_iff_set_finite.mpr hx
   have hy' : #(Function.support y) < ℵ₀ := Cardinal.lt_aleph0_iff_set_finite.mpr hy
   refine isBraided_of_small_support x y hx' hy' ?_
@@ -259,11 +259,11 @@ theorem isBraided_nnreal_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀
     (hsum : esum x = esum y) :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     IsBraided (ℵ₀ : Cardinal.{u}) x y := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  let := LMonoid.ofAddCommMonoid ℝ≥0
   classical
   have hιInf : Infinite ι := by
     rcases finite_or_infinite ι with hfin | hinf
-    · haveI := hfin
+    · have := hfin
       exact absurd (Set.toFinite (Function.support x)) hx
     · exact hinf
   have hUL : #(ULift.{u} ℕ) = ℵ₀ := by
@@ -393,11 +393,11 @@ theorem isLHom_coe_ennreal :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     letI : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
     IsLHom (le_refl (ℵ₀ : Cardinal.{u})) (fun a : ℝ≥0 => (a : ℝ≥0∞)) := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
+  let := LMonoid.ofAddCommMonoid ℝ≥0
+  let : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
   refine ⟨rfl, fun {ι} h x => ?_⟩
-  haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
-  haveI : Fintype ι := Fintype.ofFinite ι
+  have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+  have : Fintype ι := Fintype.ofFinite ι
   rw [LMonoid.lsumOf_aleph0_eq_finsum h x, ENNRealExample.instKMonoid_sumOf h.le, tsum_fintype]
   push_cast
   rfl
@@ -411,8 +411,8 @@ theorem sumOf_coe_eq_esum {ι : Type u} (hι : #ι ≤ (ℵ₀ : Cardinal.{u})) 
 theorem esum_eq_of_isBraided {ι : Type u} (hι : #ι ≤ (ℵ₀ : Cardinal.{u})) {x y : ι → ℝ≥0}
     (h : letI := LMonoid.ofAddCommMonoid ℝ≥0
       IsBraided (ℵ₀ : Cardinal.{u}) x y) : esum x = esum y := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
+  let := LMonoid.ofAddCommMonoid ℝ≥0
+  let : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
   have hb := sumOf_map_eq_of_isBraided (le_refl (ℵ₀ : Cardinal.{u})) isLHom_coe_ennreal hι h
   exact (sumOf_coe_eq_esum hι x).symm.trans (hb.trans (sumOf_coe_eq_esum hι y))
 
@@ -431,7 +431,7 @@ theorem isBraided_nnreal_iff {ι : Type u} (hι : #ι ≤ (ℵ₀ : Cardinal.{u}
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     IsBraided (ℵ₀ : Cardinal.{u}) x y ↔
       (esum x = esum y ∧ ((Function.support x).Finite ↔ (Function.support y).Finite)) := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  let := LMonoid.ofAddCommMonoid ℝ≥0
   constructor
   · intro h
     refine ⟨esum_eq_of_isBraided hι h, ?_⟩
@@ -515,7 +515,7 @@ have the same `ℵ₀`-sum but different support behaviour, so they are not brai
 theorem not_isBraided_single2_geom :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     ¬ IsBraided (ℵ₀ : Cardinal.{0}) single2 geom := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  let _ : LMonoid (ℵ₀ : Cardinal.{0}) ℝ≥0 := LMonoid.ofAddCommMonoid ℝ≥0
   intro h
   have hfin := ((isBraided_nnreal_iff (le_of_eq Cardinal.mk_nat) single2 geom).mp h).2
   exact infinite_support_geom (hfin.mp finite_support_single2)
@@ -526,7 +526,7 @@ both sum to `∞` there, but their series sums differ, so they are not braided. 
 theorem not_isBraided_geom_two_geom :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     ¬ IsBraided (ℵ₀ : Cardinal.{0}) geom (fun n => 2 * geom n) := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  let _ : LMonoid (ℵ₀ : Cardinal.{0}) ℝ≥0 := LMonoid.ofAddCommMonoid ℝ≥0
   intro h
   have hsum := esum_eq_of_isBraided (le_of_eq Cardinal.mk_nat) h
   rw [esum_geom, esum_two_geom] at hsum
@@ -789,7 +789,7 @@ noncomputable def sumData : SumData (Order.succ (ℵ₀ : Cardinal.{u})) RTilde 
   isRegular := Cardinal.isRegular_succ le_rfl
   sum _ x := sigma x
   sum_congr _ _ e x := sigma_comp_equiv e x
-  sum_unique := fun {ι} _ _ x => sigma_unique x
+  sum_unique := fun {_ι} _ _ x => sigma_unique x
   sum_sigma _ _ x _ := sigma_sigma x
 
 theorem sumData_zero :
@@ -812,7 +812,7 @@ noncomputable def instKMonoid : KMonoid (ℵ₀ : Cardinal.{u}) RTilde where
 theorem val_add (a b : RTilde) :
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
     (a + b).val = a.val + b.val := by
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
   show (sigma (Sum.elim (fun _ : PUnit.{u + 1} => a) (fun _ : PUnit.{u + 1} => b))).val = _
   rw [val_sigma, tsum_fintype]
   simp
@@ -821,7 +821,7 @@ theorem val_add (a b : RTilde) :
 theorem isConical :
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
     IsConical RTilde := by
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
   intro a b hab
   have hval : a.val + b.val = 0 := by
     rw [← val_add a b, hab, val_zero]
@@ -865,8 +865,8 @@ theorem isBraidedOver_rtilde :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
     IsBraidedOver (ℵ₀ : Cardinal.{u}) ℵ₀ ℝ≥0 RTilde le_rfl ofReal := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+  let := LMonoid.ofAddCommMonoid ℝ≥0
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
   classical
   -- a countable index type for the two infinite constructions
   have hUL : #(ULift.{u} ℕ) = #(Idx (ℵ₀ : Cardinal.{u})) := by
@@ -875,8 +875,8 @@ theorem isBraidedOver_rtilde :
   set e : ℕ ≃ Idx (ℵ₀ : Cardinal.{u}) := Equiv.ulift.symm.trans e0 with hedef
   refine ⟨⟨rfl, fun {ι} h x => ?_⟩, fun a b hab => ?_, fun h => ?_, fun x y hxy => ?_⟩
   · -- the inclusion is an `ℵ₀⁻`-homomorphism
-    haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
-    haveI : Fintype ι := Fintype.ofFinite ι
+    have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+    have : Fintype ι := Fintype.ofFinite ι
     have hfin : (Function.support x).Finite := Set.toFinite _
     have hgoal : ofReal (lsumOf (lam := (ℵ₀ : Cardinal.{u})) h x)
         = sigma (fun i => ofReal (x i)) := by
@@ -898,10 +898,9 @@ theorem isBraidedOver_rtilde :
       refine ⟨fun _ => 1, ?_⟩
       rw [eq_top_of_val_eq_top htop]
       refine (sigma_of_val_eq_top ?_).symm
-      haveI : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
+      have : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
       show (∑' _ : Idx (ℵ₀ : Cardinal.{u}), ((1 : ℝ≥0) : ℝ≥0∞)) = ⊤
-      simpa using ENNReal.tsum_const_eq_top_of_ne_zero (α := Idx (ℵ₀ : Cardinal.{u}))
-        (c := ((1 : ℝ≥0) : ℝ≥0∞)) (by simp)
+      simp
     · -- a finite value: one term if plain, a geometric family if tilded
       set a : ℝ≥0 := h.val.toNNReal with hadef
       have ha : ((a : ℝ≥0) : ℝ≥0∞) = h.val := ENNReal.coe_toNNReal htop
@@ -971,8 +970,8 @@ theorem isUniversalKExtension_rtilde :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
     IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ℝ≥0 RTilde le_rfl ofReal := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
+  let := LMonoid.ofAddCommMonoid ℝ≥0
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
   exact isBraidedOver_rtilde.isUniversalKExtension le_rfl
 
 /-! ### `H` is not `ℵ₀⁻`-braided over itself
@@ -991,8 +990,8 @@ theorem not_isBraidedOver_rtilde_self :
     letI : KMonoid (ℵ₀ : Cardinal.{0}) RTilde := instKMonoid
     letI := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{0}))
     ¬ IsBraidedOver (ℵ₀ : Cardinal.{0}) ℵ₀ RTilde RTilde le_rfl id := by
-  letI : KMonoid (ℵ₀ : Cardinal.{0}) RTilde := instKMonoid
-  letI := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{0}))
+  let : KMonoid (ℵ₀ : Cardinal.{0}) RTilde := instKMonoid
+  let := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{0}))
   intro hbr
   classical
   -- a countable index type
@@ -1045,7 +1044,7 @@ theorem not_isBraidedOver_rtilde_self :
         rw [hYdef]
         exact tilde_ne_zero _ _
     rw [huniv] at hfin
-    haveI : Infinite (Idx (ℵ₀ : Cardinal.{0})) := infinite_Idx le_rfl
+    have : Infinite (Idx (ℵ₀ : Cardinal.{0})) := infinite_Idx le_rfl
     exact Set.infinite_univ hfin
   exact hYinf (hbraid.mk_support_lt (lam := (ℵ₀ : Cardinal.{0})) isConical hXfin)
 
@@ -1097,10 +1096,10 @@ def ratSubmonoid : AddSubmonoid ℝ≥0 where
 theorem isLSubmonoid_ratSet :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     IsLSubmonoid (ℵ₀ : Cardinal.{u}) ratSet := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
+  let := LMonoid.ofAddCommMonoid ℝ≥0
   refine ⟨zero_mem_ratSet, fun {ι} h x hx => ?_⟩
-  haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
-  haveI : Fintype ι := Fintype.ofFinite ι
+  have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+  have : Fintype ι := Fintype.ofFinite ι
   rw [LMonoid.lsumOf_aleph0_eq_finsum h x]
   exact ratSubmonoid.sum_mem fun i _ => hx i
 
@@ -1276,8 +1275,8 @@ theorem isUniversalKExtension_ratSet :
     IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ↥ratSet
       ↥(KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet)) le_rfl
       (fun s => ⟨RTilde.ofReal (s : ℝ≥0), KMonoid.subset_kclosure ⟨(s : ℝ≥0), s.2, rfl⟩⟩) := by
-  letI := LMonoid.ofAddCommMonoid ℝ≥0
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  let := LMonoid.ofAddCommMonoid ℝ≥0
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
   exact lemma_3_13_sub le_rfl RTilde.isBraidedOver_rtilde ratSet isLSubmonoid_ratSet
     (Or.inr isSaturated_ratSet)
 
@@ -1289,7 +1288,7 @@ def ratReachable : Set RTilde :=
 theorem isKSubmonoid_ratReachable :
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
     KMonoid.IsKSubmonoid (ℵ₀ : Cardinal.{u}) ratReachable := by
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
   refine ⟨Or.inr (Or.inr ⟨0, zero_mem_ratSet, rfl⟩), fun x hx => ?_⟩
   show RTilde.sigma x ∈ ratReachable
   cases hfl : (RTilde.sigma x).tilded with
@@ -1342,7 +1341,7 @@ appear in the universal `ℵ₀`-extension of `ℚ≥0` only in the tilde copy. 
 theorem ofReal_notMem_kclosure_of_not_mem_ratSet {a : ℝ≥0} (ha : a ∉ ratSet) :
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
     RTilde.ofReal a ∉ KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet) := by
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
   intro hmem
   have hsub : KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet) ⊆ ratReachable :=
     KMonoid.kclosure_le (fun _ ⟨b, hb, hbe⟩ => Or.inr (Or.inr ⟨b, hb, hbe.symm⟩))
@@ -1362,7 +1361,7 @@ rationals, which has infinite support and therefore gets the tilde. -/
 theorem tilde_mem_kclosure (a : ℝ≥0) (ha : a ≠ 0) :
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
     RTilde.tilde a ha ∈ KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet) := by
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
   obtain ⟨x, hxrat, hxinf, hxsum⟩ := exists_ratSet_family ha
   have hUL : #(ULift.{u} ℕ) = #(Idx (ℵ₀ : Cardinal.{u})) := by
     rw [Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0, mk_Idx]
@@ -1397,7 +1396,7 @@ theorem tilde_mem_kclosure (a : ℝ≥0) (ha : a ≠ 0) :
 theorem top_mem_kclosure :
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
     RTilde.top ∈ KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet) := by
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
   have hone : (1 : ℝ≥0) ∈ ratSet := ⟨1, by norm_num⟩
   have hmem := (KMonoid.isKSubmonoid_kclosure (ℵ₀ : Cardinal.{u})
     (RTilde.ofReal '' ratSet)).ksum_mem (fun _ : Idx (ℵ₀ : Cardinal.{u}) => RTilde.ofReal 1)
@@ -1405,10 +1404,9 @@ theorem top_mem_kclosure :
   have heq : (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{u})) fun _ : Idx (ℵ₀ : Cardinal.{u}) =>
       RTilde.ofReal 1) = RTilde.top := by
     refine RTilde.sigma_of_val_eq_top ?_
-    haveI : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
+    have : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
     show (∑' _ : Idx (ℵ₀ : Cardinal.{u}), ((1 : ℝ≥0) : ℝ≥0∞)) = ⊤
-    simpa using ENNReal.tsum_const_eq_top_of_ne_zero (α := Idx (ℵ₀ : Cardinal.{u}))
-      (c := ((1 : ℝ≥0) : ℝ≥0∞)) (by simp)
+    simp
   rw [← heq]
   exact hmem
 
@@ -1418,7 +1416,7 @@ theorem top_mem_kclosure :
 theorem kclosure_ofReal_ratSet :
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
     KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet) = ratReachable := by
-  letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
+  let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
   refine Set.Subset.antisymm (KMonoid.kclosure_le
     (fun _ ⟨b, hb, hbe⟩ => Or.inr (Or.inr ⟨b, hb, hbe.symm⟩)) isKSubmonoid_ratReachable) ?_
   rintro h (hfl | hval | ⟨b, hb, rfl⟩)

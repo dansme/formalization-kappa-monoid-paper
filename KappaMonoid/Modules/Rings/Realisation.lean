@@ -85,6 +85,7 @@ theorem exists_natCast_of_lt_aleph0 {c : Cardinal.{u}} (h : c < ℵ₀) : ∃ n 
 theorem natCast_le (hκ : ℵ₀ ≤ κ) (n : ℕ) : (n : Cardinal.{u}) ≤ κ :=
   le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ
 
+omit [Nontrivial R] in
 /-- A free module on a finite set is `R^n`. -/
 theorem ofSet_equiv_fin {s : Set (Idx κ)} {n : ℕ} (hs : #s = (n : Cardinal.{u})) :
     Nonempty (ofSet R κ s ≃ₗ[R] (⨁ _ : Fin n, R)) := by
@@ -176,7 +177,7 @@ include hu hmatch in
 theorem isKHom_toH :
     letI := (freeClass R κ hκ).instKMonoid hκ
     IsKHom κ (toH (R := R) hκ u) := by
-  letI := (freeClass R κ hκ).instKMonoid hκ
+  let := (freeClass R κ hκ).instKMonoid hκ
   constructor
   · -- the zero class is the class of the empty generating set
     have h0 : ((freeClass R κ hκ).zero : (freeClass R κ hκ).carrier) = mkC R κ hκ ∅ := rfl

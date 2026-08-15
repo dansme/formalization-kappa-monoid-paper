@@ -93,10 +93,10 @@ The three parts below are (i) that the parametrising map is surjective, (ii) tha
 are disjoint, and (iii) that the infinite parameters are recovered from their multiples. -/
 theorem lemma_2_15 {u : H} (hu : IsFaithful (κ := κ) u) (hgen : KGenerates κ ({u} : Set H)) :
     (∀ x : H, x ∈ finitePart (κ := κ) u ∨
-        ∃ (α : Cardinal.{u}) (hα0 : ℵ₀ ≤ α) (hα : α ≤ κ), x = cmul (κ := κ) α hα u) ∧
-      (∀ (β : Cardinal.{u}) (hβ0 : ℵ₀ ≤ β) (hβ : β ≤ κ),
+        ∃ (α : Cardinal.{u}) (_hα0 : ℵ₀ ≤ α) (hα : α ≤ κ), x = cmul (κ := κ) α hα u) ∧
+      (∀ (β : Cardinal.{u}) (_hβ0 : ℵ₀ ≤ β) (hβ : β ≤ κ),
         cmul (κ := κ) β hβ u ∉ finitePart (κ := κ) u) ∧
-      (∀ (α β : Cardinal.{u}) (hα0 : ℵ₀ ≤ α) (hβ0 : ℵ₀ ≤ β) (hα : α ≤ κ) (hβ : β ≤ κ),
+      (∀ (α β : Cardinal.{u}) (_hα0 : ℵ₀ ≤ α) (_hβ0 : ℵ₀ ≤ β) (hα : α ≤ κ) (hβ : β ≤ κ),
         cmul (κ := κ) α hα u = cmul (κ := κ) β hβ u → α = β) := by
   refine ⟨fun x => ?_, fun β hβ0 hβ => cmul_notMem_finitePart hu hβ0 hβ,
     fun α β hα0 hβ0 hα hβ h => cmul_injOn_of_faithful hu hα0 hβ0 hα hβ h⟩

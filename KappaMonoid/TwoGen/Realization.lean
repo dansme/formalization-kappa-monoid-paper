@@ -150,7 +150,7 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
     refine Set.Finite.subset (hfin.biUnion fun p _ =>
       Cardinal.lt_aleph0_iff_set_finite.mp (D.J_small p)) fun i hi => ?_
     exact Set.mem_biUnion (Set.mem_image_of_mem _ hi) (IsBraided.mem_blockOf D.J D.J_cover i)
-  obtain ⟨p, hpGood, hpBad⟩ := (hGoodinf.diff hBad').nonempty
+  obtain ⟨p, hpGood, hpBad⟩ := (hGoodinf.sdiff hBad').nonempty
   -- at `p` and at `p + 1` the `I`-blocks carry only `x₂`
   have hIblock : ∀ q : FormIdx.{u} × ℕ,
       q ∉ (fun i => IsBraided.blockOf D.I D.I_cover i) '' oneSlots.{u} n →
@@ -245,7 +245,7 @@ theorem theorem_5_3_forward (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfF
     (hbij : Function.Bijective e) :
     Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂ := by
   classical
-  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
 
   -- invert the isomorphism and feed Lemma 5.1
   obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
@@ -667,7 +667,7 @@ theorem exists_finite_form_of_mem (hmix : NoMixedForms x₁ x₂)
     rw [eval, ecmul_add, ecmul_add, ← h0, ← hF, ← hG, eval, eval]
     abel
   have hfinite : HasFiniteForm x₁ x₂ (n • x₁ + n • x₂) := by
-    refine ⟨(((n : ℕ) : ℕ∞), ((n : ℕ) : ℕ∞)), ⟨ENat.coe_ne_top n, ENat.coe_ne_top n⟩, ?_⟩
+    refine ⟨(((n : ℕ) : ℕ∞), ((n : ℕ) : ℕ∞)), ⟨ENat.natCast_ne_top n, ENat.natCast_ne_top n⟩, ?_⟩
     rw [eval, ecmul_natCast, ecmul_natCast]
   have hinfinite : HasInfiniteForm x₁ x₂ (n • x₁ + n • x₂) := by
     refine ⟨(F.1 + G.1, F.2 + G.2), ?_, hsum⟩
@@ -803,7 +803,7 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
         KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e := by
   classical
 
-  letI := KMonoid.toLMonoidOfLE H Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.toLMonoidOfLE H Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{u}))
   refine corollary_4_7_one_forward le_rfl k (x₁ + x₂) ?_
   -- `add (x₁ + x₂)` contains both generators, hence generates `H`
   have hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=

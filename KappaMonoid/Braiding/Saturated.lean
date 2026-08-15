@@ -22,7 +22,7 @@ section Free
 variable {lam κ : Cardinal.{u}} {B : Type u}
 
 /-- The inclusion `F_{λ⁻}(B) ↪ F_κ(B)`. -/
-def freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) (x : ↥(FreeL lam B)) :
+def freeIncl (_hlam : lam.IsRegular) (_hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) (x : ↥(FreeL lam B)) :
     ↥(FreeK κ B) :=
   ⟨fun b => ⟨((x : B → LCard lam) b : Cardinal.{u}),
       lt_of_lt_of_le ((x : B → LCard lam) b).2 (le_trans hlk (Order.le_succ κ))⟩,
@@ -39,8 +39,8 @@ theorem freeIncl_iota (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam �
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     freeIncl hlam hκ hlk (iota (lam := lam) b) = iota (lam := Order.succ κ) b := by
-  letI : Fact lam.IsRegular := ⟨hlam⟩
-  letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+  let : Fact lam.IsRegular := ⟨hlam⟩
+  let : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
   refine Subtype.ext (funext fun b' => Subtype.ext ?_)
   rw [val_freeIncl, coe_iota, coe_iota]
   by_cases h : b' = b
@@ -53,9 +53,9 @@ theorem isLHom_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     letI := instKMonoidFreeK κ hκ B
     LMonoid.IsLHom hlk (freeIncl (B := B) hlam hκ hlk) := by
-  letI : Fact lam.IsRegular := ⟨hlam⟩
-  letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
-  letI := instKMonoidFreeK κ hκ B
+  let : Fact lam.IsRegular := ⟨hlam⟩
+  let : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+  let := instKMonoidFreeK κ hκ B
   refine ⟨Subtype.ext (funext fun b => Subtype.ext ?_), fun {ι} h x => ?_⟩
   · rw [val_freeIncl]
     show ((0 : LCard lam) : Cardinal.{u}) = ((0 : Fcard κ) : Cardinal.{u})
@@ -74,9 +74,9 @@ theorem lemma_3_13_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
     letI := instKMonoidFreeK κ hκ B
     IsUniversalKExtension.{u, u + 1, u + 1, t} lam κ ↥(FreeL lam B) ↥(FreeK κ B) hlk
       (freeIncl hlam hκ hlk) := by
-  letI : Fact lam.IsRegular := ⟨hlam⟩
-  letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
-  letI := instKMonoidFreeK κ hκ B
+  let : Fact lam.IsRegular := ⟨hlam⟩
+  let : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
+  let := instKMonoidFreeK κ hκ B
   refine ⟨isLHom_freeIncl hlam hκ hlk, fun K _ φ hφ => ?_⟩
   -- the extension is the lift of `φ ∘ ι`, taken at level `κ⁺`
   set ψ : ↥(FreeK κ B) → K :=
@@ -85,7 +85,7 @@ theorem lemma_3_13_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
     fun b => by rw [hψ, lift_iota]
   refine ⟨ψ, ⟨isKHom_of_isLMonoidHom hκ (isLMonoidHom_lift _), ?_⟩, ?_⟩
   · -- `ψ ∘ freeIncl = φ`: both are `λ⁻`-homomorphisms agreeing on the generators
-    letI := KMonoid.toLMonoidOfLE K hlam hlk
+    let := KMonoid.toLMonoidOfLE K hlam hlk
     have hcomp : IsLMonoidHom lam (fun x => ψ (freeIncl hlam hκ hlk x)) := by
       intro ι h x
       show ψ (freeIncl hlam hκ hlk (LMonoid.lsumOf (lam := lam) h x)) = _
@@ -136,8 +136,8 @@ theorem isBraidedOver_of_isLSubmonoid [LMonoid lam X] [KMonoid κ Hh] (hlk : lam
     letI := hT.kmonoid
     IsBraidedOver lam κ ↥S ↥T hlk (fun s => ⟨f (s : X), hfT (s : X) s.2⟩) := by
   classical
-  letI := hS.lmonoid
-  letI := hT.kmonoid
+  let := hS.lmonoid
+  let := hT.kmonoid
   have hf0 : f 0 = 0 := hbr.isLHom.1
   have h0S : (0 : X) ∈ S := hS.zero_mem
   refine ⟨⟨Subtype.ext hf0, fun {ι} h x => ?_⟩,
@@ -199,8 +199,8 @@ theorem lemma_3_13_sub_of_subset [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ 
     letI := hS.lmonoid
     letI := hT.kmonoid
     IsUniversalKExtension.{u, v, w, t} lam κ ↥S ↥T hlk (fun s => ⟨f (s : X), hfT (s : X) s.2⟩) := by
-  letI := hS.lmonoid
-  letI := hT.kmonoid
+  let := hS.lmonoid
+  let := hT.kmonoid
   exact (isBraidedOver_of_isLSubmonoid hlk hbr S hS hsat hT hfT hTgen).isUniversalKExtension hlk
 
 /-- **Lemma 3.13(2)** as printed: `⟨S⟩_κ ⊆ Ĥ` is the universal `κ`-extension of `S`. -/

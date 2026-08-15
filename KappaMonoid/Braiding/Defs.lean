@@ -153,10 +153,10 @@ theorem lsumOf_slot0 (hlam0 : ℵ₀ ≤ lam) (f : ι → ι) (x : ι → X) (p 
     lsumOf (lam := lam) (slot0_small hlam0 f p) (fun i : slot0 f p => x i)
       = if p.2 = 0 then x (f p.1) else 0 := by
   obtain ⟨a, (_ | n)⟩ := p
-  · letI : Unique ↥(slot0 f (a, 0)) := Set.uniqueSingleton (f a)
+  · let : Unique ↥(slot0 f (a, 0)) := Set.uniqueSingleton (f a)
     rw [lsumOf_unique (slot0_small hlam0 f (a, 0)) (fun i : slot0 f (a, 0) => x i), if_pos rfl]
     rfl
-  · letI : IsEmpty ↥(slot0 f (a, n + 1)) := inferInstanceAs (IsEmpty (↥(∅ : Set ι)))
+  · let : IsEmpty ↥(slot0 f (a, n + 1)) := inferInstanceAs (IsEmpty (↥(∅ : Set ι)))
     rw [lsumOf_isEmpty (slot0_small hlam0 f (a, n + 1)) (fun i => x i),
       if_neg (Nat.succ_ne_zero n)]
 
@@ -255,7 +255,7 @@ theorem comp_equiv {ι' : Type u} (E : ι ≃ ι') {x y : ι' → X} (h : IsBrai
     IsBraided lam (fun i => x (E i)) (fun i => y (E i)) := by
   obtain ⟨d⟩ := h
   have hpre : ∀ T : Set ι', #(E ⁻¹' T) = #T := fun T =>
-    Cardinal.mk_congr ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simpa using j.2⟩,
+    Cardinal.mk_congr ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simp⟩,
       fun i => by simp, fun j => by simp⟩
   have hdisj : ∀ (P : ι' × ℕ → Set ι'), (∀ p q, p ≠ q → Disjoint (P p) (P q)) →
       ∀ p q : ι × ℕ, p ≠ q →
@@ -285,7 +285,7 @@ theorem comp_equiv {ι' : Type u} (E : ι ≃ ι') {x y : ι' → X} (h : IsBrai
     intro P hs p f
     refine (lsumOf_equiv (lam := lam) (hs (E p.1, p.2))
       (lt_of_eq_of_lt (hpre _) (hs (E p.1, p.2)))
-      ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simpa using j.2⟩, fun i => by simp,
+      ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simp⟩, fun i => by simp,
         fun j => by simp⟩ (fun j : P (E p.1, p.2) => f j)).symm
   exact ⟨{ I := fun p => E ⁻¹' d.I (E p.1, p.2)
            J := fun p => E ⁻¹' d.J (E p.1, p.2)

@@ -120,7 +120,7 @@ theorem restrict_iso {ι : Type u} (g : Idx κ → C.carrier) (e : ι ↪ Idx κ
 theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι → C.carrier) :
     letI := C.instKMonoid hκ
     Nonempty (C.rep (sumOf (κ := κ) hι a) ≃ₗ[R] ⨁ i, C.rep (a i)) := by
-  letI := C.instKMonoid hκ
+  let := C.instKMonoid hκ
   set g : Idx κ → C.carrier := Function.extend (emb hι) a (0 : Idx κ → C.carrier) with hgdef
   have hge : ∀ i, g (emb hι i) = a i :=
     fun i => (emb hι).injective.extend_apply a (0 : Idx κ → C.carrier) i
@@ -145,7 +145,7 @@ theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι
 theorem rep_add (hκ : ℵ₀ ≤ κ) (b b' : C.carrier) :
     letI := C.instKMonoid hκ
     Nonempty (C.rep (b + b') ≃ₗ[R] C.rep b × C.rep b') := by
-  letI := C.instKMonoid hκ
+  let := C.instKMonoid hκ
   have hUB : #(ULift.{u} Bool) ≤ κ := KMonoid.mk_uLift_bool_le κ C.carrier
   rw [← sumOf_two b b' hUB]
   obtain ⟨e1⟩ := C.rep_sumOf hκ hUB fun p : ULift.{u} Bool => if p.down then b else b'
@@ -178,7 +178,7 @@ theorem add_eq_of_relCompl (hκ : ℵ₀ ≤ κ) {M : Type u} [AddCommGroup M] [
     (hA : Nonempty (C.rep A ≃ₗ[R] ↥E)) :
     letI := C.instKMonoid hκ
     b + c = A := by
-  letI := C.instKMonoid hκ
+  let := C.instKMonoid hκ
   have e : C.rep (b + c) ≃ₗ[R] C.rep A :=
     (C.rep_add hκ b c).some.trans
       ((LinearEquiv.prodCongr hb.some hc.some).trans ((relProdEquiv hd hs).trans hA.some.symm))
@@ -247,7 +247,7 @@ theorem P_iso (s : Set (Idx κ)) :
 theorem P_class (hκ : ℵ₀ ≤ κ) (s : Set (Idx κ)) (hs : #s ≤ κ) :
     letI := C.instKMonoid hκ
     Nonempty (C.rep (sumOf (κ := κ) hs (fun i : s => a i.1)) ≃ₗ[R] ↥(D.P s)) := by
-  letI := C.instKMonoid hκ
+  let := C.instKMonoid hκ
   exact ⟨(C.rep_sumOf hκ hs (fun i : s => a i.1)).some.trans (D.P_iso s).some.symm⟩
 
 /-- `λ⁻`-smallness in action: a `λ⁻`-small submodule is contained in a sub-sum indexed by
@@ -337,7 +337,7 @@ variable {κ : Cardinal.{u}} {C : ModuleClass R κ} {lam : Cardinal.{u}}
   {M : Type u} [AddCommGroup M] [Module R M] (B : DoubleDecomp C lam M)
 
 theorem zero_mem_S : C.zero ∈ B.S := by
-  letI := C.instKMonoid B.hκ
+  let := C.instKMonoid B.hκ
   have h := B.hSsub.zero_mem
   rwa [C.instKMonoid_zero B.hκ] at h
 
@@ -346,7 +346,7 @@ theorem isRep_zero : IsRep C C.zero (⊥ : Submodule R M) :=
   ⟨LinearEquiv.ofSubsingleton (R := R) (C.rep C.zero) ↥(⊥ : Submodule R M)⟩
 
 theorem empty_small (hlam : lam.IsRegular) : #(∅ : Set (Idx κ)) < lam := by
-  have h0 : #(∅ : Set (Idx κ)) = 0 := Cardinal.mk_emptyCollection _
+  have h0 : #(∅ : Set (Idx κ)) = 0 := Cardinal.mk_eq_zero _
   rw [h0]
   exact lt_of_lt_of_le zero_lt_one (one_le_aleph0.trans (Cardinal.IsRegular.aleph0_le hlam))
 
@@ -413,7 +413,7 @@ theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
     (hdisj : Disjoint Told (B.D₁.P Uidx))
     (heq : Told ⊔ B.D₁.P Uidx = B.D₂.P Jidx) :
     ∃ st : B.Step, B.StepProps Uidx Jidx Told vc st := by
-  letI := C.instKMonoid B.hκ
+  let := C.instKMonoid B.hκ
   have hlam0 : ℵ₀ ≤ lam := Cardinal.IsRegular.aleph0_le B.hlam
   have hlam1 : (1 : Cardinal) < lam := lt_of_lt_of_le one_lt_aleph0 hlam0
   by_cases hUc : (Uidxᶜ : Set (Idx κ)).Nonempty
@@ -514,7 +514,7 @@ theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
       exact hUc
     have hPtop : B.D₁.P Uidx = ⊤ := by rw [hUuniv, B.D₁.P_univ]
     have hTold : Told = ⊥ := disjoint_top.mp (hPtop ▸ hdisj)
-    haveI hsubT : Subsingleton ↥Told := by rw [hTold]; infer_instance
+    have hsubT : Subsingleton ↥Told := by rw [hTold]; infer_instance
     have hvc0 : vc = C.zero :=
       C.eq_zero_of_subsingleton (Equiv.subsingleton hvrep.some.toEquiv)
     refine ⟨B.defaultStep, ?_⟩
@@ -579,12 +579,14 @@ def TmOf (F : Idx κ × ℕ → B.Step) (μ : Idx κ × ℕ) : Submodule R M :=
 def vcOf (F : Idx κ × ℕ → B.Step) (μ : Idx κ × ℕ) : C.carrier :=
   if μ.2 = 0 then C.zero else (F (μ.1, μ.2 - 1)).tc
 
+omit [C.IsSummandClosed] in
 theorem vcOf_mem (F : Idx κ × ℕ → B.Step) (μ : Idx κ × ℕ) : B.vcOf F μ ∈ B.S := by
   unfold vcOf
   by_cases h : μ.2 = 0
   · rw [if_pos h]; exact B.zero_mem_S
   · rw [if_neg h]; exact (F (μ.1, μ.2 - 1)).tcS
 
+omit [C.IsSummandClosed] in
 theorem vcOf_rep (F : Idx κ × ℕ → B.Step) (μ : Idx κ × ℕ) : IsRep C (B.vcOf F μ) (B.TmOf F μ) := by
   unfold vcOf TmOf
   by_cases h : μ.2 = 0
@@ -653,13 +655,13 @@ open IsBraided in
 theorem mem_Uidx {μ : Idx κ × ℕ} {i : Idx κ} :
     i ∈ B.Uidx μ ↔ ∃ ν, kOrd (Idx κ) ν μ ∧ i ∈ (B.fam ν).Iset := by
   unfold Uidx UidxOf
-  simp only [Set.mem_iUnion, Set.mem_setOf_eq, exists_prop]
+  simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
 
 open IsBraided in
 theorem mem_Jidx {μ : Idx κ × ℕ} {j : Idx κ} :
     j ∈ B.Jidx μ ↔ ∃ ν, kOrd (Idx κ) ν μ ∧ j ∈ (B.fam ν).Jset := by
   unfold Jidx JidxOf
-  simp only [Set.mem_iUnion, Set.mem_setOf_eq, exists_prop]
+  simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
 
 open IsBraided in
 theorem Uidx_bsucc (μ : Idx κ × ℕ) : B.Uidx (bsucc μ) = B.Uidx μ ∪ (B.fam μ).Iset := by
@@ -884,7 +886,7 @@ theorem P₂_iUnion_eq_top : B.D₂.P (⋃ ν, (B.fam ν).Jset) = ⊤ := by
 
 /-- The classes of the modules with an index outside all `J_μ` are trivial. -/
 theorem a₂_eq_zero_of_not_mem {j : Idx κ} (hj : j ∉ ⋃ ν, (B.fam ν).Jset) : B.a₂ j = C.zero := by
-  letI := C.instKMonoid B.hκ
+  let := C.instKMonoid B.hκ
   have hbot : B.D₂.P {j} = ⊥ := by
     have h1 : B.D₂.P {j} ≤ B.D₂.P (⋃ ν, (B.fam ν).Jset)ᶜ :=
       B.D₂.P_mono (Set.singleton_subset_iff.mpr hj)
@@ -948,8 +950,8 @@ theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B
     letI := C.instKMonoid B.hκ
     letI := B.hSsub.lmonoid B.hlam
     IsBraided lam x y := by
-  letI := C.instKMonoid B.hκ
-  letI := B.hSsub.lmonoid B.hlam
+  let := C.instKMonoid B.hκ
+  let := B.hSsub.lmonoid B.hlam
   obtain ⟨E, hE1, hE2, hE3, hE4⟩ := B.exists_extra
   have hlam0 : ℵ₀ ≤ lam := Cardinal.IsRegular.aleph0_le B.hlam
   have hlam1 : (1 : Cardinal) < lam := lt_of_lt_of_le one_lt_aleph0 hlam0
@@ -1064,8 +1066,8 @@ theorem exists_braided_of_iso (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : 
     letI := C.instKMonoid hκ
     letI := hSsub.lmonoid hlam
     IsBraided lam x y := by
-  letI := C.instKMonoid hκ
-  letI := hSsub.lmonoid hlam
+  let := C.instKMonoid hκ
+  let := hSsub.lmonoid hlam
   -- package the data as a `DoubleDecomp`: `M = ⨁ᵢ A i` carries the two decompositions
   -- `id` and `e`; then run the transfinite construction.
   exact DoubleDecomp.isBraided
@@ -1093,8 +1095,8 @@ theorem theorem_4_3_core (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ�
     letI := hSsub.lmonoid hlam
     (ksum (κ := κ) fun i => (x i : C.carrier)) = (ksum (κ := κ) fun i => (y i : C.carrier)) →
       IsBraided lam x y := by
-  letI := C.instKMonoid hκ
-  letI := hSsub.lmonoid hlam
+  let := C.instKMonoid hκ
+  let := hSsub.lmonoid hlam
   intro hsum
   -- the hypothesis says exactly that the two direct sums are isomorphic
   have hdsum : C.dsum (fun i => (x i : C.carrier)) = C.dsum (fun i => (y i : C.carrier)) := by
@@ -1116,10 +1118,10 @@ theorem theorem_4_3 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤
     letI := (KMonoid.isKSubmonoid_kclosure κ S).kmonoid
     IsBraidedOver lam κ S (kclosure κ S) hlk
       (fun a => ⟨(a : C.carrier), subset_kclosure a.2⟩) := by
-  letI := C.instKMonoid hκ
-  letI := hSsub.lmonoid hlam
-  letI hKsub : IsKSubmonoid κ (kclosure κ S) := KMonoid.isKSubmonoid_kclosure κ S
-  letI := hKsub.kmonoid
+  let := C.instKMonoid hκ
+  let := hSsub.lmonoid hlam
+  let hKsub : IsKSubmonoid κ (kclosure κ S) := KMonoid.isKSubmonoid_kclosure κ S
+  let := hKsub.kmonoid
   have h0S : (0 : C.carrier) ∈ S := hSsub.zero_mem
   refine ⟨⟨rfl, ?_⟩, ?_, ?_, ?_⟩
   · -- the inclusion is a `λ⁻`-homomorphism: both sides are the ambient `κ`-sum
@@ -1157,8 +1159,8 @@ theorem corollary_4_4 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ �
     letI := hSsub.lmonoid hlam
     IsBraidedOver lam κ S C.carrier hlk (fun a => (a : C.carrier)) ∧
       IsUniversalKExtension.{u, u, u, t} lam κ S C.carrier hlk (fun a => (a : C.carrier)) := by
-  letI := C.instKMonoid hκ
-  letI := hSsub.lmonoid hlam
+  let := C.instKMonoid hκ
+  let := hSsub.lmonoid hlam
   have h0S : (0 : C.carrier) ∈ S := hSsub.zero_mem
   have hbr : IsBraidedOver lam κ S C.carrier hlk (fun a => (a : C.carrier)) := by
     refine ⟨⟨rfl, ?_⟩, fun a b hab => Subtype.ext hab, ?_, ?_⟩

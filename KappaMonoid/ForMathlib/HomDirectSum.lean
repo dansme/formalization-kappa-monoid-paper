@@ -36,6 +36,7 @@ variable {s : S} (hs : Submodule.span R {s} = ⊤)
 
 include hs
 
+omit [DecidableEq ι] in
 /-- A homomorphism out of a cyclic module vanishes in the `i`-th component as soon as it does so
 on the generator. -/
 theorem component_comp_eq_zero (f : S →ₗ[R] ⨁ i, A i) {i : ι}

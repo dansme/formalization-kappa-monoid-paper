@@ -579,9 +579,9 @@ theorem exists_block_value {c : ℕ} {S : Set FormIdx.{u}} (hS : S.Finite)
         + p • (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) := by
   classical
 
-  have hsplit : S = oneSlots.{u} c ∪ (S \ oneSlots.{u} c) := (Set.union_diff_cancel hsub).symm
+  have hsplit : S = oneSlots.{u} c ∪ (S \ oneSlots.{u} c) := (Set.union_sdiff_cancel hsub).symm
   have hdisj : Disjoint (oneSlots.{u} c) (S \ oneSlots.{u} c) := Set.disjoint_sdiff_right
-  have hdfin : (S \ oneSlots.{u} c).Finite := hS.subset Set.diff_subset
+  have hdfin : (S \ oneSlots.{u} c).Finite := hS.subset Set.sdiff_subset
   obtain ⟨p, hp⟩ := exists_nsmul_finsum hdfin
     (fun i => (⟨familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i, hFm i⟩ :
       ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))

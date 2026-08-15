@@ -90,7 +90,7 @@ noncomputable def leavittData (m n : ℕ) (hm : 1 ≤ m) (_hn : 1 ≤ n) : Leavi
     intro k
     induction k with
     | zero =>
-      haveI := bd.iso_zero
+      have := bd.iso_zero
       rw [zero_nsmul]
       exact ⟨Leavitt.equivOfSubsingleton bd.R _ _⟩
     | succ k ih =>
@@ -105,9 +105,9 @@ noncomputable def leavittData (m n : ℕ) (hm : 1 ≤ m) (_hn : 1 ≤ n) : Leavi
   have hnt : Nontrivial bd.R := by
     by_contra hcon
     rw [not_nontrivial_iff_subsingleton] at hcon
-    haveI := hcon
-    haveI : Subsingleton (bd.P (CyclicMonoidU.mk.{u} m n 1)) := Module.subsingleton bd.R _
-    haveI := bd.iso_zero
+    have := hcon
+    have : Subsingleton (bd.P (CyclicMonoidU.mk.{u} m n 1)) := Module.subsingleton bd.R _
+    have := bd.iso_zero
     exact CyclicMonoidU.mk_one_ne_zero hm
       (bd.inj _ _ ⟨Leavitt.equivOfSubsingleton bd.R _ _⟩)
   refine { R := bd.R, ring := bd.ring, nontrivial := hnt, iso_iff := fun k l => ?_ }

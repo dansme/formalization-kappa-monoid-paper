@@ -30,10 +30,10 @@ theorem ModuleClass.lambdaSmallPart_isLSubset (hκ : ℵ₀ ≤ κ) (lam : Cardi
     (hlam : lam.IsRegular) (hlk : lam ≤ κ) :
     letI := C.instKMonoid hκ
     IsLSubset lam hlk (C.lambdaSmallPart lam) := by
-  letI := C.instKMonoid hκ
+  let := C.instKMonoid hκ
   constructor
   · -- the zero module is `λ⁻`-small
-    haveI := C.subsingleton_rep_of_eq_zero (C.instKMonoid_zero hκ)
+    have := C.subsingleton_rep_of_eq_zero (C.instKMonoid_zero hκ)
     intro ι N iAG iMod f
     exact isLambdaSmall_of_subsingleton (R := R) hlam.pos (C.rep 0) N iAG iMod f
   · -- a direct sum of `< λ` many `λ⁻`-small modules is `λ⁻`-small
@@ -48,7 +48,7 @@ theorem ModuleClass.lambdaSmallPart_summand (hκ : ℵ₀ ≤ κ) (lam : Cardina
     letI := C.instKMonoid hκ
     ∀ a ∈ C.lambdaSmallPart lam, ∀ b : C.carrier, (∃ c, b + c = a) →
       b ∈ C.lambdaSmallPart lam := by
-  letI := C.instKMonoid hκ
+  let := C.instKMonoid hκ
   intro a ha b ⟨c, hc⟩
   have hprod : IsLambdaSmall R lam (C.rep b × C.rep c) :=
     IsLambdaSmall.of_equiv (C.isLambdaSmall_of_mem ha)

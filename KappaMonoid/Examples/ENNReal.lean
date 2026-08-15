@@ -29,7 +29,7 @@ noncomputable def sumData : SumData (Order.succ (ℵ₀ : Cardinal.{u})) ENNReal
   sum _ x := ∑' i, x i
   sum_congr _ _ e x := e.tsum_eq x
   sum_unique := fun {ι} _ _ x => by
-    letI : Fintype ι := Unique.fintype
+    let : Fintype ι := Unique.fintype
     rw [tsum_fintype]
     exact Fintype.sum_unique x
   sum_sigma _ _ x _ := (ENNReal.tsum_sigma x).symm

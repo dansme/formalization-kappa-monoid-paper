@@ -28,7 +28,7 @@ theorem isBraided_nat_of_finite_support {ι : Type u} (x y : ι → ℕ)
     (hsum : ∑ᶠ i, x i = ∑ᶠ i, y i) :
     letI := LMonoid.ofAddCommMonoid ℕ
     IsBraided ℵ₀ x y := by
-  letI := LMonoid.ofAddCommMonoid ℕ
+  let := LMonoid.ofAddCommMonoid ℕ
   have hx' : #(Function.support x) < ℵ₀ := Cardinal.lt_aleph0_iff_set_finite.mpr hx
   have hy' : #(Function.support y) < ℵ₀ := Cardinal.lt_aleph0_iff_set_finite.mpr hy
   refine isBraided_of_small_support x y hx' hy' ?_
@@ -91,10 +91,10 @@ noncomputable def natBraidState (x y : ℕ → ℕ) (hx : (Function.support x).I
   | (k + 1) =>
       let s := natBraidState x y hx hy k
       let bI' := (exists_ico_dominates hx x
-        (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.1 s.2.2).choose
+        (fun _i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.1 s.2.2).choose
       let u := (∑ i ∈ Finset.Ico s.1 bI', x i) - s.2.2
       let bJ' := (exists_ico_dominates hy y
-        (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.2.1 u).choose
+        (fun _i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.2.1 u).choose
       (bI', bJ', (∑ i ∈ Finset.Ico s.2.1 bJ', y i) - u)
 
 theorem natBraidState_succ (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
@@ -102,10 +102,10 @@ theorem natBraidState_succ (x y : ℕ → ℕ) (hx : (Function.support x).Infini
     natBraidState x y hx hy (k + 1) =
       let s := natBraidState x y hx hy k
       let bI' := (exists_ico_dominates hx x
-        (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.1 s.2.2).choose
+        (fun _i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.1 s.2.2).choose
       let u := (∑ i ∈ Finset.Ico s.1 bI', x i) - s.2.2
       let bJ' := (exists_ico_dominates hy y
-        (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.2.1 u).choose
+        (fun _i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi)) s.2.1 u).choose
       (bI', bJ', (∑ i ∈ Finset.Ico s.2.1 bJ', y i) - u) := rfl
 
 /-- The `x`-boundary sequence. -/
@@ -141,7 +141,7 @@ theorem natBraidBI_succ_spec (x y : ℕ → ℕ) (hx : (Function.support x).Infi
     natBraidBI x y hx hy k < natBraidBI x y hx hy (k + 1) ∧
       natBraidV x y hx hy k ≤
         ∑ i ∈ Finset.Ico (natBraidBI x y hx hy k) (natBraidBI x y hx hy (k + 1)), x i :=
-  (exists_ico_dominates hx x (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi))
+  (exists_ico_dominates hx x (fun _i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi))
     (natBraidBI x y hx hy k) (natBraidV x y hx hy k)).choose_spec
 
 /-- The defining property of `bJ (k+1)`: it dominates the deficit `u k` along `support y`. -/
@@ -150,7 +150,7 @@ theorem natBraidBJ_succ_spec (x y : ℕ → ℕ) (hx : (Function.support x).Infi
     natBraidBJ x y hx hy k < natBraidBJ x y hx hy (k + 1) ∧
       natBraidU x y hx hy k ≤
         ∑ i ∈ Finset.Ico (natBraidBJ x y hx hy k) (natBraidBJ x y hx hy (k + 1)), y i :=
-  (exists_ico_dominates hy y (fun i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi))
+  (exists_ico_dominates hy y (fun _i hi => Nat.one_le_iff_ne_zero.mpr (Function.mem_support.mp hi))
     (natBraidBJ x y hx hy k) (natBraidU x y hx hy k)).choose_spec
 
 theorem natBraidBI_lt_succ (x y : ℕ → ℕ) (hx : (Function.support x).Infinite)
@@ -202,11 +202,11 @@ theorem isBraided_nat_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀) (
     (hx : (Function.support x).Infinite) (hy : (Function.support y).Infinite) :
     letI := LMonoid.ofAddCommMonoid ℕ
     IsBraided ℵ₀ x y := by
-  letI := LMonoid.ofAddCommMonoid ℕ
+  let := LMonoid.ofAddCommMonoid ℕ
   classical
   have hιInf : Infinite ι := by
     rcases finite_or_infinite ι with hfin | hinf
-    · haveI := hfin
+    · have := hfin
       exact absurd (Set.toFinite (Function.support x)) hx
     · exact hinf
   have hUL : #(ULift.{u} ℕ) = ℵ₀ := by
@@ -356,23 +356,23 @@ theorem isBraidedOver_withTop_nat :
     letI := LMonoid.ofAddCommMonoid ℕ
     letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
     IsBraidedOver (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) le_rfl (fun a => (a : WithTop ℕ)) := by
-  letI := LMonoid.ofAddCommMonoid ℕ
-  letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+  let := LMonoid.ofAddCommMonoid ℕ
+  let := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
   classical
   have hksum : ∀ x : Idx (ℵ₀ : Cardinal.{u}) → WithTop ℕ,
       KMonoid.ksum (κ := ℵ₀) x = TrivExt.sigma x :=
     fun x => TrivExt.instKMonoid_ksum _ _ x
   refine ⟨⟨rfl, fun {ι} h x => ?_⟩, fun a b hab => ?_, fun h => ?_, fun x y hxy => ?_⟩
   · -- `↑` is an `ℵ₀⁻`-homomorphism: both sides are the finite sum of the `x i`
-    haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
-    haveI : Fintype ι := Fintype.ofFinite ι
+    have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+    have : Fintype ι := Fintype.ofFinite ι
     rw [LMonoid.lsumOf_aleph0_eq_finsum h x, KMonoid.sumOf_eq_sum]
     simp
   · exact_mod_cast hab
   · -- `ℕ₀` generates `ℕ₀ ∪ {∞}`: a finite element is a one-term sum, `∞` is the sum of `1`s
     rcases eq_or_ne h ⊤ with rfl | hne
     · refine ⟨fun _ => 1, ?_⟩
-      haveI : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
+      have : Infinite (Idx (ℵ₀ : Cardinal.{u})) := infinite_Idx le_rfl
       rw [hksum, trivExt_sigma_coe_nat_of_infinite
         (x := fun _ : Idx (ℵ₀ : Cardinal.{u}) => 1) ?_]
       rw [show (Function.support fun _ : Idx (ℵ₀ : Cardinal.{u}) => 1) = Set.univ from
@@ -402,8 +402,8 @@ theorem isUniversalKExtension_withTop_nat :
     letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
     IsUniversalKExtension.{u, 0, 0, t} (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) le_rfl
       (fun a => (a : WithTop ℕ)) := by
-  letI := LMonoid.ofAddCommMonoid ℕ
-  letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+  let := LMonoid.ofAddCommMonoid ℕ
+  let := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
   exact isBraidedOver_withTop_nat.isUniversalKExtension le_rfl
 
 /-! ## Proposition 3.14: monoids defined by linear equations, inequalities and congruences
@@ -476,7 +476,7 @@ noncomputable def LinSystem.solutions (hκ : ℵ₀ ≤ κ) : Set (Fin n → Fca
 theorem linEval_zero (hκ : ℵ₀ ≤ κ) (a : Fin n → ℕ) :
     letI := Fcard.instKMonoid hκ
     linEval hκ a (0 : Fin n → Fcard κ) = 0 := by
-  letI := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid hκ
   show ∑ i, (a i) • (0 : Fin n → Fcard κ) i = 0
   exact Finset.sum_eq_zero fun i _ => smul_zero _
 
@@ -488,8 +488,8 @@ theorem linEval_sumOf (hκ : ℵ₀ ≤ κ) (a : Fin n → ℕ) {ι : Type u} (h
     letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
     linEval hκ a (KMonoid.sumOf (κ := κ) h z)
       = KMonoid.sumOf (κ := κ) h fun k => linEval hκ a (z k) := by
-  letI := Fcard.instKMonoid hκ
-  letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+  let := Fcard.instKMonoid hκ
+  let := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
   calc linEval hκ a (KMonoid.sumOf (κ := κ) h z)
       = ∑ i, KMonoid.sumOf (κ := κ) h (fun k => (a i) • z k i) := by
         refine Finset.sum_congr rfl fun i _ => ?_
@@ -504,8 +504,8 @@ theorem LinSystem.isKSubmonoid_solutions (hκ : ℵ₀ ≤ κ) :
     letI := Fcard.instKMonoid hκ
     letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
     KMonoid.IsKSubmonoid κ (sys.solutions hκ) := by
-  letI := Fcard.instKMonoid hκ
-  letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+  let := Fcard.instKMonoid hκ
+  let := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
   have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
   constructor
   · -- `0` solves every condition
@@ -553,8 +553,8 @@ theorem fcardIncl_add (hκ : ℵ₀ ≤ κ) (a b : Fcard ℵ₀) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := Fcard.instKMonoid hκ
     fcardIncl hκ (a + b) = fcardIncl hκ a + fcardIncl hκ b := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ
   refine Fcard.ext ?_
   rw [val_fcardIncl, Fcard.instKMonoid_add, Fcard.instKMonoid_add, val_fcardIncl, val_fcardIncl]
 
@@ -562,8 +562,8 @@ theorem fcardIncl_zero (hκ : ℵ₀ ≤ κ) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := Fcard.instKMonoid hκ
     fcardIncl hκ (0 : Fcard ℵ₀) = 0 := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ
   refine Fcard.ext ?_
   rw [val_fcardIncl, Fcard.instKMonoid_zero, Fcard.instKMonoid_zero]
 
@@ -571,8 +571,8 @@ theorem fcardIncl_finsetSum (hκ : ℵ₀ ≤ κ) {J : Type w} (s : Finset J) (f
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := Fcard.instKMonoid hκ
     fcardIncl hκ (∑ j ∈ s, f j) = ∑ j ∈ s, fcardIncl hκ (f j) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ
   induction s using Finset.cons_induction with
   | empty => rw [Finset.sum_empty, Finset.sum_empty, fcardIncl_zero]
   | cons j s hj ih => rw [Finset.sum_cons, Finset.sum_cons, fcardIncl_add, ih]
@@ -581,8 +581,8 @@ theorem fcardIncl_nsmul (hκ : ℵ₀ ≤ κ) (m : ℕ) (a : Fcard ℵ₀) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := Fcard.instKMonoid hκ
     fcardIncl hκ (m • a) = m • fcardIncl hκ a := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ
   induction m with
   | zero => rw [zero_nsmul, zero_nsmul, fcardIncl_zero]
   | succ m ih => rw [succ_nsmul, succ_nsmul, fcardIncl_add, ih]
@@ -592,8 +592,8 @@ theorem fcardIncl_linEval (hκ : ℵ₀ ≤ κ) (a : Fin n → ℕ) (x : Fin n �
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := Fcard.instKMonoid hκ
     fcardIncl hκ (linEval (le_refl ℵ₀) a x) = linEval hκ a (fun i => fcardIncl hκ (x i)) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ
   show fcardIncl hκ (∑ i, (a i) • x i) = ∑ i, (a i) • fcardIncl hκ (x i)
   rw [fcardIncl_finsetSum]
   exact Finset.sum_congr rfl fun i _ => fcardIncl_nsmul hκ (a i) (x i)
@@ -608,8 +608,8 @@ theorem map_linEval {κ' : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) (hκ' : ℵ₀ �
     letI := Fcard.instKMonoid hκ
     letI := Fcard.instKMonoid hκ'
     g (linEval hκ a x) = linEval hκ' a (fun i => g (x i)) := by
-  letI := Fcard.instKMonoid hκ
-  letI := Fcard.instKMonoid hκ'
+  let := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid hκ'
   set G : Fcard κ →+ Fcard κ' := { toFun := g, map_zero' := hg.1, map_add' := hg.2 } with hG
   show G (∑ i, (a i) • x i) = ∑ i, (a i) • G (x i)
   rw [map_sum]
@@ -625,8 +625,8 @@ theorem LinSystem.mem_solutions_map {κ' : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) (
           g 0 = 0 ∧ ∀ a b, g (a + b) = g a + g b)
     {x : Fin n → Fcard κ} (hx : x ∈ sys.solutions hκ) :
     (fun i => g (x i)) ∈ sys.solutions hκ' := by
-  letI := Fcard.instKMonoid hκ
-  letI := Fcard.instKMonoid hκ'
+  let := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid hκ'
   have hmap := map_linEval (n := n) hκ hκ' g hg
   refine ⟨fun p hp => ?_, fun p hp => ?_, fun p hp => ?_⟩
   · rw [← hmap, ← hmap]
@@ -670,8 +670,8 @@ theorem truncAleph0_isAdd (hκ : ℵ₀ ≤ κ) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     truncAleph0 (κ := κ) 0 = 0 ∧
       ∀ a b, truncAleph0 (κ := κ) (a + b) = truncAleph0 a + truncAleph0 b := by
-  letI := Fcard.instKMonoid hκ
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   refine ⟨Fcard.ext ?_, fun a b => Fcard.ext ?_⟩
   · rw [val_truncAleph0, Fcard.instKMonoid_zero hκ, if_pos Cardinal.aleph0_pos,
       Fcard.instKMonoid_zero]
@@ -702,8 +702,8 @@ theorem geLevel_isAdd (hκ : ℵ₀ ≤ κ) {lev : Cardinal.{u}} (hlev : ℵ₀ 
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     geLevel (κ := κ) lev 0 = 0 ∧
       ∀ a b, geLevel (κ := κ) lev (a + b) = geLevel lev a + geLevel lev b := by
-  letI := Fcard.instKMonoid hκ
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   refine ⟨Fcard.ext ?_, fun a b => Fcard.ext ?_⟩
   · rw [val_geLevel, Fcard.instKMonoid_zero hκ,
       if_neg (fun h => absurd (le_antisymm (hlev.trans h) zero_le) Cardinal.aleph0_ne_zero),
@@ -745,10 +745,10 @@ theorem LinSystem.solutions_subset_kclosure (hκ0 : ℵ₀ ≤ κ) :
     sys.solutions hκ0 ⊆ KMonoid.kclosure κ
       ((fun (x : Fin n → Fcard ℵ₀) (i : Fin n) => fcardIncl hκ0 (x i)) ''
         sys.solutions (le_refl ℵ₀)) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := Fcard.instKMonoid hκ0
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
-  letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ0
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
   classical
   set f : (Fin n → Fcard ℵ₀) → (Fin n → Fcard κ) := fun x i => fcardIncl hκ0 (x i) with hfdef
   have hT : KMonoid.IsKSubmonoid κ (KMonoid.kclosure κ (f '' sys.solutions (le_refl ℵ₀))) :=
@@ -856,14 +856,14 @@ theorem isBraidedOver_pi_fcard (hκ : Order.succ ℵ₀ ≤ κ) :
     letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
     IsBraidedOver (Order.succ ℵ₀) κ (Fin n → Fcard ℵ₀) (Fin n → Fcard κ) hκ
       (fun x i => fcardIncl hκ0 (x i)) := by
-  letI hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := Fcard.instKMonoid hκ0
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
-  letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
-  letI : Fact (Order.succ (ℵ₀ : Cardinal.{u})).IsRegular := ⟨Cardinal.isRegular_succ le_rfl⟩
-  letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ0⟩
-  letI := instKMonoidFreeK κ hκ0 (ULift.{u} (Fin n))
+  let hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ0
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
+  let : Fact (Order.succ (ℵ₀ : Cardinal.{u})).IsRegular := ⟨Cardinal.isRegular_succ le_rfl⟩
+  let : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ0⟩
+  let := instKMonoidFreeK κ hκ0 (ULift.{u} (Fin n))
   have hBlt : #(ULift.{u} (Fin n)) < ℵ₀ := Cardinal.lt_aleph0_iff_finite.mpr inferInstance
   have hBlam : #(ULift.{u} (Fin n)) < Order.succ (ℵ₀ : Cardinal.{u}) :=
     lt_of_lt_of_le hBlt (Order.le_succ _)
@@ -912,11 +912,11 @@ theorem prop_3_14_one (hκ : Order.succ ℵ₀ ≤ κ) :
       ↥(sys.solutions hκ0) hκ
       (fun x => ⟨fun i => fcardIncl hκ0 ((x : Fin n → Fcard ℵ₀) i),
         sys.mem_solutions_of_incl hκ0 x.2⟩) := by
-  letI hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := Fcard.instKMonoid hκ0
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
-  letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
+  let hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid hκ0
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
   -- the `ℵ₀`-solutions form an `ℵ₁⁻`-submonoid of `F_{ℵ₀}^n`: an `ℵ₀`-monoid *is* an `ℵ₁⁻`-monoid
   have hS : IsLSubmonoid (Order.succ ℵ₀) (sys.solutions (le_refl (ℵ₀ : Cardinal.{u}))) :=
     ⟨(sys.isKSubmonoid_solutions (le_refl ℵ₀)).zero_mem, fun {ι} h x hx =>
@@ -928,7 +928,7 @@ theorem prop_3_14_one (hκ : Order.succ ℵ₀ ≤ κ) :
 /-- `ℵ₀·H` componentwise: replace every nonzero component by `ℵ₀`, leaving zeroes alone.  This is
 the paper's explicit description of the elements of `ℵ₀H`. -/
 noncomputable def alephPart {n : ℕ} (x : Fin n → Fcard ℵ₀) : Fin n → Fcard ℵ₀ :=
-  fun i => if ((x i : Fcard ℵ₀) : Cardinal.{u}) = 0 then Fcard.mk 0 (zero_le' : (0 : Cardinal.{u}) ≤ ℵ₀)
+  fun i => if ((x i : Fcard ℵ₀) : Cardinal.{u}) = 0 then Fcard.mk 0 (zero_le : (0 : Cardinal.{u}) ≤ ℵ₀)
     else Fcard.mk ℵ₀ le_rfl
 
 /-- `H`, the solutions all of whose components are finite: the monoid `H ⊆ ℕ₀^n` of
@@ -955,7 +955,7 @@ sides are `ℵ₀`. -/
 theorem alephOne_isAdd :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     alephOne 0 = 0 ∧ ∀ a b, alephOne (a + b) = alephOne a + alephOne b := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   have hval : ∀ c : Fcard ℵ₀, (alephOne c : Cardinal.{u})
       = if (c : Cardinal.{u}) = 0 then 0 else ℵ₀ := by
     intro c
@@ -983,8 +983,8 @@ theorem LinSystem.addSubmonoid_finSolutions :
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     (0 : Fin n → Fcard ℵ₀) ∈ sys.finSolutions ∧
       ∀ a ∈ sys.finSolutions, ∀ b ∈ sys.finSolutions, a + b ∈ sys.finSolutions := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   have hsub := sys.isKSubmonoid_solutions (le_refl (ℵ₀ : Cardinal.{u}))
   refine ⟨⟨hsub.zero_mem, fun i => ?_⟩, fun a ha b hb => ⟨hsub.add_mem ha.1 hb.1, fun i => ?_⟩⟩
   · rw [show ((0 : Fin n → Fcard ℵ₀) i) = 0 from rfl, Fcard.instKMonoid_zero]
@@ -1012,13 +1012,13 @@ theorem mk_support_le_csum {ι : Type u} (c : ι → Cardinal.{u}) :
 theorem alephPart_add {n : ℕ} (x y : Fin n → Fcard ℵ₀) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     alephPart (x + y) = alephPart x + alephPart y := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   exact funext fun i => alephOne_isAdd.2 (x i) (y i)
 
 theorem alephPart_zero {n : ℕ} :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     alephPart (0 : Fin n → Fcard ℵ₀) = 0 := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   exact funext fun _ => alephOne_isAdd.1
 
 /-- The value of `alephPart`: `0` where `x` vanishes and `ℵ₀` elsewhere. -/
@@ -1053,8 +1053,8 @@ theorem LinSystem.exists_finSolutions_support (U : Finset (Fin n))
     (hzero : ∀ i ∈ U, ∀ j ∉ U, ((g i j : Fcard ℵ₀) : Cardinal.{u}) = 0) :
     ∃ w ∈ sys.finSolutions, (∀ i ∈ U, ((w i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0) ∧
       ∀ j ∉ U, ((w j : Fcard ℵ₀) : Cardinal.{u}) = 0 := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   refine ⟨∑ i ∈ U, g i,
     (sys.mem_finSubmonoid).mp (AddSubmonoid.sum_mem sys.finSubmonoid fun i _ => hgH i),
     fun i hi => ?_, fun j hj => ?_⟩
@@ -1080,8 +1080,8 @@ theorem LinSystem.ksum_mem_alephExt (p : Idx (ℵ₀ : Cardinal.{u}) → (Fin n 
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     KMonoid.ksum (κ := ℵ₀) p ∈ sys.alephExt := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   classical
   have hidx : #(Idx (ℵ₀ : Cardinal.{u})) ≤ ℵ₀ := le_of_eq (mk_Idx _)
   show KMonoid.sumOf (κ := ℵ₀) hidx p ∈ sys.alephExt
@@ -1125,7 +1125,7 @@ theorem LinSystem.ksum_mem_alephExt (p : Idx (ℵ₀ : Cardinal.{u}) → (Fin n 
     · rw [hp₁def, hp₂def]; simp only [if_pos hk]; rw [add_zero]
     · rw [hp₁def, hp₂def]; simp only [if_neg hk]; rw [zero_add]
   -- the first half is a *finite* sum of elements of `H`, hence lies in `H`
-  haveI : Fintype ↥J := hJfin.fintype
+  have : Fintype ↥J := hJfin.fintype
   have hJle : #(J : Set (Idx (ℵ₀ : Cardinal.{u}))) ≤ ℵ₀ :=
     (Cardinal.mk_set_le J).trans (le_of_eq (mk_Idx _))
   have hp₁sum : KMonoid.sumOf (κ := ℵ₀) hidx p₁ = ∑ k : ↥J, p (k : Idx ℵ₀) := by
@@ -1193,8 +1193,8 @@ theorem LinSystem.exists_alephPart_ksum (q : Idx (ℵ₀ : Cardinal.{u}) → (Fi
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     ∃ w ∈ sys.finSolutions,
       KMonoid.ksum (κ := ℵ₀) (fun k => alephPart (q k)) = alephPart w := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   classical
   have hidx : #(Idx (ℵ₀ : Cardinal.{u})) ≤ ℵ₀ := le_of_eq (mk_Idx _)
   -- `U`: the components hit by some `q k`
@@ -1243,8 +1243,8 @@ theorem LinSystem.isKSubmonoid_alephExt :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     KMonoid.IsKSubmonoid ℵ₀ sys.alephExt := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   classical
   refine ⟨⟨0, sys.addSubmonoid_finSolutions.1, 0, sys.addSubmonoid_finSolutions.1, ?_⟩,
     fun z hz => ?_⟩
@@ -1266,8 +1266,8 @@ are solutions — the second because `alephPart` is additive — and the solutio
 submonoid. -/
 theorem LinSystem.alephExt_subset_solutions :
     sys.alephExt ⊆ sys.solutions (le_refl (ℵ₀ : Cardinal.{u})) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   rintro z ⟨h, hh, h', hh', rfl⟩
   exact (sys.isKSubmonoid_solutions (le_refl ℵ₀)).add_mem hh.1
     (sys.mem_solutions_alephPart hh'.1)
@@ -1284,21 +1284,21 @@ theorem IsLSubmonoid.isConical {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
     (hS : IsLSubmonoid lam S) (hX : IsConical X) :
     letI := hS.lmonoid
     IsConical ↥S := by
-  letI := hS.lmonoid
+  let := hS.lmonoid
   intro a b hab
   have h : (a : X) + (b : X) = 0 := congrArg Subtype.val hab
   exact ⟨Subtype.ext (hX _ _ h).1, Subtype.ext (hX _ _ h).2⟩
 
 /-- A product of reduced monoids is reduced. -/
 theorem isConical_pi {B : Type w} {Y : B → Type v} [∀ b, AddCommMonoid (Y b)]
-    (h : ∀ b, IsConical (Y b)) : IsConical (∀ b, Y b) := fun a b hab =>
+    (h : ∀ b, IsConical (Y b)) : IsConical (∀ b, Y b) := fun _a _b hab =>
   ⟨funext fun x => (h x _ _ (congrFun hab x)).1, funext fun x => (h x _ _ (congrFun hab x)).2⟩
 
 /-- `F_{λ⁻}` is reduced: a sum of cardinals vanishes only if both terms do. -/
 theorem isConical_lcard {lam : Cardinal.{u}} (hlam : lam.IsRegular) :
     letI := LCard.instLMonoid hlam
     IsConical (LCard lam) := by
-  letI := LCard.instLMonoid hlam
+  let := LCard.instLMonoid hlam
   intro a b hab
   have h : (a : Cardinal.{u}) + (b : Cardinal.{u}) = 0 := by
     rw [← LCard.val_add hlam, hab, LCard.val_zero hlam]
@@ -1325,9 +1325,9 @@ theorem lcardInclPi_zero {n : ℕ} :
     letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
       Cardinal.isRegular_aleph0
     lcardInclPi (0 : Fin n → LCard (ℵ₀ : Cardinal.{u})) = 0 := by
-  letI : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
+  let : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
     Cardinal.isRegular_aleph0
   refine funext fun i => Fcard.ext ?_
   rw [val_lcardInclPi]
@@ -1340,9 +1340,9 @@ theorem lcardInclPi_add {n : ℕ} (x y : Fin n → LCard (ℵ₀ : Cardinal.{u})
     letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
       Cardinal.isRegular_aleph0
     lcardInclPi (x + y) = lcardInclPi x + lcardInclPi y := by
-  letI : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
+  let : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
     Cardinal.isRegular_aleph0
   refine funext fun i => Fcard.ext ?_
   rw [val_lcardInclPi]
@@ -1358,10 +1358,10 @@ theorem lcardInclPi_finsetSum {n : ℕ} {J : Type w} (s : Finset J)
     letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
       Cardinal.isRegular_aleph0
     lcardInclPi (∑ j ∈ s, x j) = ∑ j ∈ s, lcardInclPi (x j) := by
-  letI : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
-  letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
+  let : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
     Cardinal.isRegular_aleph0
   induction s using Finset.cons_induction with
   | empty => rw [Finset.sum_empty, Finset.sum_empty, lcardInclPi_zero]
@@ -1376,13 +1376,13 @@ theorem isBraidedOver_pi_lcard {n : ℕ} :
       Cardinal.isRegular_aleph0
     IsBraidedOver ℵ₀ ℵ₀ (Fin n → LCard (ℵ₀ : Cardinal.{u})) (Fin n → Fcard ℵ₀) (le_refl ℵ₀)
       lcardInclPi := by
-  letI : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
-  letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
+  let : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
     Cardinal.isRegular_aleph0
-  letI : Fact (Order.succ (ℵ₀ : Cardinal.{u})).IsRegular := ⟨Cardinal.isRegular_succ le_rfl⟩
-  letI := instKMonoidFreeK (ℵ₀ : Cardinal.{u}) le_rfl (ULift.{u} (Fin n))
+  let : Fact (Order.succ (ℵ₀ : Cardinal.{u})).IsRegular := ⟨Cardinal.isRegular_succ le_rfl⟩
+  let := instKMonoidFreeK (ℵ₀ : Cardinal.{u}) le_rfl (ULift.{u} (Fin n))
   have hBlt : #(ULift.{u} (Fin n)) < ℵ₀ := Cardinal.lt_aleph0_iff_finite.mpr inferInstance
   have hBk : #(ULift.{u} (Fin n)) < Order.succ (ℵ₀ : Cardinal.{u}) :=
     lt_of_lt_of_le hBlt (Order.le_succ _)
@@ -1414,8 +1414,8 @@ theorem alephPart_eq_ksum {n : ℕ} (x : Fin n → Fcard ℵ₀)
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     alephPart x = KMonoid.ksum (κ := ℵ₀) fun _ : Idx (ℵ₀ : Cardinal.{u}) => x := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   refine funext fun i => Fcard.ext ?_
   have hval : (((KMonoid.ksum (κ := ℵ₀) fun _ : Idx (ℵ₀ : Cardinal.{u}) => x) i : Fcard ℵ₀)
       : Cardinal.{u}) = ℵ₀ * ((x i : Fcard ℵ₀) : Cardinal.{u}) := by
@@ -1452,7 +1452,7 @@ natural-number shadow (`linEvalNat`), the hypothesis `s = t + h` becomes `A(s) =
 theorem val_nsmul (hκ : ℵ₀ ≤ κ) (d : ℕ) (y : Fcard κ) :
     letI := Fcard.instKMonoid hκ
     ((d • y : Fcard κ) : Cardinal.{u}) = (d : Cardinal.{u}) * (y : Cardinal.{u}) := by
-  letI := Fcard.instKMonoid hκ
+  let := Fcard.instKMonoid hκ
   rw [← fcardVal_apply hκ, map_nsmul, fcardVal_apply, nsmul_eq_mul]
 
 /-- The natural-number shadow of the linear form `a` on a family with finite components. -/
@@ -1464,7 +1464,7 @@ theorem val_linEval_eq_linEvalNat (a : Fin n → ℕ) {x : Fin n → Fcard ℵ�
     (hx : ∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) :
     ((linEval (le_refl (ℵ₀ : Cardinal.{u})) a x : Fcard ℵ₀) : Cardinal.{u})
       = (linEvalNat a x : Cardinal.{u}) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   show ((∑ i, (a i) • x i : Fcard ℵ₀) : Cardinal.{u}) = _
   rw [← fcardVal_apply (le_refl (ℵ₀ : Cardinal.{u})), map_sum]
   show (∑ i, ((a i • x i : Fcard ℵ₀) : Cardinal.{u})) = _
@@ -1481,8 +1481,8 @@ Paper proof: cancel the `t`-part.  For an equation, `A(s) = B(s)` and `A(t) = B(
 both `A(s)` and `A(t)`, hence their difference `A(h)`.  Both steps happen in `ℕ₀`. -/
 theorem LinSystem.isSaturatedFin_of_ineqs_empty (hineq : sys.ineqs = ∅) :
     LinSystem.IsSaturatedFin.{u} sys := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   intro s hs t ht z hz hsum
   -- the shadow of `s = t + z`, for every linear form
   have hshadow : ∀ a : Fin n → ℕ, linEvalNat a s = linEvalNat a t + linEvalNat a z := by
@@ -1584,15 +1584,15 @@ theorem prop_3_14_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (le_refl ℵ₀)
       (fun h => ⟨(h : Fin n → Fcard ℵ₀), ⟨(h : Fin n → Fcard ℵ₀), h.2, 0,
         sys.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
-  letI : AddCommMonoid ↥sys.finSolutions :=
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let : AddCommMonoid ↥sys.finSolutions :=
     addCommMonoidOfClosed sys.addSubmonoid_finSolutions.1
       (fun a ha b hb => sys.addSubmonoid_finSolutions.2 a ha b hb)
-  letI := LMonoid.ofAddCommMonoid ↥sys.finSolutions
-  letI := sys.isKSubmonoid_alephExt.kmonoid
-  letI : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
-  letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
+  let := LMonoid.ofAddCommMonoid ↥sys.finSolutions
+  let := sys.isKSubmonoid_alephExt.kmonoid
+  let : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
+  let := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
     Cardinal.isRegular_aleph0
   classical
   -- `S`: the solutions inside `ℕ₀^n`, i.e. `H` read in the base of the ambient extension
@@ -1608,8 +1608,8 @@ theorem prop_3_14_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
   have hS : IsLSubmonoid (ℵ₀ : Cardinal.{u}) S := by
     refine ⟨by rw [hmemS, lcardInclPi_zero]; exact sys.addSubmonoid_finSolutions.1,
       fun {ι} h x hx => ?_⟩
-    haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
-    haveI : Fintype ι := Fintype.ofFinite ι
+    have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+    have : Fintype ι := Fintype.ofFinite ι
     rw [hmemS, LMonoid.lsumOf_aleph0_eq_finsum h x, lcardInclPi_finsetSum]
     exact (sys.mem_finSubmonoid).mp
       (AddSubmonoid.sum_mem sys.finSubmonoid fun i _ => (sys.mem_finSubmonoid).mpr (hx i))
@@ -1631,7 +1631,7 @@ theorem prop_3_14_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     rw [alephPart_eq_ksum h' hh'.2]
     exact hclos.ksum_mem _ fun _ => KMonoid.subset_kclosure (himg h' hh')
   -- Lemma 3.13(2) over `ℕ₀^n`, then transport the base from `S` to `H`
-  letI := hS.lmonoid
+  let := hS.lmonoid
   have hbrS := isBraidedOver_of_isLSubmonoid (le_refl (ℵ₀ : Cardinal.{u})) isBraidedOver_pi_lcard
     S hS (Or.inr hsatS) sys.isKSubmonoid_alephExt hfS hTgen
   have hg0 : down 0 = (0 : Fin n → LCard (ℵ₀ : Cardinal.{u})) := by
@@ -1694,7 +1694,7 @@ theorem val_linEval_two (a : Fin 2 → ℕ) (x : Fin 2 → Fcard ℵ₀) :
     ((linEval (le_refl (ℵ₀ : Cardinal.{u})) a x : Fcard ℵ₀) : Cardinal.{u})
       = (a 0 : Cardinal.{u}) * ((x 0 : Fcard ℵ₀) : Cardinal.{u})
         + (a 1 : Cardinal.{u}) * ((x 1 : Fcard ℵ₀) : Cardinal.{u}) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   show ((∑ i, (a i) • x i : Fcard ℵ₀) : Cardinal.{u}) = _
   rw [← fcardVal_apply (le_refl (ℵ₀ : Cardinal.{u})), map_sum, Fin.sum_univ_two]
   simp only [fcardVal_apply, map_nsmul, nsmul_eq_mul]
@@ -1715,7 +1715,7 @@ theorem mem_finSolutions_ineqSystem (x : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})
     (hc : ((x 0 : Fcard ℵ₀) : Cardinal.{u}) + ((c : Fcard ℵ₀) : Cardinal.{u})
       = 2 * ((x 1 : Fcard ℵ₀) : Cardinal.{u})) :
     x ∈ ineqSystem.finSolutions := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   refine ⟨⟨fun p hp => absurd hp (Set.notMem_empty p), fun p hp => ?_,
     fun p hp => absurd hp (Set.notMem_empty p)⟩, hfin⟩
   obtain rfl : p = (fun i => if i = 0 then 1 else 0, fun i => if i = 0 then 0 else 2) := hp
@@ -1731,8 +1731,8 @@ This also refutes Proposition 3.14(2) as printed, whose proof begins by assertin
 `not_isBraidedOver_ineqSystem` and `not_prop_3_14_two_ineqSystem` below show that for this `H` the
 candidate extension `H + ℵ₀H` is not braided over `H`, hence not its universal `ℵ₀`-extension. -/
 theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSystem := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
   intro hsat
   -- the entries `2`, `1`, `0` of `F_{ℵ₀}`
   set two : Fcard ℵ₀ := Fcard.mk 2 two_le_aleph0 with htwo
@@ -1787,7 +1787,7 @@ theorem le_of_mem_finSolutions_ineqSystem {x : Fin 2 → Fcard (ℵ₀ : Cardina
     (hx : x ∈ ineqSystem.finSolutions) :
     ((x 0 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat
       ≤ 2 * ((x 1 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   obtain ⟨c, hc⟩ := hx.1.2.1 _ rfl
   have hval := congrArg (fun z : Fcard (ℵ₀ : Cardinal.{u}) => (z : Cardinal.{u})) hc
   rw [Fcard.instKMonoid_add, val_linEval_two, val_linEval_two] at hval
@@ -1813,8 +1813,8 @@ theorem ineqSlack_add {a b : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})}
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
     ineqSlack (a + b) = ineqSlack a + ineqSlack b := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
   have hcomp : ∀ i, (((a + b) i : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat
       = ((a i : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat
         + ((b i : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat := by
@@ -1831,8 +1831,8 @@ theorem ineqSlack_zero :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
     ineqSlack (0 : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})) = 0 := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
   simp [ineqSlack]
 
 /-- `(2,1)`, on which the slack vanishes. -/
@@ -1844,14 +1844,14 @@ noncomputable def ptTwoTwo : Fin 2 → Fcard (ℵ₀ : Cardinal.{u}) :=
   fun _ => Fcard.mk 2 two_le_aleph0
 
 theorem ptTwoOne_mem : ptTwoOne.{u} ∈ ineqSystem.finSolutions := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   refine mem_finSolutions_ineqSystem _ (Fcard.mk 0 (zero_le : (0 : Cardinal.{u}) ≤ ℵ₀))
     (fun i => ?_) ?_
   · by_cases hi : i = 0 <;> simp [ptTwoOne, hi, Cardinal.one_lt_aleph0]
   · simp [ptTwoOne]
 
 theorem ptTwoTwo_mem : ptTwoTwo.{u} ∈ ineqSystem.finSolutions := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   refine mem_finSolutions_ineqSystem _ (Fcard.mk 2 two_le_aleph0) (fun i => ?_) ?_
   · simp [ptTwoTwo]
   · simp [ptTwoTwo]
@@ -1876,13 +1876,13 @@ theorem not_isBraidedOver_ineqSystem :
     ¬ IsBraidedOver ℵ₀ ℵ₀ ↥ineqSystem.finSolutions ↥ineqSystem.alephExt (le_refl ℵ₀)
       (fun h => ⟨(h : Fin 2 → Fcard ℵ₀), ⟨(h : Fin 2 → Fcard ℵ₀), h.2, 0,
         ineqSystem.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
-  letI : AddCommMonoid ↥ineqSystem.finSolutions :=
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  let : AddCommMonoid ↥ineqSystem.finSolutions :=
     addCommMonoidOfClosed ineqSystem.addSubmonoid_finSolutions.1
       (fun a ha b hb => ineqSystem.addSubmonoid_finSolutions.2 a ha b hb)
-  letI := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
-  letI := ineqSystem.isKSubmonoid_alephExt.kmonoid
+  let := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
+  let := ineqSystem.isKSubmonoid_alephExt.kmonoid
   classical
   intro hbr
   -- the slack, as a monoid homomorphism `H → ℕ₀`
@@ -1962,13 +1962,13 @@ theorem not_prop_3_14_two_ineqSystem :
       (le_refl ℵ₀)
       (fun h => ⟨(h : Fin 2 → Fcard ℵ₀), ⟨(h : Fin 2 → Fcard ℵ₀), h.2, 0,
         ineqSystem.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
-  letI : AddCommMonoid ↥ineqSystem.finSolutions :=
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  let : AddCommMonoid ↥ineqSystem.finSolutions :=
     addCommMonoidOfClosed ineqSystem.addSubmonoid_finSolutions.1
       (fun a ha b hb => ineqSystem.addSubmonoid_finSolutions.2 a ha b hb)
-  letI := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
-  letI := ineqSystem.isKSubmonoid_alephExt.kmonoid
+  let := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
+  let := ineqSystem.isKSubmonoid_alephExt.kmonoid
   intro huniv
   -- `H` is conical, being a submonoid of `F_{ℵ₀}²`
   have hcon : IsConical ↥ineqSystem.finSolutions :=
@@ -2002,7 +2002,7 @@ def doubleSystem : LinSystem 2 where
 theorem mem_diagSystem_solutions (x : Fin 2 → Fcard ℵ₀) :
     x ∈ diagSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) ↔
       ((x 0 : Fcard ℵ₀) : Cardinal.{u}) = ((x 1 : Fcard ℵ₀) : Cardinal.{u}) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   constructor
   · intro h
     have h1 := congrArg (fun c : Fcard ℵ₀ => (c : Cardinal.{u})) (h.1 _ rfl)
@@ -2020,7 +2020,7 @@ theorem mem_doubleSystem_solutions (x : Fin 2 → Fcard ℵ₀) :
     x ∈ doubleSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) ↔
       2 * ((x 0 : Fcard ℵ₀) : Cardinal.{u})
         = ((x 0 : Fcard ℵ₀) : Cardinal.{u}) + ((x 1 : Fcard ℵ₀) : Cardinal.{u}) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   constructor
   · intro h
     have h1 := congrArg (fun c : Fcard ℵ₀ => (c : Cardinal.{u})) (h.1 _ rfl)
@@ -2039,7 +2039,7 @@ theorem mem_doubleSystem_solutions (x : Fin 2 → Fcard ℵ₀) :
 theorem finSolutions_diagSystem :
     (diagSystem.finSolutions : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u})))
       = doubleSystem.finSolutions := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   refine Set.ext fun x => ?_
   constructor
   · rintro ⟨hx, hfin⟩
@@ -2057,8 +2057,8 @@ theorem alephExt_congr {sys₁ sys₂ : LinSystem n}
       = (sys₂.finSolutions : Set (Fin n → Fcard (ℵ₀ : Cardinal.{u})))) :
     (sys₁.alephExt : Set (Fin n → Fcard (ℵ₀ : Cardinal.{u})))
       = (sys₂.alephExt : Set (Fin n → Fcard (ℵ₀ : Cardinal.{u}))) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
   refine Set.ext fun z => ?_
   constructor <;> rintro ⟨a, ha, b, hb, rfl⟩
   · exact ⟨a, (Set.ext_iff.mp h a).mp ha, b, (Set.ext_iff.mp h b).mp hb, rfl⟩
@@ -2076,8 +2076,8 @@ theorem example_3_15 :
         = diagSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) ∧
       (doubleSystem.alephExt : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u})))
         ≠ doubleSystem.solutions (le_refl (ℵ₀ : Cardinal.{u})) := by
-  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
-  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  let := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
   -- `(ℵ₀, 1)`: a solution of the second system that is not one of the first
   set w : Fin 2 → Fcard ℵ₀ :=
     fun i => if i = 0 then Fcard.mk ℵ₀ le_rfl else Fcard.mk 1 Cardinal.one_lt_aleph0.le with hw

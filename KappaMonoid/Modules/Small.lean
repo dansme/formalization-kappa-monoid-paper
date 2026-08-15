@@ -153,7 +153,7 @@ noncomputable def dsPartIso (s : Set ι) : ↥(dsPart R N s) ≃ₗ[R] ⨁ i : s
 noncomputable def directSumEquivOfSubsingleton (i₀ : ι)
     (h : ∀ i, i ≠ i₀ → Subsingleton (N i)) : (⨁ i, N i) ≃ₗ[R] N i₀ := by
   classical
-  refine LinearEquiv.ofLinear (DirectSum.component R ι N i₀) (DirectSum.lof R ι N i₀) ?_ ?_
+  refine LinearEquiv.ofLinearMap (DirectSum.component R ι N i₀) (DirectSum.lof R ι N i₀) ?_ ?_
   · apply LinearMap.ext
     intro m
     simp
@@ -161,7 +161,7 @@ noncomputable def directSumEquivOfSubsingleton (i₀ : ι)
     by_cases hi : i = i₀
     · subst hi
       simp
-    · haveI := h i hi
+    · have := h i hi
       have hm : m = 0 := Subsingleton.elim m 0
       subst hm
       simp
@@ -248,7 +248,7 @@ theorem isLambdaSmall_of_subsingleton {lam : Cardinal.{u}} (hlam : 0 < lam) (M :
     [AddCommGroup M] [Module R M] [Subsingleton M] : IsLambdaSmall R lam M := by
   intro ι N _ _ f
   refine ⟨∅, ?_, fun m i _ => ?_⟩
-  · rwa [Cardinal.mk_emptyCollection]
+  · rwa [Cardinal.mk_eq_zero]
   · rw [Subsingleton.elim m 0, map_zero]
     rfl
 

@@ -19,7 +19,7 @@ namespace Nat
 theorem div_fiber_eq {d : ℕ} (hd : 0 < d) (k : ℕ) :
     {n : ℕ | n / d = k} = Set.Ico (d * k) (d * k + d) := by
   ext n
-  simp only [Set.mem_setOf_eq, Set.mem_Ico]
+  simp only [Set.mem_ofPred_eq, Set.mem_Ico]
   constructor
   · rintro rfl
     have h1 := Nat.div_add_mod n d
@@ -55,7 +55,7 @@ theorem blockIdx_fibre {s : ℕ → ℕ} (hs : Monotone s) (hs0 : s 0 = 0) (k : 
       = Set.Ico (s k) (s (k + 1)) ∪ {j | (¬ ∃ l, j < s l) ∧ j = k} := by
   classical
   ext j
-  simp only [Set.mem_setOf_eq, Set.mem_union, Set.mem_Ico, blockIdx]
+  simp only [Set.mem_ofPred_eq, Set.mem_union, Set.mem_Ico, blockIdx]
   by_cases h : ∃ l, j < s l
   · rw [dif_pos h]
     have hf0 : ¬ (j < s 0) := by rw [hs0]; exact Nat.not_lt_zero j

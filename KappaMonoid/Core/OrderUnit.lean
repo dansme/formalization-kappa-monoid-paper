@@ -193,10 +193,10 @@ theorem part_mono {u : H} {α β : Cardinal.{u}} (h : α ≤ β) :
 theorem part_top {u : H} (hu : IsOrderUnit (κ := κ) u) : part (κ := κ) u κ = Set.univ :=
   Set.eq_univ_of_forall fun x => size_le_top hu x
 
-theorem zero_mem_part {u : H} (hu : IsOrderUnit (κ := κ) u) (α : Cardinal.{u}) :
+theorem zero_mem_part {u : H} (_hu : IsOrderUnit (κ := κ) u) (α : Cardinal.{u}) :
     (0 : H) ∈ part (κ := κ) u α :=
-  le_trans (size_le_of_le (κ := κ) (u := u) (zero_le' : (0 : Cardinal.{u}) ≤ κ)
-    (AddLe.zero_le _)) (zero_le' : (0 : Cardinal.{u}) ≤ α)
+  le_trans (size_le_of_le (κ := κ) (u := u) (zero_le : (0 : Cardinal.{u}) ≤ κ)
+    (AddLe.zero_le _)) (zero_le : (0 : Cardinal.{u}) ≤ α)
 
 /-- **`H_α` is closed under sums of at most `α` many of its elements**, for infinite `α ≤ κ`;
 together with `zero_mem_part` this says that `H_α` is an `α`-submonoid.

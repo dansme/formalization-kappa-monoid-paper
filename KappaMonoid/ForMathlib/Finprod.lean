@@ -35,7 +35,7 @@ theorem exists_add_eq_finsum_mem {M : Type v} [AddCommMonoid M] {ι : Type u} {S
     (hS : S.Finite) (f : ι → M) {i : ι} (hi : i ∈ S) : ∃ c, f i + c = ∑ᶠ j ∈ S, f j := by
   classical
   have hins : insert i (S \ {i}) = S := by
-    rw [Set.insert_diff_singleton, Set.insert_eq_of_mem hi]
+    rw [Set.insert_sdiff_singleton, Set.insert_eq_of_mem hi]
   refine ⟨∑ᶠ j ∈ (S \ {i}), f j, ?_⟩
   conv_rhs => rw [← hins]
-  exact (finsum_mem_insert f (fun h => h.2 rfl) (hS.subset Set.diff_subset)).symm
+  exact (finsum_mem_insert f (fun h => h.2 rfl) (hS.subset Set.sdiff_subset)).symm

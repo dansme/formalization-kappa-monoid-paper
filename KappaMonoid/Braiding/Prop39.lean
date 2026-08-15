@@ -245,8 +245,8 @@ theorem isLMonoidHom_aleph0_of_add {X : Type v} {Y : Type w} [LMonoid (ℵ₀ : 
     [LMonoid (ℵ₀ : Cardinal.{u}) Y] {g : X → Y} (h0 : g 0 = 0)
     (hadd : ∀ a b, g (a + b) = g a + g b) : IsLMonoidHom ℵ₀ g := by
   intro ι h x
-  haveI : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
-  haveI : Fintype ι := Fintype.ofFinite ι
+  have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+  have : Fintype ι := Fintype.ofFinite ι
   rw [LMonoid.lsumOf_aleph0_eq_finsum h x, LMonoid.lsumOf_aleph0_eq_finsum h (g ∘ x)]
   exact map_sum ({ toFun := g, map_zero' := h0, map_add' := hadd } : X →+ Y) x Finset.univ
 
@@ -353,8 +353,8 @@ theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMo
     (hgen : KGenerates κ T) :
     letI := hT.lmonoid hlam
     IsBraidedOver lam κ ↥T H₁ hlk (fun y => (y : H₁)) := by
-  letI := hS.lmonoid hlam
-  letI := hT.lmonoid hlam
+  let := hS.lmonoid hlam
+  let := hT.lmonoid hlam
   -- the inverse isomorphism
   obtain ⟨einv, hli, hri⟩ : ∃ g : H₂ → H₁, Function.LeftInverse g e ∧ Function.RightInverse g e :=
     ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
@@ -414,6 +414,6 @@ theorem IsBraidedOver.isUniversalKExtension {X : Type v} {H : Type w}
     (hbr : IsBraidedOver lam κ X H hlk f) :
     IsUniversalKExtension lam κ X H hlk f :=
   { isLHom := hbr.isLHom
-    universal := fun K _ φ hφ => extend_lhom hlk f hbr φ hφ }
+    universal := fun _K _ φ hφ => extend_lhom hlk f hbr φ hφ }
 
 end KappaMonoid

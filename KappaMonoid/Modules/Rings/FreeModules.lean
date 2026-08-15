@@ -106,8 +106,8 @@ noncomputable def freeClass (hκ : ℵ₀ ≤ κ) : ModuleClass R κ where
     exact mk_eq_mk.mpr ⟨e⟩
   zero := mk (∅ : Set (Idx κ))
   subsingleton_rep_zero := by
-    haveI : IsEmpty ↥(∅ : Set (Idx κ)) := Set.isEmpty_coe_sort.mpr rfl
-    haveI : Subsingleton (ofSet R κ (∅ : Set (Idx κ))) :=
+    have : IsEmpty ↥(∅ : Set (Idx κ)) := Set.isEmpty_coe_sort.mpr rfl
+    have : Subsingleton (ofSet R κ (∅ : Set (Idx κ))) :=
       ⟨fun x y => DFinsupp.ext fun i => (IsEmpty.false i).elim⟩
     exact Equiv.subsingleton (basis_mk_equiv (∅ : Set (Idx κ))).some.toEquiv
   dsum f := mk (sumSet R κ hκ f)

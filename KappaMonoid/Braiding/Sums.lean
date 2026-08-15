@@ -27,7 +27,7 @@ as a `κ`-monoid (`KMonoid.toLMonoid`). -/
 theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
     (h : letI := KMonoid.toLMonoidOfLE H hlam hlk; IsBraided lam x y) :
     sumOf (κ := κ) hι x = sumOf (κ := κ) hι y := by
-  letI := KMonoid.toLMonoidOfLE H hlam hlk
+  let := KMonoid.toLMonoidOfLE H hlam hlk
   obtain ⟨d⟩ := h
   have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
   have hP : #(ι × ℕ) ≤ κ := mk_prod_nat_le hκ hι
@@ -457,7 +457,7 @@ theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < l
   have h1 : #({i} : Set ι) < lam :=
     LMonoid.mk_lt_finite (X := X) _
   have hT : #(↥(S \ {i})) < lam :=
-    lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset Set.diff_subset) hS
+    lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset Set.sdiff_subset) hS
   have hST : #(↥(({i} : Set ι) ∪ (S \ {i}))) < lam := by rw [hset]; exact hS
   have hcollapse : lsumOf (lam := lam) hST (fun j : ↥(({i} : Set ι) ∪ (S \ {i})) => f j)
       = lsumOf (lam := lam) hS (fun j : S => f j) :=
@@ -466,7 +466,7 @@ theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < l
   have hsplit := LMonoid.lsumOf_union ({i} : Set ι) (S \ {i})
     (Set.disjoint_iff_inter_eq_empty.mpr (by simp)) h1 hT hST f
   rw [hcollapse, h] at hsplit
-  haveI : Unique ({i} : Set ι) := ⟨⟨⟨i, rfl⟩⟩, fun j => Subtype.ext j.2⟩
+  have : Unique ({i} : Set ι) := ⟨⟨⟨i, rfl⟩⟩, fun j => Subtype.ext j.2⟩
   have hdef : ((default : ({i} : Set ι)) : ι) = i := (default : ({i} : Set ι)).2
   have hsingle : lsumOf (lam := lam) h1 (fun j : ({i} : Set ι) => f j) = f i := by
     rw [LMonoid.lsumOf_unique h1 (fun j : ({i} : Set ι) => f j), hdef]
@@ -516,7 +516,7 @@ theorem IsBraided.mk_support_lt (hcon : IsConical X) {x y : ι → X} (h : IsBra
         (Set.finite_Iic (p : ι × ℕ).2)) ?_
       rintro ⟨a, n⟩ ⟨ha, hn⟩
       exact ⟨ha, hn⟩
-    haveI := hfin.to_subtype
+    have := hfin.to_subtype
     exact LMonoid.mk_lt_finite (X := X) _
   -- outside `Low`, the `y`-pieces carry nothing
   have hzero : ∀ p : ι × ℕ, p ∉ Low → ∀ j ∈ d.J p, y j = 0 := by

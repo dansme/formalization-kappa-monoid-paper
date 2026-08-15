@@ -287,8 +287,8 @@ theorem cmul_top_eq_top {κ : Cardinal.{u}} (hM : IsConical M) (hκ : ℵ₀ ≤
     (hx : x ≠ 0) :
     letI := instKMonoid hM hκ
     KMonoid.cmul (κ := κ) κ le_rfl x = (⊤ : WithTop M) := by
-  letI := instKMonoid hM hκ
-  haveI := infinite_Idx hκ
+  let := instKMonoid hM hκ
+  have := infinite_Idx hκ
   have hconst : KMonoid.cmul (κ := κ) κ le_rfl x
       = KMonoid.ksum (κ := κ) (fun _ : Idx κ => x) := by
     rw [KMonoid.cmul_congr (mk_Idx κ).symm le_rfl (le_of_eq (mk_Idx κ)) x,
@@ -310,7 +310,7 @@ on `M ⊎ {∞}` extending the addition of `M`.  (The paper argues directly with
 theorem isConical_of_injective_kMonoid {κ : Cardinal.{u}} {H : Type w} [KMonoid κ H] (f : M → H)
     (hf : Function.Injective f) (h0 : f 0 = 0) (hadd : ∀ a b, f (a + b) = f a + f b) :
     IsConical M := by
-  letI : LMonoid (ℵ₀ : Cardinal.{u}) M := LMonoid.ofAddCommMonoid M
+  let : LMonoid (ℵ₀ : Cardinal.{u}) M := LMonoid.ofAddCommMonoid M
   exact LMonoid.isConical_of_injective (lam := ℵ₀) (κ := κ) f hf h0 hadd
 
 end TrivExt

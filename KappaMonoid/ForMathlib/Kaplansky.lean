@@ -584,7 +584,7 @@ theorem Module.Projective.exists_directSum_fg_of_free {R : Type u} [Ring R]
   classical
   refine Module.Projective.exists_directSum_fg_of_countablyGenerated ?_ P
   intro Q _ _ hQproj hQcnt
-  haveI := hQproj
+  have := hQproj
   by_cases hfin : Module.Finite R Q
   · refine ⟨PUnit.{u+1}, fun _ => Q, fun _ => inferInstance, fun _ => inferInstance,
       fun _ => hQproj, fun _ => hfin, ⟨?_⟩⟩

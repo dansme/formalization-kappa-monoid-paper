@@ -115,14 +115,14 @@ construction, the paper's `0` as its zero). -/
 theorem toKMonoid_sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) :
     letI := P.toKMonoid
     KMonoid.sumOf (κ := κ) h x = P.sigma (Function.extend (emb h) x 0) := by
-  letI := P.toKMonoid
+  let := P.toKMonoid
   rw [KMonoid.sumOf_eq_extend h (emb h) x, P.toKMonoid_ksum]
 
 /-- Nor by the addition: it is a two-term `Σ`. -/
 theorem toKMonoid_add (a b : H) {i₀ i₁ : Idx κ} (hne : i₀ ≠ i₁) :
     letI := P.toKMonoid
     a + b = P.sigma (fun i => if i = i₀ then a else if i = i₁ then b else 0) := by
-  letI := P.toKMonoid
+  let := P.toKMonoid
   rw [← P.toKMonoid_ksum, KMonoid.ksum_two a b i₀ i₁ hne]
 
 end PaperKMonoid

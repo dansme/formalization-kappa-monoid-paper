@@ -82,7 +82,7 @@ theorem ext {a b : LCard lam} (h : (a : Cardinal.{u}) = b) : a = b := Subtype.ex
 /-- The summation data on `F_{λ⁻}`: cardinal summation, which stays `< λ` by regularity. -/
 noncomputable def sumData (hlam : lam.IsRegular) : SumData lam (LCard lam) where
   isRegular := hlam
-  sum {ι} h x :=
+  sum {_ι} h x :=
     ⟨Cardinal.sum fun i => (x i : Cardinal.{u}),
       Cardinal.sum_lt_of_isRegular hlam h fun i => (x i).2⟩
   sum_congr _ _ e x := ext (csum_congr e fun i => (x i : Cardinal.{u}))
@@ -112,7 +112,7 @@ theorem val_lcmul (hlam : lam.IsRegular) (α : Cardinal.{u}) (hα : α < lam) (c
     letI := instLMonoid hlam
     ((LMonoid.lcmul (lam := lam) α hα c : LCard lam) : Cardinal.{u})
       = α * (c : Cardinal.{u}) := by
-  letI := instLMonoid hlam
+  let := instLMonoid hlam
   show (Cardinal.sum fun _ : Idx α => ((c : LCard lam) : Cardinal.{u})) = _
   rw [Cardinal.sum_const', mk_Idx]
 
@@ -120,7 +120,7 @@ theorem val_lcmul (hlam : lam.IsRegular) (α : Cardinal.{u}) (hα : α < lam) (c
 theorem val_add (hlam : lam.IsRegular) (a b : LCard lam) :
     letI := instLMonoid hlam
     ((a + b : LCard lam) : Cardinal.{u}) = (a : Cardinal.{u}) + b := by
-  letI := instLMonoid hlam
+  let := instLMonoid hlam
   show Cardinal.sum (fun p : PUnit.{u + 1} ⊕ PUnit.{u + 1} =>
       ((Sum.elim (fun _ => a) (fun _ => b) p : LCard lam) : Cardinal.{u})) = _
   rw [show (fun p : PUnit.{u + 1} ⊕ PUnit.{u + 1} =>

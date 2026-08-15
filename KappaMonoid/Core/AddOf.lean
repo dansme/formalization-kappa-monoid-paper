@@ -91,7 +91,7 @@ theorem addOfCard_isLSubset {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : l
     have hidx : #ι ≤ κ := hι.le.trans hlk
     rcases isEmpty_or_nonempty ι with hemp | hne
     · -- an empty sum is `0`, which is a summand of `λ · x`
-      haveI := hemp
+      have := hemp
       refine ⟨cmul (κ := κ) lam hlk x, ?_⟩
       rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty _ y, zero_add]
     · -- otherwise `#ι · λ = λ`, so the witnesses again add up to `λ · x`

@@ -55,7 +55,7 @@ theorem mk_le_of_equiv [Nontrivial R] {ι ι' : Type u} [Infinite ι]
 theorem mk_eq_of_equiv [Nontrivial R] {ι ι' : Type u} [Infinite ι]
     (e : (⨁ _ : ι, R) ≃ₗ[R] (⨁ _ : ι', R)) : #ι = #ι' := by
   have h1 : #ι ≤ #ι' := mk_le_of_equiv e
-  haveI : Infinite ι' :=
+  have : Infinite ι' :=
     Cardinal.infinite_iff.mpr ((Cardinal.infinite_iff.mp ‹Infinite ι›).trans h1)
   exact le_antisymm h1 (mk_le_of_equiv e.symm)
 
@@ -70,7 +70,7 @@ theorem mk_eq_mk_of_mk_eq {s t : Set (Idx κ)} (h : #s = #t) : (mk s : Carrier R
 /-- Conversely, for a nontrivial ring an infinite rank is determined by the class. -/
 theorem mk_eq_of_mk_eq_mk [Nontrivial R] {s t : Set (Idx κ)} (hs : ℵ₀ ≤ #s)
     (h : (mk s : Carrier R κ) = mk t) : #s = #t := by
-  haveI : Infinite ↥s := Cardinal.infinite_iff.mpr hs
+  have : Infinite ↥s := Cardinal.infinite_iff.mpr hs
   exact mk_eq_of_equiv (mk_eq_mk.mp h).some
 
 theorem mk_le_kappa (s : Set (Idx κ)) : #s ≤ κ :=
@@ -121,7 +121,7 @@ theorem rep_mkC (hκ : ℵ₀ ≤ κ) (s : Set (Idx κ)) :
 /-- The representative of `[R]` is `R`. -/
 theorem rep_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
     Nonempty ((freeClass R κ hκ).rep (unit R κ hκ k) ≃ₗ[R] R) := by
-  letI : Unique ↥({k} : Set (Idx κ)) := Set.uniqueSingleton k
+  let : Unique ↥({k} : Set (Idx κ)) := Set.uniqueSingleton k
   exact ⟨(rep_mkC hκ ({k} : Set (Idx κ))).some.trans
     (directSumEquivOfSubsingleton R (fun _ : ({k} : Set (Idx κ)) => R)
       ⟨k, Set.mem_singleton k⟩ fun i hi => absurd (Subsingleton.elim i _) hi)⟩
@@ -131,7 +131,7 @@ theorem cmul_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) {α : Cardinal.{u}} (hα : 
     (hs : #s = α) :
     letI := (freeClass R κ hκ).instKMonoid hκ
     KMonoid.cmul (κ := κ) α hα (unit R κ hκ k) = mkC R κ hκ s := by
-  letI := (freeClass R κ hκ).instKMonoid hκ
+  let := (freeClass R κ hκ).instKMonoid hκ
   refine (freeClass R κ hκ).eq_of_iso ?_
   have hL := (freeClass R κ hκ).rep_sumOf hκ (le_of_eq_of_le (mk_Idx α) hα)
     (fun _ : Idx α => unit R κ hκ k)
@@ -143,7 +143,7 @@ theorem cmul_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) {α : Cardinal.{u}} (hα : 
 theorem exists_cmul_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) (a : (freeClass R κ hκ).carrier) :
     letI := (freeClass R κ hκ).instKMonoid hκ
     ∃ (α : Cardinal.{u}) (hα : α ≤ κ), a = KMonoid.cmul (κ := κ) α hα (unit R κ hκ k) := by
-  letI := (freeClass R κ hκ).instKMonoid hκ
+  let := (freeClass R κ hκ).instKMonoid hκ
   exact ⟨#(basis a), mk_le_kappa _, by rw [cmul_unit hκ k (mk_le_kappa (basis a)) rfl, mkC_basis]⟩
 
 /-- Sums of classes add ranks. -/
@@ -152,7 +152,7 @@ theorem mkC_add_mkC (hκ : ℵ₀ ≤ κ) (k : Idx κ) (s t : Set (Idx κ))
     letI := (freeClass R κ hκ).instKMonoid hκ
     mkC R κ hκ s + mkC R κ hκ t
       = KMonoid.cmul (κ := κ) (#s + #t) hst (unit R κ hκ k) := by
-  letI := (freeClass R κ hκ).instKMonoid hκ
+  let := (freeClass R κ hκ).instKMonoid hκ
   rw [← cmul_unit hκ k (mk_le_kappa s) rfl, ← cmul_unit hκ k (mk_le_kappa t) rfl,
     ← KMonoid.cmul_add (mk_le_kappa s) (mk_le_kappa t)]
 
@@ -163,7 +163,7 @@ theorem add_mk_le (hκ : ℵ₀ ≤ κ) (s t : Set (Idx κ)) : #s + #t ≤ κ :=
 theorem isOrderUnit_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
     letI := (freeClass R κ hκ).instKMonoid hκ
     KMonoid.IsOrderUnit (κ := κ) (unit R κ hκ k) := by
-  letI := (freeClass R κ hκ).instKMonoid hκ
+  let := (freeClass R κ hκ).instKMonoid hκ
   intro x
   refine ⟨mkC R κ hκ (basis x)ᶜ, ?_⟩
   have h1 := mkC_add_mkC (R := R) hκ k (basis x) (basis x)ᶜ (add_mk_le hκ _ _)
@@ -177,7 +177,7 @@ is not a summand of `α·[R]` when `α < β` and `β` is infinite. -/
 theorem isFaithful_unit [Nontrivial R] (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
     letI := (freeClass R κ hκ).instKMonoid hκ
     KMonoid.IsFaithful (κ := κ) (unit R κ hκ k) := by
-  letI := (freeClass R κ hκ).instKMonoid hκ
+  let := (freeClass R κ hκ).instKMonoid hκ
   refine ⟨isOrderUnit_unit hκ k, ?_⟩
   rintro α β hα hβ hαβ hβ0 ⟨c, hc⟩
   rw [cmul_unit hκ k hβ (mk_setOfCard hβ), ← mkC_basis hκ c,

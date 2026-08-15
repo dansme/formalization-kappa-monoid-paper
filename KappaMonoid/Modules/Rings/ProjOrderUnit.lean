@@ -66,7 +66,7 @@ theorem rep_cmul_unitClass {α : Cardinal.{u}} (hα : α ≤ κ) (k : Idx κ) :
     letI := (projClass R κ hκ).instKMonoid hκ
     Nonempty ((projClass R κ hκ).rep
       (KMonoid.cmul (κ := κ) α hα (unitClass R κ hκ k)) ≃ₗ[R] ⨁ _ : Idx α, R) := by
-  letI := (projClass R κ hκ).instKMonoid hκ
+  let := (projClass R κ hκ).instKMonoid hκ
   obtain ⟨e⟩ := (projClass R κ hκ).rep_sumOf hκ (le_of_eq_of_le (mk_Idx α) hα)
     (fun _ : Idx α => unitClass R κ hκ k)
   exact ⟨e.trans (DirectSum.congrLinearEquiv fun _ => (rep_unitClass R κ hκ k).some)⟩
@@ -76,7 +76,7 @@ theorem rep_cmul_top_unitClass (k : Idx κ) :
     letI := (projClass R κ hκ).instKMonoid hκ
     Nonempty ((projClass R κ hκ).rep (KMonoid.cmul (κ := κ) κ le_rfl (unitClass R κ hκ k))
       ≃ₗ[R] ↥(⊤ : Submodule R (freeMod R κ))) := by
-  letI := (projClass R κ hκ).instKMonoid hκ
+  let := (projClass R κ hκ).instKMonoid hκ
   exact ⟨(rep_cmul_unitClass R κ hκ le_rfl k).some.trans Submodule.topEquiv.symm⟩
 
 /-! ## Example 2.13: `[R]` is an order-unit -/
@@ -88,7 +88,7 @@ Every class is that of a summand `P` of `R^{(κ)}`; its chosen complement `Q` gi
 theorem isOrderUnit_unitClass (k : Idx κ) :
     letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.IsOrderUnit (κ := κ) (unitClass R κ hκ k) := by
-  letI := (projClass R κ hκ).instKMonoid hκ
+  let := (projClass R κ hκ).instKMonoid hκ
   intro x
   set P : Summand R κ := x.out with hPdef
   set Q : Submodule R (freeMod R κ) := Summand.compl R κ P with hQdef
@@ -123,10 +123,10 @@ theorem mk_le_of_surjective [Nontrivial R] {ι : Type u} [Infinite ι] {W : Type
 theorem isFaithful_unitClass [Nontrivial R] (k : Idx κ) :
     letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.IsFaithful (κ := κ) (unitClass R κ hκ k) := by
-  letI := (projClass R κ hκ).instKMonoid hκ
+  let := (projClass R κ hκ).instKMonoid hκ
   refine ⟨isOrderUnit_unitClass R κ hκ k, ?_⟩
   rintro α β hα hβ hαβ hβ0 ⟨c, hc⟩
-  haveI : Infinite (Idx β) := infinite_Idx hβ0
+  have : Infinite (Idx β) := infinite_Idx hβ0
   -- `R^{(β)} × rep c ≅ R^{(α)}`
   set B := KMonoid.cmul (κ := κ) β hβ (unitClass R κ hκ k) with hBdef
   have e1 : ((⨁ _ : Idx β, R) × (projClass R κ hκ).rep c)

@@ -193,8 +193,8 @@ theorem isBraided_extend {ι : Type u} (e : ι ↪ ι) (w : ι → X) :
   rintro ⟨a, n⟩
   match n with
   | 0 =>
-    letI : Unique ↥(I (a, 0)) := Set.uniqueSingleton (e a)
-    letI : Unique ↥(J (a, 0)) := Set.uniqueSingleton a
+    let : Unique ↥(I (a, 0)) := Set.uniqueSingleton (e a)
+    let : Unique ↥(J (a, 0)) := Set.uniqueSingleton a
     rw [lsumOf_unique (hIsmall (a, 0)) (fun i : I (a, 0) => Function.extend e w 0 i),
       lsumOf_unique (hJsmall (a, 0)) (fun i : J (a, 0) => w i)]
     show Function.extend e w 0 (e a) = w a
@@ -322,7 +322,7 @@ theorem isBraided_merge {ι : Type u} (e₀ e₁ : ι ↪ ι) (hdisj : ∀ i j, 
   rintro ⟨a, n⟩
   match n with
   | 0 =>
-    letI : Unique ↥(I (a, 0)) := Set.uniqueSingleton a
+    let : Unique ↥(I (a, 0)) := Set.uniqueSingleton a
     rw [lsumOf_unique (hIsmall (a, 0)) (fun i : I (a, 0) => x i + y i)]
     have hpair : lsumOf (lam := lam) (hJsmall (a, 0)) (fun i : J (a, 0) => M i)
         = M (e₀ a) + M (e₁ a) :=
@@ -400,7 +400,7 @@ theorem isLMonoidHom_of_isLHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X 
     (hf : IsLHom hlk f) :
     letI := KMonoid.toLMonoidOfLE H hlam hlk
     IsLMonoidHom lam f := by
-  letI := KMonoid.toLMonoidOfLE H hlam hlk
+  let := KMonoid.toLMonoidOfLE H hlam hlk
   intro ι h x
   rw [KMonoid.toLMonoidOfLE_lsumOf hlam hlk h (f ∘ x)]
   exact hf.2 h x
@@ -409,7 +409,7 @@ theorem isLMonoidHom_of_isLHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X 
 theorem isLHom_of_isLMonoidHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → H}
     (hf : letI := KMonoid.toLMonoidOfLE H hlam hlk
       IsLMonoidHom lam f) : IsLHom hlk f := by
-  letI := KMonoid.toLMonoidOfLE H hlam hlk
+  let := KMonoid.toLMonoidOfLE H hlam hlk
   refine ⟨hf.map_zero, fun {ι} h x => ?_⟩
   rw [hf h x]
   exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk h (f ∘ x)).symm
@@ -420,7 +420,7 @@ theorem IsBraided.map_lhom (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) 
     letI := KMonoid.toLMonoidOfLE H (‹LMonoid lam X›.isRegular) hlk
     IsBraided lam (f ∘ x) (f ∘ y) := by
   have hlam : lam.IsRegular := ‹LMonoid lam X›.isRegular
-  letI := KMonoid.toLMonoidOfLE H hlam hlk
+  let := KMonoid.toLMonoidOfLE H hlam hlk
   obtain ⟨d⟩ := h
   have hpush : ∀ {S : Set ι} (hS : #S < lam) (g : ι → X),
       lsumOf (lam := lam) hS (fun i : S => (f ∘ g) i) = f (lsumOf (lam := lam) hS (fun i : S => g i)) := by
@@ -448,7 +448,7 @@ into a `κ`-monoid takes braided families to families with equal `κ`-sums. -/
 theorem sumOf_map_eq_of_isBraided (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f)
     {ι : Type u} (hι : #ι ≤ κ) {x y : ι → X} (h : IsBraided lam x y) :
     sumOf (κ := κ) hι (f ∘ x) = sumOf (κ := κ) hι (f ∘ y) := by
-  letI := KMonoid.toLMonoidOfLE H (‹LMonoid lam X›.isRegular) hlk
+  let := KMonoid.toLMonoidOfLE H (‹LMonoid lam X›.isRegular) hlk
   exact sumOf_eq_of_isBraided (‹LMonoid lam X›.isRegular) hlk hι _ _ (h.map_lhom hlk hf)
 
 end AuxHom
