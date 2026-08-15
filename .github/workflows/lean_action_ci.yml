@@ -46,7 +46,6 @@ jobs:
           cat > axioms.expected <<'EOF'
           albrecht_classical
           bergmanDicksData
-          kaplansky_classical
           EOF
           # the identifier must be followed by a binder or a colon, so that a docstring line
           # wrapping onto the word "axiom" is not counted as one

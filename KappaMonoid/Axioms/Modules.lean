@@ -1,11 +1,12 @@
 /-
-**A5** the Bergman-Dicks realisation theorem, **A7** Albrecht's theorem on projectives over a
-hereditary ring, and **A6** Kaplansky's theorem.  A7 was a field of `BergmanDicksData` until it
-was given its own name: it is about hereditary rings in general, and separating it lets the
-provenance audit say which of the two a result actually uses.
+**A5**, the Bergman-Dicks realisation theorem, and **A7**, Albrecht's theorem on projectives over
+a hereditary ring.  A7 was a field of `BergmanDicksData` until it was given its own name: it is
+about hereditary rings in general, and separating it lets the provenance audit say which of the
+two a result actually uses.
 
-A3 — uniqueness of the multiplicities of simple modules — was here until it was proved, in
-`ForMathlib/SimpleMultiplicity.lean`.
+Two of the axioms that used to live here have since been proved, in files that depend on nothing
+in this development: A3 — uniqueness of the multiplicities of simple modules — in
+`ForMathlib/SimpleMultiplicity.lean`, and A6 — Kaplansky's theorem — in `ForMathlib/Kaplansky.lean`.
 -/
 import Mathlib
 
@@ -116,25 +117,5 @@ axiom albrecht_classical {R : Type u} [Ring R]
       ∃ (ι : Type u) (S : ι → Type u) (_ : ∀ i, AddCommGroup (S i)) (_ : ∀ i, Module R (S i)),
         (∀ i, Module.Projective R (S i)) ∧ (∀ i, Module.Finite R (S i)) ∧
           Nonempty (Q ≃ₗ[R] ⨁ i, S i)
-
-/-! ## A6: Kaplansky's theorem -/
-
-/-- **Assumed** (Kaplansky's theorem, [Kaplansky58]): every projective module is a direct sum of
-countably generated projective modules.
-
-Standard proof, not formalised here: `P ⊕ Q` is free on a basis `B`, and one builds a
-transfinite filtration of `B` by subsets whose spans are compatible with the decomposition —
-starting from any element, alternately close up under the supports of the `P`- and `Q`-components
-until the process stabilises after countably many steps.  Each step adds a countably generated
-summand, and `P` is the direct sum of the `P`-parts of the successive quotients.
-
-Used by `kaplansky`, the `κ`-monoid form: `V^κ(R)` is generated as a `κ`-monoid by the countably
-generated projectives. -/
-axiom kaplansky_classical {R : Type u} [Ring R] (P : Type u) [AddCommGroup P] [Module R P]
-    [Module.Projective R P] :
-    ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i)) (_ : ∀ i, Module R (Q i)),
-      (∀ i, Module.Projective R (Q i)) ∧
-        (∀ i, ∃ s : Set (Q i), #s ≤ ℵ₀ ∧ Submodule.span R s = ⊤) ∧
-          Nonempty (P ≃ₗ[R] ⨁ i, Q i)
 
 end KappaMonoid

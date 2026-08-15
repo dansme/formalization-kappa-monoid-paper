@@ -12,9 +12,9 @@ empty list means *"this result rests on nothing but Lean's own foundation"*.
 The lists were computed with `#print axioms`, not guessed.  Two of them are worth reading twice:
 
 * `corollary_4_5_three` is axiom-free — it takes "every projective is a sum of finitely generated
-  ones" as a hypothesis, so Kaplansky (A6) never enters.  A6 is used by `kaplansky` alone.
-* `theorem_5_3` and all of Corollary 5.5 report **only** A5, not A6: §5 reaches modules through
-  Corollary 4.7(1), and nowhere else.
+  ones" as a hypothesis, rather than quoting Albrecht's theorem (A7) for it.
+* `kaplansky` is axiom-free too, since Kaplansky's theorem is proved in
+  `ForMathlib/Kaplansky.lean`; it was the last consumer of the axiom A6 that used to state it.
 -/
 import KappaMonoid.Meta.AxiomAudit
 import KappaMonoid.Paper.Section2
@@ -46,12 +46,12 @@ namespace KappaMonoid
 #assert_axioms prop_3_14_two_of_ineqs_empty []
 #assert_axioms example_3_15 []
 
-/-! ## §4 — A6 in Kaplansky, A5 in one direction of Corollary 4.7(1) -/
+/-! ## §4 — A5 and A7 in one direction of Corollary 4.7(1), nothing else -/
 
 #assert_axioms theorem_4_3 []
 #assert_axioms corollary_4_4 []
 #assert_axioms corollary_4_5_three []
-#assert_axioms kaplansky [kaplansky_classical]
+#assert_axioms kaplansky []
 #assert_axioms addOf_unitClass_eq []
 #assert_axioms corollary_4_7_one_backward []
 #assert_axioms corollary_4_7_one_forward [albrecht_classical, bergmanDicksData]

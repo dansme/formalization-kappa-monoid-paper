@@ -16,7 +16,7 @@ The development is layered by subject, and each layer is an entry point of its o
 | `Modules/` | Braiding | `ModuleClass`, Thm 4.3, projectives, Cor. 4.5–4.7, the ring examples of §2.2–2.3 |
 | `Examples/` | Braiding | the concrete monoids: `TrivExt`, `ℝ≥0∞`, linear systems, `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` |
 | `TwoGen/` | Modules | §5: forms, Lemmas 5.1–5.2, Thm 5.3, Prop. 5.4, Cor. 5.5 |
-| `Axioms/` | Mathlib | the six assumed classical results, split by layer |
+| `Axioms/` | Mathlib | the two assumed classical results, A5 and A7 |
 | `Paper/` | everything | the paper's numbered statements, and nothing else |
 
 `Core/` and the monoid-theoretic half of `Braiding/`, `Examples/` and `TwoGen/` mention no module
@@ -26,6 +26,7 @@ import KappaMonoid.ForMathlib.CyclicMonoid
 import KappaMonoid.ForMathlib.Finprod
 import KappaMonoid.ForMathlib.FreeRank
 import KappaMonoid.ForMathlib.HomDirectSum
+import KappaMonoid.ForMathlib.Kaplansky
 import KappaMonoid.ForMathlib.SimpleMultiplicity
 import KappaMonoid.ForMathlib.NatBlocks
 import KappaMonoid.ForMathlib.TraceIdeal

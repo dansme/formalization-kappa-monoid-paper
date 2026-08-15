@@ -16,13 +16,13 @@ assumed classical results, or — since the core no longer says `import Mathlib`
 
 | Layer | Depends on | Contents |
 |---|---|---|
-| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid, which A2's deduction needs) |
+| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid, which A2's deduction needs) and `Kaplansky.lean` (A6) |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
 | `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `Diophantine` (**Examples 3.3(1)**, §3.2: **Proposition 3.14**, **Example 3.15**), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
-| `KappaMonoid/Axioms/` | Mathlib | The two classical results assumed rather than proved, A5 and A6 — see below |
+| `KappaMonoid/Axioms/` | Mathlib | The two classical results assumed rather than proved, A5 and A7 — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
 
 `Forms`, `Prelim`, `Lemma52` and `Counterexample` are pure monoid theory: §5's braiding material
@@ -50,7 +50,7 @@ Proposition 3.14(2)" below.
 `V(R) = add [R]` (`addOf_unitClass_eq`) and needs no axiom; (i) ⇒ (ii)
 (`corollary_4_7_one_forward`) is the only result in the build that uses Bergman–Dicks realisation,
 axiom A5 below. Corollary 4.7(2) needs no axiom either — Corollary 4.5(2) plus uniqueness of
-universal `κ`-extensions. Corollary 4.6 is Corollary 4.5(3) together with six results quoted from
+universal `κ`-extensions — and neither does `kaplansky`, since Kaplansky's theorem is proved. Corollary 4.6 is Corollary 4.5(3) together with six results quoted from
 the literature, none of them monoid-theoretic and none in Mathlib, so it stays a documented stub in
 `Modules/Projective.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
 statement corrected in Examples 4.8(1)" below.
@@ -92,19 +92,18 @@ and only record what is specific to their subject.
 
 ## The assumed results
 
-Three classical theorems are taken as axioms, all in `KappaMonoid/Axioms/Modules.lean`.  Each
+Two classical theorems are taken as axioms, both in `KappaMonoid/Axioms/Modules.lean`.  Each
 carries the standard proof sketch it stands for:
 
 | Axiom | Statement | Used by |
 |---|---|---|
-| `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit `u` is `V(R)` for a hereditary `k`-algebra, with `[R] = u`. Bundled with the hereditary case of Cor. 4.6, since Cor. 4.7(1) uses the two together | `corollary_4_7_one_forward`, and `prop_2_16` through Leavitt's theorem |
+| `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit `u` is `V(R)` for a hereditary `k`-algebra, with `[R] = u` | `corollary_4_7_one_forward`, and `prop_2_16` through Leavitt's theorem |
 | `albrecht_classical` (A7) | Albrecht's theorem: over a hereditary ring every projective module is a direct sum of finitely generated projective ones — the hereditary case of Cor. 4.6 | `corollary_4_7_one_forward` |
-| `kaplansky_classical` (A6) | Kaplansky's theorem: every projective module is a direct sum of countably generated projective modules | `kaplansky`, and through it Cor. 4.5 and Cor. 4.7 |
 
 The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
-declarations under `KappaMonoid/` differs from the three above, so adding one means editing the
+declarations under `KappaMonoid/` differs from the two above, so adding one means editing the
 workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 43
-headline results, exactly which of the three each one uses — with `#assert_axioms`, a command over
+headline results, exactly which of the two each one uses — with `#assert_axioms`, a command over
 `collectAxioms` that fails both when a result gains an axiom and when it loses one. The paragraphs
 below are therefore checked, not merely written.
 
@@ -147,6 +146,32 @@ axiom carried, since it is a statement about the kernel of `k ↦ k • u` and h
 any commutative monoid; `prop_2_16` accordingly applies it to `u` itself rather than to the
 submonoid `u` generates.
 
+**A6 was the third, and is now proved too.**  Kaplansky's theorem — every projective module is a
+direct sum of countably generated projective modules — is
+`Module.Projective.exists_directSum_countablyGenerated` in `KappaMonoid/ForMathlib/Kaplansky.lean`.
+Mathlib does not have it in any form.
+
+The argument is the classical one, but it comes out as a single induction rather than two.  `P` is
+the image of an idempotent `π` on a free module `B →₀ R`.  Call a set `S` of coordinates *good*
+when the coordinate subspace it spans is `π`-invariant; that is exactly closure under
+`b ↦ supp (π (single b 1))`, so one closure operator does the work of the axiom's sketch, which
+closed up alternately under the supports of the `P`- and the `Q`-components.  `1 − π` needs no
+separate step, because `e_b − π e_b` is supported in `{b} ∪ supp (π e_b)`.  The step function has
+finite values, so the closure of a *single* coordinate is a countable union of finite sets, hence
+countable — `Reach`, `cl` and `iter` in that file.
+
+The chain of good sets then needs no Zorn's lemma either: well-order `B` and take `Jle π b` and
+`Jlt π b` to be the closures of `Set.Iic b` and `Set.Iio b`.  Closure commutes with unions, so the
+chain is increasing and continuous by construction, and the block `Dblock π b` of coordinates new
+at stage `b` sits inside the closure of `{b}`, hence is countable.  On that block `π` is conjugated
+into a fresh idempotent `blockIdem π b` of the free module — idempotent precisely because both
+`Jle π b` and `Jlt π b` are good — and `Cpart π b`, its image under `π`, is a complement of
+`π (Jlt π b)` inside `π (Jle π b)`.  Exhibiting the complement rather than deducing its existence
+from projectivity of the successive quotient is what removes the second transfinite induction.  It
+is projective because `π` is injective on the range of an idempotent of a free module, and
+countably generated because the block is; the `Cpart π b` are independent, since the sum of those
+below `b` is exactly `π (Jlt π b)`, and their supremum is the whole of `π`'s image.
+
 The assumptions are contained.  `#print axioms prop_2_16` reports exactly A5, reached through
 Leavitt's theorem; and `prop_2_17_one`, along with Example 2.13's `isFaithful_unitClass`, reports
 **no axiom at all** — which is what retiring A1, A3 and A4 bought.
@@ -160,8 +185,9 @@ A5 is used by exactly two results: `corollary_4_7_one_forward`, the implication 
 Corollary 4.7(1), and — since Leavitt's theorem is now deduced from it — `prop_2_16`. A7 is used
 by `corollary_4_7_one_forward` alone, and `prop_2_16` does *not* use it: the audit distinguishes
 them, which is the point of having split A7 out of A5's data. Everything else in §4 — including the identification `V(R) = add [R]`
-(`addOf_unitClass_eq`), the other direction of Corollary 4.7(1), Corollary 4.7(2) and Examples
-4.8(1) — reports only `propext`, `Classical.choice` and `Quot.sound`.
+(`addOf_unitClass_eq`), Kaplansky's theorem in its `κ`-monoid form, the other direction of
+Corollary 4.7(1), Corollary 4.7(2) and Examples 4.8(1) — reports only `propext`,
+`Classical.choice` and `Quot.sound`.
 
 **A2 was the fifth, and is now derived rather than assumed.**  Leavitt's realisation theorem —
 every cyclic monoid `C_{m,n}` with `m, n ≥ 1` is the monoid of finitely generated free modules over
@@ -456,7 +482,7 @@ for a new Mathlib tag and files an issue if the update does not build.
 
 CI (`.github/workflows/lean_action_ci.yml`) does four things on every push: it builds the root
 target, fails if any declaration in it uses `sorry`, runs `scripts/check_layering.sh`, and fails if
-the set of `axiom` declarations under `KappaMonoid/` differs from the three in the table above.
+the set of `axiom` declarations under `KappaMonoid/` differs from the two in the table above.
 Documentation is generated by `docgen-action`.
 
 `scripts/check_layering.sh` is what keeps the layers honest — Lake resolves modules package-wide,

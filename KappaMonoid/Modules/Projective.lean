@@ -4,6 +4,7 @@
 -/
 import KappaMonoid.Modules.SmallPart
 import KappaMonoid.Axioms.Modules
+import KappaMonoid.ForMathlib.Kaplansky
 
 universe u v w t
 
@@ -317,7 +318,8 @@ theorem kaplansky (hκ : ℵ₀ ≤ κ) :
     KGenerates κ ((projClass R κ hκ).lambdaSmallPart ℵ₁) := by
   refine kGenerates_of_decomposition R κ hκ ℵ₁ Cardinal.isRegular_aleph_one ?_
   intro P _ _ hP
-  obtain ⟨ι, Q, iAG, iMod, hproj, hgen, he⟩ := kaplansky_classical (R := R) P
+  obtain ⟨ι, Q, iAG, iMod, hproj, hgen, he⟩ :=
+    Module.Projective.exists_directSum_countablyGenerated (R := R) P
   refine ⟨ι, Q, iAG, iMod, hproj, fun i => ?_, he⟩
   obtain ⟨s, hs, hsp⟩ := hgen i
   exact ⟨s, lt_of_le_of_lt hs Cardinal.aleph0_lt_aleph_one, hs.trans hκ, hsp⟩
