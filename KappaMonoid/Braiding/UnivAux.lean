@@ -120,34 +120,36 @@ theorem IsBraided.prod {A B : Type u} {x y : A → B → X} (h : ∀ a, IsBraide
            hJ := fun p => by
              rw [hsum p.1.1 _ ((d p.1.1).J_small (p.1.2, p.2)) _ y]; exact (d p.1.1).hJ _ }⟩
 
-/-- Zero-padding a family along an embedding of the index type into itself produces a
-braided family. -/
-theorem isBraided_extend {ι : Type u} (e : ι ↪ ι) (w : ι → X) :
-    IsBraided lam (Function.extend e w 0) w := by
+/-- **Braiding from an aggregation.**  Suppose the index set carries pairwise disjoint `< λ`-small
+sets `A a`, one for each `a : ι`, such that `x` sums over `A a` to `y a` and vanishes outside
+`⋃ A`.  Then `x` and `y` are braided.
+
+The `BraidingData` is the obvious one: `A a` against `{a}` on level `0`, and the indices no `A a`
+covers — where `x` vanishes — parked on level `1` against the empty set.  Both braidings needed for
+Proposition 3.9 are of this shape, with `A a` a one- or two-element set. -/
+theorem of_aggregation {ι : Type u} {x y : ι → X} (A : ι → Set ι)
+    (hdisj : ∀ a b, a ≠ b → Disjoint (A a) (A b)) (hsmall : ∀ a, #(A a) < lam)
+    (hzero : ∀ i, i ∉ ⋃ a, A a → x i = 0)
+    (hsum : ∀ a, lsumOf (lam := lam) (hsmall a) (fun i : A a => x i) = y a) :
+    IsBraided lam x y := by
   classical
   have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
   have hfin : ∀ S : Set ι, S.Finite → #S < lam := fun S hS =>
     lt_of_lt_of_le (lt_aleph0_iff_set_finite.mpr hS) hlam0
-  set R : Set ι := Set.range e with hRdef
+  set U : Set ι := ⋃ a, A a with hUdef
   set I : ι × ℕ → Set ι :=
-    fun p => if p.2 = 0 then {e p.1} else if p.2 = 1 then {p.1} \ R else ∅ with hIdef
+    fun p => if p.2 = 0 then A p.1 else if p.2 = 1 then {p.1} \ U else ∅ with hIdef
   set J : ι × ℕ → Set ι := fun p => if p.2 = 0 then {p.1} else ∅ with hJdef
-  have hI0 : ∀ a : ι, I (a, 0) = {e a} := fun _ => rfl
-  have hI1 : ∀ a : ι, I (a, 1) = {a} \ R := fun _ => rfl
+  have hI0 : ∀ a : ι, I (a, 0) = A a := fun _ => rfl
+  have hI1 : ∀ a : ι, I (a, 1) = {a} \ U := fun _ => rfl
   have hI2 : ∀ (a : ι) (m : ℕ), I (a, m + 2) = ∅ := fun _ _ => rfl
   have hJ0 : ∀ a : ι, J (a, 0) = {a} := fun _ => rfl
   have hJn : ∀ (a : ι) (m : ℕ), J (a, m + 1) = ∅ := fun _ _ => rfl
-  have hIchar : ∀ (a : ι) (n : ℕ) (i : ι), i ∈ I (a, n) →
-      (n = 0 ∧ i = e a) ∨ (n = 1 ∧ i = a ∧ i ∉ R) := by
-    intro a n i hi
-    match n with
-    | 0 => exact Or.inl ⟨rfl, hi⟩
-    | 1 => exact Or.inr ⟨rfl, hi.1, hi.2⟩
-    | (m + 2) => exact absurd hi (by rw [hI2 a m]; exact Set.notMem_empty i)
+  have hmemU : ∀ (a : ι) (i : ι), i ∈ A a → i ∈ U := fun a i hi => Set.mem_iUnion.mpr ⟨a, hi⟩
   have hIsmall : ∀ p, #(I p) < lam := by
     rintro ⟨a, n⟩
     match n with
-    | 0 => rw [hI0 a]; exact hfin _ (Set.finite_singleton _)
+    | 0 => rw [hI0 a]; exact hsmall a
     | 1 => rw [hI1 a]; exact hfin _ ((Set.finite_singleton a).subset Set.sdiff_subset)
     | (m + 2) => rw [hI2 a m]; exact hfin _ Set.finite_empty
   have hJsmall : ∀ p, #(J p) < lam := by
@@ -155,16 +157,25 @@ theorem isBraided_extend {ι : Type u} (e : ι ↪ ι) (w : ι → X) :
     match n with
     | 0 => rw [hJ0 a]; exact hfin _ (Set.finite_singleton _)
     | (m + 1) => rw [hJn a m]; exact hfin _ Set.finite_empty
+  have hIchar : ∀ (a : ι) (n : ℕ) (i : ι), i ∈ I (a, n) →
+      (n = 0 ∧ i ∈ A a) ∨ (n = 1 ∧ i = a ∧ i ∉ U) := by
+    intro a n i hi
+    match n with
+    | 0 => exact Or.inl ⟨rfl, hi⟩
+    | 1 => exact Or.inr ⟨rfl, hi.1, hi.2⟩
+    | (m + 2) => exact absurd hi (by rw [hI2 a m]; exact Set.notMem_empty i)
   have hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q) := by
     rintro ⟨a, n⟩ ⟨b, m⟩ hpq
     rw [Set.disjoint_left]
     intro i hi hj
-    rcases hIchar a n i hi with ⟨hn, hia⟩ | ⟨hn, hia, hiR⟩ <;>
-      rcases hIchar b m i hj with ⟨hm, hib⟩ | ⟨hm, hib, hiR'⟩
-    · have hab : a = b := e.injective (hia.symm.trans hib)
+    rcases hIchar a n i hi with ⟨hn, hia⟩ | ⟨hn, hia, hiU⟩ <;>
+      rcases hIchar b m i hj with ⟨hm, hib⟩ | ⟨hm, hib, hiU'⟩
+    · have hab : a = b := by
+        by_contra hc
+        exact Set.disjoint_left.mp (hdisj a b hc) hia hib
       exact hpq (by subst hn; subst hm; subst hab; rfl)
-    · exact hiR' ⟨a, hia.symm⟩
-    · exact hiR ⟨b, hib.symm⟩
+    · exact hiU' (hmemU a i hia)
+    · exact hiU (hmemU b i hib)
     · have hab : a = b := hia.symm.trans hib
       exact hpq (by subst hn; subst hm; subst hab; rfl)
   have hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q) := by
@@ -181,9 +192,9 @@ theorem isBraided_extend {ι : Type u} (e : ι ↪ ι) (w : ι → X) :
   have hIcover : (⋃ p, I p) = Set.univ := by
     apply Set.eq_univ_of_forall
     intro i
-    by_cases hi : i ∈ R
-    · obtain ⟨a, ha⟩ := hi
-      exact Set.mem_iUnion.mpr ⟨(a, 0), by rw [hI0 a]; exact ha.symm⟩
+    by_cases hi : i ∈ U
+    · obtain ⟨a, ha⟩ := Set.mem_iUnion.mp hi
+      exact Set.mem_iUnion.mpr ⟨(a, 0), by rw [hI0 a]; exact ha⟩
     · exact Set.mem_iUnion.mpr ⟨(i, 1), by rw [hI1 i]; exact ⟨rfl, hi⟩⟩
   have hJcover : (⋃ p, J p) = Set.univ := by
     apply Set.eq_univ_of_forall
@@ -193,29 +204,42 @@ theorem isBraided_extend {ι : Type u} (e : ι ↪ ι) (w : ι → X) :
   rintro ⟨a, n⟩
   match n with
   | 0 =>
-    let : Unique ↥(I (a, 0)) := Set.uniqueSingleton (e a)
     let : Unique ↥(J (a, 0)) := Set.uniqueSingleton a
-    rw [lsumOf_unique (hIsmall (a, 0)) (fun i : I (a, 0) => Function.extend e w 0 i),
-      lsumOf_unique (hJsmall (a, 0)) (fun i : J (a, 0) => w i)]
-    show Function.extend e w 0 (e a) = w a
-    exact e.injective.extend_apply w 0 a
+    rw [lsumOf_unique (hJsmall (a, 0)) (fun i : J (a, 0) => y i)]
+    exact (hsum a).trans rfl
   | 1 =>
-    have hL : lsumOf (lam := lam) (hIsmall (a, 1))
-        (fun i : I (a, 1) => Function.extend e w 0 i) = 0 := by
-      refine LMonoid.lsumOf_eq_zero (hIsmall (a, 1)) (Function.extend e w 0) (fun i hi => ?_)
+    have hL : lsumOf (lam := lam) (hIsmall (a, 1)) (fun i : I (a, 1) => x i) = 0 := by
+      refine LMonoid.lsumOf_eq_zero (hIsmall (a, 1)) x (fun i hi => ?_)
       rw [hI1 a] at hi
-      exact Function.extend_apply' w (0 : ι → X) i (fun ⟨c, hc⟩ => hi.2 ⟨c, hc⟩)
-    have hR : lsumOf (lam := lam) (hJsmall (a, 1)) (fun i : J (a, 1) => w i) = 0 :=
-      LMonoid.lsumOf_eq_zero (hJsmall (a, 1)) w (fun i hi => absurd hi (Set.notMem_empty i))
+      exact hzero i hi.2
+    have hR : lsumOf (lam := lam) (hJsmall (a, 1)) (fun i : J (a, 1) => y i) = 0 :=
+      LMonoid.lsumOf_eq_zero (hJsmall (a, 1)) y (fun i hi => absurd hi (Set.notMem_empty i))
     rw [hL, hR]
   | (m + 2) =>
-    have hL : lsumOf (lam := lam) (hIsmall (a, m + 2))
-        (fun i : I (a, m + 2) => Function.extend e w 0 i) = 0 :=
-      LMonoid.lsumOf_eq_zero (hIsmall (a, m + 2)) (Function.extend e w 0)
+    have hL : lsumOf (lam := lam) (hIsmall (a, m + 2)) (fun i : I (a, m + 2) => x i) = 0 :=
+      LMonoid.lsumOf_eq_zero (hIsmall (a, m + 2)) x
         (fun i hi => absurd hi (Set.notMem_empty i))
-    have hR : lsumOf (lam := lam) (hJsmall (a, m + 2)) (fun i : J (a, m + 2) => w i) = 0 :=
-      LMonoid.lsumOf_eq_zero (hJsmall (a, m + 2)) w (fun i hi => absurd hi (Set.notMem_empty i))
+    have hR : lsumOf (lam := lam) (hJsmall (a, m + 2)) (fun i : J (a, m + 2) => y i) = 0 :=
+      LMonoid.lsumOf_eq_zero (hJsmall (a, m + 2)) y (fun i hi => absurd hi (Set.notMem_empty i))
     rw [hL, hR]
+
+/-- Zero-padding a family along an embedding of the index type into itself produces a
+braided family. -/
+theorem isBraided_extend {ι : Type u} (e : ι ↪ ι) (w : ι → X) :
+    IsBraided lam (Function.extend e w 0) w := by
+  classical
+  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
+  have hsmall : ∀ a : ι, #({e a} : Set ι) < lam := fun a =>
+    lt_of_lt_of_le (lt_aleph0_iff_set_finite.mpr (Set.finite_singleton _)) hlam0
+  refine of_aggregation (fun a => {e a})
+    (fun a b hab => Set.disjoint_singleton.mpr fun h => hab (e.injective h)) hsmall
+    (fun i hi => ?_) (fun a => ?_)
+  · exact Function.extend_apply' w (0 : ι → X) i
+      (fun ⟨c, hc⟩ => hi (Set.mem_iUnion.mpr ⟨c, hc.symm⟩))
+  · let : Unique ↥({e a} : Set ι) := Set.uniqueSingleton (e a)
+    rw [lsumOf_unique (hsmall a) (fun i : ({e a} : Set ι) => Function.extend e w 0 i)]
+    show Function.extend e w 0 (e a) = w a
+    exact e.injective.extend_apply w 0 a
 
 /-- Merging two families along embeddings with disjoint ranges realises their pointwise
 sum. -/
@@ -225,10 +249,7 @@ theorem isBraided_merge {ι : Type u} (e₀ e₁ : ι ↪ ι) (hdisj : ∀ i j, 
       (fun j => Function.extend e₀ x 0 j + Function.extend e₁ y 0 j) := by
   classical
   have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
-  have hfin : ∀ S : Set ι, S.Finite → #S < lam := fun S hS =>
-    lt_of_lt_of_le (lt_aleph0_iff_set_finite.mpr hS) hlam0
   set M : ι → X := fun j => Function.extend e₀ x 0 j + Function.extend e₁ y 0 j with hMdef
-  set R : Set ι := Set.range e₀ ∪ Set.range e₁ with hRdef
   -- the values of the merged family
   have hM0 : ∀ a, M (e₀ a) = x a := by
     intro a
@@ -242,110 +263,25 @@ theorem isBraided_merge {ι : Type u} (e₀ e₁ : ι ↪ ι) (hdisj : ∀ i j, 
     rw [e₁.injective.extend_apply,
       Function.extend_apply' x (0 : ι → X) (e₁ a) (fun ⟨c, hc⟩ => hdisj c a hc)]
     exact zero_add _
-  have hMout : ∀ j, j ∉ R → M j = 0 := by
-    intro j hj
-    show Function.extend e₀ x 0 j + Function.extend e₁ y 0 j = 0
-    rw [Function.extend_apply' x (0 : ι → X) j (fun ⟨c, hc⟩ => hj (Or.inl ⟨c, hc⟩)),
-      Function.extend_apply' y (0 : ι → X) j (fun ⟨c, hc⟩ => hj (Or.inr ⟨c, hc⟩))]
+  have hsmall : ∀ a : ι, #({e₀ a, e₁ a} : Set ι) < lam := fun a =>
+    lt_of_lt_of_le (lt_aleph0_iff_set_finite.mpr ((Set.finite_singleton _).insert _)) hlam0
+  refine IsBraided.symm (of_aggregation (fun a => {e₀ a, e₁ a}) (fun a b hab => ?_)
+    hsmall (fun i hi => ?_) (fun a => ?_))
+  · -- the pairs are disjoint: both embeddings are injective and their ranges do not meet
+    rw [Set.disjoint_left]
+    rintro i (rfl | rfl) (h | h)
+    · exact hab (e₀.injective h)
+    · exact hdisj a b h
+    · exact hdisj b a h.symm
+    · exact hab (e₁.injective h)
+  · -- outside the two ranges the merged family vanishes
+    show Function.extend e₀ x 0 i + Function.extend e₁ y 0 i = 0
+    rw [Function.extend_apply' x (0 : ι → X) i
+        (fun ⟨c, hc⟩ => hi (Set.mem_iUnion.mpr ⟨c, Or.inl hc.symm⟩)),
+      Function.extend_apply' y (0 : ι → X) i
+        (fun ⟨c, hc⟩ => hi (Set.mem_iUnion.mpr ⟨c, Or.inr hc.symm⟩))]
     exact add_zero _
-  set I : ι × ℕ → Set ι := fun p => if p.2 = 0 then {p.1} else ∅ with hIdef
-  set J : ι × ℕ → Set ι :=
-    fun p => if p.2 = 0 then {e₀ p.1, e₁ p.1} else if p.2 = 1 then {p.1} \ R else ∅ with hJdef
-  have hI0 : ∀ a : ι, I (a, 0) = {a} := fun _ => rfl
-  have hIn : ∀ (a : ι) (m : ℕ), I (a, m + 1) = ∅ := fun _ _ => rfl
-  have hJ0 : ∀ a : ι, J (a, 0) = {e₀ a, e₁ a} := fun _ => rfl
-  have hJ1 : ∀ a : ι, J (a, 1) = {a} \ R := fun _ => rfl
-  have hJ2 : ∀ (a : ι) (m : ℕ), J (a, m + 2) = ∅ := fun _ _ => rfl
-  have hJchar : ∀ (a : ι) (n : ℕ) (i : ι), i ∈ J (a, n) →
-      (n = 0 ∧ (i = e₀ a ∨ i = e₁ a)) ∨ (n = 1 ∧ i = a ∧ i ∉ R) := by
-    intro a n i hi
-    match n with
-    | 0 => exact Or.inl ⟨rfl, hi⟩
-    | 1 => exact Or.inr ⟨rfl, hi.1, hi.2⟩
-    | (m + 2) => exact absurd hi (Set.notMem_empty i)
-  have hIsmall : ∀ p, #(I p) < lam := by
-    rintro ⟨a, n⟩
-    match n with
-    | 0 => rw [hI0 a]; exact hfin _ (Set.finite_singleton _)
-    | (m + 1) => rw [hIn a m]; exact hfin _ Set.finite_empty
-  have hJsmall : ∀ p, #(J p) < lam := by
-    rintro ⟨a, n⟩
-    match n with
-    | 0 => rw [hJ0 a]; exact hfin _ ((Set.finite_singleton _).insert _)
-    | 1 => rw [hJ1 a]; exact hfin _ ((Set.finite_singleton a).subset Set.sdiff_subset)
-    | (m + 2) => rw [hJ2 a m]; exact hfin _ Set.finite_empty
-  have hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q) := by
-    rintro ⟨a, n⟩ ⟨b, m⟩ hpq
-    rw [Set.disjoint_left]
-    intro i hi hj
-    match n, m with
-    | 0, 0 =>
-      have hia : i = a := hi
-      have hib : i = b := hj
-      exact hpq (by subst hia; subst hib; rfl)
-    | 0, (m + 1) => exact absurd hj (Set.notMem_empty i)
-    | (n + 1), _ => exact absurd hi (Set.notMem_empty i)
-  have hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q) := by
-    rintro ⟨a, n⟩ ⟨b, m⟩ hpq
-    rw [Set.disjoint_left]
-    intro i hi hj
-    rcases hJchar a n i hi with ⟨hn, hia⟩ | ⟨hn, hia, hiR⟩ <;>
-      rcases hJchar b m i hj with ⟨hm, hib⟩ | ⟨hm, hib, hiR'⟩
-    · have hab : a = b := by
-        rcases hia with hia | hia <;> rcases hib with hib | hib
-        · exact e₀.injective (hia.symm.trans hib)
-        · exact absurd (hia.symm.trans hib) (hdisj a b)
-        · exact absurd (hib.symm.trans hia) (hdisj b a)
-        · exact e₁.injective (hia.symm.trans hib)
-      exact hpq (by subst hn; subst hm; subst hab; rfl)
-    · rcases hia with hia | hia
-      · exact hiR' (Or.inl ⟨a, hia.symm⟩)
-      · exact hiR' (Or.inr ⟨a, hia.symm⟩)
-    · rcases hib with hib | hib
-      · exact hiR (Or.inl ⟨b, hib.symm⟩)
-      · exact hiR (Or.inr ⟨b, hib.symm⟩)
-    · have hab : a = b := hia.symm.trans hib
-      exact hpq (by subst hn; subst hm; subst hab; rfl)
-  have hIcover : (⋃ p, I p) = Set.univ := by
-    apply Set.eq_univ_of_forall
-    intro i
-    exact Set.mem_iUnion.mpr ⟨(i, 0), by rw [hI0 i]; rfl⟩
-  have hJcover : (⋃ p, J p) = Set.univ := by
-    apply Set.eq_univ_of_forall
-    intro i
-    by_cases hi : i ∈ R
-    · rcases hi with ⟨a, ha⟩ | ⟨a, ha⟩
-      · exact Set.mem_iUnion.mpr ⟨(a, 0), by rw [hJ0 a]; exact Or.inl ha.symm⟩
-      · exact Set.mem_iUnion.mpr ⟨(a, 0), by rw [hJ0 a]; exact Or.inr ha.symm⟩
-    · exact Set.mem_iUnion.mpr ⟨(i, 1), by rw [hJ1 i]; exact ⟨rfl, hi⟩⟩
-  refine IsBraided.of_partition I J hIdisj hJdisj hIcover hJcover hIsmall hJsmall ?_
-  rintro ⟨a, n⟩
-  match n with
-  | 0 =>
-    let : Unique ↥(I (a, 0)) := Set.uniqueSingleton a
-    rw [lsumOf_unique (hIsmall (a, 0)) (fun i : I (a, 0) => x i + y i)]
-    have hpair : lsumOf (lam := lam) (hJsmall (a, 0)) (fun i : J (a, 0) => M i)
-        = M (e₀ a) + M (e₁ a) :=
-      LMonoid.lsumOf_pair (hdisj a a) (hJsmall (a, 0)) M
-    rw [hpair, hM0 a, hM1 a]
-    rfl
-  | 1 =>
-    have hL : lsumOf (lam := lam) (hIsmall (a, 1)) (fun i : I (a, 1) => x i + y i) = 0 :=
-      LMonoid.lsumOf_eq_zero (hIsmall (a, 1)) (fun i => x i + y i)
-        (fun i hi => absurd hi (Set.notMem_empty i))
-    have hR : lsumOf (lam := lam) (hJsmall (a, 1)) (fun i : J (a, 1) => M i) = 0 := by
-      refine LMonoid.lsumOf_eq_zero (hJsmall (a, 1)) M (fun i hi => ?_)
-      rw [hJ1 a] at hi
-      exact hMout i hi.2
-    rw [hL, hR]
-  | (m + 2) =>
-    have hL : lsumOf (lam := lam) (hIsmall (a, m + 2)) (fun i : I (a, m + 2) => x i + y i) = 0 :=
-      LMonoid.lsumOf_eq_zero (hIsmall (a, m + 2)) (fun i => x i + y i)
-        (fun i hi => absurd hi (Set.notMem_empty i))
-    have hR : lsumOf (lam := lam) (hJsmall (a, m + 2)) (fun i : J (a, m + 2) => M i) = 0 :=
-      LMonoid.lsumOf_eq_zero (hJsmall (a, m + 2)) M
-        (fun i hi => absurd hi (Set.notMem_empty i))
-    rw [hL, hR]
+  · rw [LMonoid.lsumOf_pair (hdisj a a) (hsmall a) M, hM0 a, hM1 a]
 
 /-- Variant of `isBraided_of_small_support` where the supports are replaced by arbitrary
 small sets containing them. -/
