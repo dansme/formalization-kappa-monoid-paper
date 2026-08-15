@@ -790,8 +790,7 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁) (hc2 : Cond2 x₁ x₂) (hc2' : Cond2 x₂ x₁)
     (hmix : NoMixedForms x₁ x₂) :
-    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : ∀ I : Ideal R, Module.Projective R I),
-      EveryProjectiveIsSumOfFG R ∧
+    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
       letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
       ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
         KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e := by
@@ -843,12 +842,12 @@ ring exactly when conditions (i), (ii) and (iii) hold for both orderings of the 
 The paper's `1 ≤ i ≠ j ≤ 2` is rendered as a conjunction over the two orderings rather than as
 `Fin 2` bookkeeping, which would cost more than it saves.
 
-**The statement carries `EveryProjectiveIsSumOfFG R` alongside hereditariness.**  The paper gets
-that from Corollary 4.6, whose hereditary case is Albrecht's theorem — which is *proved*, in
-`ForMathlib/Albrecht.lean`.  So here the conjunct is redundant: `Albrecht.exists_directSum_fg`
-turns the hereditariness in the same existential into it.  It is spelled out because §5 is stated
-uniformly, and Corollary 5.5 does not mention `Ideal R` at all.  Either way the statement is the
-paper's: for a hereditary ring the extra conjunct is automatic.
+**The realizing ring is `IsLeftHereditary`, which is the paper's statement** — the paper says
+"for a hereditary ring", with right modules throughout, and this development uses left ones.  The
+statement used to carry `EveryProjectiveIsSumOfFG R` as a second conjunct, because Corollary 4.6
+was quoted rather than proved and so could not be recovered from hereditariness; now that
+Albrecht's theorem is `ForMathlib/Albrecht.lean` it can be, and the conjunct is gone.  The forward
+direction takes it from `Albrecht.exists_directSum_fg`, which is all it ever used.
 
 Forward: Lemma 5.1 gives braidedness, then (iii) is 5.2(1), (ii) is 5.2(4), and (i) is the counting
 argument.  Backward: `exists_braided_form` reduces arbitrary families to forms and
@@ -857,15 +856,14 @@ which is where axiom A5 enters. -/
 theorem theorem_5_3 (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
-    (∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : ∀ I : Ideal R, Module.Projective R I),
-        EveryProjectiveIsSumOfFG R ∧
+    (∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
         letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
       (Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂) := by
   constructor
-  · rintro ⟨R, _, _, -, hfg, e, hhom, hbij⟩
-    exact theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
+  · rintro ⟨R, _, -, _, e, hhom, hbij⟩
+    exact theorem_5_3_forward x₁ x₂ R Albrecht.exists_directSum_fg hgen hnoncyclic e hhom hbij
   · rintro ⟨hc1, hc1', hc2, hc2', hmix⟩
     exact theorem_5_3_backward x₁ x₂ k hgen hc1 hc1' hc2 hc2' hmix
 

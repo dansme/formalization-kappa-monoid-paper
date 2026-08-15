@@ -16,9 +16,10 @@ Two things this layer adds, both of which the library statements lack:
   one structure makes that mistake impossible to repeat.
 
 * **`IsRealizableAsV` names the conclusion.**  "`H ≅ V^{ℵ₀}(R)` for a ring over which projective
-  modules are direct sums of finitely generated ones" is a nine-line blob repeated in Theorem 5.3
-  and all three parts of Corollary 5.5.  Named once, the corollaries read as the paper writes
-  them.
+  modules are direct sums of finitely generated ones" is a nine-line blob repeated in all three
+  parts of Corollary 5.5.  Named once, the corollaries read as the paper writes them.  Theorem 5.3
+  does *not* use it: the paper states that one for a hereditary ring, and so does this
+  formalisation.
 
 The deviations are in the docstrings, and in `README.md` under "The statements corrected in
 Section 5".
@@ -59,10 +60,11 @@ structure Setting5 (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] where
 `H` is isomorphic, as an `ℵ₀`-monoid, to `V^{ℵ₀}(R)` for a ring `R` over which every projective
 module is a direct sum of finitely generated ones.
 
-The paper says "for a hereditary ring", and the implication from that to this is Corollary 4.6,
-whose hereditary case — Albrecht's theorem — is proved in `ForMathlib/Albrecht.lean`.  So this
-condition is implied by the paper's, and equal to it wherever hereditariness is also recorded, as
-in Theorem 5.3; Corollary 5.5 states only this half, since it does not mention `Ideal R`.  See
+This is the paper's condition verbatim in Corollary 5.5(1) and (3), which read "for a ring whose
+projective modules are direct sums of finitely generated modules"; it is *added* in 5.5(2), whose
+clause in the paper mentions only freeness, but whose proof there goes through Theorem 5.3 and so
+needs it.  Hereditariness implies it, by Albrecht's theorem (`ForMathlib/Albrecht.lean`), which is
+how Theorem 5.3 — stated for a hereditary ring, as in the paper — feeds these corollaries.  See
 `README.md`, "The statements corrected in Section 5". -/
 def IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
   ∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
@@ -161,9 +163,7 @@ for any field `k`, and the ring produced is hereditary. -/
 theorem theorem_5_3_backward (S : Setting5 H) (k : Type u) [Field k]
     (hc1 : Cond1 S.x₁ S.x₂) (hc1' : Cond1 S.x₂ S.x₁)
     (hc2 : Cond2 S.x₁ S.x₂) (hc2' : Cond2 S.x₂ S.x₁) (hmix : NoMixedForms S.x₁ S.x₂) :
-    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R)
-      (_ : ∀ I : Ideal R, Module.Projective R I),
-      EveryProjectiveIsSumOfFG R ∧
+    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
       letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
       ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
         IsKHom ℵ₀ e ∧ Function.Bijective e :=

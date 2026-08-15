@@ -16,7 +16,7 @@ assumed classical results, or — since the core no longer says `import Mathlib`
 
 | Layer | Depends on | Contents |
 |---|---|---|
-| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid, which A2's deduction needs), `Kaplansky.lean` (A6) and `Albrecht.lean` (A7) |
+| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean` (hereditary rings on either side, which Mathlib does not have), and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid, which A2's deduction needs), `Kaplansky.lean` (A6) and `Albrecht.lean` (A7) |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
@@ -342,27 +342,39 @@ it a metavariable (trap 5 in `CLAUDE.md`). That is why `isBraidedOver_of_isUnive
 ## The statements corrected in Section 5
 
 Section 5 was scaffolded before it was proved, and six of its statements had to be corrected on the
-way. Each correction is also recorded in the docstring of the affected result.
+way. Each correction is also recorded in the docstring of the affected result. The first item below
+is no longer one of them — it was resolved by proving Albrecht's theorem — but it is kept because
+it says which of the §5 hypotheses are the paper's and which are not.
 
-**Hereditariness is carried together with `EveryProjectiveIsSumOfFG R`** — in Theorem 5.3,
-Proposition 5.4's hereditary half and all three parts of Corollary 5.5. Both directions of the
-paper's proofs reach `R` only through Corollary 4.6: over a hereditary ring every projective module
-is a direct sum of finitely generated ones.
+**`EveryProjectiveIsSumOfFG R` is no longer carried alongside hereditariness — and where it
+remains, it is mostly the paper's own condition.** Theorem 5.3 and Corollary 4.7(1) used to
+conclude with a hereditary ring *and* the conjunct `EveryProjectiveIsSumOfFG R`, because Corollary
+4.6 was quoted rather than proved and so could not be recovered from hereditariness inside the
+development. Albrecht's theorem is now `ForMathlib/Albrecht.lean`, so it can be, and both
+statements now say exactly what the paper says: `IsLeftHereditary R`, and nothing more.
 
-This deviation is *no longer forced*, and is the one item in this section that could now be
-removed. When it was written, that implication was quoted rather than formalised, so it could not
-be recovered from `∀ I : Ideal R, Module.Projective R I` inside the development. It now can:
-Albrecht's theorem is `ForMathlib/Albrecht.lean`, and `corollary_4_7_one_forward` applies it to the
-hereditary ring A5 produces. In Theorem 5.3, whose existential already records hereditariness, the
-extra conjunct is therefore redundant and could simply be dropped; in Corollary 5.5, which does not
-mention `Ideal R`, it could be replaced by hereditariness, which `theorem_5_3_backward` supplies.
-Both restatements are exactly the paper's. They have not been made — that is a change to six
-headline statements, not a consequence of proving the theorem — and every affected docstring says
-so.
+Reading §5 against the paper afterwards showed that the rest of this item was never a deviation at
+all:
 
-For a hereditary ring the extra conjunct is automatic, so the statements as they stand are
-faithful. `corollary_4_7_one_forward` was extended to return it, which it can because axiom A5
-supplies the hereditary ring and Albrecht's theorem does the rest.
+* **Corollary 5.5(1) and (3)** are stated in the paper for "a ring whose projective modules are
+  direct sums of finitely generated modules" — that *is* `EveryProjectiveIsSumOfFG R`, spelled out.
+  The paper does not ask for hereditariness there, and neither do these statements.
+* **Corollary 5.5(2)** is a genuine addition. The paper's clause names only the freeness of the
+  countably (non finitely) generated projectives, but its proof of that direction invokes Theorem
+  5.3's forward direction, which needs the projectives of `R` to be direct sums of finitely
+  generated ones. The hypothesis is added, and the docstring says so.
+* **Proposition 5.4's hereditary half** is a *generalisation*: the paper says "if `R` is
+  hereditary", the formalisation assumes only `EveryProjectiveIsSumOfFG R`, which hereditariness
+  implies. It is also the form Corollary 5.5 needs.
+
+Hereditariness itself is now named rather than spelled out: `IsLeftHereditary`,
+`IsRightHereditary` and `IsHereditary` are defined in `KappaMonoid/ForMathlib/Hereditary.lean`,
+since Mathlib has none of them. The development is about *left* modules and the paper about right
+ones, so the mirror of the paper's "right hereditary ring" is `IsLeftHereditary`, and that is what
+A5 records and what Theorem 5.3 and Corollary 4.7(1) produce. Bergman's Theorem 6.2 gives a ring
+that is hereditary on *both* sides, so `IsHereditary R` would be the fully faithful transcription
+of A5 and of the paper's Corollary 4.7(1)(ii); only the left half is recorded, because it is the
+only half anything uses and recording less is the safe direction for an assumption.
 
 **Lemma 5.2(3) and 5.2(4) take the generation hypothesis `hgen`.** It is a standing assumption of
 §5 ("let `H` be a non-cyclic `ℵ₀`-monoid generated by two elements") and both proofs genuinely need

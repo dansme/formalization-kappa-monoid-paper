@@ -4,6 +4,7 @@
 
 This was assumed as axiom A7 of this development until it was proved here.
 -/
+import KappaMonoid.ForMathlib.Hereditary
 import KappaMonoid.ForMathlib.Kaplansky
 import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 import Mathlib.RingTheory.Finiteness.Basic
@@ -23,7 +24,7 @@ free module is projective.  The induction peels off one coordinate: the image of
 left ideal, projective by hypothesis, so the projection splits and the kernel embeds in one
 coordinate fewer. -/
 
-theorem projective_of_injective_fin (hered : ∀ I : Ideal R, Module.Projective R I) :
+theorem projective_of_injective_fin [IsLeftHereditary R] :
     ∀ (n : ℕ) (M : Type u) [AddCommGroup M] [Module R M] (f : M →ₗ[R] (Fin n → R)),
       Function.Injective f → Module.Projective R M := by
   intro n
@@ -35,7 +36,7 @@ theorem projective_of_injective_fin (hered : ∀ I : Ideal R, Module.Projective 
   | succ n ih =>
       intro M _ _ f hf
       set φ : M →ₗ[R] R := LinearMap.proj 0 ∘ₗ f with hφ
-      have : Module.Projective R (LinearMap.range φ) := hered (LinearMap.range φ)
+      have : Module.Projective R (LinearMap.range φ) := IsLeftHereditary.projective_ideal (LinearMap.range φ)
       obtain ⟨g, hg⟩ := Module.projective_lifting_property φ.rangeRestrict LinearMap.id
         (LinearMap.surjective_rangeRestrict φ)
       have hgapp : ∀ y, φ.rangeRestrict (g y) = y := fun y =>
@@ -83,9 +84,9 @@ theorem finite_Fpart (n : ℕ) : Module.Finite R (Fpart R n) := by
   exact Submodule.fg_span ((Set.finite_Iio n).image _)
 
 /-- A submodule supported on finitely many coordinates is projective. -/
-theorem projective_of_le_Fpart (hered : ∀ I : Ideal R, Module.Projective R I) {n : ℕ}
+theorem projective_of_le_Fpart [IsLeftHereditary R] {n : ℕ}
     {M : Submodule R (ℕ →₀ R)} (hM : M ≤ Fpart R n) : Module.Projective R M := by
-  refine projective_of_injective_fin hered n ↥M
+  refine projective_of_injective_fin n ↥M
     (LinearMap.pi (fun i : Fin n => Finsupp.lapply (i : ℕ)) ∘ₗ M.subtype) ?_
   intro x y hxy
   refine Subtype.ext (Finsupp.ext fun k => ?_)
@@ -106,10 +107,10 @@ theorem exists_le_Fpart {M : Submodule R (ℕ →₀ R)} (hM : M.FG) : ∃ n, M 
     Finset.le_sup (f := fun x : ℕ →₀ R => x.support.sup id) hx
   omega
 
-theorem projective_of_fg (hered : ∀ I : Ideal R, Module.Projective R I)
+theorem projective_of_fg [IsLeftHereditary R]
     {M : Submodule R (ℕ →₀ R)} (hM : M.FG) : Module.Projective R M := by
   obtain ⟨n, hn⟩ := exists_le_Fpart hM
-  exact projective_of_le_Fpart hered hn
+  exact projective_of_le_Fpart hn
 
 /-! ## The filtration of the image of an idempotent
 
@@ -153,7 +154,7 @@ theorem iSup_Npart : ⨆ n, Npart π n = LinearMap.range π := by
 /-- `Npart π n` is a direct summand of `Fpart R n`, hence finitely generated: the quotient
 `Fpart R n / Npart π n` is the image of `1 - π` there, a finitely generated submodule of a free
 module and so projective. -/
-theorem finite_Npart (hered : ∀ I : Ideal R, Module.Projective R I) (hπ : ∀ x, π (π x) = π x)
+theorem finite_Npart [IsLeftHereditary R] (hπ : ∀ x, π (π x) = π x)
     (n : ℕ) : Module.Finite R (Npart π n) := by
   have := finite_Fpart (R := R) n
   set ψ : (Fpart R n) →ₗ[R] (ℕ →₀ R) :=
@@ -162,7 +163,7 @@ theorem finite_Npart (hered : ∀ I : Ideal R, Module.Projective R I) (hπ : ∀
   have : Module.Finite R (LinearMap.range ψ) :=
     Module.Finite.of_surjective ψ.rangeRestrict (LinearMap.surjective_rangeRestrict ψ)
   have : Module.Projective R (LinearMap.range ψ) :=
-    projective_of_fg hered (Module.Finite.iff_fg.1 inferInstance)
+    projective_of_fg (Module.Finite.iff_fg.1 inferInstance)
   obtain ⟨g, hg⟩ := Module.projective_lifting_property ψ.rangeRestrict LinearMap.id
     (LinearMap.surjective_rangeRestrict ψ)
   have hgapp : ∀ y, ψ.rangeRestrict (g y) = y := fun y => congrFun (congrArg DFunLike.coe hg) y
@@ -194,13 +195,13 @@ theorem finite_Npart (hered : ∀ I : Ideal R, Module.Projective R I) (hπ : ∀
   simp
 
 /-- The `n`-th step of the filtration splits off a finitely generated projective complement. -/
-theorem exists_complement (hered : ∀ I : Ideal R, Module.Projective R I)
+theorem exists_complement [IsLeftHereditary R]
     (hπ : ∀ x, π (π x) = π x) (n : ℕ) :
     ∃ C : Submodule R (ℕ →₀ R), C ≤ Npart π (n + 1) ∧ Disjoint (Npart π n) C ∧
       Npart π n ⊔ C = Npart π (n + 1) ∧ Module.Finite R C := by
-  have := finite_Npart π hered hπ (n + 1)
+  have := finite_Npart π hπ (n + 1)
   set χ : (Npart π (n + 1)) →ₗ[R] R := Finsupp.lapply n ∘ₗ (Npart π (n + 1)).subtype with hχ
-  have : Module.Projective R (LinearMap.range χ) := hered (LinearMap.range χ)
+  have : Module.Projective R (LinearMap.range χ) := IsLeftHereditary.projective_ideal (LinearMap.range χ)
   have : Module.Finite R (LinearMap.range χ) :=
     Module.Finite.of_surjective χ.rangeRestrict (LinearMap.surjective_rangeRestrict χ)
   obtain ⟨g, hg⟩ := Module.projective_lifting_property χ.rangeRestrict LinearMap.id
@@ -241,13 +242,13 @@ theorem exists_complement (hered : ∀ I : Ideal R, Module.Projective R I)
 
 /-- The image of an idempotent endomorphism of `ℕ →₀ R` is a direct sum of finitely generated
 projective submodules. -/
-theorem exists_directSum_fg_of_idempotent (hered : ∀ I : Ideal R, Module.Projective R I)
+theorem exists_directSum_fg_of_idempotent [IsLeftHereditary R]
     (hπ : ∀ x, π (π x) = π x) :
     ∃ C : ℕ → Submodule R (ℕ →₀ R), (∀ n, Module.Projective R (C n)) ∧
       (∀ n, Module.Finite R (C n)) ∧
         Nonempty ((LinearMap.range π) ≃ₗ[R] ⨁ n, (C n)) := by
   classical
-  choose C hle hdisj hsup hfin using exists_complement π hered hπ
+  choose C hle hdisj hsup hfin using exists_complement π hπ
   have hNle : ∀ n, Npart π n ≤ ⨆ m, C m := by
     intro n
     induction n with
@@ -263,7 +264,7 @@ theorem exists_directSum_fg_of_idempotent (hered : ∀ I : Ideal R, Module.Proje
   have hinj : Function.Injective (DirectSum.coeLinearMap C) := hindep.dfinsupp_lsum_injective
   have hrange : LinearMap.range (DirectSum.coeLinearMap C) = LinearMap.range π := by
     rw [DirectSum.range_coeLinearMap, hCsup]
-  exact ⟨C, fun n => projective_of_le_Fpart hered ((hle n).trans (Npart_le_Fpart π (n + 1))),
+  exact ⟨C, fun n => projective_of_le_Fpart ((hle n).trans (Npart_le_Fpart π (n + 1))),
     hfin, ⟨(LinearEquiv.ofEq _ _ hrange.symm).trans (LinearEquiv.ofInjective _ hinj).symm⟩⟩
 
 end Chain
@@ -282,7 +283,7 @@ theorem exists_surjective_of_countable {Q : Type u} [AddCommGroup Q] [Module R Q
 
 /-- A countably generated projective module over a ring whose left ideals are projective is a
 direct sum of finitely generated projective modules. -/
-theorem exists_directSum_fg_of_countablyGenerated (hered : ∀ I : Ideal R, Module.Projective R I)
+theorem exists_directSum_fg_of_countablyGenerated [IsLeftHereditary R]
     (Q : Type u) [AddCommGroup Q] [Module R Q] [Module.Projective R Q]
     {s : Set Q} (hs : #s ≤ ℵ₀) (hsp : Submodule.span R s = ⊤) :
     ∃ (S : ℕ → Type u) (_ : ∀ n, AddCommGroup (S n)) (_ : ∀ n, Module R (S n)),
@@ -299,7 +300,7 @@ theorem exists_directSum_fg_of_countablyGenerated (hered : ∀ I : Ideal R, Modu
     refine le_antisymm (LinearMap.range_comp_le_range _ _) ?_
     rintro _ ⟨q, rfl⟩
     exact ⟨ι q, congrArg ι (hts q)⟩
-  obtain ⟨C, hprojC, hfinC, ⟨e⟩⟩ := exists_directSum_fg_of_idempotent π hered hπ
+  obtain ⟨C, hprojC, hfinC, ⟨e⟩⟩ := exists_directSum_fg_of_idempotent π hπ
   have hιinj : Function.Injective ι := fun p q hpq => by rw [← hts p, ← hts q, hpq]
   exact ⟨fun n => C n, fun _ => inferInstance, fun _ => inferInstance, hprojC, hfinC,
     ⟨((LinearEquiv.ofInjective ι hιinj).trans (LinearEquiv.ofEq _ _ hrange.symm)).trans e⟩⟩
@@ -317,7 +318,7 @@ quotient map splits.  And `Npart π (n+1) / Npart π n` embeds in `R` through th
 so it is a finitely generated left ideal, projective again, and that step of the filtration splits
 off a finitely generated projective complement.  These complements are independent and their sum
 is the whole image. -/
-theorem exists_directSum_fg (hered : ∀ I : Ideal R, Module.Projective R I) :
+theorem exists_directSum_fg [IsLeftHereditary R] :
     ∀ (Q : Type u) (_ : AddCommGroup Q) (_ : Module R Q), Module.Projective R Q →
       ∃ (ι : Type u) (S : ι → Type u) (_ : ∀ i, AddCommGroup (S i)) (_ : ∀ i, Module R (S i)),
         (∀ i, Module.Projective R (S i)) ∧ (∀ i, Module.Finite R (S i)) ∧
@@ -334,7 +335,7 @@ theorem exists_directSum_fg (hered : ∀ I : Ideal R, Module.Projective R I) :
     let := iMod i
     have := hprojP i
     obtain ⟨s, hs, hsp⟩ := hgen i
-    exact exists_directSum_fg_of_countablyGenerated hered (P i) hs hsp
+    exact exists_directSum_fg_of_countablyGenerated (P i) hs hsp
   choose S iS mS hprojS hfinS heS using key
   refine ⟨Σ _ : ι, ℕ, fun p => S p.1 p.2, fun p => iS p.1 p.2, fun p => mS p.1 p.2,
     fun p => hprojS p.1 p.2, fun p => hfinS p.1 p.2, ⟨?_⟩⟩

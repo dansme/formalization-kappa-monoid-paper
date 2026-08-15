@@ -9,6 +9,7 @@ and A7 — Albrecht's theorem — in `ForMathlib/Albrecht.lean`.  A7 was a field
 `BergmanDicksData` before it was split out and then proved.
 -/
 import Mathlib
+import KappaMonoid.ForMathlib.Hereditary
 
 universe u
 
@@ -30,8 +31,8 @@ structure BergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M]
   R : Type u
   [ring : Ring R]
   [algebra : Algebra k R]
-  /-- `R` is hereditary: every left ideal is projective. -/
-  hereditary : ∀ I : Ideal R, Module.Projective R I
+  /-- `R` is left hereditary: every left ideal is projective. -/
+  hereditary : IsLeftHereditary R
   /-- The finitely generated projective module realising `a ∈ M`. -/
   P : M → Type u
   [addCommGroup : ∀ a, AddCommGroup (P a)]
@@ -75,10 +76,14 @@ which is what licenses an arbitrary `M` here.
 Two differences from the sources, both checked:
 
 * The papers are about **right** modules (Bergman §2), this statement about left ones, and
-  `Ideal R` is `Submodule R R`, so `hereditary` is *left* hereditary.  Theorem 6.2 gives both
-  sides, and `V` transfers by the duality Bergman records in §3: `* = Hom(_, R)` is a contravariant
-  equivalence between the finitely generated projective right and left modules, additive and
-  carrying `R` to `R`, hence a monoid isomorphism `V_right(R) ≅ V_left(R)` fixing the class of `R`.
+  `Ideal R` is `Submodule R R`, so `hereditary` is `IsLeftHereditary`.  Theorem 6.2 gives both
+  sides — it produces a *right and left* hereditary algebra, so `IsHereditary R` would be the
+  faithful transcription and is what the paper's Corollary 4.7(1)(ii) says; only the left half is
+  recorded here, because it is the only half anything uses, and recording less is the safe
+  direction for an assumption.  `V` itself transfers by the duality Bergman records in §3:
+  `* = Hom(_, R)` is a contravariant equivalence between the finitely generated projective right
+  and left modules, additive and carrying `R` to `R`, hence a monoid isomorphism
+  `V_right(R) ≅ V_left(R)` fixing the class of `R`.
 * Theorem 6.2 assumes `I ≠ 0`; there is no `u ≠ 0` here.  That is safe rather than an oversight:
   with `_hred` and `_hunit`, `u = 0` forces `M` to be trivial (`y + z = n • 0 = 0` gives `y = 0`),
   and the zero ring realises the trivial monoid — every ideal projective, `V(0)` trivial,

@@ -27,6 +27,7 @@ import KappaMonoid.ForMathlib.Finprod
 import KappaMonoid.ForMathlib.FreeRank
 import KappaMonoid.ForMathlib.HomDirectSum
 import KappaMonoid.ForMathlib.Albrecht
+import KappaMonoid.ForMathlib.Hereditary
 import KappaMonoid.ForMathlib.Kaplansky
 import KappaMonoid.ForMathlib.SimpleMultiplicity
 import KappaMonoid.ForMathlib.NatBlocks

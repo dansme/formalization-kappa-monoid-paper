@@ -33,6 +33,10 @@ variable (x₁ x₂ : H)
 /-- **Corollary 5.5(1)**: for incomparable generators, realizability is equivalent to an explicit
 condition on the relations of `H`.
 
+The class of rings is the paper's own: part (1) reads "for a ring whose projective modules are
+direct sums of finitely generated modules", which is `EveryProjectiveIsSumOfFG R` verbatim — the
+corollary does not ask for hereditariness, and neither does this statement.
+
 **This corrects the scaffold.**  The paper's condition is quantified over `1 ≤ i ≠ j ≤ 2`, so each
 of its two clauses has two instances; the scaffold kept only one of each, and both instances of
 each are needed.  Without the `X₂`-half of the first clause a finite and an infinite form could
@@ -158,7 +162,7 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
       rcases hG with h | h
       · exact hF.1 (((hcl1 F G (hFe.trans hGe.symm)).1).mpr h)
       · exact hF.2 (((hcl1 F G (hFe.trans hGe.symm)).2).mpr h)
-    obtain ⟨R, hring, -, -, hfg, e, hhom, hbij⟩ :=
+    obtain ⟨R, hring, -, hher, e, hhom, hbij⟩ :=
       theorem_5_3_backward x₁ x₂ (ULift.{u} ℚ) hgen hc1 hc1'
         (fun _ m n hmn => hcl3 (((m : ℕ) : ℕ∞), ⊤) (((n : ℕ) : ℕ∞), ⊤) rfl rfl hmn)
         (fun _ m n hmn => by
@@ -166,7 +170,7 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
             rfl rfl (by rw [eval_swap x₂ x₁, eval_swap x₂ x₁] at hmn; exact hmn)
           exact ⟨k, k', by rw [eval_swap x₂ x₁, eval_swap x₂ x₁]; exact hkk'⟩)
         hmix
-    exact ⟨R, hring, hfg, e, hhom, hbij⟩
+    exact ⟨R, hring, Albrecht.exists_directSum_fg, e, hhom, hbij⟩
 
 /-- **Corollary 5.5(2)**, first claim: if `add x₁ = add x₂` then `H` has exactly one element with
 an infinite form, namely `ℵ₀ x₁ = ℵ₀ x₂`.
@@ -198,12 +202,14 @@ theorem corollary_5_5_two_unique (h : KMonoid.addOf (κ := ℵ₀) x₁ = KMonoi
 /-- **Corollary 5.5(2)**, equivalence: `add x₁ = add x₂` with no mixed forms is exactly
 realizability by a ring whose countably (non finitely) generated projectives are all free.
 
-**This corrects the scaffold**, in the same two ways as `prop_5_4_hereditary` and
-`corollary_5_5_one`: the freeness clause is over the classes of `V^{ℵ₀}(R)` — the countably
-generated projectives — rather than over all projective modules, for which it is false; and
-`EveryProjectiveIsSumOfFG R` is carried explicitly, since the paper reaches it from Theorem 5.3
-through Corollary 4.6 — whose hereditary case, Albrecht's theorem, is `ForMathlib/Albrecht.lean` —
-and this statement, unlike Theorem 5.3, does not mention `Ideal R`.
+**This corrects the paper twice.**  The freeness clause is over the classes of `V^{ℵ₀}(R)` — the
+countably generated projectives — rather than over all projective modules, for which it is false.
+And `EveryProjectiveIsSumOfFG R` is added: unlike parts (1) and (3), the paper's clause here names
+only the freeness of the countably (non finitely) generated projectives, but its proof of
+(ii) ⇒ (i) invokes Theorem 5.3's forward direction, which needs the projectives of `R` to be direct
+sums of finitely generated ones.  Hereditariness would do as well and is what Theorem 5.3
+produces, by Albrecht's theorem (`ForMathlib/Albrecht.lean`); the weaker hypothesis is kept because
+it is the one the argument uses and the one parts (1) and (3) state.
 
 (i) ⇒ (ii): each generator lies in `add` of the other, so conditions (i) and (ii) of Theorem 5.3
 hold — the first because `ℵ₀ x_j` absorbs `ℵ₀ x_i`, the second vacuously — and (iii) is assumed;
@@ -241,10 +247,10 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
       have habs := cmul_top_absorb x₂ x₁ hx₂ ⊤
       rw [ecmul_top] at habs
       exact habs.symm.trans (add_comm _ _)
-    obtain ⟨R, hring, -, -, hfg, e, hhom, hbij⟩ :=
+    obtain ⟨R, hring, -, hher, e, hhom, hbij⟩ :=
       theorem_5_3_backward x₁ x₂ (ULift.{u} ℚ) hgen hc1 hc1'
         (fun hnot => absurd hx₁ hnot) (fun hnot => absurd hx₂ hnot) hmix
-    refine ⟨R, hring, hfg, ?_, e, hhom, hbij⟩
+    refine ⟨R, hring, Albrecht.exists_directSum_fg, ?_, e, hhom, hbij⟩
     letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     -- transport the generators back along the isomorphism
     obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
@@ -278,7 +284,8 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
     have ht₂ : traceIdeal R ((projClass R ℵ₀ le_rfl).rep (e' x₂)) = ⊤ :=
       traceIdeal_eq_top_of_addLe R (e' x₂) (e' x₁) (by rwa [Set.pair_comm]) hncp
         (hkey x₂ x₁ hx₁)
-    exact (prop_5_4_hereditary R hfg (e' x₁) (e' x₂) hgenp hncp).mp (ht₁.trans ht₂.symm)
+    exact (prop_5_4_hereditary R Albrecht.exists_directSum_fg (e' x₁) (e' x₂) hgenp hncp).mp
+      (ht₁.trans ht₂.symm)
   · rintro ⟨R, hring, hfg, hfree, e, hhom, hbij⟩
     letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
@@ -329,7 +336,8 @@ theorem corollary_5_5_three_absorb (h : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x�
 /-- **Corollary 5.5(3)**, equivalence: for `add x₁ ⊊ add x₂`, realizability is equivalent to an
 explicit relation condition.
 
-`EveryProjectiveIsSumOfFG R` is carried explicitly, as everywhere in §5.  The paper's part (3) also
+`EveryProjectiveIsSumOfFG R` is the paper's own condition here, as in part (1): "a ring `R` over
+which projective modules are direct sums of finitely generated modules".  The paper's part (3) also
 records two further reformulations of realizability — that `R` may be taken with a finitely
 generated projective `P` whose `P^{(ℵ₀)}` is not free, and that this is the same as
 `Tr(P₁) ⊊ Tr(P₂)`.  Those are not part of the statement here; see `SECTION5-PLAN.md`.
@@ -381,8 +389,8 @@ theorem corollary_5_5_three (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
       obtain ⟨-, a, a', ha⟩ := hrel n ((m : ℕ) : ℕ∞)
         (by rw [eval_swap x₂ x₁, eval_swap x₂ x₁] at hmn; exact hmn.symm)
       exact ⟨a, a', by rw [eval_swap x₂ x₁, eval_swap x₂ x₁]; exact ha⟩
-    · obtain ⟨hring, -, -, hfg, he⟩ := hR
-      exact ⟨hring, hfg, he⟩
+    · obtain ⟨hring, -, hher, he⟩ := hR
+      exact ⟨hring, Albrecht.exists_directSum_fg, he⟩
   · rintro ⟨R, hring, hfg, e, hhom, hbij⟩
     obtain ⟨-, hc1', -, hc2', hmix⟩ :=
       theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij

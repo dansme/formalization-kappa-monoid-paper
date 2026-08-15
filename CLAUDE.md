@@ -98,10 +98,12 @@ questions a build would answer, without a build. Prefer it throughout.
   without which it is *false*, and was an axiom from which `False` was derivable; the `IsConical` hypothesis
   in Theorem 3.11; the
   `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a formalised counterexample showing the
-  paper's claim is false; and the six statements corrected in §5, chiefly `EveryProjectiveIsSumOfFG
-  R` carried alongside hereditariness, which was forced when Corollary 4.6 was quoted rather than
-  formalised and is now removable — see the `README.md` section, which says what the two
-  restatements would be.
+  paper's claim is false; and the statements corrected in §5 — the class quantification in
+  Proposition 5.4 and Corollary 5.5(2), the `EveryProjectiveIsSumOfFG` hypothesis added to
+  Corollary 5.5(2), and two hypotheses restored to Lemma 5.2.  (`EveryProjectiveIsSumOfFG` carried
+  alongside hereditariness was a fifth until Albrecht's theorem was proved; Theorem 5.3 and
+  Corollary 4.7(1) now say what the paper says.  Where the conjunct survives in Corollary 5.5(1)
+  and (3) it is the paper's own condition, not a deviation.)
   (Examples 4.8(1) was a fifth until the test universe of `IsUniversalKExtension` became a
   parameter; `krsa_ascent_iso` is now the paper's statement.) When the paper is wrong, formalise the
   repaired statement and say so; do not quietly weaken or restate it.
@@ -182,7 +184,7 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 
 | Layer | Contents |
 |---|---|
-| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid), `Kaplansky.lean` (A6), `Albrecht.lean` (A7) |
+| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, `Hereditary.lean` (`IsLeftHereditary`/`IsRightHereditary`/`IsHereditary`; Mathlib has none), and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid), `Kaplansky.lean` (A6), `Albrecht.lean` (A7) |
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop39`, `UnivExt` (Thm 3.11), `Saturated` (Lemma 3.13) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
