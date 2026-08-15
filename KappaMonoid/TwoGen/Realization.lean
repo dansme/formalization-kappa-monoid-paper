@@ -245,7 +245,6 @@ theorem theorem_5_3_forward (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfF
     (hbij : Function.Bijective e) :
     Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂ := by
   classical
-  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
 
   -- invert the isomorphism and feed Lemma 5.1
   obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
@@ -798,7 +797,6 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
     (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁) (hc2 : Cond2 x₁ x₂) (hc2' : Cond2 x₂ x₁)
     (hmix : NoMixedForms x₁ x₂) :
     ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
-      letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
       ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
         KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e := by
   classical
@@ -862,7 +860,6 @@ theorem theorem_5_3 (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
       (Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂) := by

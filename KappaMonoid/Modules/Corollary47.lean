@@ -290,7 +290,6 @@ theorem everyProjectiveIsSumOfFG_of_kGenerates_finite (R : Type u) [Ring R]
       KMonoid.KGenerates ℵ₀ S) :
     EveryProjectiveIsSumOfFG R := by
   classical
-  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   -- adjoin `0`, so that `mem_kclosure_iff` applies
   have h0 : (0 : (projClass R ℵ₀ le_rfl).carrier) ∈ insert 0 S := Set.mem_insert _ _
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) (insert 0 S) :=

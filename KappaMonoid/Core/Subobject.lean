@@ -246,6 +246,13 @@ noncomputable def pi (κ : Cardinal.{u}) {B : Type w} (Y : B → Type v) [∀ b,
   toLMonoid := LMonoid.pi (Order.succ κ) Y (Cardinal.isRegular_succ hκ)
   aleph0_le := hκ
 
+/-- A product of `ℵ₀`-monoids is an `ℵ₀`-monoid.  This is `pi` at the distinguished cardinal,
+promoted to an instance: the products `F_{ℵ₀}^n` of §5 are named in almost every statement there,
+and their `ℵ₀`-monoid structure is not worth repeating. -/
+noncomputable instance instPiAleph0 {B : Type w} (Y : B → Type v)
+    [∀ b, KMonoid (ℵ₀ : Cardinal.{u}) (Y b)] : KMonoid (ℵ₀ : Cardinal.{u}) (∀ b, Y b) :=
+  pi ℵ₀ Y le_rfl
+
 /-- Sums in a product of `κ`-monoids are computed coordinatewise. -/
 @[simp] theorem pi_sumOf (κ : Cardinal.{u}) {B : Type w} (Y : B → Type v) [∀ b, KMonoid κ (Y b)]
     (hκ : ℵ₀ ≤ κ) {ι : Type u} (h : #ι ≤ κ) (x : ι → ∀ b, Y b) (b : B) :

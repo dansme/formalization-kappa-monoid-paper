@@ -52,7 +52,6 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
       ((∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G → (F.1 = ⊤ ↔ G.1 = ⊤) ∧ (F.2 = ⊤ ↔ G.2 = ⊤)) ∧
@@ -225,7 +224,6 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
             ¬ Module.Finite R ((projClass R ℵ₀ le_rfl).rep q) →
             ∃ ι : Type u, #ι ≤ ℵ₀ ∧
               Nonempty ((projClass R ℵ₀ le_rfl).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
   classical
@@ -252,7 +250,6 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
       theorem_5_3_backward x₁ x₂ (ULift.{u} ℚ) hgen hc1 hc1'
         (fun hnot => absurd hx₁ hnot) (fun hnot => absurd hx₂ hnot) hmix
     refine ⟨R, hring, ?_, e, hhom, hbij⟩
-    let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     -- transport the generators back along the isomorphism
     obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
         Function.LeftInverse g e ∧ Function.RightInverse g e :=
@@ -290,7 +287,6 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
   · rintro ⟨R, hring, hfree, e, hhom, hbij⟩
     -- Theorem 5.3's forward direction needs `EveryProjectiveIsSumOfFG`; freeness supplies it
     have hfg : EveryProjectiveIsSumOfFG R := everyProjectiveIsSumOfFG_of_free R hfree
-    let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
     obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
         Function.LeftInverse g e ∧ Function.RightInverse g e :=
@@ -358,7 +354,6 @@ theorem corollary_5_5_three (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
         β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms x₁ x₂ ↔
       (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
   classical
@@ -436,7 +431,6 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
     (e : (projClass R ℵ₀ le_rfl).carrier → H)
     (hhom : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
-    letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     ∃ p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier,
       Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₁) ∧
         Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
@@ -446,7 +440,6 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
         ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁)
             ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
-  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     ((projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
@@ -536,7 +529,6 @@ theorem corollary_5_5_three_nonfree (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀
         β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms x₁ x₂ ↔
       (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         (∃ p : (projClass R ℵ₀ le_rfl).carrier,
             Module.Finite R ((projClass R ℵ₀ le_rfl).rep p) ∧
             ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p)
@@ -566,7 +558,6 @@ theorem corollary_5_5_three_trace (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) 
         β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms x₁ x₂ ↔
       (∃ (R : Type u) (_ : Ring R),
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier,
           Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₁) ∧
             Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₂) ∧

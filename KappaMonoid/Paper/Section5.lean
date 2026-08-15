@@ -67,7 +67,6 @@ direction is stated for this weaker condition, because 5.5(2) has nothing strong
 See `README.md`, "The statements corrected in Section 5". -/
 def IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
   ∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-    letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
     ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
       IsKHom ℵ₀ e ∧ Function.Bijective e
 
@@ -163,7 +162,6 @@ theorem theorem_5_3_backward (S : Setting5 H) (k : Type u) [Field k]
     (hc1 : Cond1 S.x₁ S.x₂) (hc1' : Cond1 S.x₂ S.x₁)
     (hc2 : Cond2 S.x₁ S.x₂) (hc2' : Cond2 S.x₂ S.x₁) (hmix : NoMixedForms S.x₁ S.x₂) :
     ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
-      letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
       ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
         IsKHom ℵ₀ e ∧ Function.Bijective e :=
   TwoGen.theorem_5_3_backward S.x₁ S.x₂ k S.gen hc1 hc1' hc2 hc2' hmix
@@ -232,7 +230,6 @@ theorem corollary_5_5_two (S : Setting5 H) :
             ¬ Module.Finite R ((projClass R ℵ₀ le_rfl).rep q) →
             ∃ ι : Type u, #ι ≤ ℵ₀ ∧
               Nonempty ((projClass R ℵ₀ le_rfl).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
           IsKHom ℵ₀ e ∧ Function.Bijective e) :=
   TwoGen.corollary_5_5_two S.x₁ S.x₂ S.gen S.noncyclic
@@ -261,7 +258,6 @@ theorem corollary_5_5_three_nonfree (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (�
           eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms S.x₁ S.x₂ ↔
       (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         (∃ p : (projClass R ℵ₀ le_rfl).carrier,
             Module.Finite R ((projClass R ℵ₀ le_rfl).rep p) ∧
             ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p)
@@ -280,7 +276,6 @@ theorem corollary_5_5_three_trace (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ 
           eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms S.x₁ S.x₂ ↔
       (∃ (R : Type u) (_ : Ring R),
-        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
         ∃ p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier,
           Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₁) ∧
             Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₂) ∧

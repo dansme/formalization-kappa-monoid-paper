@@ -154,6 +154,12 @@ noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ (Fcard κ) wher
   toLMonoid := LCard.instLMonoid (Cardinal.isRegular_succ hκ)
   aleph0_le := hκ
 
+/-- `F_{ℵ₀}` is an `ℵ₀`-monoid: `instKMonoid` at the distinguished cardinal, promoted to an
+instance because it recurs in every statement about `F_{ℵ₀}`.  The hypothesis it takes is a
+`Prop`, so this is definitionally the structure any `letI := instKMonoid h` would produce. -/
+noncomputable instance instKMonoidAleph0 :
+    KMonoid (ℵ₀ : Cardinal.{u}) (Fcard (ℵ₀ : Cardinal.{u})) := instKMonoid le_rfl
+
 /-- The `κ`-sum on `F_κ` is cardinal summation. -/
 @[simp] theorem instKMonoid_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (h : #ι ≤ κ) (x : ι → Fcard κ) :
     letI := instKMonoid hκ

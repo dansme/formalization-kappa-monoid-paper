@@ -35,7 +35,6 @@ theorem lemma_5_1 (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
 
     IsBraidedOver ℵ₀ ℵ₀ ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) H le_rfl (fun y => (y : H)) := by
   classical
-  let := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     ((projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
 
