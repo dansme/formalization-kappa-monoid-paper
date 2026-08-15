@@ -6,7 +6,7 @@ Section 2.3 of
 
 preparation for Proposition 2.16: the class of `R^{(s)}` in `V^κ(𝓕^κ)` depends only on `#s`,
 and — for a nontrivial ring — determines `#s` when that is infinite.  The latter is invariance
-of infinite rank (axiom A1) once more, and is what makes `[R]` a *faithful* order-unit.
+of infinite rank once more, and is what makes `[R]` a *faithful* order-unit.
 -/
 import KappaMonoid.Modules.Rings.FreeModules
 import KappaMonoid.Modules.Rings.ProjOrderUnit
@@ -42,7 +42,8 @@ theorem span_range_lof (ι : Type u) :
 /-! ## Invariance of infinite rank, for `R^{(ι)}` -/
 
 /-- If `R^{(ι)} ≅ R^{(ι')}` and `ι` is infinite then `#ι ≤ #ι'`: the standard generators of
-`R^{(ι')}` map onto a spanning set of `R^{(ι)}`, and axiom A1 bounds the rank by it. -/
+`R^{(ι')}` map onto a spanning set of `R^{(ι)}`, and invariance of infinite rank bounds the rank
+by it. -/
 theorem mk_le_of_equiv [Nontrivial R] {ι ι' : Type u} [Infinite ι]
     (e : (⨁ _ : ι, R) ≃ₗ[R] (⨁ _ : ι', R)) : #ι ≤ #ι' :=
   le_trans

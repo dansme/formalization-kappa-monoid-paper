@@ -1,12 +1,6 @@
 /-
-**A5**, the Bergman-Dicks realisation theorem: the one classical result this development still
-assumes.
-
-Three of the axioms that used to live here have since been proved, in files that depend on
-nothing in this development: A3 — uniqueness of the multiplicities of simple modules — in
-`ForMathlib/SimpleMultiplicity.lean`, A6 — Kaplansky's theorem — in `ForMathlib/Kaplansky.lean`,
-and A7 — Albrecht's theorem — in `ForMathlib/Albrecht.lean`.  A7 was a field of
-`BergmanDicksData` before it was split out and then proved.
+The Bergman–Dicks realisation theorem (A1): the one classical result this development assumes
+rather than proves.
 -/
 import Mathlib
 import KappaMonoid.ForMathlib.Hereditary
@@ -18,7 +12,7 @@ open Cardinal DirectSum
 namespace KappaMonoid
 
 
-/-! ## A5: the Bergman–Dicks realisation theorem -/
+/-! ## The Bergman–Dicks realisation theorem -/
 
 /-- A hereditary `k`-algebra realising a given reduced commutative monoid `M` as its monoid of
 finitely generated projective modules.
@@ -88,14 +82,13 @@ Two differences from the sources, both checked:
   with `_hred` and `_hunit`, `u = 0` forces `M` to be trivial (`y + z = n • 0 = 0` gives `y = 0`),
   and the zero ring realises the trivial monoid — every ideal projective, `V(0)` trivial,
   `[0] = 0`.  Nothing here claims `Nontrivial R`, which is what keeps the degenerate case honest;
-  a `Nontrivial R` field together with a monoid only the zero ring can realise is exactly how the
-  earlier statement of Leavitt's theorem became false.
+  a `Nontrivial R` field together with a monoid only the zero ring can realise is exactly what
+  makes the paper's blanket quotation of Leavitt's theorem false (see `README.md`).
 
 The proof is a construction by universal localisation and is far out of reach here; Mathlib has
-neither hereditary rings nor universal localisation.  The statement used to bundle Albrecht's
-theorem as a `sumOfFG` field, since Corollary 4.7(1) uses the two together; that was split out as
-A7 — a statement about hereditary rings in general, not about the one this axiom produces — and is
-now proved, in `ForMathlib/Albrecht.lean`. -/
+neither hereditary rings nor universal localisation.  Corollary 4.7(1) uses this alongside
+Albrecht's theorem, which is a statement about hereditary rings in general rather than about the
+one produced here, and is proved in `ForMathlib/Albrecht.lean`. -/
 axiom bergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M] (u : M)
     (_hred : ∀ a b : M, a + b = 0 → a = 0)
     (_hunit : ∀ y : M, ∃ (z : M) (n : ℕ), y + z = n • u) :

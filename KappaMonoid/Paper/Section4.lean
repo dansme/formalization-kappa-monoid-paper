@@ -72,8 +72,8 @@ alias corollary_4_7_2_corollary_4_7_two := KappaMonoid.corollary_4_7_two
 alias example_4_8_1_krsa_ascent := KappaMonoid.krsa_ascent
 
 /-- **Example 4.8(1)**, the isomorphism `V^κ(C) ≅ F_κ(B)` the paper states —
-`KappaMonoid.krsa_ascent_iso`, in `Modules/Corollary47.lean`.  Expressible only since the test
-universe of `IsUniversalKExtension` became a parameter; the two sides live one universe apart. -/
+`KappaMonoid.krsa_ascent_iso`, in `Modules/Corollary47.lean`.  The two sides live one universe
+apart, which is why the test universe of `IsUniversalKExtension` is a parameter. -/
 alias example_4_8_1_iso := KappaMonoid.krsa_ascent_iso
 
 /-- **Example 4.8(1)**, the `B`-indexed universal property — `KappaMonoid.krsa_ascent_free`. -/
@@ -89,11 +89,9 @@ alias example_4_8_1_free := KappaMonoid.krsa_ascent_free
   `corollary_4_6` is a documented stub, and `EveryProjectiveIsSumOfFG` is the hypothesis the six
   would supply.  The *hereditary* case of the second — Albrecht's theorem — is proved, in
   `ForMathlib/Albrecht.lean`, and is the one §4 and §5 actually use; the other five stay quoted.
-* **Examples 4.8(2)** is not formalised.
+* **Examples 4.8(2)**.
 
-Examples 4.8(1) *is* formalised as printed, `V^κ(C) ≅ F_κ(B)` included (`krsa_ascent_iso`).  It was
-a documented deviation until the test universe of `IsUniversalKExtension` became a parameter: the
-two sides live one universe apart, and the old definition could not compare them. -/
+Examples 4.8(1) *is* formalised as printed, `V^κ(C) ≅ F_κ(B)` included (`krsa_ascent_iso`). -/
 
 end Paper
 

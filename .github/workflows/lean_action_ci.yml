@@ -20,10 +20,9 @@ jobs:
       - uses: leanprover/lean-action@v1
 
       # `declaration uses `sorry`` is only a warning, so `lake build` stays green on a
-      # `sorry` in an imported file.  The root target must be sorry-free at every commit
-      # (a scaffold file joins `KappaMonoid.lean` only when its last `sorry` goes), so
+      # `sorry` in an imported file.  The root target must be sorry-free at every commit, so
       # check for it explicitly.  This is a cached replay of the build above, not a rebuild.
-      # Every file of the development, §§2-5, is now part of the root target.
+      # Every file of the development, §§2-5, is part of the root target.
       - name: The root target is sorry-free
         run: |
           lake build KappaMonoid 2>&1 | tee build.log

@@ -3,7 +3,7 @@
 
 If `⨁ i, A i ≅ ⨁ j, B j` with all `A i` and `B j` simple, then for every module `S` the number of
 `i` with `A i ≅ S` equals the number of `j` with `B j ≅ S`.  Jordan–Hölder gives the finite case;
-this is the cardinal form, and it was assumed as axiom A3 of this development until proved here.
+this is the cardinal form, which Mathlib does not have.
 
 The argument is the classical one.  Fix a simple `S` and let `D = End_R(S)`, a division ring by
 Schur.  Applying `Hom_R(S, -)`:
@@ -136,11 +136,9 @@ theorem rank_hom_directSum [IsSimpleModule R S] (hA : ∀ i, IsSimpleModule R (A
   rw [← Cardinal.mk_sigma]
   exact Cardinal.mk_congr (Equiv.sigmaULiftPLiftEquivSubtype _)
 
-/-! ## A3 -/
+/-! ## The main result -/
 
-/-- **Uniqueness of the multiplicities of simple modules**, infinite multiplicities included.
-
-This was axiom A3 of this development. -/
+/-- **Uniqueness of the multiplicities of simple modules**, infinite multiplicities included. -/
 theorem mk_multiplicity_eq {J : Type u} {B : J → Type u} [∀ j, AddCommGroup (B j)]
     [∀ j, Module R (B j)] (hA : ∀ i, IsSimpleModule R (A i)) (hB : ∀ j, IsSimpleModule R (B j))
     (e : (⨁ i, A i) ≃ₗ[R] (⨁ j, B j)) (S : Type u) [AddCommGroup S] [Module R S] :

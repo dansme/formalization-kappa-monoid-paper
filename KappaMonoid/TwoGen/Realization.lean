@@ -9,7 +9,7 @@ Forward (`theorem_5_3_forward`): Lemma 5.1 gives the braiding, (iii) is Lemma 5.
 Backward (`theorem_5_3_backward`): `braidedForms_of_conditions` runs the paper's four-case split on
 forms, and `exists_braided_form` reduces an *arbitrary* family over `add (x₁ + x₂)` to a form family
 — the step the paper compresses into "hence `add (x₁ + x₂) = ⟨x₁, x₂⟩`".  Corollary 4.7(1) then
-realises `H`, which is where axiom A5 enters.
+realises `H`, which is where the Bergman–Dicks axiom enters.
 -/
 import KappaMonoid.TwoGen.Lemma51
 import KappaMonoid.TwoGen.Lemma52
@@ -843,16 +843,14 @@ The paper's `1 ≤ i ≠ j ≤ 2` is rendered as a conjunction over the two orde
 `Fin 2` bookkeeping, which would cost more than it saves.
 
 **The realizing ring is `IsLeftHereditary`, which is the paper's statement** — the paper says
-"for a hereditary ring", with right modules throughout, and this development uses left ones.  The
-statement used to carry `EveryProjectiveIsSumOfFG R` as a second conjunct, because Corollary 4.6
-was quoted rather than proved and so could not be recovered from hereditariness; now that
-Albrecht's theorem is `ForMathlib/Albrecht.lean` it can be, and the conjunct is gone.  The forward
-direction takes it from `Albrecht.exists_directSum_fg`, which is all it ever used.
+"for a hereditary ring", with right modules throughout, and this development uses left ones.  No
+condition on the projectives of `R` is carried alongside: the forward direction gets what it needs
+from `Albrecht.exists_directSum_fg`.
 
 Forward: Lemma 5.1 gives braidedness, then (iii) is 5.2(1), (ii) is 5.2(4), and (i) is the counting
 argument.  Backward: `exists_braided_form` reduces arbitrary families to forms and
 `braidedForms_of_conditions` runs the paper's four-case split; Corollary 4.7(1) then realises `H`,
-which is where axiom A5 enters. -/
+which is where the Bergman–Dicks axiom enters. -/
 theorem theorem_5_3 (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :

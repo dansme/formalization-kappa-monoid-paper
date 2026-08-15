@@ -1,8 +1,6 @@
 /-
 **Kaplansky's theorem**: over an arbitrary ring, every projective module is a direct sum of
 countably generated projective modules.
-
-This was assumed as axiom A6 of this development until it was proved here.
 -/
 import Mathlib.Algebra.DirectSum.Module
 import Mathlib.Algebra.Module.Projective

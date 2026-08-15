@@ -97,10 +97,9 @@ theorem extend_lhom {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
 
 The universe `z` of the test objects is a **parameter**, independent of `Ĥ`'s own universe `w`.
 Lean cannot quantify over universes inside a term, so this is the only way to say "for every
-`κ`-monoid `K`" without silently meaning "for every `K` in `Ĥ`'s universe" — which is what this
-definition used to say, and which is why Examples 4.8(1) could not state
-`V^κ(C) ≅ F_κ(B)`: `V^κ(C)` lives in `Type u` and `F_κ(B)`, being built from cardinals, in
-`Type (u+1)`.  The construction never needed the restriction: `extend_lhom` already extends into a
+`κ`-monoid `K`" without silently meaning "for every `K` in `Ĥ`'s universe", which would not be
+enough for Examples 4.8(1): there `V^κ(C) ≅ F_κ(B)` compares a `Type u` with a `Type (u+1)`, since
+`F_κ(B)` is built from cardinals.  The construction costs nothing: `extend_lhom` extends into a
 `K` in any universe. -/
 structure IsUniversalKExtension (lam κ : Cardinal.{u}) (X : Type v) (Hh : Type w)
     [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) (f : X → Hh) : Prop where

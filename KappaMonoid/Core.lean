@@ -5,8 +5,8 @@ A Lean 4 / Mathlib formalisation of
   *A monoid-theoretical approach to infinite direct-sum decompositions of modules*.
 
 The core: infinite summation, `κ`-monoids and `λ⁻`-monoids.  This file is the entry point of
-the layer — import it to get all of `KappaMonoid/Core/`, which depends on no module theory and
-on none of the assumed classical results.
+the layer — import it to get all of `KappaMonoid/Core/`, which depends on no module theory and on
+no assumed result.
 
 Design notes (see also `README.md`):
 

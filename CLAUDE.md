@@ -4,8 +4,8 @@ A Lean 4 formalisation of Nazemian–Smertnig, *A monoid-theoretical approach to
 decompositions of modules*. The paper is in the repo: `kappa_monoids.tex` (source of truth for
 statements) and `kappa_monoids.pdf`.
 
-`README.md` is the status and provenance document. `SECTION{3,4,5}-PLAN.md` are the work plans and
-`REFACTOR-PLAN.md` the reorganisation plan; §§2–5 are done, and steps 0–6 of the refactor.
+`README.md` is the status and provenance document: the layer map, the one assumed result, the
+deviations from the paper, what is deliberately not formalised, and the encoding decisions.
 
 ## Build
 
@@ -22,9 +22,8 @@ is populated.
 The toolchain and Mathlib are pinned to `v4.33.0`; do not run `lake update` — bumps go through
 `.github/workflows/update.yml`, by hand, as their own commit.
 
-A scaffold file joins `KappaMonoid.lean` in the same commit that removes its last `sorry`, so the
-root build is always sorry-free.  As of §5 there is no scaffold left: every file is imported, and
-CI rejects a `sorry` in the root target.
+Every file is imported by `KappaMonoid.lean`, and CI rejects a `sorry` in the root target.  A file
+still carrying one therefore joins the root only in the commit that removes its last `sorry`.
 
 ## Working efficiently
 
@@ -45,8 +44,7 @@ questions a build would answer, without a build. Prefer it throughout.
    nobody reads. Fix the *first* error and rebuild — later ones are usually downstream.
 2. **Statements first, `sorry` bodies, one build.** Elaboration, universe and instance errors are
    where the iterations go, and this catches all of them in a single pass. Then fill proofs 3–5 at
-   a time, not one at a time. This is what the scaffold files do at file scale; do it at block
-   scale too.
+   a time, not one at a time — at file scale as well as at block scale.
 3. **Try tactics without editing the file.** `lean_multi_attempt` runs a list of candidate tactics
    at a position and reports the resulting goal or error for each — much cheaper than an
    edit/diagnose cycle per candidate. `lean_code_actions` resolves the `Try this` text of `exact?` /
@@ -86,27 +84,22 @@ questions a build would answer, without a build. Prefer it throughout.
 - **Instances**: defs producing them carry `@[instance_reducible]`. Instances that depend on
   hypotheses are threaded through statements with `letI`, repeated verbatim at the top of the
   tactic proof.
-- **No new axioms without asking.** The one assumed classical result (A5) lives in
-  `KappaMonoid/Axioms/` and is documented in `README.md`. A new headline result gets a line in
-  `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo [bergmanDicksData]`, or `[]` for the
-  usual case — which is checked by the build and fails in both directions, so it also tells you when
-  a refactor has *removed* a dependency. §3 needs no axiom at all. CI enforces the list — `.github/workflows/lean_action_ci.yml` fails if the set of
-  `axiom` declarations under `KappaMonoid/` changes, so a deliberate addition means editing the
-  expected list there *and* the `README.md` table in the same commit.
+- **No new axioms without asking.** The one assumed classical result, Bergman–Dicks realisation
+  (A1), lives in `KappaMonoid/Axioms/` and is documented in `README.md`. A new headline result gets
+  a line in `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo [bergmanDicksData]`, or `[]`
+  for the usual case — which is checked by the build and fails in both directions, so it also tells
+  you when a refactor has *removed* a dependency. §3 needs no axiom at all. CI enforces the list —
+  `.github/workflows/lean_action_ci.yml` fails if the set of `axiom` declarations under
+  `KappaMonoid/` changes, so a deliberate addition means editing the expected list there *and* the
+  `README.md` table in the same commit.
 - **Deviations from the paper are documented twice**: in the docstring of the affected result and
-  in a `README.md` section. Four exist — the `m ≥ 1` hypothesis added to Leavitt's theorem,
-  without which it is *false*, and was an axiom from which `False` was derivable; the `IsConical` hypothesis
-  in Theorem 3.11; the
-  `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a formalised counterexample showing the
-  paper's claim is false; and the statements corrected in §5 — the class quantification in
-  Proposition 5.4 and Corollary 5.5(2), the `EveryProjectiveIsSumOfFG` hypothesis added to
-  Corollary 5.5(2), and two hypotheses restored to Lemma 5.2.  (`EveryProjectiveIsSumOfFG` carried
-  alongside hereditariness was a fifth until Albrecht's theorem was proved; Theorem 5.3 and
-  Corollary 4.7(1) now say what the paper says.  Where the conjunct survives in Corollary 5.5(1)
-  and (3) it is the paper's own condition, not a deviation.)
-  (Examples 4.8(1) was a fifth until the test universe of `IsUniversalKExtension` became a
-  parameter; `krsa_ascent_iso` is now the paper's statement.) When the paper is wrong, formalise the
-  repaired statement and say so; do not quietly weaken or restate it.
+  in the "Deviations from the paper" section of `README.md`, which is the authoritative list — the
+  `m ≥ 1` hypothesis added to Leavitt's theorem, without which it is *false*; the `IsConical`
+  hypothesis in Theorem 3.11; the `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a
+  formalised counterexample showing the paper's claim is false; and five statements of §5.  Not
+  every extra hypothesis is a deviation: `EveryProjectiveIsSumOfFG` in Corollary 5.5(1) and (3) is
+  the paper's own condition, spelled out.  When the paper is wrong, formalise the repaired
+  statement and say so; do not quietly weaken or restate it.
 
 ## Elaboration traps
 
@@ -170,11 +163,11 @@ re-deriving them.
     index types in different universes, which is what lets an `ℕ`-indexed construction be
     transported to `ι : Type u`.
 
-15. **Carry a repeated `letI` as an instance.** `add x` at `κ = ℵ₀` had its `LMonoid` structure
-    written out by hand in 42 statements before `KMonoid.instLMonoidAddOf`. Because `IsLSubset` is a
-    `Prop` (trap 13), two such structures are definitionally equal, so promoting one to an instance
-    is free — no proof that relied on the defeq moves. Check the head is specific enough (`↥(addOf
-    …)`) that instance search is not slowed.
+15. **Carry a repeated `letI` as an instance.** `KMonoid.instLMonoidAddOf` is the `LMonoid`
+    structure on `add x` at `κ = ℵ₀`, which otherwise has to be written out in every statement about
+    it. Because `IsLSubset` is a `Prop` (trap 13), two such structures are definitionally equal, so
+    promoting one to an instance is free — no proof that relied on the defeq moves. Check the head
+    is specific enough (`↥(addOf …)`) that instance search is not slowed.
 
 ## Where things live
 
@@ -184,18 +177,18 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 
 | Layer | Contents |
 |---|---|
-| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, `Hereditary.lean` (`IsLeftHereditary`/`IsRightHereditary`/`IsHereditary`; Mathlib has none), and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid), `Kaplansky.lean` (A6), `Albrecht.lean` (A7) |
+| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, `Hereditary.lean` (`IsLeftHereditary`/`IsRightHereditary`/`IsHereditary`), `FreeRank.lean` (invariance of infinite rank), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (multiplicities of simple modules), `CyclicMonoid.lean` (the classification, and `C_{m,n}` as a monoid), `Kaplansky.lean`, `Albrecht.lean`.  Mathlib has none of them |
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop39`, `UnivExt` (Thm 3.11), `Saturated` (Lemma 3.13) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
 | `Examples/` | `TrivExt`, `ENNReal`, `Diophantine` (§3.2), `Reals` |
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`.  Everything but `Lemma51` and after is monoid theory |
-| `Axioms/` | `Modules` (A5 alone).  A1, A3, A4, A6 and A7 were here until they were proved — `ForMathlib/{FreeRank,SimpleMultiplicity,CyclicMonoid,Kaplansky,Albrecht}.lean` — and A2 until it was derived from A5 in `Modules/Rings/Leavitt.lean` |
+| `Axioms/` | `Modules`: Bergman–Dicks realisation, the one assumed result, and nothing else |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it |
 
 **When adding a result, put it in the lowest layer that can state it.**  A monoid-theoretic lemma
-in a `Modules/` or `TwoGen/` file is how `add x` ended up behind axiom A5, and the layering check
-will not catch that — it only catches imports.
+in a `Modules/` or `TwoGen/` file puts it needlessly behind the axiom, and the layering check will
+not catch that — it only catches imports.
 
 **`Paper/` is the deliverable for a reader.**  `Paper/Section5.lean` restates §5 over `Setting5`,
 which bundles the section's standing assumptions; `Paper/Section{2,3,4}.lean` are `alias` indices.
@@ -206,6 +199,5 @@ Before writing a new construction, check whether the analogous one exists: the `
 braidings, the `Fcard`/`RTilde` `SumData`s, and the `TrivExt` extension are all templates.
 
 Anything with no `κ`-monoid content belongs in `KappaMonoid/ForMathlib/`, which imports only
-Mathlib and so never gets rebuilt when the development changes.  Putting general lemmas in a leaf
-file to dodge a `Basic.lean` rebuild is the wrong trade — it is how the trace ideals and the `ℕ`
-block combinatorics ended up inside §5, and it cost a refactor to undo.
+Mathlib and so never gets rebuilt when the development changes.  Putting a general lemma in a leaf
+file to dodge a rebuild of a lower layer is the wrong trade.

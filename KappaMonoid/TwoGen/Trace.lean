@@ -292,11 +292,11 @@ theorem eq_zero_of_finite_cmul_top {p : (projClass R ℵ₀ le_rfl).carrier}
 /-- **Proposition 5.4**, final statement: `Tr(P₁) = Tr(P₂)` exactly when every countably but not
 finitely generated projective module is free.
 
-**This corrects the scaffold twice.**  The quantifier ranged over *all* projective modules, which
-makes the right-hand side false as soon as `R ≠ 0` — `R^{(ℵ₁)}` is projective and not finitely
-generated, but is not free on a countable basis (axiom A1).  The paper says "any countably (non
-finitely) generated projective module", so the statement is over the classes of `V^{ℵ₀}(R)`, which
-are exactly those.  And hereditariness — the paper's hypothesis here — is *weakened* to
+**Two corrections to the paper's transcription.**  Quantified over *all* projective modules the
+right-hand side is false as soon as `R ≠ 0` — `R^{(ℵ₁)}` is projective and not finitely generated,
+but is not free on a countable basis (invariance of infinite rank).  The paper says "any countably
+(non finitely) generated projective module", so the statement is over the classes of `V^{ℵ₀}(R)`,
+which are exactly those.  And hereditariness — the paper's hypothesis here — is *weakened* to
 `EveryProjectiveIsSumOfFG R`: what the proof needs is that `P₁` and `P₂` are finitely generated,
 which the paper gets from Lemma 5.1 through Corollary 4.6, and that is exactly this hypothesis.
 Albrecht's theorem (`ForMathlib/Albrecht.lean`) says hereditary rings have it, so the statement

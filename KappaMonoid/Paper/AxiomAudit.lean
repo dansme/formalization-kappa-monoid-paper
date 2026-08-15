@@ -3,7 +3,7 @@
 
 CI refuses a change to the *set* of `axiom` declarations under `KappaMonoid/`, but says nothing
 about who depends on them: a proof that quietly started using Bergman–Dicks would pass.  The
-provenance paragraphs of `README.md` said it in prose, and prose drifts.  Every line below is
+provenance paragraphs of `README.md` say it in prose, and prose drifts.  Every line below is
 checked by the build.
 
 `propext`, `Classical.choice` and `Quot.sound` are permitted everywhere and never listed, so an
@@ -12,9 +12,9 @@ empty list means *"this result rests on nothing but Lean's own foundation"*.
 The lists were computed with `#print axioms`, not guessed.  Two of them are worth reading twice:
 
 * `corollary_4_5_three` is axiom-free — it takes "every projective is a sum of finitely generated
-  ones" as a hypothesis, rather than quoting Albrecht's theorem (A7) for it.
+  ones" as a hypothesis, rather than quoting Albrecht's theorem for it.
 * `kaplansky` is axiom-free too, since Kaplansky's theorem is proved in
-  `ForMathlib/Kaplansky.lean`; it was the last consumer of the axiom A6 that used to state it.
+  `ForMathlib/Kaplansky.lean`.
 -/
 import KappaMonoid.Meta.AxiomAudit
 import KappaMonoid.Paper.Section2
@@ -24,7 +24,7 @@ import KappaMonoid.Paper.Section5
 
 namespace KappaMonoid
 
-/-! ## §2 — Proposition 2.16 reaches A5 through Leavitt's theorem, which is derived from it -/
+/-! ## §2 — Proposition 2.16 reaches Bergman–Dicks through Leavitt's theorem -/
 
 #assert_axioms prop_2_16 [bergmanDicksData]
 #assert_axioms prop_2_17_one []
@@ -46,7 +46,7 @@ namespace KappaMonoid
 #assert_axioms prop_3_14_two_of_ineqs_empty []
 #assert_axioms example_3_15 []
 
-/-! ## §4 — A5 and A7 in one direction of Corollary 4.7(1), nothing else -/
+/-! ## §4 — Bergman–Dicks in one direction of Corollary 4.7(1), nothing else -/
 
 #assert_axioms theorem_4_3 []
 #assert_axioms corollary_4_4 []
@@ -61,7 +61,7 @@ namespace KappaMonoid
 #assert_axioms krsa_ascent_iso []
 #assert_axioms isUniversalKExtension_unique' []
 
-/-! ## §5 — A5 only, and only where Corollary 4.7(1) is invoked -/
+/-! ## §5 — Bergman–Dicks only, and only where Corollary 4.7(1) is invoked -/
 
 #assert_axioms TwoGen.lemma_5_1 []
 #assert_axioms TwoGen.lemma_5_2_one []

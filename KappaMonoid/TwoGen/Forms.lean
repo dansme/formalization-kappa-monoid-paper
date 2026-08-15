@@ -172,9 +172,9 @@ abbrev Nats : Type u := ULift.{u} ℕ
 /-- The index type of the family realising a form: one copy of `ℕ` for the `X₁` slots and one for
 the `X₂` slots.
 
-**This corrects the scaffold.**  Listing the `α` copies of `x₁` first and the `β` copies of `x₂`
-after them, all inside a single copy of `ℕ`, is wrong as soon as `α = ℵ₀`: there is then no slot
-left for `x₂`, and `sumOf_familyOfForm` is false — take `H = F_{ℵ₀}`, `x₁ = 0`, `x₂ = 1` and
+**Two summands, not one.**  Listing the `α` copies of `x₁` first and the `β` copies of `x₂` after
+them, all inside a single copy of `ℕ`, is wrong as soon as `α = ℵ₀`: there is then no slot left
+for `x₂`, and `sumOf_familyOfForm` would be false — take `H = F_{ℵ₀}`, `x₁ = 0`, `x₂ = 1` and
 `F = (ℵ₀, 1)`, where the family is identically `0` but the form evaluates to `1`.  Keeping the two
 kinds of slot in two summands of the index type is faithful to the paper (one generator per slot)
 and makes the sum split by `sumOf_sumType`. -/
@@ -295,7 +295,7 @@ def NoMixedForms (x₁ x₂ : H) : Prop :=
 
 The families take values in `H`; braiding is a statement about the `ℵ₀⁻`-monoid `add (x₁ + x₂)`,
 so the members must be produced there.  `hmem` is that side condition, discharged in practice by
-`KMonoid.addOf_isSaturated` from `Section4/AddOf.lean`. -/
+`KMonoid.addOf_isSaturated` from `Core/AddOf.lean`. -/
 def BraidedForms (x₁ x₂ : H) (F G : Form)
     (hF : ∀ n, familyOfForm x₁ x₂ F n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
     (hG : ∀ n, familyOfForm x₁ x₂ G n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) : Prop :=

@@ -5,7 +5,7 @@
 Hom *out of* a direct sum is a product — but not this one, which needs the source to be small:
 a map out of `S = R ∙ s` is pinned by the image of `s`, and that image has finite support.
 
-The intended use is A3, uniqueness of the multiplicities of simple modules: a simple module is
+The intended use is uniqueness of the multiplicities of simple modules: a simple module is
 cyclic, `Hom_R(S, A)` is the endomorphism division ring when `A ≅ S` and zero otherwise (Schur), so
 the left side becomes a free module whose rank is the multiplicity of `S`.
 

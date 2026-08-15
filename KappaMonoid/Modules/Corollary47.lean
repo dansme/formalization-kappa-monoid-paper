@@ -1,6 +1,6 @@
 /-
-`V(R) = add [R]`, **Corollary 4.7** (both directions; the forward one is the only use of axiom
-A5) and **Examples 4.8(1)**, the ascent of KRSA.
+`V(R) = add [R]`, **Corollary 4.7** (both directions; the forward one is the only use of the
+Bergman–Dicks axiom) and **Examples 4.8(1)**, the ascent of KRSA.
 -/
 import KappaMonoid.Modules
 import KappaMonoid.Core.AddOf
@@ -18,7 +18,7 @@ namespace KappaMonoid
 
 /-! ## `ℵ₀⁻`-small classes are finitely generated
 
-The one module-theoretic input Corollary 4.7(1) needs beyond what `ModuleClass.lean` has.  Both
+The one module-theoretic input Corollary 4.7(1) needs beyond what `Modules/Projective.lean` has.  Both
 directions of the corollary want to move between *finitely generated* projective modules — which is
 what Bergman–Dicks realises and what `EveryProjectiveIsSumOfFG` produces — and the `ℵ₀⁻`-small
 classes of `V^κ(R)`, which is the base Corollary 4.5(3) braids over.  Example 4.2(2) gives one
@@ -235,7 +235,8 @@ follows from `corollary_4_5_three`, which is *proved*.
 
 Those six implications are the quoted results (Bergman; Warfield; Mueller; Hinohara;
 McGovern–Puninski–Rothmaler), and Corollary 4.6 is exactly `corollary_4_5_three` plus those
-citations, so the documented stub in `ModuleClass.lean` is the right treatment and this file adds
+citations, so the documented stub in `Modules/Projective.lean` is the right treatment and this file
+adds
 nothing for it.  `EveryProjectiveIsSumOfFG` names the hypothesis they supply — and the one case
 this development needs, the *hereditary* one, is not quoted but proved:
 `Albrecht.exists_directSum_fg` in `ForMathlib/Albrecht.lean`. -/
@@ -250,7 +251,7 @@ def EveryProjectiveIsSumOfFG (R : Type u) [Ring R] : Prop :=
 /-! ## Corollary 4.7
 
 Part (2) is provable with what is already here.  Part (1) needs the Bergman–Dicks realisation
-theorem, which is axiom A5 — `bergmanDicksData` in `KappaMonoid/Axioms.lean`. -/
+theorem, `bergmanDicksData` in `KappaMonoid/Axioms.lean`. -/
 
 section Cor47
 
@@ -260,13 +261,13 @@ variable {κ : Cardinal.{u}}
 isomorphic.  Both are universal `κ`-extensions of it (Theorem 3.11(2)), and a universal
 `κ`-extension is unique up to a unique isomorphism.
 
-This needs no external input, and it is what makes Corollary 4.7(2) reachable now. -/
+This needs no external input, which is what keeps Corollary 4.7(2) axiom-free. -/
 theorem isKIso_of_braidedOver_same {lam : Cardinal.{u}} {S : Type u} [LMonoid lam S]
     {H₁ H₂ : Type u} [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ κ)
     {f : S → H₁} {g : S → H₂}
     (hbr₁ : IsBraidedOver lam κ S H₁ hlk f) (hbr₂ : IsBraidedOver lam κ S H₂ hlk g) :
     ∃ e : H₁ → H₂, KMonoid.IsKHom κ e ∧ (∀ s, e (f s) = g s) ∧ Function.Bijective e :=
-  -- the test universe of the universal property is now a parameter, so it has to be pinned:
+  -- the test universe of the universal property is a parameter, so it has to be pinned:
   -- here both extensions live in `Type u` and are compared against test objects there.
   have h₁ : IsUniversalKExtension.{u, u, u, u} lam κ S H₁ hlk f := hbr₁.isUniversalKExtension hlk
   have h₂ : IsUniversalKExtension.{u, u, u, u} lam κ S H₂ hlk g := hbr₂.isUniversalKExtension hlk
@@ -381,17 +382,16 @@ theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M
       (summand_projective bd.R κ c.out) hfin
     exact ⟨a, Subtype.ext ((projClass bd.R κ hκ).eq_of_iso ((hiso a).some.trans ha.some.symm))⟩
 
-/-- **Corollary 4.7(1)**, (i) ⇒ (ii), the direction that needs Bergman–Dicks (axiom A5).
+/-- **Corollary 4.7(1)**, (i) ⇒ (ii), the direction that needs Bergman–Dicks.
 
 Given `x ∈ H` with `H` braided over `add x`, and a field `k`, the monoid `add x` is reduced with
-order-unit `x` — steps 1 and 2 of the plan — so A5 supplies a left hereditary `k`-algebra `R`
-with `V(R) ≅ add x`.  Albrecht's theorem feeds `corollary_4_5_three`, making `V^κ(R)` braided over
-`V(R)`; `isKIso_of_braidedOver_same` then identifies `V^κ(R)` with `H`.
+order-unit `x`, so the axiom supplies a left hereditary `k`-algebra `R` with `V(R) ≅ add x`.
+Albrecht's theorem feeds `corollary_4_5_three`, making `V^κ(R)` braided over `V(R)`;
+`isKIso_of_braidedOver_same` then identifies `V^κ(R)` with `H`.
 
-The conclusion is the paper's: a hereditary `k`-algebra realising `H`.  It used to carry
-`EveryProjectiveIsSumOfFG R` as well, because Corollary 4.6 was quoted rather than proved; since
-Albrecht's theorem is `ForMathlib/Albrecht.lean` that conjunct is recoverable from
-`IsLeftHereditary R` and has been dropped. -/
+The conclusion is the paper's: a hereditary `k`-algebra realising `H`, with no further condition on
+its projectives — Albrecht's theorem recovers `EveryProjectiveIsSumOfFG R` from
+`IsLeftHereditary R`. -/
 theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ κ)
     (k : Type u) [Field k] (x : H)
     (hbr : letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset hκ x)
@@ -425,14 +425,14 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
     show (y : H) + z = _
     rw [hnsmul, ← KMonoid.cmul_natCast]
     exact hzn
-  -- Step 2: Bergman–Dicks (axiom A5) realises `add x` as `V(R)` for a hereditary `k`-algebra `R`
+  -- Step 2: Bergman–Dicks realises `add x` as `V(R)` for a hereditary `k`-algebra `R`
   have bd := bergmanDicksData k ↥(KMonoid.addOf (κ := κ) x) ⟨x, hxmem⟩ hred hunit
   haveI := bd.hereditary
   refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, ?_⟩
   letI := (projClass bd.R κ hκ).instKMonoid hκ
   letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
     ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
-  -- Step 3: Albrecht's theorem (A7) for the hereditary `R` is the hypothesis of Corollary 4.5(3)
+  -- Step 3: Albrecht's theorem for the hereditary `R` is the hypothesis of Corollary 4.5(3)
   obtain ⟨hbr₂, -⟩ := corollary_4_5_three.{u, u} bd.R κ hκ Albrecht.exists_directSum_fg
   -- Step 4: transport that braiding along `add x ≅ V(R)`
   obtain ⟨Φ, hΦhom, hΦinj, hΦsurj⟩ := bd.exists_isLMonoidHom_bijective κ hκ
@@ -540,17 +540,12 @@ end KRSA
 
 /-- **Examples 4.8(1)**, as the paper states it: `V^κ(C) ≅ F_κ(B)`.
 
-This is the isomorphism that could not be expressed before step 9 of `REFACTOR-PLAN.md`.  `F_κ(B)`
-is cut out of `B → F_κ` and so lives in `Type (u+1)`, while `V^κ(C)` lives in `Type u`; the
-`universal` field of `IsUniversalKExtension` used to quantify over test objects in the extension's
-*own* universe, so `isUniversalKExtension_unique` could only compare two extensions in one universe
-and the two sides were incomparable.  With the test universe a parameter, both sides are universal
-at both universes — `krsa_ascent` gives a braiding, and a braiding is universal at every test
-universe — and `isUniversalKExtension_unique'` compares them.
-
-So the deviation recorded in `README.md` under "The statement corrected in Examples 4.8(1)" is
-gone: what remains is the *stronger* pair, this isomorphism and the `B`-indexed universal property
-`krsa_ascent_free`. -/
+The two sides live in different universes: `F_κ(B)` is cut out of `B → F_κ` and so lives in
+`Type (u+1)`, while `V^κ(C)` lives in `Type u`.  That is why the test universe of
+`IsUniversalKExtension` is a parameter — both sides are then universal at both universes
+(`krsa_ascent` gives a braiding, and a braiding is universal at every test universe), and
+`isUniversalKExtension_unique'` compares them.  `krsa_ascent_free`, the `B`-indexed universal
+property, is the companion statement. -/
 theorem krsa_ascent_iso {R : Type u} [Ring R] {κ : Cardinal.{u}}
     (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
     {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (B : Type u)

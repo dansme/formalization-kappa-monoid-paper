@@ -82,9 +82,9 @@ theorem mk_support_subtype_lt {F : Form} (hF : F.IsFinite)
 
 /-- **Lemma 5.2(1)**: an infinite and a finite form cannot be braided.
 
-**This corrects the scaffold**, which omitted the non-degeneracy hypotheses: with `x₁ = 0` the
-infinite form `(ℵ₀, 0)` has the identically zero family, which *is* braided with the finite form
-`(0, 0)`.  In §5 the hypotheses come free from non-cyclicity — see `ne_zero_of_not_cyclic`.
+**The non-degeneracy hypotheses are needed**: with `x₁ = 0` the infinite form `(ℵ₀, 0)` has the
+identically zero family, which *is* braided with the finite form `(0, 0)`.  In §5 they come free
+from non-cyclicity — see `ne_zero_of_not_cyclic`.
 
 Proof: the finite form's family has finite support, so by the converse of Lemma 3.4(1)
 (`IsBraided.mk_support_lt`, which needs reducedness of `add (x₁ + x₂)`) a braided partner has
@@ -329,8 +329,8 @@ sums, so `v ≡ 0`:
 
     cI = (j ↦ j / (m'+1)) ⊕ (j ↦ j / (n'+1)),   cJ = (j ↦ j) ⊕ (j ↦ j / m),   u ≡ m x₂.
 
-**This corrects the scaffold**, which omitted the generation hypothesis `hgen`; it is a standing
-assumption of §5 and the `α = ℵ₀` case genuinely needs it. -/
+**The generation hypothesis `hgen` is needed**: it is a standing assumption of §5, and the
+`α = ℵ₀` case genuinely uses it. -/
 theorem braidedForms_of_top (hmem : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂) (hmix : NoMixedForms x₁ x₂)
     (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H)) (α : ℕ∞)
     (hFm : ∀ n, familyOfForm x₁ x₂ (α, ⊤) n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
@@ -614,8 +614,8 @@ family (`exists_block_value`).  Finally `I (a, K+1)` contains no `x₁`-slot at 
 zero `X₁`-coefficient (`x₁ ∉ add x₂`) and finite `X₂`-coefficient (`NoMixedForms`, applied to that
 finite multiple of `x₂`).
 
-**This corrects the scaffold**, which omitted the generation hypothesis `hgen`; it is a standing
-assumption of §5, and the last step needs it to write `v (a,K+1)` in a form at all. -/
+**The generation hypothesis `hgen` is needed**: it is a standing assumption of §5, and the last
+step uses it to write `v (a,K+1)` in a form at all. -/
 theorem lemma_5_2_four (hmem : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂) (hmix : NoMixedForms x₁ x₂)
     (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H)) (m n : ℕ)
     (hFm : ∀ i, familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))

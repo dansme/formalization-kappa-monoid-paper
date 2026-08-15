@@ -4,7 +4,7 @@ compare — incomparable, equal, or `add x₁ ⊊ add x₂`.
 
 All three are bookkeeping on top of Theorem 5.3; (2) and (3) additionally go through Proposition
 5.4.  The two "the converse is not true" claims are witnessed by `ℕ₀² ∪ {∞}`, in
-`KappaMonoid/Section5/Counterexample.lean`.
+`KappaMonoid/TwoGen/Counterexample.lean`.
 -/
 import KappaMonoid.TwoGen.Trace
 
@@ -37,9 +37,8 @@ The class of rings is the paper's own: part (1) reads "for a ring whose projecti
 direct sums of finitely generated modules", which is `EveryProjectiveIsSumOfFG R` verbatim — the
 corollary does not ask for hereditariness, and neither does this statement.
 
-**This corrects the scaffold.**  The paper's condition is quantified over `1 ≤ i ≠ j ≤ 2`, so each
-of its two clauses has two instances; the scaffold kept only one of each, and both instances of
-each are needed.  Without the `X₂`-half of the first clause a finite and an infinite form could
+**A correction to the paper's transcription.**  The condition is quantified over `1 ≤ i ≠ j ≤ 2`,
+so each of its two clauses has two instances, and both are needed.  Without the `X₂`-half of the first clause a finite and an infinite form could
 share a value, so condition (iii) of Theorem 5.3 would not follow; and the two halves of the second
 clause are exactly condition (ii) of Theorem 5.3 for the two orderings.
 
@@ -340,7 +339,8 @@ explicit relation condition.
 which projective modules are direct sums of finitely generated modules".  The paper's part (3) also
 records two further reformulations of realizability — that `R` may be taken with a finitely
 generated projective `P` whose `P^{(ℵ₀)}` is not free, and that this is the same as
-`Tr(P₁) ⊊ Tr(P₂)`.  Those are not part of the statement here; see `SECTION5-PLAN.md`.
+`Tr(P₁) ⊊ Tr(P₂)`.  Those are not part of the statement here; see `README.md`, "What is not
+formalised".
 
 (i) ⇒ (ii): condition (i) of Theorem 5.3 for the ordered pair `(x₂, x₁)` gives `β` finite — an
 infinite `β` would put `x₂` in `add x₁` — and condition (ii) for that pair is the relation.

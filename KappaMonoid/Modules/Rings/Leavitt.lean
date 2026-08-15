@@ -2,22 +2,22 @@
 **Leavitt's realisation theorem, deduced from Bergman–Dicks.**
 
 Every cyclic monoid `C_{m,n}` with `m ≥ 1`, `n ≥ 1` is the monoid of finitely generated free
-modules over some ring.  This was axiom A2 of this development; it is now a consequence of axiom
-A5, which is the deeper statement and was assumed anyway.
+modules over some ring.  It is a consequence of the Bergman–Dicks axiom, which is the deeper
+statement and is assumed anyway.
 
 The deduction is the obvious one once `BergmanDicksData` records that the order-unit is the class
 of the ring itself (`iso_unit`, `[R] = u`, which is what Bergman's construction gives):
 
 * `C_{m,n}` is a monoid — `ForMathlib/CyclicMonoid.lean` builds it as `ℕ₀` modulo the congruence
   `∼_{m,n}` — it is conical exactly because `m ≥ 1`, and the class of `1` is an order-unit;
-* so A5 hands back a hereditary algebra `R` with `V(R) ≅ C_{m,n}` and `[R] ↦ 1`;
+* so the axiom hands back a hereditary algebra `R` with `V(R) ≅ C_{m,n}` and `[R] ↦ 1`;
 * the module realising `k • 1` is then `R^k`, by induction on `k` from `iso_add` and `iso_unit`;
 * and `a ↦ [P a]` being injective turns `R^k ≅ R^l` into `k ∼_{m,n} l`.
 
 `Nontrivial R` comes out of the same injectivity: over a trivial ring every module is trivial, so
 `P 1 ≅ P 0`, forcing `1 = 0` in `C_{m,n}` — false for `m ≥ 1`.
 
-The trade is deliberate and worth stating plainly: §2.3 now rests on Bergman–Dicks rather than on
+The trade is deliberate and worth stating plainly: §2.3 rests on Bergman–Dicks rather than on
 Leavitt's much more elementary theorem.  Leavitt's own proof is a seven-page minimal-counterexample
 argument on leading terms, and it covers only type `(1,k)` — his type `(n,1)` rings are in the
 earlier [Leavitt56; Leavitt57], and even the normal form his argument computes with is quoted from
@@ -81,7 +81,7 @@ noncomputable def leavittData (m n : ℕ) (hm : 1 ≤ m) (_hn : 1 ≤ n) : Leavi
     intro y
     obtain ⟨k, rfl⟩ := CyclicMonoidU.surjective_mk m n y
     exact ⟨0, k, by rw [add_zero, CyclicMonoidU.nsmul_mk_one]⟩
-  -- so A5 realises it
+  -- so the axiom realises it
   have bd := bergmanDicksData (ULift.{u} ℚ) (CyclicMonoidU.{u} m n)
     (CyclicMonoidU.mk m n 1) hred hunit
   -- the module realising `k • 1` is `R^k`

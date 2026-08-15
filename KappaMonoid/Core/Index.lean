@@ -23,8 +23,8 @@ namespace KappaMonoid
 /-! ## Preliminaries on cardinals and index types -/
 
 /-- `Idx κ` is a fixed type of cardinality `κ`, playing the role of the von Neumann cardinal
-`κ` used as an index set in the paper.  It no longer occurs in the axioms; it is kept for the
-constructions of Sections 3 and 4, which produce `κ`-indexed data. -/
+`κ` used as an index set in the paper.  The axioms are stated over arbitrary index types instead;
+`Idx κ` serves the constructions of Sections 3 and 4, which produce `κ`-indexed data. -/
 abbrev Idx (κ : Cardinal.{u}) : Type u := κ.ord.ToType
 
 @[simp] theorem mk_Idx (κ : Cardinal.{u}) : #(Idx κ) = κ := mk_ord_toType κ

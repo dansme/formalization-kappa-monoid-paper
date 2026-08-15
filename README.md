@@ -9,260 +9,218 @@ Theorem 3.11 (universal `κ`-extensions), Proposition 3.14 (universal extensions
 monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`), Theorem 5.3 (which
 two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring) and all of §§2–5.
 
+One classical theorem is assumed rather than proved — Bergman–Dicks realisation, see "The assumed
+result". Everything else, §3 and the monoid-theoretic parts of §§4–5 included, depends only on
+`propext`, `Classical.choice` and `Quot.sound`.
+
+A handful of statements are formalised in a repaired form; they are listed under "Deviations from
+the paper", and each is also flagged in the docstring of the result it affects. "What is not
+formalised" lists the deliberate omissions.
+
 The development is layered by subject, and each layer is an entry point of its own: importing
 `KappaMonoid.Core` or `KappaMonoid.Braiding` gets the monoid theory without the module theory, the
-assumed classical results, or — since the core no longer says `import Mathlib` — most of Mathlib.
+assumed result, or — since the core does not say `import Mathlib` — most of Mathlib.
 `scripts/check_layering.sh` enforces this in CI; Lake would not.
 
 | Layer | Depends on | Contents |
 |---|---|---|
-| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean` (Mathlib has no trace ideal — `Module.trace` is the trace of an endomorphism), `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean` (hereditary rings on either side, which Mathlib does not have), and the retired axioms `FreeRank.lean` (A1), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (A3), `CyclicMonoid.lean` (A4, and `C_{m,n}` as a monoid, which A2's deduction needs), `Kaplansky.lean` (A6) and `Albrecht.lean` (A7) |
+| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean`, `FreeRank.lean`, `HomDirectSum.lean` + `SimpleMultiplicity.lean`, `CyclicMonoid.lean` (also `C_{m,n}` as a monoid), `Kaplansky.lean` and `Albrecht.lean` — see "Classical results proved here" |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
-| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
+| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky in `κ`-monoid form, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
 | `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `Diophantine` (**Examples 3.3(1)**, §3.2: **Proposition 3.14**, **Example 3.15**), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
-| `KappaMonoid/Axioms/` | Mathlib | The one classical result assumed rather than proved, A5 — see below |
+| `KappaMonoid/Axioms/` | Mathlib | The one classical result assumed rather than proved — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
 
 `Forms`, `Prelim`, `Lemma52` and `Counterexample` are pure monoid theory: §5's braiding material
-mentions no module and uses no axiom.  The module theory enters at `Lemma51`.
-
-**Section 2 is complete.** Every definition, example, lemma and proposition of §2 is stated and
-proved, `sorry`-free.  Of the six results §2 once assumed, four are now proved (A1, A3, A4) or
-derived (A2, from A5); Proposition 2.16 reaches A5 through Leavitt's theorem, and everything else
-in §2 is axiom-free.  See "The assumed results".  Leavitt's theorem carries one added hypothesis,
-`m ≥ 1`, without which it is not merely too strong but false; see "The hypothesis added to
-Leavitt's theorem" below.
-
-**Section 3 is complete.** Every definition, lemma, proposition and example of §3 is stated and
-proved, `sorry`-free and axiom-free — including Theorem 3.11 and its converse, all of Examples 3.3,
-Examples 3.12, Lemma 3.13, Proposition 3.14 and Example 3.15. Two deliberate omissions are
-documented: Lemma 3.4(2)(3) and Lemma 3.5 (the `ι × ℕ` normal form *is* their content, see the
-"limit well-order" note) and Remark 3.16 (a pointer to the literature). Proposition 3.14(2) carries one added
-hypothesis — the saturation of `H`, which the paper claims is automatic but is not for systems with
-inequalities; it *is* automatic without them, so the inequality-free case
-(`prop_3_14_two_of_ineqs_empty`) is the paper's statement verbatim. See "The hypothesis added to
-Proposition 3.14(2)" below.
-
-**Section 4 is complete.** Definition 4.1 through Examples 4.8(1) are stated and proved. Corollary
-4.7(1) is an equivalence: (iii) ⇒ (i) is Corollary 4.5(3) moved along the identification
-`V(R) = add [R]` (`addOf_unitClass_eq`) and needs no axiom; (i) ⇒ (ii)
-(`corollary_4_7_one_forward`) is the only result in the build that uses Bergman–Dicks realisation,
-axiom A5 below — Albrecht's theorem, which it also invokes, is proved. Corollary 4.7(2) needs no
-axiom either — Corollary 4.5(2) plus uniqueness of universal `κ`-extensions — and neither does
-`kaplansky`, since Kaplansky's theorem is proved. Corollary 4.6 is Corollary 4.5(3) together with six results quoted from
-the literature, none of them monoid-theoretic and none in Mathlib, so it stays a documented stub in
-`Modules/Projective.lean`. Examples 4.8(1) is proved in a corrected form, for a universe reason: see "The
-statement corrected in Examples 4.8(1)" below.
-
-**Section 5 is complete.** Every lemma, theorem, proposition and corollary of §5 is stated and
-proved, `sorry`-free. Theorem 5.3 and Corollary 5.5 use no axiom beyond A5, which enters through
-Corollary 4.7(1); Proposition 5.4 and its hereditary half use none at all. Six statements needed
-correcting before they could be proved — the scaffold had dropped hypotheses that the paper's
-standing assumptions supply, and in two places the quantifier was too wide; all six are recorded in
-"The statements corrected in Section 5" below.
+mentions no module and uses no axiom. The module theory enters at `Lemma51`.
 
 ## Reading the formalisation against the paper
 
 `KappaMonoid/Paper/` is what to read with the PDF open; nothing else depends on it.
 
-* `Paper/Section5.lean` restates **every numbered result of §5** in the paper's own terms and
-  discharges it from `TwoGen/`.  Two things it adds that the library statements lack.  `Setting5`
-  bundles the section's standing assumption — *"throughout the section, let `H` be a non-cyclic
-  `ℵ₀`-monoid generated by two elements `x₁` and `x₂`"* — which in the library travels as two loose
-  arguments, and which the scaffold dropped from Lemma 5.2(3) and 5.2(4): two of the six corrected
-  statements below were exactly that mistake.  And `IsRealizableAsV` names the nine-line
-  "`H ≅ V^{ℵ₀}(R)` for a ring whose projectives are sums of finitely generated modules" that
-  Theorem 5.3 and all three parts of Corollary 5.5 repeat.
-* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 97 entries between them,
+* `Paper/Section5.lean` restates **every numbered result of §5** in the paper's own terms. Two
+  things it adds that the library statements lack. `Setting5` bundles the section's standing
+  assumption — *"throughout the section, let `H` be a non-cyclic `ℵ₀`-monoid generated by two
+  elements `x₁` and `x₂`"* — which in the library travels as two loose arguments. And
+  `IsRealizableAsV` names the nine-line "`H ≅ V^{ℵ₀}(R)` for a ring whose projectives are sums of
+  finitely generated modules" that Theorem 5.3 and all three parts of Corollary 5.5 repeat.
+* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 99 entries between them,
   one per numbered result, each an `alias` naming the declaration that formalises it and the file
-  it lives in.  The alias fails to compile if the declaration goes, so the index cannot rot the way
-  the tables in this file did.  Each closes with what the development deliberately does *not*
-  formalise, and why: Lemma 3.4(2)(3), Lemma 3.5, Remark 3.16, Corollary 4.6, Examples 4.8(2).
+  it lives in. The alias fails to compile if the declaration goes, so the index cannot rot. Each
+  closes with what the development deliberately does *not* formalise, and why.
 * `Paper/Definition21.lean` transcribes **Definition 2.1** literally and proves it agrees with the
   `KMonoid` the development works with.
 
-## Conventions
-
 `CLAUDE.md` collects what a contributor (human or model) needs before touching the files: the build
 commands, the Lean house style, the axiom and deviation discipline, the recurring elaboration traps
-of this development, and the workflow that keeps the edit/build loop cheap. The plan documents —
-`SECTION{3,4,5}-PLAN.md` for the sections, `REFACTOR-PLAN.md` for the reorganisation — defer to it
-and only record what is specific to their subject.
+of this development, and the workflow that keeps the edit/build loop cheap.
 
-## The assumed results
+## The assumed result
 
-One classical theorem is taken as an axiom, in `KappaMonoid/Axioms/Modules.lean`.  It carries the
-standard proof sketch it stands for:
+One classical theorem is taken as an axiom, in `KappaMonoid/Axioms/Modules.lean`. It carries the
+standard proof sketch it stands for; assuming a true statement cannot make the development
+inconsistent, but a *mis-stated* axiom is false and a false axiom proves everything, so it should
+be checked against the literature before it is relied on.
 
 | Axiom | Statement | Used by |
 |---|---|---|
-| `bergmanDicksData` (A5) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit `u` is `V(R)` for a hereditary `k`-algebra, with `[R] = u` | `corollary_4_7_one_forward`, and `prop_2_16` through Leavitt's theorem |
+| `bergmanDicksData` (A1) | Bergman–Dicks realisation: every reduced commutative monoid with order-unit `u` is `V(R)` for a hereditary `k`-algebra, with `[R] = u` | `corollary_4_7_one_forward`, and `prop_2_16` through Leavitt's theorem |
 
 The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
 declarations under `KappaMonoid/` differs from the one above, so adding one means editing the
-workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 43
+workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 47
 headline results, whether each one uses it — with `#assert_axioms`, a command over `collectAxioms`
-that fails both when a result gains an axiom and when it loses one. The paragraphs below are
-therefore checked, not merely written.
+that fails both when a result gains an axiom and when it loses one. The claims below are therefore
+checked, not merely written.
 
-**A1 was the sixth, and is now proved.**  Invariance of infinite rank — a free module with an
-infinite basis is not generated by fewer elements than its rank — is `mk_le_of_span_eq_top` in
-`KappaMonoid/ForMathlib/FreeRank.lean`.  Mathlib's `Module.Basis.le_span` says the same but assumes
-`RankCondition R`, which the application here does not have: it covers finite bases too, where the
-statement is genuinely about invariant basis number.  For an *infinite* basis nothing beyond
-nontriviality is needed, and the proof is the support argument the axiom's docstring described —
-each element of a spanning set has finite `b`-support, the union of those supports covers the basis
-by linear independence, and a `#S`-indexed union of finite sets has size at most `#S · ℵ₀ = #S`.
-The finite-`S` case is vacuous: the union would be finite and the basis is not.
+Two results invoke A1 directly: `corollary_4_7_one_forward`, the implication (i) ⇒ (ii) of
+Corollary 4.7(1), and `prop_2_16`, which reaches it through Leavitt's theorem. In §5, Theorem 5.3's
+backward direction and all three parts of Corollary 5.5 inherit it from Corollary 4.7(1), and
+nothing else does: Lemma 5.1, all of Lemma 5.2, Theorem 5.3's forward direction, both halves of
+Proposition 5.4 and the counterexample are axiom-free. So is the rest of §4 — the identification
+`V(R) = add [R]` (`addOf_unitClass_eq`), Kaplansky's theorem in its `κ`-monoid form, the other
+direction of Corollary 4.7(1), Corollary 4.7(2), Examples 4.8(1) — and so is the whole of §§2.2 and
+3, `prop_2_17_one` and Example 2.13's `isFaithful_unitClass` included.
 
-It is stated in the *generation* form rather than the two-bases form because the complement
-appearing in Example 2.13 is merely projective, not free, so there is no second basis to compare
-against; the familiar two-bases statement is `mk_eq_mk_of_infinite`, derived from it.  The file
-depends on nothing in this development and is the natural shape for upstreaming: a
-`RankCondition`-free `Basis.le_span` for infinite bases.
+**Leavitt's realisation theorem is a consequence of A1, not a second assumption.** Every cyclic
+monoid `C_{m,n}` with `m, n ≥ 1` is the monoid of finitely generated free modules over some ring:
+`leavittData` in `KappaMonoid/Modules/Rings/Leavitt.lean`. The deduction uses the part of Bergman's
+construction that says which element is the order-unit, `[R] = u`
+(`BergmanDicksData.iso_unit`) — without it a realisation `V(R) ≅ M` cannot be turned into a
+statement about *free* modules. The rest is bookkeeping: `ForMathlib/CyclicMonoid.lean` builds
+`C_{m,n}` as `ℕ₀` modulo the congruence `∼_{m,n}`, which is conical exactly when `m ≥ 1` and has
+the class of `1` as an order-unit; A1 realises it; `R^k` is the module realising `k • 1` by
+induction from `iso_add` and `iso_unit`; and injectivity of `a ↦ [P a]` turns `R^k ≅ R^l` into
+`k ∼_{m,n} l`. `Nontrivial R` falls out of the same injectivity, since `1 ≠ 0` in `C_{m,n}`.
 
-**A3 was the fifth, and is now proved too.**  Uniqueness of the multiplicities of simple modules —
-if `⨁ A i ≅ ⨁ B j` with all summands simple, each isomorphism class occurs the same number of
-times on both sides, infinite multiplicities included — is
-`SimpleMultiplicity.mk_multiplicity_eq` in `KappaMonoid/ForMathlib/SimpleMultiplicity.lean`.  The
-argument is the classical one: apply `Hom_R(S, -)` for a simple `S`.  It turns the direct sum into
-a direct sum (`ForMathlib/HomDirectSum.lean` — Hom out of a *cyclic* module commutes with direct
-sums, which Mathlib does not have; it has only the easy direction, Hom out of a sum being a
-product), each summand contributes `End_R(S)` or `0` by Schur, and rank over the division ring
-`End_R(S)` is well defined.  `Module.End R S` acts on `S →ₗ[R] M` on the right, so the rank is
-taken over `(Module.End R S)ᵐᵒᵖ`.
+The trade is deliberate: §2.3 rests on Bergman–Dicks, which is a deeper theorem than Leavitt's and
+is assumed anyway, rather than on a second assumption. Leavitt's own proof is a seven-page
+minimal-counterexample argument on leading terms, it covers only type `(1,k)` — his type `(n,1)`
+rings are in the earlier [Leavitt56; Leavitt57] — and even the normal form it computes with is
+quoted from those papers rather than proved.
 
-**A4 was the fourth, and is now proved too.**  The classification of cyclic monoids — the map
-`k ↦ k • u` is either injective, or its kernel is the congruence `∼_{m,n}` of `C_{m,n}` — is
-`cyclicMonoidClassification` in `KappaMonoid/ForMathlib/CyclicMonoid.lean`, which is also where
-`CyclicRel` now lives.  Mathlib has nothing on the subject: `IsCyclic` is about groups.  The proof
-is the one the axiom's docstring described, with the step that argument glosses over made explicit:
-the set of periods at `m` is closed under *differences*, not merely under addition, so division with
-remainder and the minimality of `n` make it exactly the multiples of `n` — a submonoid of `ℕ`
-containing `n` would not be enough.  The formalised statement drops the generation hypothesis the
-axiom carried, since it is a statement about the kernel of `k ↦ k • u` and holds for any element of
-any commutative monoid; `prop_2_16` accordingly applies it to `u` itself rather than to the
-submonoid `u` generates.
+## Classical results proved here
 
-**A6 was the third, and is now proved too.**  Kaplansky's theorem — every projective module is a
-direct sum of countably generated projective modules — is
-`Module.Projective.exists_directSum_countablyGenerated` in `KappaMonoid/ForMathlib/Kaplansky.lean`.
-Mathlib does not have it in any form.
+`KappaMonoid/ForMathlib/` proves six things that Mathlib does not have, in files that depend on
+nothing else in the development and are the natural shape for upstreaming.
 
-The argument is the classical one, but it comes out as a single induction rather than two.  `P` is
-the image of an idempotent `π` on a free module `B →₀ R`.  Call a set `S` of coordinates *good*
-when the coordinate subspace it spans is `π`-invariant; that is exactly closure under
-`b ↦ supp (π (single b 1))`, so one closure operator does the work of the axiom's sketch, which
-closed up alternately under the supports of the `P`- and the `Q`-components.  `1 − π` needs no
-separate step, because `e_b − π e_b` is supported in `{b} ∪ supp (π e_b)`.  The step function has
-finite values, so the closure of a *single* coordinate is a countable union of finite sets, hence
-countable — `Reach`, `cl` and `iter` in that file.
+**Hereditary rings** (`Hereditary.lean`). Mathlib has no notion of one. `IsLeftHereditary R` says
+every left ideal is projective, `IsRightHereditary R` says every right ideal is — equivalently,
+every left ideal of `Rᵐᵒᵖ` — and `IsHereditary R` is both. The development is about *left* modules
+and the paper about right ones, so the mirror of the paper's "right hereditary ring" is
+`IsLeftHereditary`, and that is what A1 records and what Theorem 5.3 and Corollary 4.7(1) produce.
+Bergman's Theorem 6.2 gives a ring hereditary on *both* sides, so `IsHereditary R` would be the
+fully faithful transcription of A1 and of the paper's Corollary 4.7(1)(ii); only the left half is
+recorded, because it is the only half anything uses and recording less is the safe direction for an
+assumption.
+
+**Invariance of infinite rank** (`FreeRank.lean`). A free module with an infinite basis is not
+generated by fewer elements than its rank: `mk_le_of_span_eq_top`. Mathlib's `Module.Basis.le_span`
+says the same but assumes `RankCondition R`, which the application here does not have: it covers
+finite bases too, where the statement is genuinely about invariant basis number. For an *infinite*
+basis nothing beyond nontriviality is needed — each element of a spanning set has finite
+`b`-support, the union of those supports covers the basis by linear independence, and a
+`#S`-indexed union of finite sets has size at most `#S · ℵ₀ = #S`. The finite-`S` case is vacuous:
+the union would be finite and the basis is not. It is stated in the *generation* form rather than
+the two-bases form because the complement appearing in Example 2.13 is merely projective, not free,
+so there is no second basis to compare against; the familiar two-bases statement is
+`mk_eq_mk_of_infinite`, derived from it.
+
+**Uniqueness of the multiplicities of simple modules** (`SimpleMultiplicity.lean`). If
+`⨁ A i ≅ ⨁ B j` with all summands simple, each isomorphism class occurs the same number of times
+on both sides, infinite multiplicities included: `SimpleMultiplicity.mk_multiplicity_eq`. The
+argument is the classical one: apply `Hom_R(S, -)` for a simple `S`. It turns the direct sum into a
+direct sum (`HomDirectSum.lean` — Hom out of a *cyclic* module commutes with direct sums, which
+Mathlib does not have; it has only the easy direction, Hom out of a sum being a product), each
+summand contributes `End_R(S)` or `0` by Schur, and rank over the division ring `End_R(S)` is well
+defined. `Module.End R S` acts on `S →ₗ[R] M` on the right, so the rank is taken over
+`(Module.End R S)ᵐᵒᵖ`. The converse — that equal multiplicities force an isomorphism — is
+`multMap_injective`.
+
+**The classification of cyclic monoids** (`CyclicMonoid.lean`). The map `k ↦ k • u` is either
+injective, or its kernel is the congruence `∼_{m,n}` of `C_{m,n}`:
+`cyclicMonoidClassification`, and `CyclicRel` lives there too. Mathlib has nothing on the subject —
+`IsCyclic` is about groups. The step usually glossed over is made explicit: the set of periods at
+`m` is closed under *differences*, not merely under addition, so division with remainder and the
+minimality of `n` make it exactly the multiples of `n` — a submonoid of `ℕ` containing `n` would
+not be enough. The statement is about the kernel of `k ↦ k • u` for any element of any commutative
+monoid, so `prop_2_16` applies it to `u` itself rather than to the submonoid `u` generates.
+
+**Kaplansky's theorem** (`Kaplansky.lean`). Every projective module is a direct sum of countably
+generated projective modules: `Module.Projective.exists_directSum_countablyGenerated`.
+
+The argument is the classical one, but it comes out as a single induction rather than two. `P` is
+the image of an idempotent `π` on a free module `B →₀ R`. Call a set `S` of coordinates *good* when
+the coordinate subspace it spans is `π`-invariant; that is exactly closure under
+`b ↦ supp (π (single b 1))`, so one closure operator does the work of the usual alternating closure
+under the supports of the `P`- and the `Q`-components. `1 − π` needs no separate step, because
+`e_b − π e_b` is supported in `{b} ∪ supp (π e_b)`. The step function has finite values, so the
+closure of a *single* coordinate is a countable union of finite sets, hence countable — `Reach`,
+`cl` and `iter` in that file.
 
 The chain of good sets then needs no Zorn's lemma either: well-order `B` and take `Jle π b` and
-`Jlt π b` to be the closures of `Set.Iic b` and `Set.Iio b`.  Closure commutes with unions, so the
+`Jlt π b` to be the closures of `Set.Iic b` and `Set.Iio b`. Closure commutes with unions, so the
 chain is increasing and continuous by construction, and the block `Dblock π b` of coordinates new
-at stage `b` sits inside the closure of `{b}`, hence is countable.  On that block `π` is conjugated
+at stage `b` sits inside the closure of `{b}`, hence is countable. On that block `π` is conjugated
 into a fresh idempotent `blockIdem π b` of the free module — idempotent precisely because both
 `Jle π b` and `Jlt π b` are good — and `Cpart π b`, its image under `π`, is a complement of
-`π (Jlt π b)` inside `π (Jle π b)`.  Exhibiting the complement rather than deducing its existence
-from projectivity of the successive quotient is what removes the second transfinite induction.  It
+`π (Jlt π b)` inside `π (Jle π b)`. Exhibiting the complement rather than deducing its existence
+from projectivity of the successive quotient is what removes the second transfinite induction. It
 is projective because `π` is injective on the range of an idempotent of a free module, and
 countably generated because the block is; the `Cpart π b` are independent, since the sum of those
 below `b` is exactly `π (Jlt π b)`, and their supremum is the whole of `π`'s image.
 
-**A7 was the fourth, and is now proved too.**  Albrecht's theorem — over a hereditary ring every
-projective module is a direct sum of *finitely generated* projective modules — is
-`Albrecht.exists_directSum_fg` in `KappaMonoid/ForMathlib/Albrecht.lean`.  It was split out of A5's
-data one commit before it was proved, which is what made it visible as a separate assumption at
-all.
+**Albrecht's theorem** (`Albrecht.lean`). Over a hereditary ring every projective module is a
+direct sum of *finitely generated* projective modules: `Albrecht.exists_directSum_fg`.
 
-Two ingredients.  First, over a ring all of whose left ideals are projective, a module embedding in
+Two ingredients. First, over a ring all of whose left ideals are projective, a module embedding in
 `Rⁿ` is projective (`projective_of_injective_fin`): peel off one coordinate, and the image there is
-a left ideal, so the projection splits.  Second, Kaplansky's theorem reduces the statement to a
+a left ideal, so the projection splits. Second, Kaplansky's theorem reduces the statement to a
 countably generated projective `Q`, which is the image of an idempotent `π` on the free module
-`ℕ →₀ R`.  Filter that image by `Npart π n`, its part supported on the first `n` coordinates.  Each
+`ℕ →₀ R`. Filter that image by `Npart π n`, its part supported on the first `n` coordinates. Each
 `Npart π n` is *finitely* generated, because `Fpart R n / Npart π n` is the image of `1 − π` on
 `Fpart R n` — finitely generated, hence projective by the first ingredient — so the quotient map
-splits and `Npart π n` is a direct summand of `Rⁿ`.  And `Npart π (n+1) / Npart π n` embeds in `R`
+splits and `Npart π n` is a direct summand of `Rⁿ`. And `Npart π (n+1) / Npart π n` embeds in `R`
 through the `n`-th coordinate, so it is a finitely generated left ideal: projective again, and that
-step of the filtration splits off a finitely generated projective complement.  The complements are
+step of the filtration splits off a finitely generated projective complement. The complements are
 independent and sum to the whole image — the same assembly lemma `iSupIndep_of_disjoint_lt` that
 Kaplansky's proof uses.
 
-The hypothesis is *hereditary*, all left ideals projective, which is what `corollary_4_7_one_forward`
-has from A5.  Albrecht's own theorem is for semihereditary rings, where only the finitely generated
-ideals are assumed projective; that is a genuine strengthening, and the proof above would need the
-first ingredient restated for finitely generated submodules to reach it.  Nothing here needs it.
+The hypothesis is *hereditary*, all left ideals projective, which is what
+`corollary_4_7_one_forward` has from A1. Albrecht's own theorem is for semihereditary rings, where
+only the finitely generated ideals are assumed projective; that is a genuine strengthening, and the
+proof above would need the first ingredient restated for finitely generated submodules to reach it.
+Nothing here needs it.
 
-The assumptions are contained.  `#print axioms prop_2_16` reports exactly A5, reached through
-Leavitt's theorem; and `prop_2_17_one`, along with Example 2.13's `isFaithful_unitClass`, reports
-**no axiom at all** — which is what retiring A1, A3 and A4 bought.
-Note that `multMap_injective` needs *no* axiom: the converse of A3 — that equal multiplicities
-force an isomorphism — is proved, not assumed.  **Everything else — including
-Theorems 3.11 and 4.3, Proposition 2.9, Lemmas 2.14 and 2.15, and even
-`Projective.isOrderUnit_unitClass` — depends only on `propext`, `Classical.choice` and
-`Quot.sound`.**
+## Deviations from the paper
 
-A5 is used by exactly two results: `corollary_4_7_one_forward`, the implication (i) ⇒ (ii) of
-Corollary 4.7(1), and — since Leavitt's theorem is now deduced from it — `prop_2_16`. Everything
-else in §4 — including the identification `V(R) = add [R]` (`addOf_unitClass_eq`), Kaplansky's
-theorem in its `κ`-monoid form, the other direction of Corollary 4.7(1), Corollary 4.7(2) and
-Examples 4.8(1) — reports only `propext`, `Classical.choice` and `Quot.sound`.
+Each of these is also documented in the docstring of the result it affects.
 
-**A2 was the fifth, and is now derived rather than assumed.**  Leavitt's realisation theorem —
-every cyclic monoid `C_{m,n}` with `m, n ≥ 1` is the monoid of finitely generated free modules over
-some ring — is `leavittData` in `KappaMonoid/Modules/Rings/Leavitt.lean`, deduced from A5.
-
-The deduction needs one addition to A5, which Bergman's construction supplies and the axiom had
-simply not recorded: the order-unit is the class of the ring itself, `[R] = u`
-(`BergmanDicksData.iso_unit`).  Without it a realisation `V(R) ≅ M` says nothing about which
-element is `[R]`, so it cannot be turned into a statement about *free* modules.  With it the rest is
-bookkeeping: `ForMathlib/CyclicMonoid.lean` builds `C_{m,n}` as `ℕ₀` modulo the congruence
-`∼_{m,n}`, which is conical exactly when `m ≥ 1` and has the class of `1` as an order-unit; A5
-realises it; `R^k` is the module realising `k • 1` by induction from `iso_add` and `iso_unit`; and
-injectivity of `a ↦ [P a]` turns `R^k ≅ R^l` into `k ∼_{m,n} l`.  `Nontrivial R` falls out of the
-same injectivity, since `1 ≠ 0` in `C_{m,n}`.
-
-The trade is deliberate: §2.3 now rests on Bergman–Dicks, which is a deeper theorem than Leavitt's
-and was assumed anyway, rather than on a second assumption.  Formalising Leavitt's own proof was
-attempted first and abandoned: it is a seven-page minimal-counterexample argument on leading terms,
-it covers only type `(1,k)` — his type `(n,1)` rings are in the earlier [Leavitt56; Leavitt57] —
-and even the normal form it computes with is quoted from those papers rather than proved.  What
-survives from that attempt is `Modules/Rings/Leavitt.lean`'s statement, which is Leavitt's.
-
-## The hypothesis added to Leavitt's theorem
+### The hypothesis added to Leavitt's theorem
 
 The paper quotes Leavitt as: *for every cyclic monoid `C` there exists a ring `R` with
-`V(𝓕) ≅ C`*, and an earlier version of the axioms transcribed that verbatim, as
-`leavittData (m n : ℕ) (_hn : 1 ≤ n) : LeavittData m n`.
+`V(𝓕) ≅ C`*. **That blanket quotation is false.** `C_{0,n}` identifies `0` with `n`, so a ring
+realising it has `R^0 ≅ R^n` with `n ≥ 1` — that is `0 ≅ R^n`, forcing `R = 0` and contradicting
+`Nontrivial R`. The underlying mathematics is not in doubt: `V(𝓕)` of a ring is conical, so no
+cyclic monoid that is a group can be realised, and Leavitt's theorem is stated for `m ≥ 1`. It is
+`C_{0,n}` with `n ≥ 2` that the quotation gets wrong.
 
-**That axiom is false, and `False` was derivable from it.** `C_{0,n}` identifies `0` with `n`, so a
-ring realising it has `R^0 ≅ R^n` with `n ≥ 1` — that is `0 ≅ R^n`, forcing `R = 0` and
-contradicting the `Nontrivial R` field of `LeavittData`. Concretely, `(leavittData 0 1 _).iso_iff 0
-1` produces an isomorphism `0 ≅ R` over a nontrivial ring. The underlying mathematics is not in
-doubt: `V(𝓕)` of a ring is conical, so no cyclic monoid that is a group can be realised, and
-Leavitt's theorem is stated for `m ≥ 1`. It is the blanket quotation that is wrong, for `C_{0,n}`
-with `n ≥ 2`.
+`leavittData` therefore reads `(m n : ℕ) (hm : 1 ≤ m) (_hn : 1 ≤ n)`, and `m ≥ 1` is exactly what
+the deduction from A1 needs, since it is what makes `C_{m,n}` conical. Proposition 2.16 supplies
+the hypothesis rather than assuming it: a faithful order-unit satisfies no relation `n u = 0` for
+`n ≥ 1`, because `ℵ₀ u = (ℵ₀ · n) u = ℵ₀ (n u) = 0 = 0 · u` would give `ℵ₀ u ≼ 0 u`. That is
+`KMonoid.nsmul_ne_zero_of_faithful` in `Core/OrderUnit.lean`, and it is the formal content of the
+paper's remark that a faithful generator "fixes the realization issue" — the size-zero submonoid of
+a cyclic `κ`-monoid with faithful order-unit is never a group, so `m ≥ 1` always holds where the
+paper applies Leavitt.
 
-The statement now reads `leavittData (m n : ℕ) (hm : 1 ≤ m) (_hn : 1 ≤ n)` — and `m ≥ 1` is
-exactly what the deduction from A5 needs, since it is what makes `C_{m,n}` conical.  Proposition
-2.16 supplies the hypothesis rather than assuming it: a faithful order-unit satisfies no relation
-`n u = 0` for `n ≥ 1`, because `ℵ₀ u = (ℵ₀ · n) u = ℵ₀ (n u) = 0 = 0 · u` would give `ℵ₀ u ≼ 0 u`.
-That is `KMonoid.nsmul_ne_zero_of_faithful` in `Core/OrderUnit.lean`, and it is the formal content
-of the paper's remark that a faithful generator "fixes the realization issue" — the size-zero
-submonoid of a cyclic `κ`-monoid with faithful order-unit is never a group, so `m ≥ 1` always holds
-where the paper applies Leavitt.
+This is the hazard the axiom discipline exists for, and the two CI checks would not catch it: they
+check *which* axioms exist and *who* uses them, not whether an axiom is true. Only a `Nontrivial R`
+field makes such a falsity visible at all.
 
-This is the hazard the axiom discipline exists for, and it is worth being explicit that the two CI
-checks did not catch it: they check *which* axioms exist and *who* uses them, not whether an axiom
-is true. Only the `Nontrivial R` field made the falsity visible at all; a `LeavittData` without it
-would have been consistent and merely useless. Now that `leavittData` is proved from A5 the danger
-is gone — a false statement could no longer be derived — but the hypothesis, and the reason for it,
-are the same.
-
-## The hypothesis added to Theorem 3.11
+### The hypothesis added to Theorem 3.11
 
 Theorem 3.11(1) asserts, for an arbitrary `λ⁻`-monoid `H`, the existence of a `κ`-monoid
 `Ĥ ⊇ H` which is a `λ⁻`-overmonoid of `H`. But Lemma 2.8(1) says every `κ`-monoid is
@@ -284,12 +242,11 @@ hypothesis down exactly:
   the paper's verbatim. This rests on `LMonoid.isConical`, the analogue of Lemma 2.8(1) for
   `λ⁻`-monoids, which the paper asserts at the end of §2.4.
 
-So the deviation from the paper is confined to `λ = ℵ₀`, which is (per Lemma 3.4(4)) the
-interesting case. Example 2.3(1) already flags reducedness as necessary in exactly this
-situation, so this looks like an omission in transcription rather than an error in the
-mathematics.
+So the deviation is confined to `λ = ℵ₀`, which is (per Lemma 3.4(4)) the interesting case.
+Example 2.3(1) already flags reducedness as necessary in exactly this situation, so this looks like
+an omission in transcription rather than an error in the mathematics.
 
-## The hypothesis added to Proposition 3.14(2)
+### The hypothesis added to Proposition 3.14(2)
 
 The remark before Proposition 3.14 asserts that a submonoid of `ℕ₀^n` defined by homogeneous
 linear equations, inequalities and congruences is saturated, by cancellativity of `ℕ₀^n`. For
@@ -307,74 +264,18 @@ and Proposition 3.14(2), whose proof opens by invoking it, fails with it. Take
   this `H`.
 
 `prop_3_14_two` therefore takes the saturation of `H` as a hypothesis (`IsSaturatedFin`), which is
-exactly what Lemma 3.13(2) needs. Only the failure of saturation is formalised; the braiding
-computation is recorded in the docstring of `not_isSaturatedFin_ineqSystem`.
+exactly what Lemma 3.13(2) needs. For a system of **equations and congruences** the paper's
+argument is correct and the hypothesis costs nothing: `isSaturatedFin_of_ineqs_empty` proves it
+(all values in a finite solution are finite, so every linear form has a natural-number shadow and
+the cancellation happens in `ℕ₀`), and `prop_3_14_two_of_ineqs_empty` is Proposition 3.14(2) for
+such a system with no hypothesis beyond `sys.ineqs = ∅`. So the correction is confined to
+inequalities.
 
-For a system of **equations and congruences** the paper's argument is correct and the hypothesis
-costs nothing: `isSaturatedFin_of_ineqs_empty` proves it (all values in a finite solution are
-finite, so every linear form has a natural-number shadow and the cancellation happens in `ℕ₀`),
-and `prop_3_14_two_of_ineqs_empty` is Proposition 3.14(2) for such a system with no hypothesis
-beyond `sys.ineqs = ∅`. So the correction to the paper is confined to inequalities.
+### The statements corrected in Section 5
 
-## Examples 4.8(1), and the universe that used to block it
-
-Examples 4.8(1) concludes `V^κ(C) ≅ F_κ(B)`. That isomorphism was **not expressible** until the
-universal property was generalised, and the README recorded it as a deviation. `F_κ(B)` is cut out
-of `B → F_κ`, so it lives in `Type (u+1)`, while `V^κ(C)` lives in `Type u`; the `universal` field
-of `IsUniversalKExtension` quantified over test objects in the *extension's own* universe, so
-`isUniversalKExtension_unique` could compare two extensions in one universe only, and the two sides
-of the isomorphism were incomparable.
-
-The test universe is now a **parameter** of `IsUniversalKExtension` — Lean cannot quantify over
-universes inside a term, so this is the only way to say "for every `κ`-monoid `K`" — and
-`extend_lhom` was generalised to match, which cost nothing: its proof never used the restriction.
-Both sides are then universal at both universes, since `krsa_ascent` delivers a *braiding* and a
-braiding is universal at every test universe (`IsBraidedOver.isUniversalKExtension`), and
-`isUniversalKExtension_unique'` compares extensions across universes.
-
-So the deviation is gone. `krsa_ascent_iso` is the paper's statement, and `krsa_ascent_free` — the
-`B`-indexed universal property, every map `B → K` extending uniquely along the generators, now for
-`K` in **any** universe — is the stronger companion. The price is that statements mentioning
-`IsUniversalKExtension` must pin the test universe: it appears in no argument, so Lean would leave
-it a metavariable (trap 5 in `CLAUDE.md`). That is why `isBraidedOver_of_isUniversalKExtension`,
-`lemma_3_13_free` and their kin now carry explicit `.{u, v, w, t}` annotations.
-
-## The statements corrected in Section 5
-
-Section 5 was scaffolded before it was proved, and six of its statements had to be corrected on the
-way. Each correction is also recorded in the docstring of the affected result. The first item below
-is no longer one of them — it was resolved by proving Albrecht's theorem — but it is kept because
-it says which of the §5 hypotheses are the paper's and which are not.
-
-**`EveryProjectiveIsSumOfFG R` is no longer carried alongside hereditariness — and where it
-remains, it is mostly the paper's own condition.** Theorem 5.3 and Corollary 4.7(1) used to
-conclude with a hereditary ring *and* the conjunct `EveryProjectiveIsSumOfFG R`, because Corollary
-4.6 was quoted rather than proved and so could not be recovered from hereditariness inside the
-development. Albrecht's theorem is now `ForMathlib/Albrecht.lean`, so it can be, and both
-statements now say exactly what the paper says: `IsLeftHereditary R`, and nothing more.
-
-Reading §5 against the paper afterwards showed that the rest of this item was never a deviation at
-all:
-
-* **Corollary 5.5(1) and (3)** are stated in the paper for "a ring whose projective modules are
-  direct sums of finitely generated modules" — that *is* `EveryProjectiveIsSumOfFG R`, spelled out.
-  The paper does not ask for hereditariness there, and neither do these statements.
-* **Corollary 5.5(2)** is a genuine addition. The paper's clause names only the freeness of the
-  countably (non finitely) generated projectives, but its proof of that direction invokes Theorem
-  5.3's forward direction, which needs the projectives of `R` to be direct sums of finitely
-  generated ones. The hypothesis is added, and the docstring says so.
-* **Proposition 5.4's hereditary half** is a *generalisation*: the paper says "if `R` is
-  hereditary", the formalisation assumes only `EveryProjectiveIsSumOfFG R`, which hereditariness
-  implies. It is also the form Corollary 5.5 needs.
-
-Hereditariness itself is now named rather than spelled out: `IsLeftHereditary`,
-`IsRightHereditary` and `IsHereditary` are defined in `KappaMonoid/ForMathlib/Hereditary.lean`,
-since Mathlib has none of them. The development is about *left* modules and the paper about right
-ones, so the mirror of the paper's "right hereditary ring" is `IsLeftHereditary`, and that is what
-A5 records and what Theorem 5.3 and Corollary 4.7(1) produce. Bergman's Theorem 6.2 gives a ring
-that is hereditary on *both* sides, so `IsHereditary R` would be the fully faithful transcription
-of A5 and of the paper's Corollary 4.7(1)(ii); only the left half is recorded, because it is the
-only half anything uses and recording less is the safe direction for an assumption.
+**Lemma 5.2(1) needs `x₁ ≠ 0` and `x₂ ≠ 0`.** With `x₁ = 0` the infinite form `(ℵ₀, 0)` is braided
+with the finite form `(0, 0)`, which the lemma forbids. `ne_zero_of_not_cyclic` supplies both from
+the standing assumptions of §5.
 
 **Lemma 5.2(3) and 5.2(4) take the generation hypothesis `hgen`.** It is a standing assumption of
 §5 ("let `H` be a non-cyclic `ℵ₀`-monoid generated by two elements") and both proofs genuinely need
@@ -382,23 +283,52 @@ it: in 5.2(3) it is where `t = m' x_i + n' x_j` comes from, and in 5.2(4) it is 
 `v (a, K+1)` be written in a form at all.
 
 **Corollary 5.5(1)'s condition is quantified over both orderings of the generators.** The paper
-writes it for `1 ≤ i ≠ j ≤ 2`, so each of its two clauses has two instances; the scaffold kept only
-one of each, and both are needed. Without the `X₂`-half of the first clause a finite and an infinite
-form could share a value, so condition (iii) of Theorem 5.3 would not follow; and the two halves of
-the second clause are exactly condition (ii) of Theorem 5.3 for the two orderings.
+writes it for `1 ≤ i ≠ j ≤ 2`, so each of its two clauses has two instances, and both are needed.
+Without the `X₂`-half of the first clause a finite and an infinite form could share a value, so
+condition (iii) of Theorem 5.3 would not follow; and the two halves of the second clause are
+exactly condition (ii) of Theorem 5.3 for the two orderings.
 
 **Proposition 5.4's hereditary half and Corollary 5.5(2) quantify over classes, not over all
-projective modules.** As scaffolded, the freeness clause read "every projective module that is not
-finitely generated is free on a countable basis", which is false as soon as `R ≠ 0`: `R^{(ℵ₁)}` is
-projective and not finitely generated, but is not free on a countable basis (axiom A1). The paper
+projective modules.** Read as "every projective module that is not finitely generated is free on a
+countable basis", the freeness clause is false as soon as `R ≠ 0`: `R^{(ℵ₁)}` is projective and not
+finitely generated, but is not free on a countable basis (invariance of infinite rank). The paper
 says "any countably (non finitely) generated projective module", and the carrier of `V^{ℵ₀}(R)` is
 exactly the countably generated projectives, so the statements range over `q : V^{ℵ₀}(R)`.
 
-One thing the paper has that Section 5 does not: part (3) of Corollary 5.5 also records two further
-reformulations of realizability — that `R` may be taken with a finitely generated projective `P`
-whose `P^{(ℵ₀)}` is not free, and that this is the same as `Tr(P₁) ⊊ Tr(P₂)`. The scaffold stated
-part (3) without them, and it is a correct equivalence as it stands; the omission is noted in
-`SECTION5-PLAN.md`.
+**Corollary 5.5(2) also carries `EveryProjectiveIsSumOfFG R`.** The paper's clause names only the
+freeness of the countably (non finitely) generated projectives, but its proof of that direction
+invokes Theorem 5.3's forward direction, which needs the projectives of `R` to be direct sums of
+finitely generated ones.
+
+Two nearby hypotheses are *not* deviations, and are easy to mistake for them. Corollary 5.5(1) and
+(3) are stated in the paper for "a ring whose projective modules are direct sums of finitely
+generated modules" — that *is* `EveryProjectiveIsSumOfFG R`, spelled out. And Proposition 5.4's
+hereditary half is a *generalisation*: the paper says "if `R` is hereditary", the formalisation
+assumes only `EveryProjectiveIsSumOfFG R`, which hereditariness implies, and which is the form
+Corollary 5.5 needs.
+
+## What is not formalised
+
+* **Lemma 3.4(2)(3) and Lemma 3.5** — their content *is* the `ι × ℕ` normal form that
+  `BraidingData` is built on; see "The limit well-order" below.
+* **Remark 3.16** — a pointer to the literature.
+* **The braiding half of the counterexample to Proposition 3.14(2)** — only the failure of
+  saturation is formalised (`not_isSaturatedFin_ineqSystem`); the braiding computation is recorded
+  in its docstring.
+* **Corollary 4.6** — Corollary 4.5(3) together with six results quoted from the literature, none
+  of them monoid-theoretic and none in Mathlib. It stays a documented stub in
+  `Modules/Projective.lean`.
+* **Examples 4.8(2)**.
+* **Two of the three clauses of Corollary 5.5(3).** What is formalised is the equivalence between
+  the relation condition and plain realizability; the paper's part (3) is a *three*-way
+  equivalence, which also records that `R` may be taken with a finitely generated projective `P`
+  whose `P^{(ℵ₀)}` is not free, and that this is the same as `Tr(P₁) ⊊ Tr(P₂)`. Both extra clauses
+  need one more module-theoretic step — that a finitely generated summand of `P^{(ℵ₀)}` is already
+  a summand of some `P^n`, the same `ℵ₀⁻`-smallness argument as `eq_zero_of_finite_cmul_top` — and
+  would be the natural next addition.
+
+One typo in the paper, unrelated to the formalisation: Corollary 5.5(3) reads "The converse is not
+true.2", a stray `2` after the full stop, at `kappa_monoids.tex:2133`.
 
 ## Encoding decisions
 
@@ -478,6 +408,17 @@ breaks up into a disjoint union of countable ones, and conversely) together with
 results: they are absorbed into the definition, which is why `BraidingData` is a plain
 structure over `ι × ℕ` with no order-theoretic side conditions. The cost is that if you ever
 want to reason with a *given* well-order you must transport across the normal form first.
+
+**The test universe of `IsUniversalKExtension` is a parameter.** Examples 4.8(1) concludes
+`V^κ(C) ≅ F_κ(B)` across a universe gap: `F_κ(B)` is cut out of `B → F_κ`, so it lives in
+`Type (u+1)`, while `V^κ(C)` lives in `Type u`. The `universal` field therefore quantifies over
+test objects in a universe of its own — Lean cannot quantify over universes inside a term, so this
+is the only way to say "for every `κ`-monoid `K`" — and `isUniversalKExtension_unique'` compares
+extensions across universes. Both sides of Examples 4.8(1) are universal at both universes, since
+`krsa_ascent` delivers a *braiding* and a braiding is universal at every test universe
+(`IsBraidedOver.isUniversalKExtension`). The price is that statements mentioning
+`IsUniversalKExtension` must pin the test universe explicitly, as it appears in no argument (trap 8
+in `CLAUDE.md`).
 
 **Classes of modules.** There is no type of all `R`-modules, so `ModuleClass R κ` bundles a
 type `carrier` of isomorphism classes, chosen representatives `rep a`, the requirement that

@@ -16,7 +16,7 @@ together with Lemma 3.5 (independence of the chosen well-order), which is why th
 lemmas do not appear as separate results below — they are absorbed into the definition.
 
 Entry point of the braiding layer: import it for all of `KappaMonoid/Braiding/`, which depends
-on `KappaMonoid/Core/` alone — no module theory and none of the assumed classical results.
+on `KappaMonoid/Core/` alone — no module theory and no assumed result.
 -/
 import KappaMonoid.Braiding.Prelim
 import KappaMonoid.Braiding.Defs

@@ -3,16 +3,15 @@
 
 CI already refuses a change to the *set* of `axiom` declarations under `KappaMonoid/`.  It says
 nothing about who depends on them, so a proof that quietly starts using Bergman–Dicks passes.
-`README.md` carries that information as a prose table, which is exactly the kind of table that goes
-stale — one of its entries already had.
+`README.md` carries that information as prose, which is exactly the kind of claim that goes stale.
 
     #assert_axioms KappaMonoid.theorem_3_11 []
     #assert_axioms KappaMonoid.prop_2_16 [bergmanDicksData]
 
 `propext`, `Classical.choice` and `Quot.sound` are always permitted and never listed; everything
 else must be declared, and a mismatch in either direction is an error.  The point of failing on a
-*missing* axiom too is that the claim stays honest when a proof is refactored: if a result stops
-needing A5, the assertion says so and the table gets fixed.
+*missing* axiom too is that the claim stays honest when a proof changes: if a result stops needing
+an axiom, the assertion says so and the table gets fixed.
 -/
 import Lean
 

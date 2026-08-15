@@ -1,8 +1,6 @@
 /-
 **Albrecht's theorem**: over a hereditary ring every projective module is a direct sum of
 *finitely generated* projective modules.
-
-This was assumed as axiom A7 of this development until it was proved here.
 -/
 import KappaMonoid.ForMathlib.Hereditary
 import KappaMonoid.ForMathlib.Kaplansky

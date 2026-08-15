@@ -13,9 +13,9 @@ linear independence forbids; so the subfamily is everything, and counting gives 
 When `S` is infinite that is `#S`; when `S` is finite the subfamily is finite, contradicting the
 infinitude of the basis.
 
-This was assumed as axiom A1 of this development until it was proved here.  It is stated in the
-*generation* form rather than the two-bases form because the application (Example 2.13) has only a
-projective complement, not a second basis; `mk_eq_mk_of_infinite` derives the familiar form.
+It is stated in the *generation* form rather than the two-bases form because the application
+(Example 2.13) has only a projective complement, not a second basis; `mk_eq_mk_of_infinite`
+derives the familiar form.
 
 Both proofs are adapted from the infinite branch of Mathlib's `Module.Basis.le_span`, which is
 where this belongs upstream.
