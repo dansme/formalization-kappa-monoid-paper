@@ -192,12 +192,11 @@ family that is `≡ 1` on an uncountable index type cannot be braided with one s
 countable subset, since `BraidingData`'s pieces have size `< ℵ₀`, so only countably many of them
 can be nonempty, and each nonzero entry of the first family needs its own piece.)
 
-We build the `BraidingData` directly over `ι`: transport a bijection `φ : ℕ ≃ ι` (which exists
-since `ι` is infinite of cardinality `≤ ℵ₀`), run the `ℕ`-arithmetic construction on
-`x ∘ φ, y ∘ φ : ℕ → ℕ`, and place all of the pieces at the single basepoint `a₀ := φ 0`, moving
-the resulting intervals of `ℕ` back into subsets of `ι` via images under `φ`.  (We deliberately
-avoid `IsBraided.reindex`, whose two index types live in the *same* universe `u`: here one side is
-the genuinely `Type 0`-valued `ℕ`, which need not match the ambient `ι : Type u`.) -/
+Transport a bijection `φ : ℕ ≃ ι` — one exists because `ι` is infinite of cardinality `≤ ℵ₀` —
+run the `ℕ`-arithmetic construction above on `x ∘ φ`, `y ∘ φ`, and hand the resulting block
+boundaries, carries and deficits to `IsBraided.of_nat_blocks`, which assembles the `BraidingData`
+over `ι`.  (A *bijection with* `ℕ` is what is needed, not `IsBraided.comp_equiv`, whose two index
+types live in the same universe: here one side is the genuinely `Type 0`-valued `ℕ`.) -/
 theorem isBraided_nat_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀) (x y : ι → ℕ)
     (hx : (Function.support x).Infinite) (hy : (Function.support y).Infinite) :
     letI := LMonoid.ofAddCommMonoid ℕ
@@ -209,123 +208,22 @@ theorem isBraided_nat_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀) (
     · have := hfin
       exact absurd (Set.toFinite (Function.support x)) hx
     · exact hinf
-  have hUL : #(ULift.{u} ℕ) = ℵ₀ := by
-    rw [Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0]
-  have h1 : #(ULift.{u} ℕ) ≤ #ι := by rw [hUL]; exact Cardinal.infinite_iff.mp hιInf
-  have h2 : #ι ≤ #(ULift.{u} ℕ) := by rw [hUL]; exact hι
-  have hmk : #(ULift.{u} ℕ) = #ι := le_antisymm h1 h2
-  obtain ⟨e0⟩ := Cardinal.eq.mp hmk
-  -- `e0 : ULift.{u} ℕ ≃ ι`; compose with `Equiv.ulift : ULift.{u} ℕ ≃ ℕ` to get a plain bijection
-  -- `φ : ℕ ≃ ι` (this is fine as a *term*: `Equiv.trans` does not require matching universes,
-  -- only the theorem `IsBraided.reindex` does — so we avoid calling it and instead build the
-  -- `BraidingData` for `x y : ι → ℕ` directly, using images under `φ`).
-  set φ : ℕ ≃ ι := Equiv.ulift.symm.trans e0 with hφ
-  set x3 : ℕ → ℕ := x ∘ φ with hx3def
-  set y3 : ℕ → ℕ := y ∘ φ with hy3def
-  have hx3 : (Function.support x3).Infinite := by
-    rw [hx3def, Function.support_comp_eq_preimage]
-    intro hfin
-    apply hx
-    rw [← Set.image_preimage_eq (Function.support x) φ.surjective]
+  obtain ⟨φ⟩ := Cardinal.nonempty_equiv_nat_of_le_aleph0 hι hιInf
+  have hsupp : ∀ z : ι → ℕ, (Function.support z).Infinite →
+      (Function.support (z ∘ φ)).Infinite := by
+    intro z hz hfin
+    rw [Function.support_comp_eq_preimage] at hfin
+    apply hz
+    rw [← Set.image_preimage_eq (Function.support z) φ.surjective]
     exact hfin.image _
-  have hy3 : (Function.support y3).Infinite := by
-    rw [hy3def, Function.support_comp_eq_preimage]
-    intro hfin
-    apply hy
-    rw [← Set.image_preimage_eq (Function.support y) φ.surjective]
-    exact hfin.image _
-  have hbI : StrictMono (natBraidBI x3 y3 hx3 hy3) :=
-    strictMono_nat_of_lt_succ (natBraidBI_lt_succ x3 y3 hx3 hy3)
-  have hbJ : StrictMono (natBraidBJ x3 y3 hx3 hy3) :=
-    strictMono_nat_of_lt_succ (natBraidBJ_lt_succ x3 y3 hx3 hy3)
-  set a₀ : ι := φ 0 with ha₀def
-  set I : ι × ℕ → Set ι := fun p =>
-    if p.1 = a₀ then
-      φ '' Set.Ico (natBraidBI x3 y3 hx3 hy3 p.2) (natBraidBI x3 y3 hx3 hy3 (p.2 + 1))
-    else ∅ with hIdef
-  set J : ι × ℕ → Set ι := fun p =>
-    if p.1 = a₀ then
-      φ '' Set.Ico (natBraidBJ x3 y3 hx3 hy3 p.2) (natBraidBJ x3 y3 hx3 hy3 (p.2 + 1))
-    else ∅ with hJdef
-  refine ⟨BraidingData.mk_finsum I J
-    (fun p => by
-      rw [hIdef]; dsimp only
-      split
-      · exact (Set.finite_Ico _ _).image _
-      · exact Set.finite_empty)
-    (fun p => by
-      rw [hJdef]; dsimp only
-      split
-      · exact (Set.finite_Ico _ _).image _
-      · exact Set.finite_empty)
-    (fun p q hpq => by
-      rw [hIdef]; dsimp only
-      by_cases hp : p.1 = a₀ <;> by_cases hq : q.1 = a₀
-      · rw [if_pos hp, if_pos hq]
-        exact Set.disjoint_image_of_injective φ.injective
-          (ico_pairwise_disjoint hbI (fun he => hpq (Prod.ext (hp.trans hq.symm) he)))
-      · rw [if_pos hp, if_neg hq]; exact disjoint_bot_right
-      · rw [if_neg hp, if_pos hq]; exact disjoint_bot_left
-      · rw [if_neg hp, if_neg hq]; exact disjoint_bot_left)
-    (fun p q hpq => by
-      rw [hJdef]; dsimp only
-      by_cases hp : p.1 = a₀ <;> by_cases hq : q.1 = a₀
-      · rw [if_pos hp, if_pos hq]
-        exact Set.disjoint_image_of_injective φ.injective
-          (ico_pairwise_disjoint hbJ (fun he => hpq (Prod.ext (hp.trans hq.symm) he)))
-      · rw [if_pos hp, if_neg hq]; exact disjoint_bot_right
-      · rw [if_neg hp, if_pos hq]; exact disjoint_bot_left
-      · rw [if_neg hp, if_neg hq]; exact disjoint_bot_left)
-    (Set.eq_univ_of_forall fun i => by
-      have hcov := iUnion_Ico_eq_univ_of_strictMono (natBraidBI_zero x3 y3 hx3 hy3) hbI
-      have hi : φ.symm i ∈
-          (⋃ k, Set.Ico (natBraidBI x3 y3 hx3 hy3 k) (natBraidBI x3 y3 hx3 hy3 (k + 1))) := by
-        rw [hcov]; trivial
-      obtain ⟨k, hk⟩ := Set.mem_iUnion.mp hi
-      refine Set.mem_iUnion.mpr ⟨(a₀, k), ?_⟩
-      rw [hIdef]; dsimp only
-      rw [if_pos rfl]
-      exact ⟨φ.symm i, hk, φ.apply_symm_apply i⟩)
-    (Set.eq_univ_of_forall fun i => by
-      have hcov := iUnion_Ico_eq_univ_of_strictMono (natBraidBJ_zero x3 y3 hx3 hy3) hbJ
-      have hi : φ.symm i ∈
-          (⋃ k, Set.Ico (natBraidBJ x3 y3 hx3 hy3 k) (natBraidBJ x3 y3 hx3 hy3 (k + 1))) := by
-        rw [hcov]; trivial
-      obtain ⟨k, hk⟩ := Set.mem_iUnion.mp hi
-      refine Set.mem_iUnion.mpr ⟨(a₀, k), ?_⟩
-      rw [hJdef]; dsimp only
-      rw [if_pos rfl]
-      exact ⟨φ.symm i, hk, φ.apply_symm_apply i⟩)
-    (fun p => if p.1 = a₀ then natBraidU x3 y3 hx3 hy3 p.2 else 0)
-    (fun p => if p.1 = a₀ then natBraidV x3 y3 hx3 hy3 p.2 else 0)
-    (fun a => by
-      by_cases h : a = a₀
-      · simp [h, natBraidV_zero]
-      · simp [h])
-    (fun p => by
-      by_cases hp : p.1 = a₀
-      · simp only [hIdef, if_pos hp]
-        rw [finsum_mem_image φ.injective.injOn,
-          show (Set.Ico (natBraidBI x3 y3 hx3 hy3 p.2) (natBraidBI x3 y3 hx3 hy3 (p.2 + 1))
-                : Set ℕ)
-            = (↑(Finset.Ico (natBraidBI x3 y3 hx3 hy3 p.2) (natBraidBI x3 y3 hx3 hy3 (p.2 + 1)))
-              : Set ℕ)
-            from (Finset.coe_Ico _ _).symm, finsum_mem_coe_finset]
-        exact natBraidBI_sum_eq x3 y3 hx3 hy3 p.2
-      · simp [hIdef, if_neg hp])
-    (fun p => by
-      have hfst : (bsucc p).1 = p.1 := rfl
-      by_cases hp : p.1 = a₀
-      · simp only [hJdef, hfst, if_pos hp]
-        rw [finsum_mem_image φ.injective.injOn,
-          show (Set.Ico (natBraidBJ x3 y3 hx3 hy3 p.2) (natBraidBJ x3 y3 hx3 hy3 (p.2 + 1))
-              : Set ℕ)
-            = (↑(Finset.Ico (natBraidBJ x3 y3 hx3 hy3 p.2) (natBraidBJ x3 y3 hx3 hy3 (p.2 + 1)))
-              : Set ℕ)
-            from (Finset.coe_Ico _ _).symm, finsum_mem_coe_finset]
-        exact natBraidBJ_sum_eq x3 y3 hx3 hy3 p.2
-      · simp only [hJdef, hfst, if_neg hp]
-        simp)⟩
+  have hx3 : (Function.support (x ∘ φ)).Infinite := hsupp x hx
+  have hy3 : (Function.support (y ∘ φ)).Infinite := hsupp y hy
+  exact IsBraided.of_nat_blocks φ (natBraidBI _ _ hx3 hy3) (natBraidBJ _ _ hx3 hy3)
+    (strictMono_nat_of_lt_succ (natBraidBI_lt_succ _ _ hx3 hy3))
+    (strictMono_nat_of_lt_succ (natBraidBJ_lt_succ _ _ hx3 hy3))
+    (natBraidBI_zero _ _ hx3 hy3) (natBraidBJ_zero _ _ hx3 hy3)
+    (natBraidU _ _ hx3 hy3) (natBraidV _ _ hx3 hy3) (natBraidV_zero _ _ hx3 hy3)
+    (natBraidBI_sum_eq _ _ hx3 hy3) (natBraidBJ_sum_eq _ _ hx3 hy3)
 
 /-! ### Packaging: `ℕ₀ ∪ {∞}` as an `ℵ₀`-monoid over `ℕ₀` -/
 

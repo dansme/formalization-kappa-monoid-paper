@@ -251,9 +251,9 @@ theorem isBraided_nnreal_of_finite_support {ι : Type u} (x y : ι → ℝ≥0)
 /-- **Examples 3.3(2)**, the substantive half: two families in `ℝ≥0` with infinite support and the
 same series sum are `ℵ₀⁻`-braided, over an index type of cardinality at most `ℵ₀`.
 
-As in Examples 3.3(1) the data is built over `ι` directly: transport a bijection `φ : ℕ ≃ ι`, run
-the construction of `realBraidState` on `x ∘ φ`, `y ∘ φ`, and place all the pieces at the single
-basepoint `φ 0`, carrying the intervals of `ℕ` over to subsets of `ι` as images under `φ`. -/
+As in Examples 3.3(1): transport a bijection `φ : ℕ ≃ ι`, run the construction of
+`realBraidState` on `x ∘ φ`, `y ∘ φ`, and hand the block boundaries, carries and deficits to
+`IsBraided.of_nat_blocks`. -/
 theorem isBraided_nnreal_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀) (x y : ι → ℝ≥0)
     (hx : (Function.support x).Infinite) (hy : (Function.support y).Infinite)
     (hsum : esum x = esum y) :
@@ -266,121 +266,24 @@ theorem isBraided_nnreal_of_infinite_support {ι : Type u} (hι : #ι ≤ ℵ₀
     · have := hfin
       exact absurd (Set.toFinite (Function.support x)) hx
     · exact hinf
-  have hUL : #(ULift.{u} ℕ) = ℵ₀ := by
-    rw [Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0]
-  have h1 : #(ULift.{u} ℕ) ≤ #ι := by rw [hUL]; exact Cardinal.infinite_iff.mp hιInf
-  have h2 : #ι ≤ #(ULift.{u} ℕ) := by rw [hUL]; exact hι
-  obtain ⟨e0⟩ := Cardinal.eq.mp (le_antisymm h1 h2)
-  set φ : ℕ ≃ ι := Equiv.ulift.symm.trans e0 with hφ
-  set x3 : ℕ → ℝ≥0 := x ∘ φ with hx3def
-  set y3 : ℕ → ℝ≥0 := y ∘ φ with hy3def
-  have hx3 : (Function.support x3).Infinite := by
-    rw [hx3def, Function.support_comp_eq_preimage]
-    intro hfin
-    apply hx
-    rw [← Set.image_preimage_eq (Function.support x) φ.surjective]
+  obtain ⟨φ⟩ := Cardinal.nonempty_equiv_nat_of_le_aleph0 hι hιInf
+  have hsupp : ∀ z : ι → ℝ≥0, (Function.support z).Infinite →
+      (Function.support (z ∘ φ)).Infinite := by
+    intro z hz hfin
+    rw [Function.support_comp_eq_preimage] at hfin
+    apply hz
+    rw [← Set.image_preimage_eq (Function.support z) φ.surjective]
     exact hfin.image _
-  have hy3 : (Function.support y3).Infinite := by
-    rw [hy3def, Function.support_comp_eq_preimage]
-    intro hfin
-    apply hy
-    rw [← Set.image_preimage_eq (Function.support y) φ.surjective]
-    exact hfin.image _
-  have hsum3 : esum x3 = esum y3 := by
-    rw [hx3def, hy3def, esum_comp_equiv φ x, esum_comp_equiv φ y]
-    exact hsum
-  have hbI : StrictMono (realBraidBI hx3 hy3 hsum3) :=
-    strictMono_nat_of_lt_succ (realBraidBI_lt_succ hx3 hy3 hsum3)
-  have hbJ : StrictMono (realBraidBJ hx3 hy3 hsum3) :=
-    strictMono_nat_of_lt_succ (realBraidBJ_lt_succ hx3 hy3 hsum3)
-  set a₀ : ι := φ 0 with ha₀def
-  set I : ι × ℕ → Set ι := fun p =>
-    if p.1 = a₀ then
-      φ '' Set.Ico (realBraidBI hx3 hy3 hsum3 p.2) (realBraidBI hx3 hy3 hsum3 (p.2 + 1))
-    else ∅ with hIdef
-  set J : ι × ℕ → Set ι := fun p =>
-    if p.1 = a₀ then
-      φ '' Set.Ico (realBraidBJ hx3 hy3 hsum3 p.2) (realBraidBJ hx3 hy3 hsum3 (p.2 + 1))
-    else ∅ with hJdef
-  refine ⟨BraidingData.mk_finsum I J
-    (fun p => by
-      rw [hIdef]; dsimp only
-      split
-      · exact (Set.finite_Ico _ _).image _
-      · exact Set.finite_empty)
-    (fun p => by
-      rw [hJdef]; dsimp only
-      split
-      · exact (Set.finite_Ico _ _).image _
-      · exact Set.finite_empty)
-    (fun p q hpq => by
-      rw [hIdef]; dsimp only
-      by_cases hp : p.1 = a₀ <;> by_cases hq : q.1 = a₀
-      · rw [if_pos hp, if_pos hq]
-        exact Set.disjoint_image_of_injective φ.injective
-          (ico_pairwise_disjoint hbI (fun he => hpq (Prod.ext (hp.trans hq.symm) he)))
-      · rw [if_pos hp, if_neg hq]; exact disjoint_bot_right
-      · rw [if_neg hp, if_pos hq]; exact disjoint_bot_left
-      · rw [if_neg hp, if_neg hq]; exact disjoint_bot_left)
-    (fun p q hpq => by
-      rw [hJdef]; dsimp only
-      by_cases hp : p.1 = a₀ <;> by_cases hq : q.1 = a₀
-      · rw [if_pos hp, if_pos hq]
-        exact Set.disjoint_image_of_injective φ.injective
-          (ico_pairwise_disjoint hbJ (fun he => hpq (Prod.ext (hp.trans hq.symm) he)))
-      · rw [if_pos hp, if_neg hq]; exact disjoint_bot_right
-      · rw [if_neg hp, if_pos hq]; exact disjoint_bot_left
-      · rw [if_neg hp, if_neg hq]; exact disjoint_bot_left)
-    (Set.eq_univ_of_forall fun i => by
-      have hcov := iUnion_Ico_eq_univ_of_strictMono (realBraidBI_zero hx3 hy3 hsum3) hbI
-      have hi : φ.symm i ∈
-          (⋃ k, Set.Ico (realBraidBI hx3 hy3 hsum3 k) (realBraidBI hx3 hy3 hsum3 (k + 1))) := by
-        rw [hcov]; trivial
-      obtain ⟨k, hk⟩ := Set.mem_iUnion.mp hi
-      refine Set.mem_iUnion.mpr ⟨(a₀, k), ?_⟩
-      rw [hIdef]; dsimp only
-      rw [if_pos rfl]
-      exact ⟨φ.symm i, hk, φ.apply_symm_apply i⟩)
-    (Set.eq_univ_of_forall fun i => by
-      have hcov := iUnion_Ico_eq_univ_of_strictMono (realBraidBJ_zero hx3 hy3 hsum3) hbJ
-      have hi : φ.symm i ∈
-          (⋃ k, Set.Ico (realBraidBJ hx3 hy3 hsum3 k) (realBraidBJ hx3 hy3 hsum3 (k + 1))) := by
-        rw [hcov]; trivial
-      obtain ⟨k, hk⟩ := Set.mem_iUnion.mp hi
-      refine Set.mem_iUnion.mpr ⟨(a₀, k), ?_⟩
-      rw [hJdef]; dsimp only
-      rw [if_pos rfl]
-      exact ⟨φ.symm i, hk, φ.apply_symm_apply i⟩)
-    (fun p => if p.1 = a₀ then realBraidU hx3 hy3 hsum3 p.2 else 0)
-    (fun p => if p.1 = a₀ then realBraidV hx3 hy3 hsum3 p.2 else 0)
-    (fun a => by
-      by_cases h : a = a₀
-      · simp [h, realBraidV_zero]
-      · simp [h])
-    (fun p => by
-      by_cases hp : p.1 = a₀
-      · simp only [hIdef, if_pos hp]
-        rw [finsum_mem_image φ.injective.injOn,
-          show (Set.Ico (realBraidBI hx3 hy3 hsum3 p.2) (realBraidBI hx3 hy3 hsum3 (p.2 + 1))
-                : Set ℕ)
-            = (↑(Finset.Ico (realBraidBI hx3 hy3 hsum3 p.2)
-                (realBraidBI hx3 hy3 hsum3 (p.2 + 1))) : Set ℕ)
-            from (Finset.coe_Ico _ _).symm, finsum_mem_coe_finset]
-        exact realBraidBI_sum_eq hx3 hy3 hsum3 p.2
-      · simp [hIdef, if_neg hp])
-    (fun p => by
-      have hfst : (bsucc p).1 = p.1 := rfl
-      by_cases hp : p.1 = a₀
-      · simp only [hJdef, hfst, if_pos hp]
-        rw [finsum_mem_image φ.injective.injOn,
-          show (Set.Ico (realBraidBJ hx3 hy3 hsum3 p.2) (realBraidBJ hx3 hy3 hsum3 (p.2 + 1))
-              : Set ℕ)
-            = (↑(Finset.Ico (realBraidBJ hx3 hy3 hsum3 p.2)
-                (realBraidBJ hx3 hy3 hsum3 (p.2 + 1))) : Set ℕ)
-            from (Finset.coe_Ico _ _).symm, finsum_mem_coe_finset]
-        exact realBraidBJ_sum_eq hx3 hy3 hsum3 p.2
-      · simp only [hJdef, hfst, if_neg hp]
-        simp)⟩
+  have hx3 : (Function.support (x ∘ φ)).Infinite := hsupp x hx
+  have hy3 : (Function.support (y ∘ φ)).Infinite := hsupp y hy
+  have hsum3 : esum (x ∘ φ) = esum (y ∘ φ) := by
+    rw [esum_comp_equiv φ x, esum_comp_equiv φ y]; exact hsum
+  exact IsBraided.of_nat_blocks φ (realBraidBI hx3 hy3 hsum3) (realBraidBJ hx3 hy3 hsum3)
+    (strictMono_nat_of_lt_succ (realBraidBI_lt_succ hx3 hy3 hsum3))
+    (strictMono_nat_of_lt_succ (realBraidBJ_lt_succ hx3 hy3 hsum3))
+    (realBraidBI_zero hx3 hy3 hsum3) (realBraidBJ_zero hx3 hy3 hsum3)
+    (realBraidU hx3 hy3 hsum3) (realBraidV hx3 hy3 hsum3) (realBraidV_zero hx3 hy3 hsum3)
+    (realBraidBI_sum_eq hx3 hy3 hsum3) (realBraidBJ_sum_eq hx3 hy3 hsum3)
 
 /-! ### Braided families have the same series sum
 

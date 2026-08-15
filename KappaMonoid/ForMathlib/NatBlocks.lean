@@ -10,7 +10,13 @@ for the constant-size case.
 Nothing here mentions `κ`-monoids; the file depends only on Mathlib.
 -/
 import Mathlib.Order.Interval.Set.Nat
+import Mathlib.Logic.Denumerable
+import Mathlib.SetTheory.Cardinal.Basic
 import Mathlib.Data.Set.Card
+
+universe u
+
+open Cardinal
 
 namespace Nat
 
@@ -84,9 +90,26 @@ theorem blockIdx_fibre {s : ℕ → ℕ} (hs : Monotone s) (hs0 : s 0 = 0) (k : 
       · exact absurd ⟨k + 1, h2⟩ h
       · exact h2
 
+/-- For a strictly monotone `s` there are no leftover slots — `s` is unbounded — so the fibre of
+`blockIdx` at `k` is exactly the block `[s k, s (k+1))`. -/
+theorem blockIdx_fibre_of_strictMono {s : ℕ → ℕ} (hs : StrictMono s) (hs0 : s 0 = 0) (k : ℕ) :
+    {j : ℕ | blockIdx s j = k} = Set.Ico (s k) (s (k + 1)) := by
+  rw [blockIdx_fibre hs.monotone hs0]
+  refine Set.union_eq_self_of_subset_right fun j hj => ?_
+  exact absurd ⟨j + 1, lt_of_lt_of_le (Nat.lt_succ_self j) (hs.le_apply)⟩ hj.1
+
 theorem blockIdx_fibre_finite {s : ℕ → ℕ} (hs : Monotone s) (hs0 : s 0 = 0) (k : ℕ) :
     {j : ℕ | blockIdx s j = k}.Finite := by
   rw [blockIdx_fibre hs hs0]
   exact (Set.finite_Ico _ _).union ((Set.finite_singleton k).subset fun j hj => hj.2)
 
 end Nat
+
+/-- An infinite index type of cardinality at most `ℵ₀` is in bijection with `ℕ`.  The bijection —
+rather than a reindexing of one family by another — is what an `ℕ`-indexed construction needs when
+it is to be transported to an index type in another universe. -/
+theorem Cardinal.nonempty_equiv_nat_of_le_aleph0 {ι : Type u} (hι : #ι ≤ ℵ₀) (hinf : Infinite ι) :
+    Nonempty (ℕ ≃ ι) := by
+  have hc : Countable ι := Cardinal.mk_le_aleph0_iff.mp hι
+  obtain ⟨d⟩ := nonempty_denumerable_iff.mpr ⟨hc, hinf⟩
+  exact ⟨(@Denumerable.eqv ι d).symm⟩

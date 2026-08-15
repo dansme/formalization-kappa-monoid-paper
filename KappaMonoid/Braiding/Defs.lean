@@ -3,6 +3,7 @@
 of the index set, and the basic properties of the braiding relation - **Lemma 3.6**.
 -/
 import KappaMonoid.Braiding.Prelim
+import KappaMonoid.ForMathlib.NatBlocks
 
 universe u v w
 
@@ -243,6 +244,50 @@ theorem of_levels {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {x y : ι → X}
       exact hJeq p.2
     · have hbp : ¬ ((bsucc p).1 = a₀) := hp
       rw [if_neg hp, if_neg hp, if_neg hbp, finsum_mem_empty, add_zero]
+
+/-- **Braiding from a pair of `ℕ`-block decompositions.**
+
+Both families of Examples 3.3 are built the same way: a bijection `φ : ℕ ≃ ι` carries the problem
+to `ℕ`, where two strictly increasing sequences of block boundaries `bI`, `bJ` starting at `0` cut
+`ℕ` into consecutive intervals, and the partial sums over those intervals telescope through the
+carries `u` and the deficits `v`.  This packages that argument once: the level functions of
+`of_levels` are the block indices `Nat.blockIdx`, whose fibres are exactly the intervals
+(`Nat.blockIdx_fibre_of_strictMono`), transported along `φ`.
+
+Note that `φ` is a *bijection with `ℕ`*, not a reindexing in the sense of `comp_equiv`: the two
+index types live in different universes, which is why the data is built over `ι` directly. -/
+theorem of_nat_blocks {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} (φ : ℕ ≃ ι) {x y : ι → X}
+    (bI bJ : ℕ → ℕ) (hbI : StrictMono bI) (hbJ : StrictMono bJ) (hbI0 : bI 0 = 0) (hbJ0 : bJ 0 = 0)
+    (u v : ℕ → X) (hv0 : v 0 = 0)
+    (hIeq : ∀ k, ∑ i ∈ Finset.Ico (bI k) (bI (k + 1)), x (φ i) = v k + u k)
+    (hJeq : ∀ k, ∑ i ∈ Finset.Ico (bJ k) (bJ (k + 1)), y (φ i) = v (k + 1) + u k) :
+    IsBraided ℵ₀ x y := by
+  classical
+  have hfib : ∀ (b : ℕ → ℕ), StrictMono b → b 0 = 0 → ∀ k : ℕ,
+      {i : ι | Nat.blockIdx b (φ.symm i) = k} = φ '' Set.Ico (b k) (b (k + 1)) := by
+    intro b hb hb0 k
+    rw [← Nat.blockIdx_fibre_of_strictMono hb hb0]
+    ext i
+    constructor
+    · exact fun hi => ⟨φ.symm i, hi, φ.apply_symm_apply i⟩
+    · rintro ⟨j, hj, rfl⟩
+      show Nat.blockIdx b (φ.symm (φ j)) = k
+      rwa [φ.symm_apply_apply]
+  have hsum : ∀ (b : ℕ → ℕ), StrictMono b → b 0 = 0 → ∀ (z : ι → X) (k : ℕ),
+      (∑ᶠ i ∈ {i : ι | Nat.blockIdx b (φ.symm i) = k}, z i)
+        = ∑ i ∈ Finset.Ico (b k) (b (k + 1)), z (φ i) := by
+    intro b hb hb0 z k
+    rw [hfib b hb hb0 k, finsum_mem_image φ.injective.injOn,
+      show (Set.Ico (b k) (b (k + 1)) : Set ℕ) = (↑(Finset.Ico (b k) (b (k + 1))) : Set ℕ) from
+        (Finset.coe_Ico _ _).symm,
+      finsum_mem_coe_finset]
+  refine of_levels (φ 0) (fun i => Nat.blockIdx bI (φ.symm i))
+    (fun i => Nat.blockIdx bJ (φ.symm i)) (fun k => ?_) (fun k => ?_) u v hv0 (fun k => ?_)
+    (fun k => ?_)
+  · rw [hfib bI hbI hbI0 k]; exact (Set.finite_Ico _ _).image _
+  · rw [hfib bJ hbJ hbJ0 k]; exact (Set.finite_Ico _ _).image _
+  · rw [hsum bI hbI hbI0 x k]; exact hIeq k
+  · rw [hsum bJ hbJ hbJ0 y k]; exact hJeq k
 
 /-- **Braiding transports along a bijection of index types.**
 
