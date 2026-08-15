@@ -39,15 +39,15 @@ variable (x₁ x₂ : H)
 def Cond1 (a b : H) : Prop :=
   ∀ n : ℕ, KMonoid.cmul (κ := ℵ₀) (n : Cardinal.{u})
         (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) a
-      + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl b
-    = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl a + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl b →
-      KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl b
-          = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl a + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl b
-        ∧ a ∈ KMonoid.addOf (κ := ℵ₀) b
+      + ℵ₀∙b
+    = ℵ₀∙a + ℵ₀∙b →
+      ℵ₀∙b
+          = ℵ₀∙a + ℵ₀∙b
+        ∧ a ∈ add(b)
 
 /-- Condition (ii) of Theorem 5.3, for the ordered pair `(a, b)` of generators. -/
 def Cond2 (a b : H) : Prop :=
-  a ∉ KMonoid.addOf (κ := ℵ₀) b →
+  a ∉ add(b) →
     ∀ m n : ℕ, eval a b ((m : ℕ∞), ⊤) = eval a b ((n : ℕ∞), ⊤) →
       ∃ k k' : ℕ, eval a b ((m : ℕ∞), (k : ℕ∞)) = eval a b ((n : ℕ∞), (k' : ℕ∞))
 
@@ -75,23 +75,23 @@ This is what turns the hypothesis of Theorem 5.3's forward direction into the in
 5.2. -/
 theorem braidedForms_of_braidedOver
     (hbr :
-      IsBraidedOver ℵ₀ ℵ₀ ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) H le_rfl (fun y => (y : H)))
+      IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H le_rfl (fun y => (y : H)))
     (F G : Form) (heq : eval x₁ x₂ F = eval x₁ x₂ G)
-    (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-    (hGm : ∀ i, familyOfForm x₁ x₂ G i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ add((x₁ + x₂)))
+    (hGm : ∀ i, familyOfForm x₁ x₂ G i ∈ add((x₁ + x₂))) :
     BraidedForms x₁ x₂ F G hFm hGm := by
 
   have hsum : (KMonoid.ksum (κ := ℵ₀) fun i =>
         ((⟨familyOfForm x₁ x₂ F (formIdxEquiv.{u}.symm i), hFm _⟩ :
-          ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H))
+          ↥(add((x₁ + x₂)))) : H))
       = KMonoid.ksum (κ := ℵ₀) fun i =>
         ((⟨familyOfForm x₁ x₂ G (formIdxEquiv.{u}.symm i), hGm _⟩ :
-          ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H) := by
+          ↥(add((x₁ + x₂)))) : H) := by
     rw [show (fun i => ((⟨familyOfForm x₁ x₂ F (formIdxEquiv.{u}.symm i), hFm _⟩ :
-        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H))
+        ↥(add((x₁ + x₂)))) : H))
       = (fun i => familyOfForm x₁ x₂ F (formIdxEquiv.{u}.symm i)) from rfl,
       show (fun i => ((⟨familyOfForm x₁ x₂ G (formIdxEquiv.{u}.symm i), hGm _⟩ :
-        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H))
+        ↥(add((x₁ + x₂)))) : H))
       = (fun i => familyOfForm x₁ x₂ G (formIdxEquiv.{u}.symm i)) from rfl,
       ksum_familyOfForm, ksum_familyOfForm]
     exact heq
@@ -109,7 +109,7 @@ theorem noMixedForms_swap (h : NoMixedForms x₁ x₂) : NoMixedForms x₂ x₁ 
     ⟨(G.2, G.1), by rcases hG with h | h; exacts [Or.inr h, Or.inl h], by rw [← hGe, eval_swap]⟩⟩
 
 /-- The two orderings of the generators give the same `add (x₁ + x₂)`. -/
-theorem addOf_add_swap : KMonoid.addOf (κ := ℵ₀) (x₂ + x₁) = KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) := by
+theorem addOf_add_swap : add((x₂ + x₁)) = add((x₁ + x₂)) := by
   rw [add_comm]
 
 /-- **The counting step of Theorem 5.3(i)**.
@@ -124,13 +124,13 @@ then `u p` and `v (p+1)` are both summands of finite multiples of `x₂`, and
 
     x₁ ≼ Σ_{J p} y = v (p+1) + u p ≼ (r + r') x₂. -/
 theorem mem_addOf_of_braidedForms_top (n : ℕ)
-    (hFm : ∀ i, familyOfForm x₁ x₂ ((n : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-    (hGm : ∀ i, familyOfForm x₁ x₂ ((⊤ : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
+    (hFm : ∀ i, familyOfForm x₁ x₂ ((n : ℕ∞), ⊤) i ∈ add((x₁ + x₂)))
+    (hGm : ∀ i, familyOfForm x₁ x₂ ((⊤ : ℕ∞), ⊤) i ∈ add((x₁ + x₂)))
     (hbr : BraidedForms x₁ x₂ ((n : ℕ∞), ⊤) ((⊤ : ℕ∞), ⊤) hFm hGm) :
-    x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂ := by
+    x₁ ∈ add(x₂) := by
   classical
 
-  have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+  have hx₂T : x₂ ∈ add((x₁ + x₂)) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₂ x₁ (add_comm x₁ x₂)
   obtain ⟨D⟩ := hbr
   -- the `I`-blocks meeting an `x₁`-slot of the finite form, and their `bsucc`-predecessors
@@ -154,12 +154,12 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
   -- at `p` and at `p + 1` the `I`-blocks carry only `x₂`
   have hIblock : ∀ q : FormIdx.{u} × ℕ,
       q ∉ (fun i => IsBraided.blockOf D.I D.I_cover i) '' oneSlots.{u} n →
-      ∃ r : ℕ, D.v q + D.u q = r • (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) := by
+      ∃ r : ℕ, D.v q + D.u q = r • (⟨x₂, hx₂T⟩ : ↥(add((x₁ + x₂)))) := by
     intro q hq
     obtain ⟨r, hr⟩ := exists_nsmul_finsum (Cardinal.lt_aleph0_iff_set_finite.mp (D.I_small q))
       (fun i => (⟨familyOfForm x₁ x₂ ((n : ℕ∞), ⊤) i, hFm i⟩ :
-        ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
-      (⟨x₂, hx₂T⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))
+        ↥(add((x₁ + x₂)))))
+      (⟨x₂, hx₂T⟩ : ↥(add((x₁ + x₂))))
       (fun i hi => by
         have hone : i ∉ oneSlots.{u} n := fun hmem =>
           hq ⟨i, hmem, IsBraided.blockOf_eq D.I_disjoint D.I_cover hi⟩
@@ -176,9 +176,9 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
   obtain ⟨j, rfl⟩ := hi₀W
   obtain ⟨c, hc⟩ := exists_add_eq_finsum_mem (Cardinal.lt_aleph0_iff_set_finite.mp (D.J_small p))
     (fun i => (⟨familyOfForm x₁ x₂ ((⊤ : ℕ∞), ⊤) i, hGm i⟩ :
-      ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) hi₀J
+      ↥(add((x₁ + x₂))))) hi₀J
   have hJp : (∑ᶠ i ∈ D.J p, (⟨familyOfForm x₁ x₂ ((⊤ : ℕ∞), ⊤) i, hGm i⟩ :
-      ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) = D.v (bsucc p) + D.u p := by
+      ↥(add((x₁ + x₂))))) = D.v (bsucc p) + D.u p := by
     rw [← LMonoid.lsumOf_eq_finsum (D.J_small p)]
     exact D.hJ p
   rw [hJp] at hc
@@ -188,10 +188,10 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
     exact if_pos (WithTop.coe_lt_top (j.down : ℕ))
   have hcH : x₁ + (c : H) = (D.v (bsucc p) : H) + (D.u p : H) := by
     have hcc : ((⟨familyOfForm x₁ x₂ ((⊤ : ℕ∞), ⊤) (Sum.inl j), hGm _⟩ :
-          ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H) + (c : H)
+          ↥(add((x₁ + x₂)))) : H) + (c : H)
         = (D.v (bsucc p) : H) + (D.u p : H) := congrArg Subtype.val hc
     rwa [show ((⟨familyOfForm x₁ x₂ ((⊤ : ℕ∞), ⊤) (Sum.inl j), hGm _⟩ :
-      ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) : H) = x₁ from hval] at hcc
+      ↥(add((x₁ + x₂)))) : H) = x₁ from hval] at hcc
   have hrH : (D.v p : H) + (D.u p : H) = r • x₂ := by
     have := congrArg Subtype.val hr
     rwa [coe_nsmul_addOf x₁ x₂ r ⟨x₂, hx₂T⟩] at this
@@ -209,14 +209,14 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
 counting step gives `x₁ ∈ add x₂`, and then `ℵ₀ x₂` absorbs `ℵ₀ x₁`. -/
 theorem cond1_of_braidedOver
     (hbr :
-      IsBraidedOver ℵ₀ ℵ₀ ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) H le_rfl (fun y => (y : H))) :
+      IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H le_rfl (fun y => (y : H))) :
     Cond1 x₁ x₂ := by
   intro n hn
   have heval : eval x₁ x₂ ((n : ℕ∞), ⊤) = eval x₁ x₂ ((⊤ : ℕ∞), ⊤) := by
     show ecmul ((n : ℕ) : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂ = ecmul (⊤ : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
     rw [ecmul_natCast, ecmul_top, ecmul_top, ← KMonoid.cmul_natCast x₁ n]
     exact hn
-  have hmem : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂ :=
+  have hmem : x₁ ∈ add(x₂) :=
     mem_addOf_of_braidedForms_top x₁ x₂ n (familyOfForm_mem x₁ x₂ _) (familyOfForm_mem x₁ x₂ _)
       (braidedForms_of_braidedOver x₁ x₂ hbr _ _ heval _ _)
   refine ⟨?_, hmem⟩
@@ -240,14 +240,14 @@ Lemma 5.1 supplies the braiding over `add (x₁ + x₂)`; (iii) is then Lemma 5.
 theorem theorem_5_3_forward (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfFG R)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
-    (e : (projClass R ℵ₀ le_rfl).carrier → H)
-    (hhom : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (e : V(R).carrier → H)
+    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
     Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂ := by
   classical
 
   -- invert the isomorphism and feed Lemma 5.1
-  obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
+  obtain ⟨e', hleft, hright⟩ : ∃ g : H → V(R).carrier,
       Function.LeftInverse g e ∧ Function.RightInverse g e :=
     ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
       (Equiv.ofBijective e hbij).right_inv⟩
@@ -292,34 +292,34 @@ theorem isBraided_base_eq {S T : Set H} (hS : IsLSubset (ℵ₀ : Cardinal.{u}) 
 
 /-- Swapping the generators swaps the two halves of `FormIdx` and the two coefficients. -/
 theorem braidedForms_swap {F G : Form}
-    (hFm : ∀ i, familyOfForm x₂ x₁ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₂ + x₁))
-    (hGm : ∀ i, familyOfForm x₂ x₁ G i ∈ KMonoid.addOf (κ := ℵ₀) (x₂ + x₁))
+    (hFm : ∀ i, familyOfForm x₂ x₁ F i ∈ add((x₂ + x₁)))
+    (hGm : ∀ i, familyOfForm x₂ x₁ G i ∈ add((x₂ + x₁)))
     (h : BraidedForms x₂ x₁ F G hFm hGm)
-    (hFm' : ∀ i, familyOfForm x₁ x₂ (F.2, F.1) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-    (hGm' : ∀ i, familyOfForm x₁ x₂ (G.2, G.1) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    (hFm' : ∀ i, familyOfForm x₁ x₂ (F.2, F.1) i ∈ add((x₁ + x₂)))
+    (hGm' : ∀ i, familyOfForm x₁ x₂ (G.2, G.1) i ∈ add((x₁ + x₂))) :
     BraidedForms x₁ x₂ (F.2, F.1) (G.2, G.1) hFm' hGm' := by
 
-  have hmemF : ∀ i, familyOfForm x₂ x₁ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) := by
+  have hmemF : ∀ i, familyOfForm x₂ x₁ F i ∈ add((x₁ + x₂)) := by
     intro i
     rw [← addOf_add_swap x₁ x₂]
     exact hFm i
-  have hmemG : ∀ i, familyOfForm x₂ x₁ G i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) := by
+  have hmemG : ∀ i, familyOfForm x₂ x₁ G i ∈ add((x₁ + x₂)) := by
     intro i
     rw [← addOf_add_swap x₁ x₂]
     exact hGm i
   have hbase : IsBraided (ℵ₀ : Cardinal.{u})
-      (fun i => (⟨familyOfForm x₂ x₁ F i, hmemF i⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
-      (fun i => (⟨familyOfForm x₂ x₁ G i, hmemG i⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) :=
+      (fun i => (⟨familyOfForm x₂ x₁ F i, hmemF i⟩ : ↥(add((x₁ + x₂)))))
+      (fun i => (⟨familyOfForm x₂ x₁ G i, hmemG i⟩ : ↥(add((x₁ + x₂))))) :=
     isBraided_base_eq (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₂ + x₁))
       (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl (x₁ + x₂)) (addOf_add_swap x₁ x₂)
       (familyOfForm x₂ x₁ F) (familyOfForm x₂ x₁ G) hFm hGm hmemF hmemG h
   have h' := hbase.comp_equiv (Equiv.sumComm Nats.{u} Nats.{u})
-  have hEq : ∀ (K : Form) (hK : ∀ i, familyOfForm x₂ x₁ K i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-      (hK' : ∀ i, familyOfForm x₁ x₂ (K.2, K.1) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)),
+  have hEq : ∀ (K : Form) (hK : ∀ i, familyOfForm x₂ x₁ K i ∈ add((x₁ + x₂)))
+      (hK' : ∀ i, familyOfForm x₁ x₂ (K.2, K.1) i ∈ add((x₁ + x₂))),
       (fun i => (⟨familyOfForm x₂ x₁ K ((Equiv.sumComm Nats.{u} Nats.{u}) i), hK _⟩ :
-          ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
+          ↥(add((x₁ + x₂)))))
         = (fun i => (⟨familyOfForm x₁ x₂ (K.2, K.1) i, hK' i⟩ :
-          ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) := by
+          ↥(add((x₁ + x₂))))) := by
     intro K hK hK'
     funext i
     refine Subtype.ext ?_
@@ -334,16 +334,16 @@ copies and the first `k'`; every later block matches one copy of `x₂` against 
 This is the paper's "from this we can easily construct a braiding". -/
 theorem braidedForms_of_finite_relation (m k m' k' : ℕ)
     (hrel : eval x₁ x₂ ((m : ℕ∞), (k : ℕ∞)) = eval x₁ x₂ ((m' : ℕ∞), (k' : ℕ∞)))
-    (hFm : ∀ i, familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-    (hGm : ∀ i, familyOfForm x₁ x₂ ((m' : ℕ∞), ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    (hFm : ∀ i, familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i ∈ add((x₁ + x₂)))
+    (hGm : ∀ i, familyOfForm x₁ x₂ ((m' : ℕ∞), ⊤) i ∈ add((x₁ + x₂))) :
     BraidedForms x₁ x₂ ((m : ℕ∞), ⊤) ((m' : ℕ∞), ⊤) hFm hGm := by
   classical
 
-  have hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+  have hx₁T : x₁ ∈ add((x₁ + x₂)) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₁ x₂ rfl
-  have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+  have hx₂T : x₂ ∈ add((x₁ + x₂)) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₂ x₁ (add_comm x₁ x₂)
-  have hbase : (m • x₁ + k • x₂) ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+  have hbase : (m • x₁ + k • x₂) ∈ add((x₁ + x₂)) :=
     addOf_add_mem (addOf_nsmul_mem hx₁T m) (addOf_nsmul_mem hx₂T k)
   -- the two level functions: the finite parts on level `0`, then one copy of `x₂` per level
   have hfin : ∀ (c : ℕ) (l : ℕ),
@@ -427,15 +427,15 @@ theorem braidedForms_of_finite_relation (m k m' k' : ℕ)
 
 /-- `ℵ₀` copies of `x` absorb any smaller number of copies. -/
 theorem ecmul_add_cmul_top (a : ℕ∞) (x : H) :
-    ecmul a x + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x := by
-  obtain ⟨w, hw⟩ : ecmul a x ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x :=
+    ecmul a x + ℵ₀∙x = ℵ₀∙x := by
+  obtain ⟨w, hw⟩ : ecmul a x ≼ ℵ₀∙x :=
     KMonoid.cmul_le_cmul (Cardinal.ofENat_le_aleph0 a) le_rfl (Cardinal.ofENat_le_aleph0 a) x
   exact KMonoid.add_cmul_top_eq hw
 
 /-- `ℵ₀ x + ℵ₀ x = ℵ₀ x`. -/
 theorem cmul_top_add_self (x : H) :
-    KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x
-      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x :=
+    ℵ₀∙x + ℵ₀∙x
+      = ℵ₀∙x :=
   KMonoid.add_cmul_top_eq (add_zero _)
 
 /-- **The case `β = β' = ℵ₀` of Theorem 5.3's backward direction.**  If `x₁ ∈ add x₂` this is
@@ -445,11 +445,11 @@ relation that `braidedForms_of_finite_relation` turns into a braiding. -/
 theorem braidedForms_of_snd_top (hc1 : Cond1 x₁ x₂) (hc2 : Cond2 x₁ x₂)
     (hmix : NoMixedForms x₁ x₂) (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
     (α β : ℕ∞) (heq : eval x₁ x₂ (α, ⊤) = eval x₁ x₂ (β, ⊤))
-    (hFm : ∀ i, familyOfForm x₁ x₂ (α, ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-    (hGm : ∀ i, familyOfForm x₁ x₂ (β, ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    (hFm : ∀ i, familyOfForm x₁ x₂ (α, ⊤) i ∈ add((x₁ + x₂)))
+    (hGm : ∀ i, familyOfForm x₁ x₂ (β, ⊤) i ∈ add((x₁ + x₂))) :
     BraidedForms x₁ x₂ (α, ⊤) (β, ⊤) hFm hGm := by
 
-  by_cases hmem : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂
+  by_cases hmem : x₁ ∈ add(x₂)
   · exact lemma_5_2_three x₁ x₂ hmem hmix hgen α β hFm hGm
   -- an infinite coefficient against a finite one would force `x₁ ∈ add x₂`
   have hkey : ∀ (d : ℕ), eval x₁ x₂ ((⊤ : ℕ∞), ⊤) = eval x₁ x₂ ((d : ℕ∞), ⊤) → False := by
@@ -478,25 +478,25 @@ symmetry" finishes. -/
 theorem braidedForms_of_mixed (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁)
     (hmix : NoMixedForms x₁ x₂) (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
     (α : ℕ∞) (n : ℕ) (heq : eval x₁ x₂ (α, ⊤) = eval x₁ x₂ ((⊤ : ℕ∞), (n : ℕ∞)))
-    (hFm : ∀ i, familyOfForm x₁ x₂ (α, ⊤) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-    (hGm : ∀ i, familyOfForm x₁ x₂ ((⊤ : ℕ∞), (n : ℕ∞)) i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    (hFm : ∀ i, familyOfForm x₁ x₂ (α, ⊤) i ∈ add((x₁ + x₂)))
+    (hGm : ∀ i, familyOfForm x₁ x₂ ((⊤ : ℕ∞), (n : ℕ∞)) i ∈ add((x₁ + x₂))) :
     BraidedForms x₁ x₂ (α, ⊤) ((⊤ : ℕ∞), (n : ℕ∞)) hFm hGm := by
 
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₂, x₁} : Set H) := by
     rwa [Set.pair_comm]
   have hmix' := noMixedForms_swap x₁ x₂ hmix
-  have heval : ecmul α x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂
-      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ + ecmul ((n : ℕ) : ℕ∞) x₂ := by
+  have heval : ecmul α x₁ + ℵ₀∙x₂
+      = ℵ₀∙x₁ + ecmul ((n : ℕ) : ℕ∞) x₂ := by
     have h0 := heq
     rwa [eval, eval, ecmul_top, ecmul_top] at h0
   -- `x₂ ∈ add x₁`, by adding `ℵ₀ x₁` to both sides
-  have hx₂ : x₂ ∈ KMonoid.addOf (κ := ℵ₀) x₁ := by
+  have hx₂ : x₂ ∈ add(x₁) := by
     refine (hc1' n ?_).2
-    have h1 : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ + (ecmul α x₁
-          + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂)
-        = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ + (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
+    have h1 : ℵ₀∙x₁ + (ecmul α x₁
+          + ℵ₀∙x₂)
+        = ℵ₀∙x₁ + (ℵ₀∙x₁
           + ecmul ((n : ℕ) : ℕ∞) x₂) := by rw [heval]
-    rw [← add_assoc, add_comm (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁) (ecmul α x₁),
+    rw [← add_assoc, add_comm (ℵ₀∙x₁) (ecmul α x₁),
       ecmul_add_cmul_top, ← add_assoc, cmul_top_add_self] at h1
     rw [ecmul_natCast] at h1
     rw [KMonoid.cmul_natCast x₂ n, add_comm (n • x₂), ← h1, add_comm]
@@ -513,9 +513,9 @@ theorem braidedForms_of_mixed (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁)
     obtain ⟨m, rfl⟩ : ∃ m : ℕ, α = (m : ℕ∞) := ⟨α.toNat, (ENat.natCast_toNat hα).symm⟩
     refine lemma_5_2_three x₁ x₂ ?_ hmix hgen _ _ _ _
     refine (hc1 m ?_).2
-    have h1 : (ecmul ((m : ℕ) : ℕ∞) x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂)
-        = (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ + ecmul ((n : ℕ) : ℕ∞) x₂)
-          + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
+    have h1 : (ecmul ((m : ℕ) : ℕ∞) x₁ + ℵ₀∙x₂)
+        = (ℵ₀∙x₁ + ecmul ((n : ℕ) : ℕ∞) x₂)
+          + ℵ₀∙x₂ := by
       rw [← heval, add_assoc, cmul_top_add_self]
     rw [add_assoc, ecmul_add_cmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₁ m] at h1
     exact h1
@@ -527,8 +527,8 @@ theorem braidedForms_of_conditions (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x�
     (hc2 : Cond2 x₁ x₂) (hc2' : Cond2 x₂ x₁) (hmix : NoMixedForms x₁ x₂)
     (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
     (F G : Form) (heq : eval x₁ x₂ F = eval x₁ x₂ G)
-    (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-    (hGm : ∀ i, familyOfForm x₁ x₂ G i ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ add((x₁ + x₂)))
+    (hGm : ∀ i, familyOfForm x₁ x₂ G i ∈ add((x₁ + x₂))) :
     BraidedForms x₁ x₂ F G hFm hGm := by
 
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₂, x₁} : Set H) := by
@@ -649,7 +649,7 @@ form alongside its finite one.  This is the paper's "elements of `add (x₁ + x�
 finite forms". -/
 theorem exists_finite_form_of_mem (hmix : NoMixedForms x₁ x₂)
     (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
-    {y : H} (hy : y ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) :
+    {y : H} (hy : y ∈ add((x₁ + x₂))) :
     ∃ F : Form, F.IsFinite ∧ eval x₁ x₂ F = y := by
   obtain ⟨z, n, hzn⟩ := hy
   obtain ⟨F, hF⟩ := exists_form x₁ x₂ hgen y
@@ -686,11 +686,11 @@ and `IsBraided.of_levels` applies with `v ≡ 0`.
 This is the step the paper compresses into "hence `add (x₁ + x₂) = ⟨x₁, x₂⟩`". -/
 theorem exists_braided_form (hmix : NoMixedForms x₁ x₂)
     (hgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) ({x₁, x₂} : Set H))
-    (a : Idx (ℵ₀ : Cardinal.{u}) → ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))) :
+    (a : Idx (ℵ₀ : Cardinal.{u}) → ↥(add((x₁ + x₂)))) :
 
     ∃ A B : ℕ∞, IsBraided ℵ₀ a
       (fun i => (⟨familyOfForm x₁ x₂ (A, B) (formIdxEquiv.{u}.symm i),
-        familyOfForm_mem x₁ x₂ _ _⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) := by
+        familyOfForm_mem x₁ x₂ _ _⟩ : ↥(add((x₁ + x₂))))) := by
   classical
 
   -- a finite form for each member
@@ -763,7 +763,7 @@ theorem exists_braided_form (hmix : NoMixedForms x₁ x₂)
     exact (zero_add _).symm
   · have hcongr : ∀ p ∈ {p : FormIdx.{u} | ψ p = k},
         (⟨familyOfForm x₁ x₂ (A, B) (formIdxEquiv.{u}.symm (formIdxEquiv.{u} p)),
-            familyOfForm_mem x₁ x₂ _ _⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))
+            familyOfForm_mem x₁ x₂ _ _⟩ : ↥(add((x₁ + x₂))))
           = ⟨familyOfForm x₁ x₂ (A, B) p, familyOfForm_mem x₁ x₂ _ _⟩ :=
       fun p _ => Subtype.ext (by rw [Equiv.symm_apply_apply])
     rw [hJfib k, finsum_mem_image (Set.injOn_of_injective formIdxEquiv.{u}.injective),
@@ -797,18 +797,18 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
     (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁) (hc2 : Cond2 x₁ x₂) (hc2' : Cond2 x₂ x₁)
     (hmix : NoMixedForms x₁ x₂) :
     ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
-      ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+      ∃ e : V(R).carrier → H,
         KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e := by
   classical
 
   let := KMonoid.toLMonoidOfLE H Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{u}))
   refine corollary_4_7_one_forward le_rfl k (x₁ + x₂) ?_
   -- `add (x₁ + x₂)` contains both generators, hence generates `H`
-  have hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+  have hx₁T : x₁ ∈ add((x₁ + x₂)) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₁ x₂ rfl
-  have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+  have hx₂T : x₂ ∈ add((x₁ + x₂)) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₂ x₁ (add_comm x₁ x₂)
-  have hTgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) (KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) := by
+  have hTgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) (add((x₁ + x₂))) := by
     refine Set.eq_univ_of_univ_subset ?_
     rw [← hgen]
     refine KMonoid.kclosure_le ?_ (KMonoid.isKSubmonoid_kclosure _ _)
@@ -817,10 +817,10 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
     · exact KMonoid.subset_kclosure hx₂T
   -- the inclusion is a homomorphism of `ℵ₀⁻`-monoids, so braided families keep their sums
   have hcoehom : IsLMonoidHom (ℵ₀ : Cardinal.{u})
-      (fun y : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) => (y : H)) := fun {ι} h x => rfl
-  have hksum : ∀ (y : Idx (ℵ₀ : Cardinal.{u}) → ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))
+      (fun y : ↥(add((x₁ + x₂))) => (y : H)) := fun {ι} h x => rfl
+  have hksum : ∀ (y : Idx (ℵ₀ : Cardinal.{u}) → ↥(add((x₁ + x₂))))
       (C D : ℕ∞), IsBraided ℵ₀ y (fun i => (⟨familyOfForm x₁ x₂ (C, D) (formIdxEquiv.{u}.symm i),
-        familyOfForm_mem x₁ x₂ _ _⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)))) →
+        familyOfForm_mem x₁ x₂ _ _⟩ : ↥(add((x₁ + x₂))))) →
       KMonoid.ksum (κ := ℵ₀) (fun i => (y i : H)) = eval x₁ x₂ (C, D) := by
     intro y C D hy
     rw [← ksum_familyOfForm x₁ x₂ (C, D), ← KMonoid.sumOf_Idx, ← KMonoid.sumOf_Idx]
@@ -860,7 +860,7 @@ theorem theorem_5_3 (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
-        ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+        ∃ e : V(R).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
       (Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂) := by
   constructor

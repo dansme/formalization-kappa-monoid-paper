@@ -630,4 +630,10 @@ end Sub
 
 end KMonoid
 
+/-- `ℵ₀∙x` is the paper's `ℵ₀x`, the largest multiple available in an `ℵ₀`-monoid.  It is
+notation, not a definition: it expands to `cmul ℵ₀ le_rfl x`, so every lemma about `cmul` applies
+to it unchanged.  Almost all of §5 is written in terms of it. -/
+scoped notation:70 "ℵ₀∙" x:71 => KappaMonoid.KMonoid.cmul (κ := Cardinal.aleph0) Cardinal.aleph0
+  le_rfl x
+
 end KappaMonoid

@@ -29,43 +29,43 @@ hypothesis first bites. -/
 theorem lemma_5_1 (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
-    (e : H → (projClass R ℵ₀ le_rfl).carrier)
-    (hhom : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (e : H → V(R).carrier)
+    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
 
-    IsBraidedOver ℵ₀ ℵ₀ ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) H le_rfl (fun y => (y : H)) := by
+    IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H le_rfl (fun y => (y : H)) := by
   classical
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
+    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
 
   -- Corollary 4.5(3): `V^{ℵ₀}(R)` is braided over `V(R)`, the `ℵ₀⁻`-small classes
   have hbrV := (corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1
   -- `S = e⁻¹(V(R))` is the set of elements of `H` corresponding to finitely generated modules
-  set S : Set H := e ⁻¹' ((projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀) with hSdef
-  have hWsub := (projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀
+  set S : Set H := e ⁻¹' (V(R).lambdaSmallPart ℵ₀) with hSdef
+  have hWsub := V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀
     Cardinal.isRegular_aleph0 le_rfl
   have h0S : (0 : H) ∈ S := by
-    show e 0 ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀
+    show e 0 ∈ V(R).lambdaSmallPart ℵ₀
     rw [hhom.1]
     exact hWsub.zero_mem
   -- `V(R)` is closed under binary sums: `+` is a two-element `ℵ₀⁻`-sum
   have haddS : ∀ a ∈ S, ∀ b ∈ S, a + b ∈ S := by
     intro a ha b hb
-    show e (a + b) ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀
+    show e (a + b) ∈ V(R).lambdaSmallPart ℵ₀
     rw [KMonoid.IsKHom.map_add hhom]
     exact hWsub.add_mem le_rfl ha hb
   -- `S` is divisor-closed, because `V(R)` is (a summand of a f.g. module is f.g.)
   have hSsat : ∀ a ∈ S, ∀ b c : H, a = b + c → b ∈ S := by
     intro a ha b c habc
-    exact (projClass R ℵ₀ le_rfl).lambdaSmallPart_summand le_rfl ℵ₀ (e a) ha (e b)
+    exact V(R).lambdaSmallPart_summand le_rfl ℵ₀ (e a) ha (e b)
       ⟨e c, by rw [← KMonoid.IsKHom.map_add hhom, ← habc]⟩
   -- and `S` generates `H`, because `V(R)` generates `V^{ℵ₀}(R)`
   have hSgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) S := by
     refine KMonoid.kGenerates_iff.mpr fun h => ?_
     obtain ⟨z, hz⟩ := hbrV.generates (e h)
-    choose w hw using fun i => hbij.2 ((z i : (projClass R ℵ₀ le_rfl).carrier))
+    choose w hw using fun i => hbij.2 ((z i : V(R).carrier))
     refine (KMonoid.mem_kclosure_iff (S := S) h0S h).mpr ⟨w, fun i => ?_, hbij.1 ?_⟩
-    · show e (w i) ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀
+    · show e (w i) ∈ V(R).lambdaSmallPart ℵ₀
       rw [hw i]
       exact (z i).2
     · rw [hz, hhom.2 w]
@@ -79,18 +79,18 @@ theorem lemma_5_1 (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
     induction n with
     | zero => rwa [zero_nsmul]
     | succ p hp => rw [succ_nsmul]; exact haddS _ hp _ ha
-  have hTS : ∀ a ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂),
-      e a ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀ := by
+  have hTS : ∀ a ∈ add((x₁ + x₂)),
+      e a ∈ V(R).lambdaSmallPart ℵ₀ := by
     rintro a ⟨z, n, hzn⟩
     refine hSsat _ ?_ a z hzn.symm
     rw [KMonoid.cmul_natCast]
     exact hnsmulS n _ (haddS _ hx₁S _ hx₂S)
   -- `add (x₁ + x₂)` still generates `H`, since it contains both generators
-  have hx₁T : x₁ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+  have hx₁T : x₁ ∈ add((x₁ + x₂)) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₁ x₂ rfl
-  have hx₂T : x₂ ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂) :=
+  have hx₂T : x₂ ∈ add((x₁ + x₂)) :=
     KMonoid.addOf_isSaturated (x₁ + x₂) _ (KMonoid.self_mem_addOf _) x₂ x₁ (add_comm x₁ x₂)
-  have hTgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) (KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) := by
+  have hTgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) (add((x₁ + x₂))) := by
     refine Set.eq_univ_of_univ_subset ?_
     rw [← hgen]
     refine KMonoid.kclosure_le ?_ (KMonoid.isKSubmonoid_kclosure _ _)

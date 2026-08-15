@@ -256,10 +256,10 @@ classes of `V^{ℵ₀}(R)`, which are exactly the countably generated projective
 It is what makes Corollary 5.5(2) the paper's statement: the realizability clause there names only
 the freeness, and the hypothesis Theorem 5.3's forward direction needs comes from it. -/
 theorem everyProjectiveIsSumOfFG_of_free (R : Type u) [Ring R]
-    (hfree : ∀ q : (projClass R ℵ₀ le_rfl).carrier,
-        ¬ Module.Finite R ((projClass R ℵ₀ le_rfl).rep q) →
+    (hfree : ∀ q : V(R).carrier,
+        ¬ Module.Finite R (V(R).rep q) →
         ∃ ι : Type u, #ι ≤ ℵ₀ ∧
-          Nonempty ((projClass R ℵ₀ le_rfl).rep q ≃ₗ[R] ⨁ _ : ι, R)) :
+          Nonempty (V(R).rep q ≃ₗ[R] ⨁ _ : ι, R)) :
     EveryProjectiveIsSumOfFG R := by
   intro P _ _ hP
   have := hP
@@ -269,8 +269,8 @@ theorem everyProjectiveIsSumOfFG_of_free (R : Type u) [Ring R]
   obtain ⟨s, hs, hspan⟩ := hQcnt
   -- a countably generated projective is a class of `V^{ℵ₀}(R)`
   obtain ⟨Pw, ⟨eP⟩⟩ := exists_summand_of_projective R ℵ₀ Q s hs hspan
-  set q : (projClass R ℵ₀ le_rfl).carrier := (⟦Pw⟧ : Quotient (summandSetoid R ℵ₀)) with hq
-  have e0 : (projClass R ℵ₀ le_rfl).rep q ≃ₗ[R] Q :=
+  set q : V(R).carrier := (⟦Pw⟧ : Quotient (summandSetoid R ℵ₀)) with hq
+  have e0 : V(R).rep q ≃ₗ[R] Q :=
     (Quotient.mk_out (s := summandSetoid R ℵ₀) Pw).some.trans eP
   obtain ⟨ι, _, ⟨e1⟩⟩ := hfree q fun _ => hQfin (Module.Finite.equiv e0)
   exact ⟨ι, ⟨e0.symm.trans e1⟩⟩
@@ -284,22 +284,22 @@ This is what makes the third clause of Corollary 5.5(3) — realizability by a r
 finitely generated projective generators — imply the others without a separate hypothesis on
 decompositions. -/
 theorem everyProjectiveIsSumOfFG_of_kGenerates_finite (R : Type u) [Ring R]
-    (S : Set (projClass R ℵ₀ le_rfl).carrier)
-    (hfin : ∀ p ∈ S, Module.Finite R ((projClass R ℵ₀ le_rfl).rep p))
-    (hgen : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl;
+    (S : Set V(R).carrier)
+    (hfin : ∀ p ∈ S, Module.Finite R (V(R).rep p))
+    (hgen : letI := V(R).instKMonoid le_rfl;
       KMonoid.KGenerates ℵ₀ S) :
     EveryProjectiveIsSumOfFG R := by
   classical
   -- adjoin `0`, so that `mem_kclosure_iff` applies
-  have h0 : (0 : (projClass R ℵ₀ le_rfl).carrier) ∈ insert 0 S := Set.mem_insert _ _
+  have h0 : (0 : V(R).carrier) ∈ insert 0 S := Set.mem_insert _ _
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) (insert 0 S) :=
     Set.eq_univ_of_univ_subset (hgen ▸ KMonoid.kclosure_mono (Set.subset_insert _ _))
-  have hfin' : ∀ p ∈ insert 0 S, Module.Finite R ((projClass R ℵ₀ le_rfl).rep p) := by
+  have hfin' : ∀ p ∈ insert 0 S, Module.Finite R (V(R).rep p) := by
     rintro p (rfl | hp)
-    · have : Subsingleton ((projClass R ℵ₀ le_rfl).rep
-        (0 : (projClass R ℵ₀ le_rfl).carrier)) := by
-        refine (projClass R ℵ₀ le_rfl).subsingleton_rep_of_eq_zero ?_
-        exact ((projClass R ℵ₀ le_rfl).instKMonoid_zero le_rfl).symm
+    · have : Subsingleton (V(R).rep
+        (0 : V(R).carrier)) := by
+        refine V(R).subsingleton_rep_of_eq_zero ?_
+        exact (V(R).instKMonoid_zero le_rfl).symm
       exact Module.Finite.of_finite
     · exact hfin p hp
   refine Module.Projective.exists_directSum_fg_of_countablyGenerated ?_
@@ -307,16 +307,16 @@ theorem everyProjectiveIsSumOfFG_of_kGenerates_finite (R : Type u) [Ring R]
   have := hQproj
   obtain ⟨s, hs, hspan⟩ := hQcnt
   obtain ⟨Pw, ⟨eP⟩⟩ := exists_summand_of_projective R ℵ₀ Q s hs hspan
-  set q : (projClass R ℵ₀ le_rfl).carrier := (⟦Pw⟧ : Quotient (summandSetoid R ℵ₀)) with hq
-  have e0 : (projClass R ℵ₀ le_rfl).rep q ≃ₗ[R] Q :=
+  set q : V(R).carrier := (⟦Pw⟧ : Quotient (summandSetoid R ℵ₀)) with hq
+  have e0 : V(R).rep q ≃ₗ[R] Q :=
     (Quotient.mk_out (s := summandSetoid R ℵ₀) Pw).some.trans eP
   -- write the class of `Q` as a countable sum of finitely generated classes
   obtain ⟨w, hwS, hqw⟩ := (KMonoid.mem_kclosure_iff h0 q).mp (hgen' ▸ Set.mem_univ q)
-  have edsum : (projClass R ℵ₀ le_rfl).rep q ≃ₗ[R]
-      ⨁ i : Idx (ℵ₀ : Cardinal.{u}), (projClass R ℵ₀ le_rfl).rep (w i) := by
-    rw [hqw, (projClass R ℵ₀ le_rfl).instKMonoid_ksum le_rfl w]
-    exact ((projClass R ℵ₀ le_rfl).dsum_iso w).some
-  refine ⟨Idx (ℵ₀ : Cardinal.{u}), fun i => (projClass R ℵ₀ le_rfl).rep (w i),
+  have edsum : V(R).rep q ≃ₗ[R]
+      ⨁ i : Idx (ℵ₀ : Cardinal.{u}), V(R).rep (w i) := by
+    rw [hqw, V(R).instKMonoid_ksum le_rfl w]
+    exact (V(R).dsum_iso w).some
+  refine ⟨Idx (ℵ₀ : Cardinal.{u}), fun i => V(R).rep (w i),
     fun _ => inferInstance, fun _ => inferInstance, fun i => summand_projective R ℵ₀ (w i).out,
     fun i => hfin' (w i) (hwS i), ⟨e0.symm.trans edsum⟩⟩
 

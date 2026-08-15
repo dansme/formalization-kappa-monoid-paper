@@ -110,8 +110,8 @@ theorem le_of_add_eq_coe (z : WithTop NatSq.{u}) (p q : ℕ × ℕ)
 
 /-- In `ℕ₀² ∪ {∞}` the two generators have incomparable `add` sets. -/
 theorem cex_incomparable :
-    cex₁.{u} ∉ KMonoid.addOf (κ := ℵ₀) cex₂.{u} ∧
-      cex₂.{u} ∉ KMonoid.addOf (κ := ℵ₀) cex₁.{u} := by
+    cex₁.{u} ∉ add(cex₂.{u}) ∧
+      cex₂.{u} ∉ add(cex₁.{u}) := by
   constructor
   · rintro ⟨z, n, hzn⟩
     have hzn' : cex₁.{u} + z = ((⟨(0, n)⟩ : NatSq.{u}) : WithTop NatSq.{u}) :=
@@ -123,28 +123,28 @@ theorem cex_incomparable :
     exact absurd (le_of_add_eq_coe z (0, 1) (n, 0) hzn').2 (by omega)
 
 /-- `ℵ₀` copies of either generator are `∞`. -/
-theorem cmul_top_cex₁ : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl cex₁.{u} = (⊤ : WithTop NatSq.{u}) :=
+theorem cmul_top_cex₁ : ℵ₀∙cex₁.{u} = (⊤ : WithTop NatSq.{u}) :=
   TrivExt.cmul_top_eq_top isConical_natSq le_rfl cex₁_ne_zero
 
-theorem cmul_top_cex₂ : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl cex₂.{u} = (⊤ : WithTop NatSq.{u}) :=
+theorem cmul_top_cex₂ : ℵ₀∙cex₂.{u} = (⊤ : WithTop NatSq.{u}) :=
   TrivExt.cmul_top_eq_top isConical_natSq le_rfl cex₂_ne_zero
 
 /-- Yet `ℵ₀ x₂ + β x₁ = ℵ₀ x₂` for every `β`, both sides being `∞`.  With `cex_incomparable`
 this refutes the converse asserted in Corollary 5.5(3). -/
 theorem cex_absorb (β : ℕ∞) :
-    KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl cex₂.{u} + ecmul β cex₁.{u}
-      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl cex₂.{u} :=
-  calc KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl cex₂.{u} + ecmul β cex₁.{u}
+    ℵ₀∙cex₂.{u} + ecmul β cex₁.{u}
+      = ℵ₀∙cex₂.{u} :=
+  calc ℵ₀∙cex₂.{u} + ecmul β cex₁.{u}
       = (⊤ : WithTop NatSq.{u}) + ecmul β cex₁.{u} := by rw [cmul_top_cex₂]
     _ = (⊤ : WithTop NatSq.{u}) := WithTop.top_add _
-    _ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl cex₂.{u} := cmul_top_cex₂.symm
+    _ = ℵ₀∙cex₂.{u} := cmul_top_cex₂.symm
 
 /-- And `∞` is the only element with an infinite form, although `add x₁ ≠ add x₂`.  With
 `cex_incomparable` this refutes the converse asserted in Corollary 5.5(2). -/
 theorem cex_unique_infinite :
     (∀ F G : Form, F.IsInfinite → G.IsInfinite →
         eval cex₁.{u} cex₂.{u} F = eval cex₁.{u} cex₂.{u} G) ∧
-      KMonoid.addOf (κ := ℵ₀) cex₁.{u} ≠ KMonoid.addOf (κ := ℵ₀) cex₂.{u} := by
+      add(cex₁.{u}) ≠ add(cex₂.{u}) := by
   have htop : ∀ F : Form, F.IsInfinite → eval cex₁.{u} cex₂.{u} F = (⊤ : WithTop NatSq.{u}) := by
     intro F hF
     rcases hF with h | h

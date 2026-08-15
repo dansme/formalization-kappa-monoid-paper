@@ -67,12 +67,12 @@ direction is stated for this weaker condition, because 5.5(2) has nothing strong
 See `README.md`, "The statements corrected in Section 5". -/
 def IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
   ∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-    ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+    ∃ e : V(R).carrier → H,
       IsKHom ℵ₀ e ∧ Function.Bijective e
 
 /-- The `ℵ₀⁻`-monoid structure on `add (x₁ + x₂)`, which the braiding statements of §5 live
 over. -/
-abbrev addBase (S : Setting5 H) : Set H := addOf (κ := ℵ₀) (S.x₁ + S.x₂)
+abbrev addBase (S : Setting5 H) : Set H := add((S.x₁ + S.x₂))
 
 /-! ## Lemma 5.1 -/
 
@@ -83,8 +83,8 @@ to finitely generated modules, the `ℵ₀`-monoid `H` is braided over `add(x₁
 
 The braiding is what the rest of the section runs on, and is what is recorded here. -/
 theorem lemma_5_1 (S : Setting5 H) (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfFG R)
-    (e : H → (projClass R ℵ₀ le_rfl).carrier)
-    (hhom : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl; IsKHom ℵ₀ e)
+    (e : H → V(R).carrier)
+    (hhom : letI := V(R).instKMonoid le_rfl; IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
     IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H le_rfl (fun y => (y : H)) :=
   TwoGen.lemma_5_1 R hfg S.x₁ S.x₂ S.gen S.noncyclic e hhom hbij
@@ -116,7 +116,7 @@ braided.
 
 The generation hypothesis is a standing assumption of the section, and the proof genuinely needs
 it — it is where `t = m' x₁ + n' x₂` comes from.  Here it is `S.gen`. -/
-theorem lemma_5_2_three (S : Setting5 H) (hmem : S.x₁ ∈ addOf (κ := ℵ₀) S.x₂)
+theorem lemma_5_2_three (S : Setting5 H) (hmem : S.x₁ ∈ add(S.x₂))
     (hmix : NoMixedForms S.x₁ S.x₂) (α β : ℕ∞)
     (hFm : ∀ n, familyOfForm S.x₁ S.x₂ (α, ⊤) n ∈ addBase S)
     (hGm : ∀ n, familyOfForm S.x₁ S.x₂ (β, ⊤) n ∈ addBase S) :
@@ -128,7 +128,7 @@ already `m X₁ + k X₂ = n X₁ + k' X₂` for some natural numbers `k`, `k'`.
 
 Takes the standing generation hypothesis, as `S.gen`; the proof needs it to write `v (a, K+1)` in
 a form at all. -/
-theorem lemma_5_2_four (S : Setting5 H) (hmem : S.x₁ ∉ addOf (κ := ℵ₀) S.x₂)
+theorem lemma_5_2_four (S : Setting5 H) (hmem : S.x₁ ∉ add(S.x₂))
     (hmix : NoMixedForms S.x₁ S.x₂) (m n : ℕ)
     (hFm : ∀ i, familyOfForm S.x₁ S.x₂ ((m : ℕ∞), ⊤) i ∈ addBase S)
     (hGm : ∀ i, familyOfForm S.x₁ S.x₂ ((n : ℕ∞), ⊤) i ∈ addBase S)
@@ -139,8 +139,8 @@ theorem lemma_5_2_four (S : Setting5 H) (hmem : S.x₁ ∉ addOf (κ := ℵ₀) 
 /-- **Lemma 5.2(5)**.  Given the braiding of Lemma 5.1, `x₁ ∈ add x₂` iff `ℵ₀(x₁+x₂) = ℵ₀x₂`. -/
 theorem lemma_5_2_five (S : Setting5 H)
     (hbr :      IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H le_rfl (fun y => (y : H))) :
-    S.x₁ ∈ addOf (κ := ℵ₀) S.x₂ ↔
-      cmul (κ := ℵ₀) ℵ₀ le_rfl (S.x₁ + S.x₂) = cmul (κ := ℵ₀) ℵ₀ le_rfl S.x₂ :=
+    S.x₁ ∈ add(S.x₂) ↔
+      ℵ₀∙(S.x₁ + S.x₂) = ℵ₀∙S.x₂ :=
   TwoGen.lemma_5_2_five S.x₁ S.x₂ hbr
 
 /-! ## Theorem 5.3 -/
@@ -149,8 +149,8 @@ theorem lemma_5_2_five (S : Setting5 H)
 conditions hold, for both orderings of the generators. -/
 theorem theorem_5_3_forward (S : Setting5 H) (R : Type u) [Ring R]
     (hfg : EveryProjectiveIsSumOfFG R)
-    (e : (projClass R ℵ₀ le_rfl).carrier → H)
-    (hhom : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl; IsKHom ℵ₀ e)
+    (e : V(R).carrier → H)
+    (hhom : letI := V(R).instKMonoid le_rfl; IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
     Cond1 S.x₁ S.x₂ ∧ Cond1 S.x₂ S.x₁ ∧ Cond2 S.x₁ S.x₂ ∧ Cond2 S.x₂ S.x₁ ∧
       NoMixedForms S.x₁ S.x₂ :=
@@ -162,7 +162,7 @@ theorem theorem_5_3_backward (S : Setting5 H) (k : Type u) [Field k]
     (hc1 : Cond1 S.x₁ S.x₂) (hc1' : Cond1 S.x₂ S.x₁)
     (hc2 : Cond2 S.x₁ S.x₂) (hc2' : Cond2 S.x₂ S.x₁) (hmix : NoMixedForms S.x₁ S.x₂) :
     ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
-      ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+      ∃ e : V(R).carrier → H,
         IsKHom ℵ₀ e ∧ Function.Bijective e :=
   TwoGen.theorem_5_3_backward S.x₁ S.x₂ k S.gen hc1 hc1' hc2 hc2' hmix
 
@@ -178,18 +178,18 @@ alias theorem_5_3 := TwoGen.theorem_5_3
 Stated at `V^{ℵ₀}(R)` itself rather than through an isomorphism, as the paper does.  The standing
 assumptions of §5 appear here as explicit hypotheses rather than as a `Setting5`, because the
 `KMonoid` instance on `V^{ℵ₀}(R)` is not in scope while the binder elaborates (trap 3). -/
-theorem prop_5_4 (R : Type u) [Ring R] (p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier)
-    (hgen : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
-      KGenerates ℵ₀ ({p₁, p₂} : Set (projClass R ℵ₀ le_rfl).carrier))
-    (hnoncyclic : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
-      ∀ x : (projClass R ℵ₀ le_rfl).carrier,
-        ¬ KGenerates ℵ₀ ({x} : Set (projClass R ℵ₀ le_rfl).carrier)) :
-    (traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂) ≤ traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁)
-        ↔ traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁) = ⊤) ∧
-      (traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁) = ⊤ ↔
+theorem prop_5_4 (R : Type u) [Ring R] (p₁ p₂ : V(R).carrier)
+    (hgen : letI := V(R).instKMonoid le_rfl
+      KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
+    (hnoncyclic : letI := V(R).instKMonoid le_rfl
+      ∀ x : V(R).carrier,
+        ¬ KGenerates ℵ₀ ({x} : Set V(R).carrier)) :
+    (traceIdeal R (V(R).rep p₂) ≤ traceIdeal R (V(R).rep p₁)
+        ↔ traceIdeal R (V(R).rep p₁) = ⊤) ∧
+      (traceIdeal R (V(R).rep p₁) = ⊤ ↔
         ∃ (Q : Type u) (_ : AddCommGroup Q) (_ : Module R Q),
-          Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁) ≃ₗ[R]
-            (projClass R ℵ₀ le_rfl).rep p₂ × Q)) :=
+          Nonempty (DirectSum ℕ (fun _ => V(R).rep p₁) ≃ₗ[R]
+            V(R).rep p₂ × Q)) :=
   TwoGen.prop_5_4 R p₁ p₂ hgen hnoncyclic
 
 /-! ## Corollary 5.5 -/
@@ -200,8 +200,8 @@ value agree after replacing the infinite coefficient by suitable finite ones.
 
 The condition is quantified over **both** orderings of the generators, as the paper's
 `1 ≤ i ≠ j ≤ 2` requires; both instances of each clause are needed. -/
-theorem corollary_5_5_one (S : Setting5 H) (h₁ : S.x₁ ∉ addOf (κ := ℵ₀) S.x₂)
-    (h₂ : S.x₂ ∉ addOf (κ := ℵ₀) S.x₁) :
+theorem corollary_5_5_one (S : Setting5 H) (h₁ : S.x₁ ∉ add(S.x₂))
+    (h₂ : S.x₂ ∉ add(S.x₁)) :
     IsRealizableAsV H ↔
       ((∀ F G : Form, eval S.x₁ S.x₂ F = eval S.x₁ S.x₂ G →
           (F.1 = ⊤ ↔ G.1 = ⊤) ∧ (F.2 = ⊤ ↔ G.2 = ⊤)) ∧
@@ -224,13 +224,13 @@ and needs none: the freeness clause gives `EveryProjectiveIsSumOfFG R` through K
 (`everyProjectiveIsSumOfFG_of_free`), which is what Theorem 5.3's forward direction is applied
 with. -/
 theorem corollary_5_5_two (S : Setting5 H) :
-    (addOf (κ := ℵ₀) S.x₁ = addOf (κ := ℵ₀) S.x₂ ∧ NoMixedForms S.x₁ S.x₂) ↔
+    (add(S.x₁) = add(S.x₂) ∧ NoMixedForms S.x₁ S.x₂) ↔
       (∃ (R : Type u) (_ : Ring R),
-        (∀ q : (projClass R ℵ₀ le_rfl).carrier,
-            ¬ Module.Finite R ((projClass R ℵ₀ le_rfl).rep q) →
+        (∀ q : V(R).carrier,
+            ¬ Module.Finite R (V(R).rep q) →
             ∃ ι : Type u, #ι ≤ ℵ₀ ∧
-              Nonempty ((projClass R ℵ₀ le_rfl).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-        ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+              Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
+        ∃ e : V(R).carrier → H,
           IsKHom ℵ₀ e ∧ Function.Bijective e) :=
   TwoGen.corollary_5_5_two S.x₁ S.x₂ S.gen S.noncyclic
 
@@ -240,8 +240,8 @@ theorem corollary_5_5_two (S : Setting5 H) :
 
 The paper's part (3) is a three-way equivalence; the other two clauses are
 `corollary_5_5_three_nonfree` and `corollary_5_5_three_trace` below. -/
-theorem corollary_5_5_three (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ := ℵ₀) S.x₂)
-    (h₂ : S.x₂ ∉ addOf (κ := ℵ₀) S.x₁) :
+theorem corollary_5_5_three (S : Setting5 H) (h₁ : S.x₁ ∈ add(S.x₂))
+    (h₂ : S.x₂ ∉ add(S.x₁)) :
     (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
         β ≠ ⊤ ∧ ∃ m m' : ℕ,
           eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
@@ -251,38 +251,38 @@ theorem corollary_5_5_three (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ := ℵ
 /-- **Corollary 5.5(3)**, second clause: the same relation condition is equivalent to
 realizability by a ring which in addition carries a finitely generated projective `P` with
 `P^{(ℵ₀)}` not free. -/
-theorem corollary_5_5_three_nonfree (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ := ℵ₀) S.x₂)
-    (h₂ : S.x₂ ∉ addOf (κ := ℵ₀) S.x₁) :
+theorem corollary_5_5_three_nonfree (S : Setting5 H) (h₁ : S.x₁ ∈ add(S.x₂))
+    (h₂ : S.x₂ ∉ add(S.x₁)) :
     (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
         β ≠ ⊤ ∧ ∃ m m' : ℕ,
           eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms S.x₁ S.x₂ ↔
       (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        (∃ p : (projClass R ℵ₀ le_rfl).carrier,
-            Module.Finite R ((projClass R ℵ₀ le_rfl).rep p) ∧
-            ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p)
+        (∃ p : V(R).carrier,
+            Module.Finite R (V(R).rep p) ∧
+            ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => V(R).rep p)
               ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-          ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+          ∃ e : V(R).carrier → H,
             IsKHom ℵ₀ e ∧ Function.Bijective e) :=
   TwoGen.corollary_5_5_three_nonfree S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
 
 /-- **Corollary 5.5(3)**, third clause: equivalently, `H ≅ V^{ℵ₀}(R)` for a ring with two finitely
 generated projective modules `P₁`, `P₂` generating `V^{ℵ₀}(R)` and satisfying
 `Tr(P₁) ⊊ Tr(P₂)`. -/
-theorem corollary_5_5_three_trace (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ := ℵ₀) S.x₂)
-    (h₂ : S.x₂ ∉ addOf (κ := ℵ₀) S.x₁) :
+theorem corollary_5_5_three_trace (S : Setting5 H) (h₁ : S.x₁ ∈ add(S.x₂))
+    (h₂ : S.x₂ ∉ add(S.x₁)) :
     (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
         β ≠ ⊤ ∧ ∃ m m' : ℕ,
           eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms S.x₁ S.x₂ ↔
       (∃ (R : Type u) (_ : Ring R),
-        ∃ p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier,
-          Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₁) ∧
-            Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
-            KGenerates ℵ₀ ({p₁, p₂} : Set (projClass R ℵ₀ le_rfl).carrier) ∧
-            traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁)
-              < traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
-            ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+        ∃ p₁ p₂ : V(R).carrier,
+          Module.Finite R (V(R).rep p₁) ∧
+            Module.Finite R (V(R).rep p₂) ∧
+            KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier) ∧
+            traceIdeal R (V(R).rep p₁)
+              < traceIdeal R (V(R).rep p₂) ∧
+            ∃ e : V(R).carrier → H,
               IsKHom ℵ₀ e ∧ Function.Bijective e) :=
   TwoGen.corollary_5_5_three_trace S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
 

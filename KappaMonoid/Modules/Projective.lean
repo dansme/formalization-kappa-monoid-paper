@@ -151,6 +151,11 @@ of free modules of §2.3 lacks. -/
 instance instIsSummandClosed (hκ : ℵ₀ ≤ κ) : (projClass R κ hκ).IsSummandClosed where
   exists_of_isCompl := exists_class_of_summand_projClass R κ
 
+/-- `V(R)` is `V^{ℵ₀}(R)`, the monoid of §4 and §5.  Notation, not a definition: it expands to
+`projClass R ℵ₀ le_rfl`, so `V(R).carrier` and `V(R).rep p` are the carrier and the representative
+module of a class. -/
+scoped notation:max "V(" R ")" => KappaMonoid.projClass R Cardinal.aleph0 le_rfl
+
 /-- `V^{ℵ₀}(R)` is an `ℵ₀`-monoid.  This is `ModuleClass.instKMonoid` at the class and the
 cardinal that §4 and §5 work with throughout, promoted to an instance so that their statements
 need not carry it. -/

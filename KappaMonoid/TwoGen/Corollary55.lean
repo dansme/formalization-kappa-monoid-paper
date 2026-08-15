@@ -47,12 +47,12 @@ it into the hypothesis of Theorem 5.3(i), whose conclusion `x_i ∈ add x_j` is 
 clause is Theorem 5.3(ii).  (ii) ⇒ (i): Theorem 5.3(i) holds vacuously — its hypothesis would make
 an infinite coefficient equal a finite one — (ii) is the assumption, and (iii) follows from the
 first clause. -/
-theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
-    (h₂ : x₂ ∉ KMonoid.addOf (κ := ℵ₀) x₁)
+theorem corollary_5_5_one (h₁ : x₁ ∉ add(x₂))
+    (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+        ∃ e : V(R).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
       ((∀ F G : Form, eval x₁ x₂ F = eval x₁ x₂ G → (F.1 = ⊤ ↔ G.1 = ⊤) ∧ (F.2 = ⊤ ↔ G.2 = ⊤)) ∧
         (∀ F G : Form, F.1 = ⊤ → G.1 = ⊤ → eval x₁ x₂ F = eval x₁ x₂ G →
@@ -68,8 +68,8 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
       intro F G hFG hF hG
       obtain ⟨m, hm⟩ : ∃ m : ℕ, G.1 = (m : ℕ∞) := ⟨G.1.toNat, (ENat.natCast_toNat hG).symm⟩
       refine h₁ (hc1 m ?_).2
-      have hadd : eval x₁ x₂ F + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂
-          = eval x₁ x₂ G + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by rw [hFG]
+      have hadd : eval x₁ x₂ F + ℵ₀∙x₂
+          = eval x₁ x₂ G + ℵ₀∙x₂ := by rw [hFG]
       rw [eval, eval, hF, hm, add_assoc, add_assoc, ecmul_add_cmul_top, ecmul_add_cmul_top,
         ecmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₁ m] at hadd
       exact hadd.symm
@@ -78,22 +78,22 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
       intro F G hFG hF hG
       obtain ⟨n, hn⟩ : ∃ n : ℕ, G.2 = (n : ℕ∞) := ⟨G.2.toNat, (ENat.natCast_toNat hG).symm⟩
       refine h₂ (hc1' n ?_).2
-      have hadd : eval x₁ x₂ F + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
-          = eval x₁ x₂ G + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by rw [hFG]
-      have hL : eval x₁ x₂ F + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
-          = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+      have hadd : eval x₁ x₂ F + ℵ₀∙x₁
+          = eval x₁ x₂ G + ℵ₀∙x₁ := by rw [hFG]
+      have hL : eval x₁ x₂ F + ℵ₀∙x₁
+          = ℵ₀∙x₂ + ℵ₀∙x₁ := by
         rw [eval, hF]
-        calc ecmul F.1 x₁ + ecmul (⊤ : ℕ∞) x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
-            = (ecmul F.1 x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁) + ecmul (⊤ : ℕ∞) x₂ := by abel
-          _ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+        calc ecmul F.1 x₁ + ecmul (⊤ : ℕ∞) x₂ + ℵ₀∙x₁
+            = (ecmul F.1 x₁ + ℵ₀∙x₁) + ecmul (⊤ : ℕ∞) x₂ := by abel
+          _ = ℵ₀∙x₂ + ℵ₀∙x₁ := by
               rw [ecmul_add_cmul_top, ecmul_top, add_comm]
-      have hR : eval x₁ x₂ G + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
+      have hR : eval x₁ x₂ G + ℵ₀∙x₁
           = KMonoid.cmul (κ := ℵ₀) (n : Cardinal.{u})
               (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂
-            + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+            + ℵ₀∙x₁ := by
         rw [eval, hn]
-        calc ecmul G.1 x₁ + ecmul ((n : ℕ) : ℕ∞) x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁
-            = (ecmul G.1 x₁ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁)
+        calc ecmul G.1 x₁ + ecmul ((n : ℕ) : ℕ∞) x₂ + ℵ₀∙x₁
+            = (ecmul G.1 x₁ + ℵ₀∙x₁)
               + ecmul ((n : ℕ) : ℕ∞) x₂ := by abel
           _ = _ := by
               rw [ecmul_add_cmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₂ n, add_comm]
@@ -150,10 +150,10 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ KMonoid.addOf (κ := ℵ₀) x₂)
       show ecmul (⊤ : ℕ∞) x₁ + ecmul ((n : ℕ) : ℕ∞) x₂
         = ecmul (⊤ : ℕ∞) x₁ + ecmul (⊤ : ℕ∞) x₂
       rw [ecmul_natCast, ecmul_top, ecmul_top, ← KMonoid.cmul_natCast x₂ n,
-        add_comm (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁)
+        add_comm (ℵ₀∙x₁)
           (KMonoid.cmul (κ := ℵ₀) (n : Cardinal.{u})
             (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂),
-        add_comm (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁) (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂)]
+        add_comm (ℵ₀∙x₁) (ℵ₀∙x₂)]
       exact hn
     have hmix : NoMixedForms x₁ x₂ := by
       rintro y ⟨⟨F, hF, hFe⟩, ⟨G, hG, hGe⟩⟩
@@ -175,21 +175,21 @@ an infinite form, namely `ℵ₀ x₁ = ℵ₀ x₂`.
 
 Each generator absorbs the other by `cmul_top_absorb`, which both identifies `ℵ₀ x₁` with `ℵ₀ x₂`
 and collapses every infinite form to it. -/
-theorem corollary_5_5_two_unique (h : KMonoid.addOf (κ := ℵ₀) x₁ = KMonoid.addOf (κ := ℵ₀) x₂)
+theorem corollary_5_5_two_unique (h : add(x₁) = add(x₂))
     (_hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H)) :
     ∀ F G : Form, F.IsInfinite → G.IsInfinite → eval x₁ x₂ F = eval x₁ x₂ G := by
-  have h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂ := by rw [← h]; exact KMonoid.self_mem_addOf x₁
-  have h₂ : x₂ ∈ KMonoid.addOf (κ := ℵ₀) x₁ := by rw [h]; exact KMonoid.self_mem_addOf x₂
+  have h₁ : x₁ ∈ add(x₂) := by rw [← h]; exact KMonoid.self_mem_addOf x₁
+  have h₂ : x₂ ∈ add(x₁) := by rw [h]; exact KMonoid.self_mem_addOf x₂
   have habs₁ := cmul_top_absorb x₁ x₂ h₁
   have habs₂ := cmul_top_absorb x₂ x₁ h₂
   -- the two infinite multiples agree, both being `ℵ₀ x₁ + ℵ₀ x₂`
-  have heq : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
+  have heq : ℵ₀∙x₁ = ℵ₀∙x₂ := by
     have e₁ := habs₁ ⊤
     have e₂ := habs₂ ⊤
     rw [ecmul_top] at e₁ e₂
     rw [← e₂, add_comm, e₁]
   -- every infinite form evaluates to `ℵ₀ x₁`
-  have key : ∀ F : Form, F.IsInfinite → eval x₁ x₂ F = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+  have key : ∀ F : Form, F.IsInfinite → eval x₁ x₂ F = ℵ₀∙x₁ := by
     intro F hF
     rcases hF with hc | hc
     · rw [eval, hc, ecmul_top]
@@ -218,20 +218,20 @@ so Proposition 5.4's hereditary half gives freeness.  (ii) ⇒ (i): freeness mak
 `ℵ₀ [P₂]` both equal to `ℵ₀ [R]`, which is the hypothesis of Theorem 5.3(i) with `n = 0`. -/
 theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
-    (KMonoid.addOf (κ := ℵ₀) x₁ = KMonoid.addOf (κ := ℵ₀) x₂ ∧ NoMixedForms x₁ x₂) ↔
+    (add(x₁) = add(x₂) ∧ NoMixedForms x₁ x₂) ↔
       (∃ (R : Type u) (_ : Ring R),
-        (∀ q : (projClass R ℵ₀ le_rfl).carrier,
-            ¬ Module.Finite R ((projClass R ℵ₀ le_rfl).rep q) →
+        (∀ q : V(R).carrier,
+            ¬ Module.Finite R (V(R).rep q) →
             ∃ ι : Type u, #ι ≤ ℵ₀ ∧
-              Nonempty ((projClass R ℵ₀ le_rfl).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-        ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+              Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
+        ∃ e : V(R).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
   classical
   constructor
   · rintro ⟨heq, hmix⟩
-    have hx₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂ := by
+    have hx₁ : x₁ ∈ add(x₂) := by
       rw [← heq]; exact KMonoid.self_mem_addOf x₁
-    have hx₂ : x₂ ∈ KMonoid.addOf (κ := ℵ₀) x₁ := by
+    have hx₂ : x₂ ∈ add(x₁) := by
       rw [heq]; exact KMonoid.self_mem_addOf x₂
     -- the conditions of Theorem 5.3
     have hc1 : Cond1 x₁ x₂ := by
@@ -251,35 +251,35 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
         (fun hnot => absurd hx₁ hnot) (fun hnot => absurd hx₂ hnot) hmix
     refine ⟨R, hring, ?_, e, hhom, hbij⟩
     -- transport the generators back along the isomorphism
-    obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
+    obtain ⟨e', hleft, hright⟩ : ∃ g : H → V(R).carrier,
         Function.LeftInverse g e ∧ Function.RightInverse g e :=
       ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
         (Equiv.ofBijective e hbij).right_inv⟩
     have he' : KMonoid.IsKHom (ℵ₀ : Cardinal.{u}) e' := hhom.inv hbij hright
     have he'surj : Function.Surjective e' := hleft.surjective
     have hgenp : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
-        ({e' x₁, e' x₂} : Set (projClass R ℵ₀ le_rfl).carrier) := by
+        ({e' x₁, e' x₂} : Set V(R).carrier) := by
       have := KMonoid.KGenerates.map he' he'surj hgen
       rwa [Set.image_pair] at this
-    have hncp : ∀ x : (projClass R ℵ₀ le_rfl).carrier,
-        ¬ KMonoid.KGenerates ℵ₀ ({x} : Set (projClass R ℵ₀ le_rfl).carrier) := by
+    have hncp : ∀ x : V(R).carrier,
+        ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier) := by
       intro x hx
       refine hnoncyclic (e x) ?_
       have := KMonoid.KGenerates.map hhom hbij.2 hx
       rwa [Set.image_singleton] at this
     -- both trace ideals are `R`
-    have hkey : ∀ a b : H, b ∈ KMonoid.addOf (κ := ℵ₀) a →
-        e' b ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (e' a) := by
+    have hkey : ∀ a b : H, b ∈ add(a) →
+        e' b ≼ ℵ₀∙(e' a) := by
       intro a b hab
       obtain ⟨z, n, hzn⟩ := hab
-      obtain ⟨w, hw⟩ : b ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl a :=
+      obtain ⟨w, hw⟩ : b ≼ ℵ₀∙a :=
         AddLe.trans ⟨z, hzn⟩ (KMonoid.cmul_le_cmul _ _
           (le_of_lt Cardinal.natCast_lt_aleph0) a)
       refine ⟨e' w, ?_⟩
       rw [← KMonoid.IsKHom.map_add he', hw, he'.map_cmul]
-    have ht₁ : traceIdeal R ((projClass R ℵ₀ le_rfl).rep (e' x₁)) = ⊤ :=
+    have ht₁ : traceIdeal R (V(R).rep (e' x₁)) = ⊤ :=
       traceIdeal_eq_top_of_addLe R (e' x₁) (e' x₂) hgenp hncp (hkey x₁ x₂ hx₂)
-    have ht₂ : traceIdeal R ((projClass R ℵ₀ le_rfl).rep (e' x₂)) = ⊤ :=
+    have ht₂ : traceIdeal R (V(R).rep (e' x₂)) = ⊤ :=
       traceIdeal_eq_top_of_addLe R (e' x₂) (e' x₁) (by rwa [Set.pair_comm]) hncp
         (hkey x₂ x₁ hx₁)
     exact (prop_5_4_hereditary R Albrecht.exists_directSum_fg (e' x₁) (e' x₂) hgenp hncp).mp
@@ -288,38 +288,38 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
     -- Theorem 5.3's forward direction needs `EveryProjectiveIsSumOfFG`; freeness supplies it
     have hfg : EveryProjectiveIsSumOfFG R := everyProjectiveIsSumOfFG_of_free R hfree
     obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
-    obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
+    obtain ⟨e', hleft, hright⟩ : ∃ g : H → V(R).carrier,
         Function.LeftInverse g e ∧ Function.RightInverse g e :=
       ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
         (Equiv.ofBijective e hbij).right_inv⟩
     have he' : KMonoid.IsKHom (ℵ₀ : Cardinal.{u}) e' := hhom.inv hbij hright
     have hgenp : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
-        ({e' x₁, e' x₂} : Set (projClass R ℵ₀ le_rfl).carrier) := by
+        ({e' x₁, e' x₂} : Set V(R).carrier) := by
       have := KMonoid.KGenerates.map he' hleft.surjective hgen
       rwa [Set.image_pair] at this
-    have hncp : ∀ x : (projClass R ℵ₀ le_rfl).carrier,
-        ¬ KMonoid.KGenerates ℵ₀ ({x} : Set (projClass R ℵ₀ le_rfl).carrier) := by
+    have hncp : ∀ x : V(R).carrier,
+        ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier) := by
       intro x hx
       refine hnoncyclic (e x) ?_
       have := KMonoid.KGenerates.map hhom hbij.2 hx
       rwa [Set.image_singleton] at this
     obtain ⟨hne₁, hne₂⟩ := ne_zero_of_not_cyclic (e' x₁) (e' x₂) hgenp hncp
     -- both `ℵ₀ [P_i]` are `ℵ₀ [R]`, hence equal
-    have hcm : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ := by
+    have hcm : ℵ₀∙x₁ = ℵ₀∙x₂ := by
       have h₁ := cmul_top_eq_unitClass_of_free R k (e' x₁) hne₁ hfree
       have h₂ := cmul_top_eq_unitClass_of_free R k (e' x₂) hne₂ hfree
-      have hstep : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (e' x₁)
-          = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (e' x₂) := h₁.trans h₂.symm
+      have hstep : ℵ₀∙(e' x₁)
+          = ℵ₀∙(e' x₂) := h₁.trans h₂.symm
       have := congrArg e hstep
       rwa [hhom.map_cmul, hhom.map_cmul, hright x₁, hright x₂] at this
     -- Theorem 5.3(i) with `n = 0`
     obtain ⟨hc1, hc1', -, -, hmix⟩ :=
       theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
-    have habs : ∀ a b : H, KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl a
-        = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl b →
+    have habs : ∀ a b : H, ℵ₀∙a
+        = ℵ₀∙b →
         KMonoid.cmul (κ := ℵ₀) (0 : ℕ) (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) a
-          + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl b
-        = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl a + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl b := by
+          + ℵ₀∙b
+        = ℵ₀∙a + ℵ₀∙b := by
       intro a b hab
       rw [KMonoid.cmul_natCast, zero_nsmul, zero_add, hab, cmul_top_add_self]
     refine ⟨le_antisymm (addOf_subset_of_mem ((hc1 0 (habs x₁ x₂ hcm)).2))
@@ -327,9 +327,9 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
 
 /-- **Corollary 5.5(3)**, first claim: `x₁ ∈ add x₂` forces `ℵ₀ x₂ + β x₁ = ℵ₀ x₂` for every `β`.
 Generation is not needed — this is `cmul_top_absorb`. -/
-theorem corollary_5_5_three_absorb (h : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
+theorem corollary_5_5_three_absorb (h : x₁ ∈ add(x₂))
     (_hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H)) (β : ℕ∞) :
-    KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + ecmul β x₁ = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ :=
+    ℵ₀∙x₂ + ecmul β x₁ = ℵ₀∙x₂ :=
   cmul_top_absorb x₁ x₂ h β
 
 /-- **Corollary 5.5(3)**, equivalence: for `add x₁ ⊊ add x₂`, realizability is equivalent to an
@@ -346,26 +346,26 @@ infinite `β` would put `x₂` in `add x₁` — and condition (ii) for that pai
 (ii) ⇒ (i): Theorem 5.3(i) holds for `(x₁, x₂)` because `x₁ ∈ add x₂` and `ℵ₀ x₂` absorbs `ℵ₀ x₁`,
 and vacuously for `(x₂, x₁)`; (ii) holds vacuously for `(x₁, x₂)` and is the assumption for
 `(x₂, x₁)`. -/
-theorem corollary_5_5_three (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
-    (h₂ : x₂ ∉ KMonoid.addOf (κ := ℵ₀) x₁)
+theorem corollary_5_5_three (h₁ : x₁ ∈ add(x₂))
+    (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (∀ (n : ℕ) (β : ℕ∞), eval x₁ x₂ (⊤, (n : ℕ∞)) = eval x₁ x₂ (⊤, β) →
         β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms x₁ x₂ ↔
       (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+        ∃ e : V(R).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
   classical
   -- the two readings of `ℵ₀ x₁ + a x₂`
   have hev : ∀ a : ℕ, eval x₁ x₂ ((⊤ : ℕ∞), ((a : ℕ) : ℕ∞))
       = KMonoid.cmul (κ := ℵ₀) (a : Cardinal.{u})
           (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) le_rfl) x₂
-        + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+        + ℵ₀∙x₁ := by
     intro a
     rw [eval, ecmul_top, ecmul_natCast, ← KMonoid.cmul_natCast x₂ a, add_comm]
   have hevtop : eval x₁ x₂ ((⊤ : ℕ∞), (⊤ : ℕ∞))
-      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+      = ℵ₀∙x₂ + ℵ₀∙x₁ := by
     rw [eval, ecmul_top, ecmul_top, add_comm]
   constructor
   · rintro ⟨hrel, hmix⟩
@@ -423,37 +423,37 @@ situation `x₁ ∈ add x₂` and `x₂ ∉ add x₁`, carries two finitely gene
 `Tr(P₁) = R` (`traceIdeal_eq_top_of_iso_free`).  And `[P₂] ≼ ℵ₀ [P₁]` is impossible: transported to
 `H` it gives `ℵ₀ x₁ + ℵ₀ x₂ = ℵ₀ x₁`, which is condition (i) of Theorem 5.3 for `(x₂, x₁)` at
 `n = 0`, and that condition concludes `x₂ ∈ add x₁`. -/
-theorem cor_5_5_three_data (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
-    (h₂ : x₂ ∉ KMonoid.addOf (κ := ℵ₀) x₁)
+theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
+    (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
     (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfFG R)
-    (e : (projClass R ℵ₀ le_rfl).carrier → H)
-    (hhom : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (e : V(R).carrier → H)
+    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
-    ∃ p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier,
-      Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₁) ∧
-        Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
-        KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set (projClass R ℵ₀ le_rfl).carrier) ∧
-        traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁)
-          < traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
-        ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p₁)
+    ∃ p₁ p₂ : V(R).carrier,
+      Module.Finite R (V(R).rep p₁) ∧
+        Module.Finite R (V(R).rep p₂) ∧
+        KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier) ∧
+        traceIdeal R (V(R).rep p₁)
+          < traceIdeal R (V(R).rep p₂) ∧
+        ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => V(R).rep p₁)
             ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
+    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
-  obtain ⟨e', hleft, hright⟩ : ∃ g : H → (projClass R ℵ₀ le_rfl).carrier,
+  obtain ⟨e', hleft, hright⟩ : ∃ g : H → V(R).carrier,
       Function.LeftInverse g e ∧ Function.RightInverse g e :=
     ⟨(Equiv.ofBijective e hbij).symm, (Equiv.ofBijective e hbij).left_inv,
       (Equiv.ofBijective e hbij).right_inv⟩
   have he' : KMonoid.IsKHom (ℵ₀ : Cardinal.{u}) e' := hhom.inv hbij hright
   have hgenp : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
-      ({e' x₁, e' x₂} : Set (projClass R ℵ₀ le_rfl).carrier) := by
+      ({e' x₁, e' x₂} : Set V(R).carrier) := by
     have := KMonoid.KGenerates.map he' hleft.surjective hgen
     rwa [Set.image_pair] at this
-  have hncp : ∀ x : (projClass R ℵ₀ le_rfl).carrier,
-      ¬ KMonoid.KGenerates ℵ₀ ({x} : Set (projClass R ℵ₀ le_rfl).carrier) := by
+  have hncp : ∀ x : V(R).carrier,
+      ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier) := by
     intro x hx
     refine hnoncyclic (e x) ?_
     have := KMonoid.KGenerates.map hhom hbij.2 hx
@@ -462,51 +462,51 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
   -- Theorem 5.3(i) for the ordered pair `(x₂, x₁)`
   obtain ⟨-, hc1', -, -, -⟩ := theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
   -- `x₂ ≼ ℵ₀ x₁` is impossible
-  have hkeyH : ¬ (x₂ ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁) := by
+  have hkeyH : ¬ (x₂ ≼ ℵ₀∙x₁) := by
     rintro ⟨c, hc⟩
-    have habs : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₂ + KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl c
-        = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x₁ := by
+    have habs : ℵ₀∙x₂ + ℵ₀∙c
+        = ℵ₀∙x₁ := by
       rw [← KMonoid.cmul_top_distrib, hc, KMonoid.cmul_top_idem]
     refine h₂ (hc1' 0 ?_).2
     rw [KMonoid.cmul_natCast, zero_nsmul, zero_add, KMonoid.add_cmul_top_eq habs]
   -- transporting `≼ ℵ₀ ·` in both directions along the isomorphism
-  have hdown : ∀ a b : H, b ∈ KMonoid.addOf (κ := ℵ₀) a →
-      e' b ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (e' a) := by
+  have hdown : ∀ a b : H, b ∈ add(a) →
+      e' b ≼ ℵ₀∙(e' a) := by
     intro a b hab
     obtain ⟨z, n, hzn⟩ := hab
-    obtain ⟨w, hw⟩ : b ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl a :=
+    obtain ⟨w, hw⟩ : b ≼ ℵ₀∙a :=
       AddLe.trans ⟨z, hzn⟩ (KMonoid.cmul_le_cmul _ _
         (le_of_lt Cardinal.natCast_lt_aleph0) a)
     exact ⟨e' w, by rw [← KMonoid.IsKHom.map_add he', hw, he'.map_cmul]⟩
-  have hup : ∀ a b : (projClass R ℵ₀ le_rfl).carrier,
-      b ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl a → e b ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (e a) := by
+  have hup : ∀ a b : V(R).carrier,
+      b ≼ ℵ₀∙a → e b ≼ ℵ₀∙(e a) := by
     rintro a b ⟨c, hc⟩
     exact ⟨e c, by rw [← KMonoid.IsKHom.map_add hhom, hc, hhom.map_cmul]⟩
   -- both generators are finitely generated
-  have hWsub := (projClass R ℵ₀ le_rfl).lambdaSmallPart_isLSubset le_rfl ℵ₀
+  have hWsub := V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀
     Cardinal.isRegular_aleph0 le_rfl
-  have hWsat : ∀ a ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀,
-      ∀ b c : (projClass R ℵ₀ le_rfl).carrier, a = b + c →
-      b ∈ (projClass R ℵ₀ le_rfl).lambdaSmallPart ℵ₀ :=
+  have hWsat : ∀ a ∈ V(R).lambdaSmallPart ℵ₀,
+      ∀ b c : V(R).carrier, a = b + c →
+      b ∈ V(R).lambdaSmallPart ℵ₀ :=
     fun a ha b c habc =>
-      (projClass R ℵ₀ le_rfl).lambdaSmallPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
+      V(R).lambdaSmallPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
   obtain ⟨hp₁W, hp₂W⟩ := mem_of_divisorClosed_of_generates (e' x₁) (e' x₂) hWsat
     ((corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1.kGenerates_coe) hgenp hncp
-  have hfin₁ : Module.Finite R ((projClass R ℵ₀ le_rfl).rep (e' x₁)) :=
+  have hfin₁ : Module.Finite R (V(R).rep (e' x₁)) :=
     finite_of_isLambdaSmall_aleph0 R ℵ₀ (e' x₁).out
-      ((projClass R ℵ₀ le_rfl).isLambdaSmall_of_mem hp₁W)
-  have hfin₂ : Module.Finite R ((projClass R ℵ₀ le_rfl).rep (e' x₂)) :=
+      (V(R).isLambdaSmall_of_mem hp₁W)
+  have hfin₂ : Module.Finite R (V(R).rep (e' x₂)) :=
     finite_of_isLambdaSmall_aleph0 R ℵ₀ (e' x₂).out
-      ((projClass R ℵ₀ le_rfl).isLambdaSmall_of_mem hp₂W)
+      (V(R).isLambdaSmall_of_mem hp₂W)
   -- `Tr(P₂) = R`, because `[P₁] ≼ ℵ₀ [P₂]`
-  have htop₂ : traceIdeal R ((projClass R ℵ₀ le_rfl).rep (e' x₂)) = ⊤ :=
+  have htop₂ : traceIdeal R (V(R).rep (e' x₂)) = ⊤ :=
     traceIdeal_eq_top_of_addLe R (e' x₂) (e' x₁) (by rwa [Set.pair_comm]) hncp
       (hdown x₂ x₁ h₁)
   -- `Tr(P₁) ≠ R`, because it would put `[P₂]` below `ℵ₀ [P₁]`
-  have hnottop : traceIdeal R ((projClass R ℵ₀ le_rfl).rep (e' x₁)) ≠ ⊤ := by
+  have hnottop : traceIdeal R (V(R).rep (e' x₁)) ≠ ⊤ := by
     intro htop
     refine hkeyH ?_
-    have h3 : e' x₂ ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl (e' x₁) :=
+    have h3 : e' x₂ ≼ ℵ₀∙(e' x₁) :=
       AddLe.trans (Projective.isOrderUnit_unitClass R ℵ₀ le_rfl k (e' x₂))
         (cmul_top_unitClass_addLe R (e' x₁) k htop)
     have := hup (e' x₁) (e' x₂) h3
@@ -521,19 +521,19 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
 /-- **Corollary 5.5(3)**, the clause the paper states first: the relation condition is equivalent
 to realizability by a ring which, in addition, carries a finitely generated projective module `P`
 with `P^{(ℵ₀)}` not free. -/
-theorem corollary_5_5_three_nonfree (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
-    (h₂ : x₂ ∉ KMonoid.addOf (κ := ℵ₀) x₁)
+theorem corollary_5_5_three_nonfree (h₁ : x₁ ∈ add(x₂))
+    (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (∀ (n : ℕ) (β : ℕ∞), eval x₁ x₂ (⊤, (n : ℕ∞)) = eval x₁ x₂ (⊤, β) →
         β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms x₁ x₂ ↔
       (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
-        (∃ p : (projClass R ℵ₀ le_rfl).carrier,
-            Module.Finite R ((projClass R ℵ₀ le_rfl).rep p) ∧
-            ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p)
+        (∃ p : V(R).carrier,
+            Module.Finite R (V(R).rep p) ∧
+            ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => V(R).rep p)
               ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
-          ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+          ∃ e : V(R).carrier → H,
             KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
   refine ⟨fun h => ?_, fun h => (corollary_5_5_three x₁ x₂ h₁ h₂ hgen hnoncyclic).mpr ?_⟩
   · obtain ⟨R, hring, hfg, e, hhom, hbij⟩ :=
@@ -550,21 +550,21 @@ realizability by a ring with two finitely generated projective generators `P₁`
 
 No condition on the decompositions of projective modules is needed here: generation by finitely
 generated classes supplies it (`everyProjectiveIsSumOfFG_of_kGenerates_finite`). -/
-theorem corollary_5_5_three_trace (h₁ : x₁ ∈ KMonoid.addOf (κ := ℵ₀) x₂)
-    (h₂ : x₂ ∉ KMonoid.addOf (κ := ℵ₀) x₁)
+theorem corollary_5_5_three_trace (h₁ : x₁ ∈ add(x₂))
+    (h₂ : x₂ ∉ add(x₁))
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
     (∀ (n : ℕ) (β : ℕ∞), eval x₁ x₂ (⊤, (n : ℕ∞)) = eval x₁ x₂ (⊤, β) →
         β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms x₁ x₂ ↔
       (∃ (R : Type u) (_ : Ring R),
-        ∃ p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier,
-          Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₁) ∧
-            Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
-            KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set (projClass R ℵ₀ le_rfl).carrier) ∧
-            traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁)
-              < traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
-            ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+        ∃ p₁ p₂ : V(R).carrier,
+          Module.Finite R (V(R).rep p₁) ∧
+            Module.Finite R (V(R).rep p₂) ∧
+            KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier) ∧
+            traceIdeal R (V(R).rep p₁)
+              < traceIdeal R (V(R).rep p₂) ∧
+            ∃ e : V(R).carrier → H,
               KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) := by
   refine ⟨fun h => ?_, fun h => (corollary_5_5_three x₁ x₂ h₁ h₂ hgen hnoncyclic).mpr ?_⟩
   · obtain ⟨R, hring, hfg, e, hhom, hbij⟩ :=

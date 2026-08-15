@@ -43,7 +43,7 @@ variable {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H]
 /-- The `ℵ₀`-sum of a constant family is `ℵ₀` copies of its value. -/
 theorem ksum_const (c : H) :
     KMonoid.ksum (κ := ℵ₀) (fun _ : Idx (ℵ₀ : Cardinal.{u}) => c)
-      = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl c := by
+      = ℵ₀∙c := by
   rw [← KMonoid.sumOf_Idx, ← KMonoid.cmul_eq_sumOf]
   exact KMonoid.cmul_congr (mk_Idx (ℵ₀ : Cardinal.{u})) _ le_rfl c
 
@@ -66,7 +66,7 @@ abbrev Form : Type := ℕ∞ × ℕ∞
 noncomputable def ecmul (a : ℕ∞) (x : H) : H :=
   KMonoid.cmul (κ := ℵ₀) (Cardinal.ofENat a) (Cardinal.ofENat_le_aleph0 a) x
 
-@[simp] theorem ecmul_top (x : H) : ecmul (⊤ : ℕ∞) x = KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl x := by
+@[simp] theorem ecmul_top (x : H) : ecmul (⊤ : ℕ∞) x = ℵ₀∙x := by
   simp [ecmul]
 
 /-- The element of `H` represented by a form. -/
@@ -297,12 +297,12 @@ The families take values in `H`; braiding is a statement about the `ℵ₀⁻`-m
 so the members must be produced there.  `hmem` is that side condition, discharged in practice by
 `KMonoid.addOf_isSaturated` from `Core/AddOf.lean`. -/
 def BraidedForms (x₁ x₂ : H) (F G : Form)
-    (hF : ∀ n, familyOfForm x₁ x₂ F n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))
-    (hG : ∀ n, familyOfForm x₁ x₂ G n ∈ KMonoid.addOf (κ := ℵ₀) (x₁ + x₂)) : Prop :=
+    (hF : ∀ n, familyOfForm x₁ x₂ F n ∈ add((x₁ + x₂)))
+    (hG : ∀ n, familyOfForm x₁ x₂ G n ∈ add((x₁ + x₂))) : Prop :=
 
   IsBraided ℵ₀ (ι := FormIdx.{u})
-    (fun n => (⟨familyOfForm x₁ x₂ F n, hF n⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
-    (fun n => (⟨familyOfForm x₁ x₂ G n, hG n⟩ : ↥(KMonoid.addOf (κ := ℵ₀) (x₁ + x₂))))
+    (fun n => (⟨familyOfForm x₁ x₂ F n, hF n⟩ : ↥(add((x₁ + x₂)))))
+    (fun n => (⟨familyOfForm x₁ x₂ G n, hG n⟩ : ↥(add((x₁ + x₂)))))
 
 end TwoGen
 

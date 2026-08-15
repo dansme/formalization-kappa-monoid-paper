@@ -107,4 +107,8 @@ theorem addOfCard_isLSubset {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : l
 
 end KMonoid
 
+/-- `add(x)` at `κ = ℵ₀`, the paper's `add(x)`.  Notation, not a definition: it expands to
+`addOf x` with `κ := ℵ₀`, which is the only case §4 and §5 use. -/
+scoped notation:max "add(" x ")" => KappaMonoid.KMonoid.addOf (κ := Cardinal.aleph0) x
+
 end KappaMonoid
