@@ -96,7 +96,7 @@ questions a build would answer, without a build. Prefer it throughout.
   in the "Deviations from the paper" section of `README.md`, which is the authoritative list — the
   `m ≥ 1` hypothesis added to Leavitt's theorem, without which it is *false*; the `IsConical`
   hypothesis in Theorem 3.11; the `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a
-  formalised counterexample showing the paper's claim is false; and five statements of §5.  Not
+  formalised counterexample showing the paper's claim is false; and three statements of §5.  Not
   every extra hypothesis is a deviation: `EveryProjectiveIsSumOfFG` in Corollary 5.5(1) and (3) is
   the paper's own condition, spelled out.  When the paper is wrong, formalise the repaired
   statement and say so; do not quietly weaken or restate it.

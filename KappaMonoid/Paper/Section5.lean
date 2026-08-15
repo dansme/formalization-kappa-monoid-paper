@@ -58,11 +58,13 @@ structure Setting5 (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] where
 module is a direct sum of finitely generated ones.
 
 This is the paper's condition verbatim in Corollary 5.5(1) and (3), which read "for a ring whose
-projective modules are direct sums of finitely generated modules"; it is *added* in 5.5(2), whose
-clause in the paper mentions only freeness, but whose proof there goes through Theorem 5.3 and so
-needs it.  Hereditariness implies it, by Albrecht's theorem (`ForMathlib/Albrecht.lean`), which is
-how Theorem 5.3 — stated for a hereditary ring, as in the paper — feeds these corollaries.  See
-`README.md`, "The statements corrected in Section 5". -/
+projective modules are direct sums of finitely generated modules".  Corollary 5.5(2) does not use
+it: its clause names only the freeness of the countably (non finitely) generated projectives, and
+that already implies the condition (`everyProjectiveIsSumOfFG_of_free`).  Hereditariness implies it
+too, by Albrecht's theorem (`ForMathlib/Albrecht.lean`), which is how Theorem 5.3's backward
+direction — stated for a hereditary ring, as in the paper — feeds these corollaries; the forward
+direction is stated for this weaker condition, because 5.5(2) has nothing stronger to offer it.
+See `README.md`, "The statements corrected in Section 5". -/
 def IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
   ∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
     letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
@@ -217,10 +219,15 @@ has both a mixed infinite form and another form.
 
 The freeness clause ranges over the classes of `V^{ℵ₀}(R)`, the countably generated projectives,
 not over all projective modules: for those it is false — `R^{(ℵ₁)}` is a counterexample, by
-invariance of infinite rank (`mk_le_of_span_eq_top`). -/
+invariance of infinite rank (`mk_le_of_span_eq_top`).
+
+Unlike parts (1) and (3) this one names no condition on the decompositions of projective modules,
+and needs none: the freeness clause gives `EveryProjectiveIsSumOfFG R` through Kaplansky's theorem
+(`everyProjectiveIsSumOfFG_of_free`), which is what Theorem 5.3's forward direction is applied
+with. -/
 theorem corollary_5_5_two (S : Setting5 H) :
     (addOf (κ := ℵ₀) S.x₁ = addOf (κ := ℵ₀) S.x₂ ∧ NoMixedForms S.x₁ S.x₂) ↔
-      (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
+      (∃ (R : Type u) (_ : Ring R),
         (∀ q : (projClass R ℵ₀ le_rfl).carrier,
             ¬ Module.Finite R ((projClass R ℵ₀ le_rfl).rep q) →
             ∃ ι : Type u, #ι ≤ ℵ₀ ∧
@@ -234,10 +241,8 @@ theorem corollary_5_5_two (S : Setting5 H) :
 `ℵ₀X₁ + nX₂` has finite `X₂`-coefficient and agrees with it after replacing the infinite
 `X₁`-coefficient by finite ones.
 
-The paper's part (3) is a three-way equivalence: it also records that `R` may be taken with a
-finitely generated projective `P` whose `P^{(ℵ₀)}` is not free, and that this is the same as
-`Tr(P₁) ⊊ Tr(P₂)`.  Those two extra clauses are not formalised — see `README.md`, "What is not
-formalised". -/
+The paper's part (3) is a three-way equivalence; the other two clauses are
+`corollary_5_5_three_nonfree` and `corollary_5_5_three_trace` below. -/
 theorem corollary_5_5_three (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ := ℵ₀) S.x₂)
     (h₂ : S.x₂ ∉ addOf (κ := ℵ₀) S.x₁) :
     (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
@@ -245,6 +250,46 @@ theorem corollary_5_5_three (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ := ℵ
           eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
       ∧ NoMixedForms S.x₁ S.x₂ ↔ IsRealizableAsV H :=
   TwoGen.corollary_5_5_three S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
+
+/-- **Corollary 5.5(3)**, second clause: the same relation condition is equivalent to
+realizability by a ring which in addition carries a finitely generated projective `P` with
+`P^{(ℵ₀)}` not free. -/
+theorem corollary_5_5_three_nonfree (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ := ℵ₀) S.x₂)
+    (h₂ : S.x₂ ∉ addOf (κ := ℵ₀) S.x₁) :
+    (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
+        β ≠ ⊤ ∧ ∃ m m' : ℕ,
+          eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
+      ∧ NoMixedForms S.x₁ S.x₂ ↔
+      (∃ (R : Type u) (_ : Ring R), EveryProjectiveIsSumOfFG R ∧
+        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+        (∃ p : (projClass R ℵ₀ le_rfl).carrier,
+            Module.Finite R ((projClass R ℵ₀ le_rfl).rep p) ∧
+            ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => (projClass R ℵ₀ le_rfl).rep p)
+              ≃ₗ[R] DirectSum ι (fun _ => R))) ∧
+          ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+            IsKHom ℵ₀ e ∧ Function.Bijective e) :=
+  TwoGen.corollary_5_5_three_nonfree S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
+
+/-- **Corollary 5.5(3)**, third clause: equivalently, `H ≅ V^{ℵ₀}(R)` for a ring with two finitely
+generated projective modules `P₁`, `P₂` generating `V^{ℵ₀}(R)` and satisfying
+`Tr(P₁) ⊊ Tr(P₂)`. -/
+theorem corollary_5_5_three_trace (S : Setting5 H) (h₁ : S.x₁ ∈ addOf (κ := ℵ₀) S.x₂)
+    (h₂ : S.x₂ ∉ addOf (κ := ℵ₀) S.x₁) :
+    (∀ (n : ℕ) (β : ℕ∞), eval S.x₁ S.x₂ (⊤, (n : ℕ∞)) = eval S.x₁ S.x₂ (⊤, β) →
+        β ≠ ⊤ ∧ ∃ m m' : ℕ,
+          eval S.x₁ S.x₂ ((m : ℕ∞), β) = eval S.x₁ S.x₂ ((m' : ℕ∞), (n : ℕ∞)))
+      ∧ NoMixedForms S.x₁ S.x₂ ↔
+      (∃ (R : Type u) (_ : Ring R),
+        letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+        ∃ p₁ p₂ : (projClass R ℵ₀ le_rfl).carrier,
+          Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₁) ∧
+            Module.Finite R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
+            KGenerates ℵ₀ ({p₁, p₂} : Set (projClass R ℵ₀ le_rfl).carrier) ∧
+            traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₁)
+              < traceIdeal R ((projClass R ℵ₀ le_rfl).rep p₂) ∧
+            ∃ e : (projClass R ℵ₀ le_rfl).carrier → H,
+              IsKHom ℵ₀ e ∧ Function.Bijective e) :=
+  TwoGen.corollary_5_5_three_trace S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
 
 end Paper
 

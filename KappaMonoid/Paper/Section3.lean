@@ -133,6 +133,12 @@ alias proposition_3_14_2_prop_3_14_two := KappaMonoid.prop_3_14_two
 /-- **Proposition 3.14(2) for a system of equations and congruences** — `KappaMonoid.prop_3_14_two_of_ineqs_empty`, in `Examples/Diophantine.lean`. -/
 alias proposition_3_14_2_for_a_system_of_equations_and_congruences_prop_3_14_two_of_ineqs_empty := KappaMonoid.prop_3_14_two_of_ineqs_empty
 
+/-- **Proposition 3.14(2) is false without the saturation hypothesis** —
+`KappaMonoid.not_prop_3_14_two_ineqSystem`, in `Examples/Diophantine.lean`: for
+`H = {(a,b) ∈ ℕ₀² : a ≤ 2b}` the monoid `H + ℵ₀H` is not the universal `ℵ₀`-extension of `H`,
+because it is not braided over it (`not_isBraidedOver_ineqSystem`). -/
+alias proposition_3_14_2_counterexample := KappaMonoid.not_prop_3_14_two_ineqSystem
+
 /-- **Example 3.15** — `KappaMonoid.example_3_15`, in `Examples/Diophantine.lean`. -/
 alias example_3_15_example_3_15 := KappaMonoid.example_3_15
 
@@ -144,10 +150,7 @@ alias example_3_15_example_3_15 := KappaMonoid.example_3_15
   form of `BraidingData` *is* their content: restating them would mean reintroducing abstract
   limit well-orders purely to prove they do not matter.  See `README.md`, "The limit well-order".
 * **Remark 3.16**.  Saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids —
-  a pointer to the literature, not a theorem of the paper.
-* The braiding half of the counterexample to Proposition 3.14(2): only the failure of saturation
-  is formalised (`not_isSaturatedFin_ineqSystem`), the braiding computation being recorded in its
-  docstring. -/
+  a pointer to the literature, not a theorem of the paper. -/
 
 end Paper
 

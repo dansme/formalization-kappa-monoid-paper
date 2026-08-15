@@ -1709,20 +1709,27 @@ theorem two_le_aleph0 : (2 : Cardinal.{u}) ≤ ℵ₀ := by
   have h : ((2 : ℕ) : Cardinal.{u}) < ℵ₀ := Cardinal.natCast_lt_aleph0
   exact_mod_cast h.le
 
+/-- Membership in `H = {(a,b) ∈ ℕ₀² : a ≤ 2b}`, with the witness of the inequality spelled out. -/
+theorem mem_finSolutions_ineqSystem (x : Fin 2 → Fcard (ℵ₀ : Cardinal.{u}))
+    (c : Fcard (ℵ₀ : Cardinal.{u})) (hfin : ∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀)
+    (hc : ((x 0 : Fcard ℵ₀) : Cardinal.{u}) + ((c : Fcard ℵ₀) : Cardinal.{u})
+      = 2 * ((x 1 : Fcard ℵ₀) : Cardinal.{u})) :
+    x ∈ ineqSystem.finSolutions := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  refine ⟨⟨fun p hp => absurd hp (Set.notMem_empty p), fun p hp => ?_,
+    fun p hp => absurd hp (Set.notMem_empty p)⟩, hfin⟩
+  obtain rfl : p = (fun i => if i = 0 then 1 else 0, fun i => if i = 0 then 0 else 2) := hp
+  refine ⟨c, Fcard.ext ?_⟩
+  rw [Fcard.instKMonoid_add, val_linEval_two, val_linEval_two]
+  simpa using hc
+
 /-- **The paper's saturation remark fails for inequalities.**  For the single inequality
 `x₁ ≤ 2x₂` the monoid `H = {(a, b) ∈ ℕ₀² : a ≤ 2b}` is *not* saturated in `ℕ₀²`:
 `(2,1) = (0,1) + (2,0)` with `(2,1)`, `(0,1) ∈ H`, but `(2,0) ∉ H`.
 
-This also refutes Proposition 3.14(2) as printed, whose proof begins by asserting the saturation.
-Explicitly, for this `H` take `x_k = (2,1)` for all `k` and `y_0 = (0,1)`, `y_k = (2,1)` for
-`k ≥ 1`.  Both families have `ℵ₀`-sum `(ℵ₀, ℵ₀) ∈ H + ℵ₀H`, but they are not `ℵ₀⁻`-braided over
-`H`: summing the two braiding equations over the initial segment `n ≤ N` of the `ω`-block whose
-`J`-pieces contain the index `0` of `y` telescopes to `Σ_B y = Σ_A x + v(a₀, N+1)` with
-`A`, `B` the finite index sets used, so with `p := #B - #A ≥ 1` one gets `v(a₀,N+1) = (2p-2, p)`;
-the `I`-equation at `(a₀, N+1)` then forces `u(a₀,N+1) = (2m-2p+2, m-p)` for `m` the size of that
-`I`-piece, and `2m-2p+2 ≤ 2(m-p)` is false.  So `H + ℵ₀H` is not `ℵ₀⁻`-braided over `H`, hence by
-`isBraidedOver_of_isUniversalKExtension` not its universal `ℵ₀`-extension either.  (Only the
-failure of saturation is formalised here; the braiding computation is the argument just given.) -/
+This also refutes Proposition 3.14(2) as printed, whose proof begins by asserting the saturation:
+`not_isBraidedOver_ineqSystem` and `not_prop_3_14_two_ineqSystem` below show that for this `H` the
+candidate extension `H + ℵ₀H` is not braided over `H`, hence not its universal `ℵ₀`-extension. -/
 theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSystem := by
   letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
@@ -1731,19 +1738,7 @@ theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSyst
   set two : Fcard ℵ₀ := Fcard.mk 2 two_le_aleph0 with htwo
   set one : Fcard ℵ₀ := Fcard.mk 1 Cardinal.one_lt_aleph0.le with hone
   set nil : Fcard ℵ₀ := Fcard.mk 0 (zero_le : (0 : Cardinal.{u}) ≤ ℵ₀) with hnil
-  -- the single inequality, with its witness spelled out
-  have hmem : ∀ (x : Fin 2 → Fcard ℵ₀) (c : Fcard ℵ₀),
-      (∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀) →
-      ((x 0 : Fcard ℵ₀) : Cardinal.{u}) + ((c : Fcard ℵ₀) : Cardinal.{u})
-        = 2 * ((x 1 : Fcard ℵ₀) : Cardinal.{u}) →
-      x ∈ ineqSystem.finSolutions := by
-    intro x c hfin hc
-    refine ⟨⟨fun p hp => absurd hp (Set.notMem_empty p), fun p hp => ?_,
-      fun p hp => absurd hp (Set.notMem_empty p)⟩, hfin⟩
-    obtain rfl : p = (fun i => if i = 0 then 1 else 0, fun i => if i = 0 then 0 else 2) := hp
-    refine ⟨c, Fcard.ext ?_⟩
-    rw [Fcard.instKMonoid_add, val_linEval_two, val_linEval_two]
-    simpa using hc
+  have hmem := fun x c hfin hc => mem_finSolutions_ineqSystem x c hfin hc
   have hsmem : (fun i => if i = 0 then two else one) ∈ ineqSystem.finSolutions := by
     refine hmem _ nil (fun i => ?_) ?_
     · by_cases hi : i = 0 <;> simp [hi, htwo, hone, Cardinal.one_lt_aleph0]
@@ -1765,6 +1760,223 @@ theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSyst
   · refine Fcard.ext ?_
     by_cases hi : i = 0 <;>
       simp [hi, htwo, hone, hnil, Fcard.instKMonoid_add (le_refl (ℵ₀ : Cardinal.{u}))]
+
+/-! ### The braiding half of the counterexample
+
+For the same `H` the candidate extension `H + ℵ₀H` is not even *braided* over `H`, so by
+`isBraidedOver_of_isUniversalKExtension` it is not the universal `ℵ₀`-extension either:
+Proposition 3.14(2) is false as printed, not merely unproved.
+
+The paper's argument telescopes the braiding equations along an `ω`-block.  The proof below is
+shorter.  The slack `δ(a,b) = 2b - a` is a monoid homomorphism `H → ℕ₀` — the subtraction is exact
+on `H`, which is what `a ≤ 2b` says — so a braiding of `x` with `y` forces
+`Σ_{i ∈ I p} δ(x i) = δ(v p) + δ(u p)` and likewise for `J`.  Take `x ≡ (2,1)`, on which `δ`
+vanishes: the `I`-equations then force `δ(u p) = δ(v p) = 0` for *every* `p`, so every `J`-equation
+reads `Σ_{j ∈ J p} δ(y j) = 0`.  With `y ≡ (2,2)`, where `δ = 2`, that is impossible for a piece
+`J p` that is not empty — and the pieces cover the index set.  Both families have `ℵ₀`-sum
+`(ℵ₀, ℵ₀)`. -/
+
+/-- The slack in `x₁ ≤ 2x₂`, as a natural number.  On `H` the truncated subtraction is exact, so
+`ineqSlack` is additive there. -/
+noncomputable def ineqSlack (x : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})) : ℕ :=
+  2 * ((x 1 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat
+    - ((x 0 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat
+
+/-- Membership in `H` is the inequality `x₁ ≤ 2x₂` between the natural-number components. -/
+theorem le_of_mem_finSolutions_ineqSystem {x : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})}
+    (hx : x ∈ ineqSystem.finSolutions) :
+    ((x 0 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat
+      ≤ 2 * ((x 1 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  obtain ⟨c, hc⟩ := hx.1.2.1 _ rfl
+  have hval := congrArg (fun z : Fcard (ℵ₀ : Cardinal.{u}) => (z : Cardinal.{u})) hc
+  rw [Fcard.instKMonoid_add, val_linEval_two, val_linEval_two] at hval
+  simp only [Fin.isValue, if_pos] at hval
+  norm_num at hval
+  -- `x₁ + c = 2 x₂` in `Cardinal`, with both components finite
+  have hle : ((x 0 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u})
+      ≤ ((x 1 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u})
+        + ((x 1 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}) := by
+    rw [← two_mul, ← hval]
+    exact self_le_add_right _ _
+  have hfin := hx.2
+  have h2 : ((x 1 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u})
+      + ((x 1 : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}) < ℵ₀ :=
+    Cardinal.add_lt_aleph0 (hfin 1) (hfin 1)
+  have := Cardinal.toNat_le_toNat hle h2
+  rw [Cardinal.toNat_add (hfin 1) (hfin 1)] at this
+  omega
+
+/-- `ineqSlack` is additive on `H`. -/
+theorem ineqSlack_add {a b : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})}
+    (ha : a ∈ ineqSystem.finSolutions) (hb : b ∈ ineqSystem.finSolutions) :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+    ineqSlack (a + b) = ineqSlack a + ineqSlack b := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  have hcomp : ∀ i, (((a + b) i : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat
+      = ((a i : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat
+        + ((b i : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}).toNat := by
+    intro i
+    show (((a i + b i : Fcard (ℵ₀ : Cardinal.{u}))) : Cardinal.{u}).toNat = _
+    rw [Fcard.instKMonoid_add, Cardinal.toNat_add (ha.2 i) (hb.2 i)]
+  have hA := le_of_mem_finSolutions_ineqSystem ha
+  have hB := le_of_mem_finSolutions_ineqSystem hb
+  simp only [ineqSlack, hcomp]
+  omega
+
+/-- `ineqSlack` vanishes at `0`. -/
+theorem ineqSlack_zero :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+    ineqSlack (0 : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})) = 0 := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  simp [ineqSlack]
+
+/-- `(2,1)`, on which the slack vanishes. -/
+noncomputable def ptTwoOne : Fin 2 → Fcard (ℵ₀ : Cardinal.{u}) :=
+  fun i => if i = 0 then Fcard.mk 2 two_le_aleph0 else Fcard.mk 1 Cardinal.one_lt_aleph0.le
+
+/-- `(2,2)`, on which the slack is `2`. -/
+noncomputable def ptTwoTwo : Fin 2 → Fcard (ℵ₀ : Cardinal.{u}) :=
+  fun _ => Fcard.mk 2 two_le_aleph0
+
+theorem ptTwoOne_mem : ptTwoOne.{u} ∈ ineqSystem.finSolutions := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  refine mem_finSolutions_ineqSystem _ (Fcard.mk 0 (zero_le : (0 : Cardinal.{u}) ≤ ℵ₀))
+    (fun i => ?_) ?_
+  · by_cases hi : i = 0 <;> simp [ptTwoOne, hi, Cardinal.one_lt_aleph0]
+  · simp [ptTwoOne]
+
+theorem ptTwoTwo_mem : ptTwoTwo.{u} ∈ ineqSystem.finSolutions := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  refine mem_finSolutions_ineqSystem _ (Fcard.mk 2 two_le_aleph0) (fun i => ?_) ?_
+  · simp [ptTwoTwo]
+  · simp [ptTwoTwo]
+    ring
+
+@[simp] theorem ineqSlack_ptTwoOne : ineqSlack ptTwoOne.{u} = 0 := by
+  simp [ineqSlack, ptTwoOne]
+
+@[simp] theorem ineqSlack_ptTwoTwo : ineqSlack ptTwoTwo.{u} = 2 := by
+  simp [ineqSlack, ptTwoTwo]
+
+/-- **The braiding half of the counterexample**: `H + ℵ₀H` is not `ℵ₀⁻`-braided over
+`H = {(a,b) ∈ ℕ₀² : a ≤ 2b}`. -/
+theorem not_isBraidedOver_ineqSystem :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+    letI : AddCommMonoid ↥ineqSystem.finSolutions :=
+      addCommMonoidOfClosed ineqSystem.addSubmonoid_finSolutions.1
+        (fun a ha b hb => ineqSystem.addSubmonoid_finSolutions.2 a ha b hb)
+    letI := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
+    letI := ineqSystem.isKSubmonoid_alephExt.kmonoid
+    ¬ IsBraidedOver ℵ₀ ℵ₀ ↥ineqSystem.finSolutions ↥ineqSystem.alephExt (le_refl ℵ₀)
+      (fun h => ⟨(h : Fin 2 → Fcard ℵ₀), ⟨(h : Fin 2 → Fcard ℵ₀), h.2, 0,
+        ineqSystem.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  letI : AddCommMonoid ↥ineqSystem.finSolutions :=
+    addCommMonoidOfClosed ineqSystem.addSubmonoid_finSolutions.1
+      (fun a ha b hb => ineqSystem.addSubmonoid_finSolutions.2 a ha b hb)
+  letI := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
+  letI := ineqSystem.isKSubmonoid_alephExt.kmonoid
+  classical
+  intro hbr
+  -- the slack, as a monoid homomorphism `H → ℕ₀`
+  set δ : ↥ineqSystem.finSolutions →+ ℕ :=
+    { toFun := fun h => ineqSlack (h : Fin 2 → Fcard ℵ₀)
+      map_zero' := ineqSlack_zero
+      map_add' := fun a b => ineqSlack_add a.2 b.2 } with hδdef
+  have hδ : ∀ h : ↥ineqSystem.finSolutions, δ h = ineqSlack (h : Fin 2 → Fcard ℵ₀) :=
+    fun _ => rfl
+  -- the two constant families: `(2,1)`, of slack `0`, and `(2,2)`, of slack `2`
+  set x : Idx (ℵ₀ : Cardinal.{u}) → ↥ineqSystem.finSolutions :=
+    fun _ => ⟨ptTwoOne, ptTwoOne_mem⟩ with hxdef
+  set y : Idx (ℵ₀ : Cardinal.{u}) → ↥ineqSystem.finSolutions :=
+    fun _ => ⟨ptTwoTwo, ptTwoTwo_mem⟩ with hydef
+  -- both have `ℵ₀`-sum `(ℵ₀, ℵ₀)`
+  have hconst : ∀ (z : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})),
+      (∀ j, ((z j : Fcard ℵ₀) : Cardinal.{u}) ≠ 0) → ∀ j : Fin 2,
+      ((KMonoid.ksum (κ := ℵ₀) (fun _ : Idx (ℵ₀ : Cardinal.{u}) => z) j
+        : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}) = ℵ₀ := by
+    intro z hz j
+    show (Cardinal.sum fun _ : Idx (ℵ₀ : Cardinal.{u}) => ((z j : Fcard ℵ₀) : Cardinal.{u})) = ℵ₀
+    rw [Cardinal.sum_const', mk_Idx]
+    exact Cardinal.mul_eq_left le_rfl (Order.lt_succ_iff.mp (z j).2) (hz j)
+  have hsum : (KMonoid.ksum (κ := ℵ₀) fun i =>
+        (⟨(x i : Fin 2 → Fcard ℵ₀), ⟨(x i : Fin 2 → Fcard ℵ₀), (x i).2, 0,
+          ineqSystem.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩ :
+            ↥ineqSystem.alephExt))
+      = KMonoid.ksum (κ := ℵ₀) fun i =>
+        (⟨(y i : Fin 2 → Fcard ℵ₀), ⟨(y i : Fin 2 → Fcard ℵ₀), (y i).2, 0,
+          ineqSystem.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩ :
+            ↥ineqSystem.alephExt) := by
+    refine Subtype.ext ?_
+    rw [ineqSystem.isKSubmonoid_alephExt.coe_ksum, ineqSystem.isKSubmonoid_alephExt.coe_ksum]
+    have hone : ∀ j : Fin 2, ((ptTwoOne j : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}) ≠ 0 := by
+      intro j
+      by_cases hj : j = 0 <;> simp [ptTwoOne, hj]
+    have htwo : ∀ j : Fin 2, ((ptTwoTwo j : Fcard (ℵ₀ : Cardinal.{u})) : Cardinal.{u}) ≠ 0 := by
+      intro j; simp [ptTwoTwo]
+    exact funext fun j => Fcard.ext ((hconst ptTwoOne hone j).trans (hconst ptTwoTwo htwo j).symm)
+  obtain ⟨B⟩ := hbr.braided x y hsum
+  -- every `I`-piece consists of elements of slack `0`, so `δ u = δ v = 0` at every position
+  have hI : ∀ p, δ (B.v p) + δ (B.u p) = 0 := by
+    intro p
+    have h := (LMonoid.lsumOf_eq_finsum (B.I_small p) x).symm.trans (B.hI p)
+    have h2 := congrArg δ h
+    rw [AddMonoidHom.map_finsum_mem x δ (Cardinal.lt_aleph0_iff_set_finite.mp (B.I_small p)),
+      map_add] at h2
+    rw [← h2]
+    have hz : ∀ i, δ (x i) = 0 := fun i => by rw [hδ]; exact ineqSlack_ptTwoOne
+    simp [hz]
+  have hu : ∀ p, δ (B.u p) = 0 := fun p => by have := hI p; omega
+  have hv : ∀ p, δ (B.v p) = 0 := fun p => by have := hI p; omega
+  -- a `J`-piece is nonempty, and every element of `y` has slack `2`
+  obtain ⟨j₀⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
+  obtain ⟨p, hp⟩ := Set.mem_iUnion.mp (B.J_cover ▸ Set.mem_univ j₀)
+  have hJfin : (B.J p).Finite := Cardinal.lt_aleph0_iff_set_finite.mp (B.J_small p)
+  have hJ := (LMonoid.lsumOf_eq_finsum (B.J_small p) y).symm.trans (B.hJ p)
+  have hJ2 := congrArg δ hJ
+  rw [AddMonoidHom.map_finsum_mem y δ hJfin, map_add, hu, hv, add_zero] at hJ2
+  rw [show B.J p = insert j₀ (B.J p \ {j₀}) from
+      (Set.insert_sdiff_singleton.trans (Set.insert_eq_self.mpr hp)).symm,
+    finsum_mem_insert _ (by simp) (hJfin.sdiff)] at hJ2
+  have : δ (y j₀) = 2 := by rw [hδ]; exact ineqSlack_ptTwoTwo
+  omega
+
+/-- **Proposition 3.14(2) is false without the saturation hypothesis**: for
+`H = {(a,b) ∈ ℕ₀² : a ≤ 2b}` the monoid `H + ℵ₀H` is not the universal `ℵ₀`-extension of `H`. -/
+theorem not_prop_3_14_two_ineqSystem :
+    letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+    letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+    letI : AddCommMonoid ↥ineqSystem.finSolutions :=
+      addCommMonoidOfClosed ineqSystem.addSubmonoid_finSolutions.1
+        (fun a ha b hb => ineqSystem.addSubmonoid_finSolutions.2 a ha b hb)
+    letI := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
+    letI := ineqSystem.isKSubmonoid_alephExt.kmonoid
+    ¬ IsUniversalKExtension.{u, u + 1, u + 1, u + 1} ℵ₀ ℵ₀ ↥ineqSystem.finSolutions ↥ineqSystem.alephExt
+      (le_refl ℵ₀)
+      (fun h => ⟨(h : Fin 2 → Fcard ℵ₀), ⟨(h : Fin 2 → Fcard ℵ₀), h.2, 0,
+        ineqSystem.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
+  letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
+  letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
+  letI : AddCommMonoid ↥ineqSystem.finSolutions :=
+    addCommMonoidOfClosed ineqSystem.addSubmonoid_finSolutions.1
+      (fun a ha b hb => ineqSystem.addSubmonoid_finSolutions.2 a ha b hb)
+  letI := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
+  letI := ineqSystem.isKSubmonoid_alephExt.kmonoid
+  intro huniv
+  -- `H` is conical, being a submonoid of `F_{ℵ₀}²`
+  have hcon : IsConical ↥ineqSystem.finSolutions :=
+    LMonoid.isConical_of_injective (lam := ℵ₀) (κ := ℵ₀)
+      (X := ↥ineqSystem.finSolutions) (H := Fin 2 → Fcard ℵ₀)
+      (fun h => (h : Fin 2 → Fcard ℵ₀)) (fun _ _ h => Subtype.ext h) rfl fun _ _ => rfl
+  exact not_isBraidedOver_ineqSystem
+    (isBraidedOver_of_isUniversalKExtension Cardinal.isRegular_aleph0 (le_refl ℵ₀) hcon huniv)
 
 /-! ### Example 3.15: at `κ = ℵ₀` the extension is not cut out by the same system
 

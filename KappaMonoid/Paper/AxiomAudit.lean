@@ -44,6 +44,8 @@ namespace KappaMonoid
 #assert_axioms prop_3_14_one []
 #assert_axioms prop_3_14_two []
 #assert_axioms prop_3_14_two_of_ineqs_empty []
+#assert_axioms not_isBraidedOver_ineqSystem []
+#assert_axioms not_prop_3_14_two_ineqSystem []
 #assert_axioms example_3_15 []
 
 /-! ## §4 — Bergman–Dicks in one direction of Corollary 4.7(1), nothing else -/
@@ -77,6 +79,8 @@ namespace KappaMonoid
 #assert_axioms TwoGen.corollary_5_5_one [bergmanDicksData]
 #assert_axioms TwoGen.corollary_5_5_two [bergmanDicksData]
 #assert_axioms TwoGen.corollary_5_5_three [bergmanDicksData]
+#assert_axioms TwoGen.corollary_5_5_three_nonfree [bergmanDicksData]
+#assert_axioms TwoGen.corollary_5_5_three_trace [bergmanDicksData]
 #assert_axioms TwoGen.cex_incomparable []
 #assert_axioms TwoGen.cex_absorb []
 

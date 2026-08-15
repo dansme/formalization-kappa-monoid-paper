@@ -89,9 +89,16 @@ alias example_4_8_1_free := KappaMonoid.krsa_ascent_free
   `corollary_4_6` is a documented stub, and `EveryProjectiveIsSumOfFG` is the hypothesis the six
   would supply.  The *hereditary* case of the second — Albrecht's theorem — is proved, in
   `ForMathlib/Albrecht.lean`, and is the one §4 and §5 actually use; the other five stay quoted.
-* **Examples 4.8(2)**.
-
-Examples 4.8(1) *is* formalised as printed, `V^κ(C) ≅ F_κ(B)` included (`krsa_ascent_iso`). -/
+* **Examples 4.8(2)–(7)**.  Of the seven items only (1) is formalised, and it *is* formalised as
+  printed, `V^κ(C) ≅ F_κ(B)` included (`krsa_ascent_iso`); the general `λ⁻` form above has the
+  paper's finite-KRSA and countable/Kaplansky readings as the cases `λ = ℵ₀` and `λ = ℵ₁`.
+  Item (2) is a question (Herbera–Příhoda–Wiegand, Question 1.1) restated in `κ`-monoid language,
+  not a claim.  Item (3) is Corollary 4.7 instantiated at `ℕ₀`, `ℝ≥0`/`ℚ≥0`, and the Diophantine
+  monoids; the general statement and all three monoid computations are formalised (`Examples/`),
+  only the transport back to `V^{ℵ₀}(R)` is missing.  Items (4)–(7) are a survey, each resting on a
+  classical description of `V(R)` quoted from the literature and not in Mathlib — Steinitz, Bass,
+  Herbera–Příhoda, Levy–Robson — with the `κ`-monoid step on top being Theorem 4.3 or
+  Proposition 3.14.  See `README.md` for the itemised account. -/
 
 end Paper
 

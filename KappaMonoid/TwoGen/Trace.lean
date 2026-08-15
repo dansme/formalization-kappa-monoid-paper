@@ -289,6 +289,52 @@ theorem eq_zero_of_finite_cmul_top {p : (projClass R ℵ₀ le_rfl).carrier}
       DirectSum.component.lof_self] at this
   rw [hval y, hval z]
 
+/-- **A free `P^{(ℵ₀)}` forces `Tr(P) = R`.**  The basis is nonempty because `ℵ₀ [P] ≠ 0`, so the
+free module has full trace ideal; and the trace ideal of `P^{(ℵ₀)}` is contained in that of `P`,
+being a direct sum of copies of it. -/
+theorem traceIdeal_eq_top_of_iso_free {p : (projClass R ℵ₀ le_rfl).carrier}
+    (hp : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl; p ≠ 0) {ι : Type u}
+    (e : letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+      Nonempty ((projClass R ℵ₀ le_rfl).rep (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)
+        ≃ₗ[R] DirectSum ι (fun _ => R))) :
+    traceIdeal R ((projClass R ℵ₀ le_rfl).rep p) = ⊤ := by
+  classical
+  letI := (projClass R ℵ₀ le_rfl).instKMonoid le_rfl
+  -- the basis is nonempty, since `ℵ₀ p ≠ 0`
+  have hιne : Nonempty ι := by
+    by_contra hcon
+    rw [not_nonempty_iff] at hcon
+    refine hp ?_
+    have hsub : Subsingleton ((projClass R ℵ₀ le_rfl).rep
+        (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)) := Equiv.subsingleton e.some.toEquiv
+    have hzero : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p = 0 :=
+      ((projClass R ℵ₀ le_rfl).eq_zero_of_subsingleton hsub).trans
+        ((projClass R ℵ₀ le_rfl).instKMonoid_zero le_rfl).symm
+    obtain ⟨w, hw⟩ : p ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p := by
+      refine ⟨KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p, ?_⟩
+      exact KMonoid.add_cmul_top_self (ℵ₀ : Cardinal.{u}) _ p
+    rw [hzero] at hw
+    exact (KMonoid.isConical (ℵ₀ : Cardinal.{u}) _ p w hw).1
+  obtain ⟨i₀⟩ := hιne
+  -- a free module on a nonempty basis has trace ideal `R`
+  have hfree : traceIdeal R (DirectSum ι (fun _ => R)) = ⊤ := by
+    refine eq_top_iff.mpr fun y _ => ?_
+    refine le_traceIdeal R _ (DirectSum.component R ι (fun _ => R) i₀) ?_
+    exact ⟨DirectSum.lof R ι (fun _ => R) i₀ y, by rw [DirectSum.component.lof_self]⟩
+  have hcm : traceIdeal R ((projClass R ℵ₀ le_rfl).rep
+      (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)) = ⊤ := by
+    rw [traceIdeal_of_iso R e.some]
+    exact hfree
+  have hdec : (projClass R ℵ₀ le_rfl).rep (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)
+      ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u}))
+        (fun _ => (projClass R ℵ₀ le_rfl).rep p) := by
+      exact (rep_cmul_top_dsum R p).some
+  refine top_le_iff.mp ?_
+  rw [← hcm, traceIdeal_of_iso R hdec]
+  exact le_trans (traceIdeal_dsum_le R (fun _ : Idx (ℵ₀ : Cardinal.{u}) =>
+    (projClass R ℵ₀ le_rfl).rep p)) (iSup_le fun _ => le_rfl)
+
+
 /-- **Proposition 5.4**, final statement: `Tr(P₁) = Tr(P₂)` exactly when every countably but not
 finitely generated projective module is free.
 
@@ -389,39 +435,7 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
       intro p hp
       obtain ⟨ι, hι, e⟩ := h (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)
         (fun hfin => hp (eq_zero_of_finite_cmul_top R hfin))
-      -- the basis is nonempty, since `ℵ₀ p ≠ 0`
-      have hιne : Nonempty ι := by
-        by_contra hcon
-        rw [not_nonempty_iff] at hcon
-        refine hp ?_
-        have hsub : Subsingleton ((projClass R ℵ₀ le_rfl).rep
-            (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)) := Equiv.subsingleton e.some.toEquiv
-        have hzero : KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p = 0 :=
-          ((projClass R ℵ₀ le_rfl).eq_zero_of_subsingleton hsub).trans
-            ((projClass R ℵ₀ le_rfl).instKMonoid_zero le_rfl).symm
-        obtain ⟨w, hw⟩ : p ≼ KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p := by
-          refine ⟨KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p, ?_⟩
-          exact KMonoid.add_cmul_top_self (ℵ₀ : Cardinal.{u}) _ p
-        rw [hzero] at hw
-        exact (KMonoid.isConical (ℵ₀ : Cardinal.{u}) _ p w hw).1
-      obtain ⟨i₀⟩ := hιne
-      -- a free module on a nonempty basis has trace ideal `R`
-      have hfree : traceIdeal R (DirectSum ι (fun _ => R)) = ⊤ := by
-        refine eq_top_iff.mpr fun y _ => ?_
-        refine le_traceIdeal R _ (DirectSum.component R ι (fun _ => R) i₀) ?_
-        exact ⟨DirectSum.lof R ι (fun _ => R) i₀ y, by rw [DirectSum.component.lof_self]⟩
-      have hcm : traceIdeal R ((projClass R ℵ₀ le_rfl).rep
-          (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)) = ⊤ := by
-        rw [traceIdeal_of_iso R e.some]
-        exact hfree
-      have hdec : (projClass R ℵ₀ le_rfl).rep (KMonoid.cmul (κ := ℵ₀) ℵ₀ le_rfl p)
-          ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u}))
-            (fun _ => (projClass R ℵ₀ le_rfl).rep p) := by
-          exact (rep_cmul_top_dsum R p).some
-      refine top_le_iff.mp ?_
-      rw [← hcm, traceIdeal_of_iso R hdec]
-      exact le_trans (traceIdeal_dsum_le R (fun _ : Idx (ℵ₀ : Cardinal.{u}) =>
-        (projClass R ℵ₀ le_rfl).rep p)) (iSup_le fun _ => le_rfl)
+      exact traceIdeal_eq_top_of_iso_free R hp e
     rw [key p₁ hne₁, key p₂ hne₂]
 
 /-- **`[P₂] ≼ ℵ₀ [P₁]` forces `Tr(P₁) = R`**, by the second half of Proposition 5.4. -/

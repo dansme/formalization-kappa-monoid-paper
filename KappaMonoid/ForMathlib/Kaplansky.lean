@@ -7,6 +7,7 @@ import Mathlib.Algebra.Module.Projective
 import Mathlib.LinearAlgebra.DFinsupp
 import Mathlib.LinearAlgebra.Finsupp.Supported
 import Mathlib.LinearAlgebra.FreeModule.Basic
+import Mathlib.RingTheory.Finiteness.Basic
 import Mathlib.Data.Set.Countable
 import Mathlib.SetTheory.Cardinal.Basic
 import Mathlib.SetTheory.Cardinal.Order
@@ -535,3 +536,60 @@ theorem Module.Projective.exists_directSum_countablyGenerated {R : Type u} [Ring
   have hsecinj : Function.Injective sec := fun p q h => by
     rw [← hts p, ← hts q, h]
   exact ((LinearEquiv.ofInjective sec hsecinj).trans (LinearEquiv.ofEq _ _ hrange.symm)).trans e
+
+/-- **A projective module is a direct sum of finitely generated projective modules**, as soon as
+every *countably generated* projective module is one.
+
+Paper proof: Kaplansky's theorem writes `P` as a direct sum of countably generated projective
+modules; splitting each of those and regrouping gives a direct sum of finitely generated
+projectives. -/
+theorem Module.Projective.exists_directSum_fg_of_countablyGenerated {R : Type u} [Ring R]
+    (hcg : ∀ (Q : Type u) (_ : AddCommGroup Q) (_ : Module R Q), Module.Projective R Q →
+      (∃ s : Set Q, #s ≤ ℵ₀ ∧ Submodule.span R s = ⊤) →
+      ∃ (J : Type u) (D : J → Type u) (_ : ∀ j, AddCommGroup (D j)) (_ : ∀ j, Module R (D j)),
+        (∀ j, Module.Projective R (D j)) ∧ (∀ j, Module.Finite R (D j)) ∧
+          Nonempty (Q ≃ₗ[R] ⨁ j, D j))
+    (P : Type u) [AddCommGroup P] [Module R P] [Module.Projective R P] :
+    ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i)) (_ : ∀ i, Module R (Q i)),
+      (∀ i, Module.Projective R (Q i)) ∧ (∀ i, Module.Finite R (Q i)) ∧
+        Nonempty (P ≃ₗ[R] ⨁ i, Q i) := by
+  classical
+  obtain ⟨ι, Q, iAG, iMod, hproj, hcnt, ⟨e⟩⟩ :=
+    Module.Projective.exists_directSum_countablyGenerated (R := R) P
+  choose J D iAGD iModD hprojD hfinD hisoD using
+    fun i => hcg (Q i) inferInstance inferInstance (hproj i) (hcnt i)
+  refine ⟨(i : ι) × J i, fun ij => D ij.1 ij.2, fun _ => inferInstance, fun _ => inferInstance,
+    fun ij => hprojD ij.1 ij.2, fun ij => hfinD ij.1 ij.2, ⟨?_⟩⟩
+  exact e.trans ((DFinsupp.mapRange.linearEquiv (fun i => (hisoD i).some)).trans
+    (DirectSum.sigmaLcurryEquiv R (δ := fun i j => D i j)).symm)
+
+/-- **A projective module is a direct sum of finitely generated projective modules**, as soon as
+every countably generated projective module is either finitely generated or free.
+
+Each countably generated projective is by hypothesis finitely generated already, or free and hence
+a direct sum of copies of `R`; then
+`Module.Projective.exists_directSum_fg_of_countablyGenerated` applies.
+
+The freeness hypothesis is the one Corollary 5.5(2) carries — "every countably (non finitely)
+generated projective module is free" — which is why Theorem 5.3 has to be stated for rings whose
+projectives are direct sums of finitely generated ones rather than for hereditary rings. -/
+theorem Module.Projective.exists_directSum_fg_of_free {R : Type u} [Ring R]
+    (hfree : ∀ (Q : Type u) (_ : AddCommGroup Q) (_ : Module R Q), Module.Projective R Q →
+      (∃ s : Set Q, #s ≤ ℵ₀ ∧ Submodule.span R s = ⊤) → ¬ Module.Finite R Q →
+      ∃ ι : Type u, Nonempty (Q ≃ₗ[R] ⨁ _ : ι, R))
+    (P : Type u) [AddCommGroup P] [Module R P] [Module.Projective R P] :
+    ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i)) (_ : ∀ i, Module R (Q i)),
+      (∀ i, Module.Projective R (Q i)) ∧ (∀ i, Module.Finite R (Q i)) ∧
+        Nonempty (P ≃ₗ[R] ⨁ i, Q i) := by
+  classical
+  refine Module.Projective.exists_directSum_fg_of_countablyGenerated ?_ P
+  intro Q _ _ hQproj hQcnt
+  haveI := hQproj
+  by_cases hfin : Module.Finite R Q
+  · refine ⟨PUnit.{u+1}, fun _ => Q, fun _ => inferInstance, fun _ => inferInstance,
+      fun _ => hQproj, fun _ => hfin, ⟨?_⟩⟩
+    exact (LinearEquiv.funUnique PUnit.{u+1} R Q).symm.trans
+      (DFinsupp.linearEquivFunOnFintype (R := R) (M := fun _ : PUnit.{u+1} => Q)).symm
+  · obtain ⟨ι', ⟨e'⟩⟩ := hfree Q inferInstance inferInstance hQproj hQcnt hfin
+    exact ⟨ι', fun _ => R, fun _ => inferInstance, fun _ => inferInstance,
+      fun _ => inferInstance, fun _ => inferInstance, ⟨e'⟩⟩
