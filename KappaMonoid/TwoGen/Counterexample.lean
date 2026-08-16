@@ -30,6 +30,7 @@ section Counterexample
 /-- The underlying monoid `ℕ₀²` of the counterexample, lifted into `Type u`. -/
 abbrev NatSq : Type u := ULift.{u} (ℕ × ℕ)
 
+/-- `ℕ₀²` is conical, so its trivial `ℵ₀`-extension is a `κ`-monoid. -/
 theorem isConical_natSq : IsConical NatSq.{u} := by
   rintro ⟨a⟩ ⟨b⟩ hab
   have h : a + b = (0 : ℕ × ℕ) := congrArg ULift.down hab
@@ -71,8 +72,10 @@ theorem coe_natSq_ne_zero {a b : ℕ} (h : a ≠ 0 ∨ b ≠ 0) :
   · exact h (congrArg (fun x : NatSq.{u} => x.down.1) h0)
   · exact h (congrArg (fun x : NatSq.{u} => x.down.2) h0)
 
+/-- The first generator is nonzero, -/
 theorem cex₁_ne_zero : cex₁.{u} ≠ 0 := coe_natSq_ne_zero (Or.inl one_ne_zero)
 
+/-- and so is the second. -/
 theorem cex₂_ne_zero : cex₂.{u} ≠ 0 := coe_natSq_ne_zero (Or.inr one_ne_zero)
 
 /-- `n` copies of `x₁ = (1,0)` are `(n,0)`. -/
@@ -126,6 +129,7 @@ theorem cex_incomparable :
 theorem cmul_top_cex₁ : ℵ₀∙cex₁.{u} = (⊤ : WithTop NatSq.{u}) :=
   TrivExt.cmul_top_eq_top isConical_natSq le_rfl cex₁_ne_zero
 
+/-- `ℵ₀` copies of the second generator is `∞`. -/
 theorem cmul_top_cex₂ : ℵ₀∙cex₂.{u} = (⊤ : WithTop NatSq.{u}) :=
   TrivExt.cmul_top_eq_top isConical_natSq le_rfl cex₂_ne_zero
 

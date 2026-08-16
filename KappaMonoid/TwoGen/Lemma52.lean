@@ -156,10 +156,13 @@ theorem nats_setOf (T : Set ℕ) : {j : Nats.{u} | j.down ∈ T} = ULift.up '' T
   subst hj
   exact hj'
 
+/-- A subset of `Nats` cut out by a condition on the underlying natural number has the same
+cardinality as that condition's solution set in `ℕ`. -/
 theorem ncard_nats_setOf (T : Set ℕ) : ({j : Nats.{u} | j.down ∈ T}).ncard = T.ncard := by
   rw [nats_setOf]
   exact Set.ncard_image_of_injective T (fun a b hab => congrArg ULift.down hab)
 
+/-- …and is finite when that solution set is. -/
 theorem finite_nats_setOf {T : Set ℕ} (hT : T.Finite) : ({j : Nats.{u} | j.down ∈ T}).Finite := by
   rw [nats_setOf]; exact hT.image _
 
@@ -170,6 +173,7 @@ theorem fiber_elim (f g : Nats.{u} → ℕ) (k : ℕ) :
   ext i
   rcases i with j | j <;> simp
 
+/-- A fibre of `Sum.elim f g` is finite when the two fibres it is assembled from are. -/
 theorem finite_fiber_elim {f g : Nats.{u} → ℕ} {k : ℕ}
     (hf : {j : Nats.{u} | f j = k}.Finite) (hg : {j : Nats.{u} | g j = k}.Finite) :
     {i : FormIdx.{u} | Sum.elim f g i = k}.Finite := by
@@ -200,12 +204,14 @@ end Fibres
 
 /-! ### The fibre counts used by Lemma 5.2(3) -/
 
+/-- `ecmul` is additive in its `ℕ∞`-argument. -/
 theorem ecmul_add (a b : ℕ∞) (x : H) : ecmul (a + b) x = ecmul a x + ecmul b x := by
   have hc : Cardinal.ofENat (a + b) = Cardinal.ofENat a + Cardinal.ofENat b := by simp
   have hle : Cardinal.ofENat a + Cardinal.ofENat b ≤ ℵ₀ := hc ▸ Cardinal.ofENat_le_aleph0 (a + b)
   rw [ecmul, ecmul, ecmul, KMonoid.cmul_congr hc _ hle,
     KMonoid.cmul_add (Cardinal.ofENat_le_aleph0 a) (Cardinal.ofENat_le_aleph0 b) hle]
 
+/-- Peeling one copy off an `ecmul`. -/
 theorem ecmul_one_add (a : ℕ∞) (x : H) : ecmul (1 + a) x = x + ecmul a x := by
   have hc : Cardinal.ofENat (1 + a) = 1 + Cardinal.ofENat a := by simp
   have hle : (1 : Cardinal.{u}) + Cardinal.ofENat a ≤ ℵ₀ := hc ▸ Cardinal.ofENat_le_aleph0 (1 + a)
@@ -213,6 +219,7 @@ theorem ecmul_one_add (a : ℕ∞) (x : H) : ecmul (1 + a) x = x + ecmul a x := 
     KMonoid.cmul_add (le_of_lt Cardinal.one_lt_aleph0) (Cardinal.ofENat_le_aleph0 a) hle,
     KMonoid.cmul_one]
 
+/-- At a finite coefficient `ecmul` is the `ℕ`-action. -/
 theorem ecmul_natCast (k : ℕ) (x : H) : ecmul ((k : ℕ) : ℕ∞) x = k • x := by
   rw [ecmul, KMonoid.cmul_congr (by simp : Cardinal.ofENat ((k : ℕ) : ℕ∞) = ((k : ℕ) : Cardinal.{u}))
     _ (le_of_lt Cardinal.natCast_lt_aleph0)]
@@ -223,6 +230,7 @@ theorem addOf_add_mem {y a b : H} (ha : a ∈ add(y))
     (hb : b ∈ add(y)) : a + b ∈ add(y) :=
   (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl y).add_mem le_rfl ha hb
 
+/-- `add y` is closed under finite multiples. -/
 theorem addOf_nsmul_mem {y a : H} (ha : a ∈ add(y)) (k : ℕ) :
     k • a ∈ add(y) :=
   (KMonoid.addOf_isLSubset (κ := ℵ₀) le_rfl y).nsmul_mem le_rfl ha k
@@ -251,17 +259,21 @@ theorem levelA_fiber_succ (A k : ℕ) :
   ext ⟨j⟩
   by_cases h : j < A <;> simp [h] <;> omega
 
+/-- The level function `j ↦ j / n + 1` never takes the value `0`. -/
 theorem divsucc_fiber_zero (n : ℕ) : {j : Nats.{u} | j.down / n + 1 = 0} = ∅ := by
   ext ⟨j⟩; simp
 
+/-- Its fibre at `k + 1` is the fibre of `j ↦ j / n` at `k`. -/
 theorem divsucc_fiber_succ (n k : ℕ) :
     {j : Nats.{u} | j.down / n + 1 = k + 1} = {j : Nats.{u} | j.down / n = k} := by
   ext ⟨j⟩; simp
 
 
+/-- The value of `familyOfForm` on an `X₁`-slot. -/
 theorem familyOfForm_inl (F : Form) (j : Nats.{u}) :
     familyOfForm x₁ x₂ F (Sum.inl j) = if ((j.down : ℕ) : ℕ∞) < F.1 then x₁ else 0 := rfl
 
+/-- The value of `familyOfForm` on an `X₂`-slot. -/
 theorem familyOfForm_inr (F : Form) (j : Nats.{u}) :
     familyOfForm x₁ x₂ F (Sum.inr j) = if ((j.down : ℕ) : ℕ∞) < F.2 then x₂ else 0 := rfl
 
@@ -278,22 +290,28 @@ theorem familyOfForm_mem (F : Form) (i : FormIdx.{u}) :
   · rw [familyOfForm_inl]; split <;> assumption
   · rw [familyOfForm_inr]; split <;> assumption
 
+/-- The fibres of `j ↦ j / d` in `Nats` have `d` elements, -/
 theorem ncard_nats_div {d : ℕ} (hd : 0 < d) (k : ℕ) :
     ({j : Nats.{u} | j.down / d = k}).ncard = d :=
   (ncard_nats_setOf {n : ℕ | n / d = k}).trans (Nat.ncard_div_fiber hd k)
 
+/-- and in particular are finite. -/
 theorem finite_nats_div {d : ℕ} (hd : 0 < d) (k : ℕ) : ({j : Nats.{u} | j.down / d = k}).Finite :=
   finite_nats_setOf (Nat.finite_div_fiber hd k)
 
+/-- A single slot is a one-element set, -/
 theorem ncard_nats_eq (k : ℕ) : ({j : Nats.{u} | j.down = k}).ncard = 1 :=
   (ncard_nats_setOf {k}).trans (Set.ncard_singleton k)
 
+/-- and so finite. -/
 theorem finite_nats_eq (k : ℕ) : ({j : Nats.{u} | j.down = k}).Finite :=
   finite_nats_setOf (Set.finite_singleton k)
 
+/-- The first `A` slots are `A` in number, -/
 theorem ncard_nats_lt (A : ℕ) : ({j : Nats.{u} | j.down < A}).ncard = A :=
   (ncard_nats_setOf (Set.Iio A)).trans (Set.ncard_Iio_nat A)
 
+/-- and so finite. -/
 theorem finite_nats_lt (A : ℕ) : ({j : Nats.{u} | j.down < A}).Finite :=
   finite_nats_setOf (Set.finite_Iio A)
 
@@ -537,12 +555,15 @@ theorem coe_nsmul_addOf (k : ℕ) (a : ↥(add((x₁ + x₂)))) :
 /-- The slots at which the family of `c X₁ + ℵ₀ X₂` takes the value `x₁`. -/
 def oneSlots (c : ℕ) : Set FormIdx.{u} := Sum.inl '' {j : Nats.{u} | j.down < c}
 
+/-- The slots carrying `x₁` in the form `c X₁ + ℵ₀ X₂` are finite in number, -/
 theorem finite_oneSlots (c : ℕ) : (oneSlots.{u} c).Finite := (finite_nats_lt c).image _
 
+/-- and there are exactly `c` of them. -/
 theorem ncard_oneSlots (c : ℕ) : (oneSlots.{u} c).ncard = c := by
   rw [oneSlots, Set.ncard_image_of_injective _ Sum.inl_injective]
   exact ncard_nats_lt c
 
+/-- On those slots the family of the form `c X₁ + ℵ₀ X₂` takes the value `x₁`, -/
 theorem familyOfForm_eq_of_mem_oneSlots {c : ℕ} {i : FormIdx.{u}} (hi : i ∈ oneSlots.{u} c) :
     familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i = x₁ := by
   obtain ⟨j, hj, rfl⟩ := hi
@@ -551,6 +572,7 @@ theorem familyOfForm_eq_of_mem_oneSlots {c : ℕ} {i : FormIdx.{u}} (hi : i ∈ 
   show ((j.down : ℕ) : ℕ∞) < ((c : ℕ) : ℕ∞)
   exact_mod_cast hj
 
+/-- and off them it is `x₂` or `0`. -/
 theorem familyOfForm_eq_of_notMem_oneSlots {c : ℕ} {i : FormIdx.{u}} (hi : i ∉ oneSlots.{u} c) :
     familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i = x₂ ∨ familyOfForm x₁ x₂ ((c : ℕ∞), ⊤) i = 0 := by
   rcases i with j | j

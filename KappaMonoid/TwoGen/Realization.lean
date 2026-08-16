@@ -97,6 +97,7 @@ theorem braidedForms_of_braidedOver
 theorem eval_swap (a b : H) (F : Form) : eval a b F = eval b a (F.2, F.1) := by
   rw [eval, eval, add_comm]
 
+/-- Having no mixed forms does not depend on the order of the two generators. -/
 theorem noMixedForms_swap (h : NoMixedForms x₁ x₂) : NoMixedForms x₂ x₁ := by
   rintro y ⟨⟨F, hF, hFe⟩, ⟨G, hG, hGe⟩⟩
   exact h y ⟨⟨(F.2, F.1), ⟨hF.2, hF.1⟩, by rw [← hFe, eval_swap]⟩,

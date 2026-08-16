@@ -8,5 +8,7 @@ construction rather than an example.
 -/
 import KappaMonoid.Examples.TrivExt
 import KappaMonoid.Examples.ENNReal
+import KappaMonoid.Examples.NatBraiding
 import KappaMonoid.Examples.Diophantine
+import KappaMonoid.Examples.NNReal
 import KappaMonoid.Examples.Reals

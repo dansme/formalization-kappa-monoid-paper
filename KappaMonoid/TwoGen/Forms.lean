@@ -115,6 +115,7 @@ def Form.IsInfinite (F : Form) : Prop := F.1 = ⊤ ∨ F.2 = ⊤
 /-- A form is *finite* otherwise. -/
 def Form.IsFinite (F : Form) : Prop := F.1 ≠ ⊤ ∧ F.2 ≠ ⊤
 
+/-- A form is finite exactly when both of its coefficients are. -/
 theorem Form.not_isInfinite_iff (F : Form) : ¬ F.IsInfinite ↔ F.IsFinite := by
   simp [Form.IsInfinite, Form.IsFinite, not_or]
 
@@ -186,13 +187,17 @@ noncomputable def familyOfForm (x₁ x₂ : H) (F : Form) : FormIdx.{u} → H :=
   Sum.elim (fun n => if ((n.down : ℕ) : ℕ∞) < F.1 then x₁ else 0)
     (fun n => if ((n.down : ℕ) : ℕ∞) < F.2 then x₂ else 0)
 
+/-- `Nats`, the universe-lifted copy of `ℕ`, is countable, -/
 theorem mk_nats : #(Nats.{u}) = (ℵ₀ : Cardinal.{u}) := by simp [Nats]
 
+/-- and so may index an `ℵ₀`-sum. -/
 theorem mk_nats_le_aleph0 : #(Nats.{u}) ≤ (ℵ₀ : Cardinal.{u}) := le_of_eq mk_nats
 
+/-- The slots of a form — two copies of `ℕ` — are countable, -/
 theorem mk_formIdx : #(FormIdx.{u}) = (ℵ₀ : Cardinal.{u}) := by
   rw [FormIdx, Cardinal.mk_sum, mk_nats, Cardinal.lift_id, Cardinal.aleph0_add_aleph0]
 
+/-- and so may index an `ℵ₀`-sum. -/
 theorem mk_formIdx_le_aleph0 : #(FormIdx.{u}) ≤ (ℵ₀ : Cardinal.{u}) := le_of_eq mk_formIdx
 
 /-- The slots a coefficient uses: `{n : ℕ | n < α}` has exactly `α` elements, `ℵ₀` when `α = ℵ₀`. -/
@@ -241,6 +246,7 @@ def slots (F : Form) : Set FormIdx.{u} :=
   (Sum.inl '' {n : Nats.{u} | ((n.down : ℕ) : ℕ∞) < F.1}) ∪
     (Sum.inr '' {n : Nats.{u} | ((n.down : ℕ) : ℕ∞) < F.2})
 
+/-- Outside the slots a form prescribes, its family vanishes. -/
 theorem familyOfForm_eq_zero_of_notMem_slots (x₁ x₂ : H) {F : Form} {i : FormIdx.{u}}
     (hi : i ∉ slots.{u} F) : familyOfForm x₁ x₂ F i = 0 := by
   rcases i with n | n

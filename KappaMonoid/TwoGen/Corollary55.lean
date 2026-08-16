@@ -101,6 +101,8 @@ theorem exists_inv_generators (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : 
     have := KMonoid.KGenerates.map hhom hbij.2 hp
     rwa [Set.image_singleton] at this
 
+/-! ### Part (1): incomparable generators -/
+
 /-- **Corollary 5.5(1)**: for incomparable generators, realizability is equivalent to an explicit
 condition on the relations of `H`.
 
@@ -233,6 +235,8 @@ theorem corollary_5_5_one (h₁ : x₁ ∉ add(x₂))
         hmix
     exact ⟨R, hring, Albrecht.exists_directSum_fg, e, hhom, hbij⟩
 
+/-! ### Part (2): `add x₁ = add x₂` -/
+
 /-- **Corollary 5.5(2)**, first claim: if `add x₁ = add x₂` then `H` has exactly one element with
 an infinite form, namely `ℵ₀ x₁ = ℵ₀ x₂`.
 
@@ -351,6 +355,8 @@ theorem corollary_5_5_two (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set 
       rw [zero_nsmul, zero_add, hab, cmul_top_add_self]
     refine ⟨le_antisymm (addOf_subset_of_mem ((hc1 0 (habs x₁ x₂ hcm)).2))
       (addOf_subset_of_mem ((hc1' 0 (habs x₂ x₁ hcm.symm)).2)), hmix⟩
+
+/-! ### Part (3): `add x₁ ⊊ add x₂` -/
 
 /-- **Corollary 5.5(3)**, first claim: `x₁ ∈ add x₂` forces `ℵ₀ x₂ + β x₁ = ℵ₀ x₂` for every `β`.
 Generation is not needed — this is `cmul_top_absorb`. -/
