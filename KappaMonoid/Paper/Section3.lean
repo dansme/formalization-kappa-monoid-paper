@@ -37,16 +37,16 @@ alias examples_3_3_2_isBraidedOver_rtilde := KappaMonoid.RTilde.isBraidedOver_rt
 /-- **Examples 3.3(2)** — `KappaMonoid.RTilde.not_isBraidedOver_rtilde_self`, in `Examples/Reals.lean`. -/
 alias examples_3_3_2_not_isBraidedOver_rtilde_self := KappaMonoid.RTilde.not_isBraidedOver_rtilde_self
 
-/-- **Examples 3.3(1)** — `KappaMonoid.isBraidedOver_withTop_nat`, in `Examples/Diophantine.lean`. -/
+/-- **Examples 3.3(1)** — `KappaMonoid.isBraidedOver_withTop_nat`, in `Examples/NatBraiding.lean`. -/
 alias examples_3_3_1_isBraidedOver_withTop_nat := KappaMonoid.isBraidedOver_withTop_nat
 
-/-- **Examples 3.3(1)** — `KappaMonoid.isBraided_nat_of_infinite_support`, in `Examples/Diophantine.lean`. -/
+/-- **Examples 3.3(1)** — `KappaMonoid.isBraided_nat_of_infinite_support`, in `Examples/NatBraiding.lean`. -/
 alias examples_3_3_1_isBraided_nat_of_infinite_support := KappaMonoid.isBraided_nat_of_infinite_support
 
-/-- **Examples 3.3(2)** — `KappaMonoid.isBraided_nnreal_iff`, in `Examples/Reals.lean`. -/
+/-- **Examples 3.3(2)** — `KappaMonoid.isBraided_nnreal_iff`, in `Examples/NNReal.lean`. -/
 alias examples_3_3_2_isBraided_nnreal_iff := KappaMonoid.isBraided_nnreal_iff
 
-/-- **Examples 3.3(2)** — `KappaMonoid.isBraided_nnreal_of_infinite_support`, in `Examples/Reals.lean`. -/
+/-- **Examples 3.3(2)** — `KappaMonoid.isBraided_nnreal_of_infinite_support`, in `Examples/NNReal.lean`. -/
 alias examples_3_3_2_isBraided_nnreal_of_infinite_support := KappaMonoid.isBraided_nnreal_of_infinite_support
 
 /-- **Examples 3.3(3)** — `KappaMonoid.isUniversalKExtension_ratSet`, in `Examples/Reals.lean`. -/
@@ -55,10 +55,10 @@ alias examples_3_3_3_isUniversalKExtension_ratSet := KappaMonoid.isUniversalKExt
 /-- **Examples 3.3(3)** — `KappaMonoid.kclosure_ofReal_ratSet`, in `Examples/Reals.lean`. -/
 alias examples_3_3_3_kclosure_ofReal_ratSet := KappaMonoid.kclosure_ofReal_ratSet
 
-/-- **Examples 3.3(2)** — `KappaMonoid.not_isBraided_geom_two_geom`, in `Examples/Reals.lean`. -/
+/-- **Examples 3.3(2)** — `KappaMonoid.not_isBraided_geom_two_geom`, in `Examples/NNReal.lean`. -/
 alias examples_3_3_2_not_isBraided_geom_two_geom := KappaMonoid.not_isBraided_geom_two_geom
 
-/-- **Examples 3.3(2)** — `KappaMonoid.not_isBraided_single2_geom`, in `Examples/Reals.lean`. -/
+/-- **Examples 3.3(2)** — `KappaMonoid.not_isBraided_single2_geom`, in `Examples/NNReal.lean`. -/
 alias examples_3_3_2_not_isBraided_single2_geom := KappaMonoid.not_isBraided_single2_geom
 
 /-- **Examples 3.3(3)** — `KappaMonoid.ofReal_notMem_kclosure_of_not_mem_ratSet`, in `Examples/Reals.lean`. -/
@@ -109,7 +109,7 @@ alias theorem_3_11_theorem_3_11_of_aleph0_lt := KappaMonoid.theorem_3_11_of_alep
 /-- **Examples 3.12** — `KappaMonoid.RTilde.isUniversalKExtension_rtilde`, in `Examples/Reals.lean`. -/
 alias examples_3_12_isUniversalKExtension_rtilde := KappaMonoid.RTilde.isUniversalKExtension_rtilde
 
-/-- **Examples 3.12** — `KappaMonoid.isUniversalKExtension_withTop_nat`, in `Examples/Diophantine.lean`. -/
+/-- **Examples 3.12** — `KappaMonoid.isUniversalKExtension_withTop_nat`, in `Examples/NatBraiding.lean`. -/
 alias examples_3_12_isUniversalKExtension_withTop_nat := KappaMonoid.isUniversalKExtension_withTop_nat
 
 /-- **Lemma 3.13(2)** — `KappaMonoid.isBraidedOver_of_isLSubmonoid`, in `Braiding/Saturated.lean`. -/

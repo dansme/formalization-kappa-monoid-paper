@@ -28,7 +28,7 @@ assumed result, or — since the core does not say `import Mathlib` — most of 
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky in `κ`-monoid form, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
-| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `Diophantine` (**Examples 3.3(1)**, §3.2: **Proposition 3.14**, **Example 3.15**), `Reals` (**Examples 3.3(2)(3)**) |
+| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.14**, its counterexample, **Example 3.15**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
 | `KappaMonoid/Axioms/` | Mathlib | The one classical result assumed rather than proved — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
@@ -344,7 +344,7 @@ files these travel as separate arguments, which is why they are visible there at
     language — when is `⟨V(C_fg)⟩_κ` divisor-closed in `V^κ(C)`? — not a claim.
   * **(3)** is Corollary 4.7 instantiated at three monoids. The general statement and all three
     monoid-side computations are formalised — `corollary_4_7_two`, and `ℕ₀ ∪ {∞}`
-    (`Examples/ENNReal.lean`), `ℝ≥0`/`ℚ≥0` (`Examples/Reals.lean`), the Diophantine case
+    (`Examples/ENNReal.lean`), `ℝ≥0`/`ℚ≥0` (`Examples/NNReal.lean`, `Examples/Reals.lean`), the Diophantine case
     (`Examples/Diophantine.lean`). What is missing is only the transport: reading each computation
     back as a description of `V^{ℵ₀}(R)` for a ring with `V(R)` isomorphic to that monoid.
   * **(4)–(7)** are a survey. Each rests on a classical description of `V(R)` quoted from the
@@ -360,6 +360,24 @@ One typo in the paper, unrelated to the formalisation: Corollary 5.5(3) reads "T
 true.2", a stray `2` after the full stop, at `kappa_monoids.tex:2133`.
 
 ## Encoding decisions
+
+**Notation for the three ubiquitous idioms.** Read as the paper writes them:
+
+```lean
+ℵ₀∙x    -- KMonoid.cmul ℵ₀ le_rfl x, the paper's ℵ₀x
+add(x)  -- KMonoid.addOf at κ = ℵ₀
+V(R)    -- projClass R ℵ₀ le_rfl, the paper's V^{ℵ₀}(R)
+```
+
+All three are scoped `notation` in namespace `KappaMonoid` rather than definitions: each expands to
+exactly the term that would otherwise be written out, so no proof and no lemma statement changes
+meaning, and `rw` still matches. Finite multiples are written `n • x`, which
+`KMonoid.cmul_natCast` identifies with `cmul (n : Cardinal) _ x`.
+
+The `κ`-monoid structures at the fixed cardinal — `F_{ℵ₀}`, `V^{ℵ₀}(R)`, and products of
+`ℵ₀`-monoids — are instances rather than a `letI` threaded through every statement and repeated in
+every proof. In `Examples/` the statement-level `letI`s stay even so: there they also pin the
+universe of `ℵ₀`, which is otherwise auto-bound afresh in each half of a statement.
 
 **Index sets: arbitrary types, not the cardinal.** The paper indexes by the von Neumann
 cardinal `κ` itself. Here the summation operation is applied directly to a family indexed by

@@ -78,6 +78,11 @@ questions a build would answer, without a build. Prefer it throughout.
   auto-binding (see trap 5).
 - **Prove at the `λ⁻` level and specialise to `κ`.** `KMonoid κ H` *is* `LMonoid (Order.succ κ) H`
   plus `ℵ₀ ≤ κ`, and `#ι ≤ κ ↔ #ι < Order.succ κ`.
+- **Notation for the three ubiquitous idioms.** `ℵ₀∙x` is `KMonoid.cmul ℵ₀ le_rfl x` (the paper's
+  `ℵ₀x`), `add(x)` is `KMonoid.addOf` at `κ = ℵ₀`, and `V(R)` is `projClass R ℵ₀ le_rfl`. All three
+  are scoped `notation` in namespace `KappaMonoid`, not definitions: they expand to exactly the term
+  that used to be written, so `rw` and every existing lemma still apply. State finite multiples as
+  `n • x` (`KMonoid.cmul_natCast`) rather than `cmul (n : Cardinal) _ x`.
 - **Docstrings** open with the bold paper reference — `**Lemma 3.13(2)**`, `**Examples 3.3(2)**` —
   and, when the argument is not obvious, carry a `Paper proof:` paragraph paraphrasing the source.
   This is the main navigation aid in the repo; keep it up.
@@ -169,7 +174,20 @@ re-deriving them.
     structure on `add x` at `κ = ℵ₀`, which otherwise has to be written out in every statement about
     it. Because `IsLSubset` is a `Prop` (trap 13), two such structures are definitionally equal, so
     promoting one to an instance is free — no proof that relied on the defeq moves. Check the head
-    is specific enough (`↥(addOf …)`) that instance search is not slowed.
+    is specific enough (`↥(addOf …)`) that instance search is not slowed. The same was done at the
+    fixed cardinal for `F_{ℵ₀}` (`Fcard.instKMonoidAleph0`), for `V^{ℵ₀}(R)`
+    (`instKMonoidProjClassAleph0`) and for products (`KMonoid.instPiAleph0`); together they removed
+    ~100 `letI`/`let` lines.
+
+16. **A statement-level `letI` may be pinning a universe, not only carrying an instance.** In
+    `Examples/`, `letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))` is the only mention of
+    `Cardinal.{u}` in many statements; deleting it (now that the instance is global) leaves `ℵ₀`'s
+    universe auto-bound afresh in *each* half of a conjunction, and the file fails with "contains
+    universe level metavariables" a hundred lines later (trap 5). Where an instance is promoted,
+    check whether the `letI` was load-bearing for universes before deleting it; there the
+    statement-level `letI`s stay and only the proof-level ones go. Do not promote a structure whose
+    carrier already has a Mathlib `AddCommMonoid` (`ℝ≥0`, `ℝ≥0∞`, `ℕ`): the promoted `LMonoid` would
+    put a second `+` into instance search.
 
 ## Where things live
 
@@ -179,11 +197,11 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 
 | Layer | Contents |
 |---|---|
-| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, `Hereditary.lean` (`IsLeftHereditary`/`IsRightHereditary`/`IsHereditary`), `FreeRank.lean` (invariance of infinite rank), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (multiplicities of simple modules), `CyclicMonoid.lean` (the classification, and `C_{m,n}` as a monoid), `Kaplansky.lean`, `Albrecht.lean`.  Mathlib has none of them |
+| `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, `Hereditary.lean` (`IsLeftHereditary`/`IsRightHereditary`/`IsHereditary`), `FreeRank.lean` (invariance of infinite rank), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (multiplicities of simple modules), `CyclicMonoid.lean` (the classification, and `C_{m,n}` as a monoid), `Kaplansky.lean`, `Albrecht.lean`, `ProjectiveSplit.lean` (a surjection onto a projective splits; a one-sided inverse gives an idempotent).  Mathlib has none of them |
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop39`, `UnivExt` (Thm 3.11), `Saturated` (Lemma 3.13) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
-| `Examples/` | `TrivExt`, `ENNReal`, `Diophantine` (§3.2), `Reals` |
+| `Examples/` | `TrivExt`, `ENNReal`, `NatBraiding` (Examples 3.3(1), `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2 and the 3.14(2) counterexample), `NNReal` (braiding in `ℝ≥0`), `Reals` (`ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, and `ℚ≥0`) |
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`.  Everything but `Lemma51` and after is monoid theory |
 | `Axioms/` | `Modules`: Bergman–Dicks realisation, the one assumed result, and nothing else |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it |
@@ -197,8 +215,12 @@ which bundles the section's standing assumptions; `Paper/Section{2,3,4}.lean` ar
 A new headline result belongs there too, and a numbered result that stops being formalised must
 move to that file's "not formalised" section with a reason.
 
-Before writing a new construction, check whether the analogous one exists: the `ℕ₀` and `ℝ≥0`
-braidings, the `Fcard`/`RTilde` `SumData`s, and the `TrivExt` extension are all templates.
+Before writing a new construction, check whether the analogous one exists, and prefer the builder
+to a hand-rolled `BraidingData`: `IsBraided.of_partition`, `of_levels`, `of_nat_blocks` (a bijection
+`ℕ ≃ ι` plus two block-boundary sequences — this is Examples 3.3(1) and (2)) and `of_aggregation`
+(pairwise disjoint small sets over which one family sums to the other — this is Proposition 3.9's
+two braidings). The `Fcard`/`RTilde` `SumData`s and the `TrivExt` extension are the other
+templates.
 
 Anything with no `κ`-monoid content belongs in `KappaMonoid/ForMathlib/`, which imports only
 Mathlib and so never gets rebuilt when the development changes.  Putting a general lemma in a leaf
