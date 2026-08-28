@@ -1,0 +1,76 @@
+{
+  // Lean 4 dev container for rootless Podman.
+  // Deliberately minimal: no sudo, no postStart hooks, no firewall.
+  // The isolation comes from the workspace-only mount + non-root user.
+
+  "name": "lean-sandbox",
+  "build": { "dockerfile": "Dockerfile" },
+
+  // --- Identity ---------------------------------------------------------
+  // keep-id maps your host UID to 'vscode' (uid 1000) inside the container,
+  // so bind-mounted files have sane ownership. updateRemoteUserUID must be
+  // false or the CLI tries to chown things it can't touch in a userns.
+  "containerUser": "vscode",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": false,
+
+  // --- Mounts -----------------------------------------------------------
+  // workspaceMount is blank on purpose: rootless Podman needs the explicit
+  // --volume below instead of the mount the CLI would generate.
+  // This is the ONLY host path visible inside the container.
+  "workspaceMount": "",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  "runArgs": [
+    "--userns=keep-id:uid=1000,gid=1000",
+    "--volume=${localWorkspaceFolder}:/workspaces/${localWorkspaceFolderBasename}:Z"
+
+    // Add these back ONE AT A TIME, rebuilding after each, once the
+    // container opens cleanly. Both break sudo and apt inside the
+    // container by design; after adding them, new packages go in the
+    // Dockerfile.
+    //"--security-opt=no-new-privileges",
+    //"--cap-drop=ALL"
+  ],
+
+  // --- Environment ------------------------------------------------------
+  "containerEnv": {
+    "HOME": "/home/vscode",
+    "GITHUB_TOKEN": "",
+    "GH_TOKEN": "",
+    "ANTHROPIC_API_KEY": ""
+  },
+
+  // Blanks the forwarded SSH agent path for anything VS Code launches.
+  // NOTE: this hides the socket, it does not stop the extension from
+  // mounting it. To actually prevent forwarding you must launch VS Code
+  // with SSH_AUTH_SOCK unset on the host.
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": ""
+  },
+
+  // Skips the `bash -lic` probe the CLI runs to harvest PATH. The
+  // Dockerfile sets PATH via ENV, so nothing is lost, and this removes a
+  // common startup failure.
+  "userEnvProbe": "none",
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["leanprover.lean4", "anthropic.claude-code"],
+      "settings": {
+        "github.gitAuthentication": false,
+        "git.terminalAuthentication": false
+      },
+      // MCP servers declared here run INSIDE the container.
+      // Servers in your user profile mcp.json keep running on the host.
+      "mcp": { "servers": {} }
+    }
+  }
+  
+  "mounts": [
+  "source=claude-config-kappa,target=/home/vscode/.claude,type=volume"
+]
+
+  // No postCreateCommand on purpose. Prime the mathlib cache by hand in
+  // the container terminal:  lake exe cache get
+}
