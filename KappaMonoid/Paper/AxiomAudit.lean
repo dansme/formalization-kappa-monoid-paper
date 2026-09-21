@@ -35,6 +35,8 @@ namespace KappaMonoid
 
 /-! ## §3 — no axiom at all -/
 
+#assert_axioms BraidingData.isBraided_block []
+#assert_axioms isBraided_of_blocks []
 #assert_axioms isBraidedOn_iff_isBraided []
 #assert_axioms isBraidedOn_congr_self []
 #assert_axioms theorem_3_12 []

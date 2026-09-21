@@ -70,6 +70,16 @@ alias lemma_3_4_4_isBraided_iff_of_ne_aleph0 := KappaMonoid.isBraided_iff_of_ne_
 /-- **Lemma 3.4(1)** — `KappaMonoid.isBraided_of_small_support`, in `Braiding/Sums.lean`. -/
 alias lemma_3_4_1_isBraided_of_small_support := KappaMonoid.isBraided_of_small_support
 
+/-- **Lemma 3.4(2)** — `KappaMonoid.BraidingData.isBraided_block`, in `Braiding/WellOrder.lean`:
+the restriction of a braiding to one `ω`-block of the well-order, padded by zeroes, is again a
+braiding. -/
+alias lemma_3_4_2_isBraided_block := KappaMonoid.BraidingData.isBraided_block
+
+/-- **Lemma 3.4(3)** — `KappaMonoid.isBraided_of_blocks`, in `Braiding/WellOrder.lean`: the
+converse, a family of block braidings indexed by a pair of indexed partitions assembles into one
+braiding.  The paper's "there exists a limit well-order on `κ`" is discharged by Lemma 3.5. -/
+alias lemma_3_4_3_isBraided_of_blocks := KappaMonoid.isBraided_of_blocks
+
 /-- **Definition 3.1(1) over an arbitrary limit well-order** — `KappaMonoid.BraidingDataOn`, in
 `Braiding/WellOrder.lean`: the definition as the paper states it, with the successor and the limit
 elements taken from an index structure `LimitSucc` rather than from the `ι × ℕ` normal form. -/
@@ -180,11 +190,6 @@ alias example_3_17_slack_iso := KappaMonoid.example_3_17_slack_iso
 
 /-! ## Not formalised, deliberately
 
-* **Lemma 3.4(2)(3)**.  A braiding decomposes into a disjoint union of countable braidings, one per
-  limit element, and conversely.  In the paper this is a step towards Lemma 3.5, which is proved
-  here directly (`isBraidedOn_iff_isBraided`) from the `ω`-block decomposition of a limit
-  well-order, so the intermediate statement is not needed.  See `README.md`, "The limit
-  well-order".
 * **Remark 3.9**.  Why transitivity of braiding is easy for `λ > ℵ₀`: the common coarsening of two
   partitions into `< λ`-sized pieces is again into `< λ`-sized pieces, by regularity.  A sketch
   motivating Lemma 3.8, whose proof is formalised in full (`IsBraided.trans`).

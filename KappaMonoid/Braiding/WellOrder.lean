@@ -444,6 +444,193 @@ theorem _root_.KappaMonoid.IsBraidedOn.comap (h : IsBraidedOn lam W x y) (Φ : M
 
 end BraidingDataOn
 
+/-! ## Lemma 3.4(2)(3): a braiding is a disjoint union of `ω`-block braidings
+
+Part (2) restricts a braiding to one `ω`-block of the well-order; part (3) assembles a braiding
+from a family of them, one per piece of a pair of indexed partitions of the index set.  Together
+they say that a braiding *is* a disjoint union of countable braidings, which is the shape the
+`ι × ℕ` normal form of `BraidingData` records.
+
+The paper indexes the restricted families by the blocks `I(l)`, `J(l)` themselves, and so has to
+require `|I(l)| = |J(l)|` infinite for Definition 3.1 to apply to them; here they are padded by
+zeroes to the ambient index set — which is what the paper's "padded by zeroes to an index set of
+cardinality `κ`" asks for in (2) — so (3) is the exact converse of (2) and needs no such
+hypothesis. -/
+
+section Blocks
+
+variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Type u} {x y : ι → X}
+
+/-- The part of the index set that the `ω`-block of the limit element `(a, 0)` covers on the
+`x`-side: `I(a) = ⋃ₘ I (a, m)`. -/
+def BraidingData.blockI (d : BraidingData lam x y) (a : ι) : Set ι := ⋃ m : ℕ, d.I (a, m)
+
+/-- The same on the `y`-side: `J(a) = ⋃ₘ J (a, m)`. -/
+def BraidingData.blockJ (d : BraidingData lam x y) (a : ι) : Set ι := ⋃ m : ℕ, d.J (a, m)
+
+theorem BraidingData.subset_blockI (d : BraidingData lam x y) (p : ι × ℕ) :
+    d.I p ⊆ d.blockI p.1 := fun _ hi => Set.mem_iUnion.mpr ⟨p.2, hi⟩
+
+theorem BraidingData.subset_blockJ (d : BraidingData lam x y) (p : ι × ℕ) :
+    d.J p ⊆ d.blockJ p.1 := fun _ hj => Set.mem_iUnion.mpr ⟨p.2, hj⟩
+
+theorem BraidingData.notMem_blockI (d : BraidingData lam x y) {a : ι} {p : ι × ℕ}
+    (hp : p.1 ≠ a) {i : ι} (hi : i ∈ d.I p) : i ∉ d.blockI a := by
+  rintro hmem
+  obtain ⟨m, hm⟩ := Set.mem_iUnion.mp hmem
+  exact Set.disjoint_left.mp (d.I_disjoint p (a, m) (fun h => hp (congrArg Prod.fst h))) hi hm
+
+theorem BraidingData.notMem_blockJ (d : BraidingData lam x y) {a : ι} {p : ι × ℕ}
+    (hp : p.1 ≠ a) {j : ι} (hj : j ∈ d.J p) : j ∉ d.blockJ a := by
+  rintro hmem
+  obtain ⟨m, hm⟩ := Set.mem_iUnion.mp hmem
+  exact Set.disjoint_left.mp (d.J_disjoint p (a, m) (fun h => hp (congrArg Prod.fst h))) hj hm
+
+/-- **Lemma 3.4(2)**: the restriction of a braiding to one `ω`-block of the well-order is again a
+braiding.  Concretely, if `x` and `y` are `λ⁻`-braided by `d`, then for every limit element
+`(a, 0)` the subfamilies supported on `I(a)` and `J(a)` — padded by zeroes to the whole index set —
+are `λ⁻`-braided.
+
+The braiding is `d`'s own: keep the partitions, and zero the braiding families off the block.  Off
+the block both padded families vanish, so every equation there reads `0 = 0 + 0`. -/
+theorem BraidingData.isBraided_block (d : BraidingData lam x y) (a : ι) :
+    IsBraided lam (Set.indicator (d.blockI a) x) (Set.indicator (d.blockJ a) y) := by
+  classical
+  refine ⟨{ I := d.I, J := d.J, I_disjoint := d.I_disjoint, J_disjoint := d.J_disjoint
+            I_cover := d.I_cover, J_cover := d.J_cover
+            I_small := d.I_small, J_small := d.J_small
+            u := fun p => if p.1 = a then d.u p else 0
+            v := fun p => if p.1 = a then d.v p else 0
+            v_limit := ?_, hI := ?_, hJ := ?_ }⟩
+  · intro b
+    by_cases hb : b = a
+    · subst hb
+      simpa using d.v_limit b
+    · simp [hb]
+  · intro p
+    by_cases hp : p.1 = a
+    · have hx : ∀ i : d.I p, Set.indicator (d.blockI a) x (i : ι) = x i := fun i =>
+        Set.indicator_of_mem (hp ▸ d.subset_blockI p i.2) x
+      rw [show (fun i : d.I p => Set.indicator (d.blockI a) x (i : ι))
+          = (fun i : d.I p => x (i : ι)) from funext hx, if_pos hp, if_pos hp]
+      exact d.hI p
+    · rw [LMonoid.lsumOf_eq_zero_of_forall (d.I_small p)
+        (fun i => Set.indicator_of_notMem (d.notMem_blockI hp i.2) x), if_neg hp, if_neg hp,
+        add_zero]
+  · intro p
+    by_cases hp : p.1 = a
+    · have hy : ∀ j : d.J p, Set.indicator (d.blockJ a) y (j : ι) = y j := fun j =>
+        Set.indicator_of_mem (hp ▸ d.subset_blockJ p j.2) y
+      have hbs : (bsucc p).1 = a := hp
+      rw [show (fun j : d.J p => Set.indicator (d.blockJ a) y (j : ι))
+          = (fun j : d.J p => y (j : ι)) from funext hy, if_pos hbs, if_pos hp]
+      exact d.hJ p
+    · have hbs : ¬ ((bsucc p).1 = a) := hp
+      rw [LMonoid.lsumOf_eq_zero_of_forall (d.J_small p)
+        (fun j => Set.indicator_of_notMem (d.notMem_blockJ hp j.2) y), if_neg hbs, if_neg hp,
+        add_zero]
+
+/-- **Lemma 3.4(3)**, the converse: a family of block braidings assembles into one braiding.
+
+Given indexed partitions `(A l)` and `(B l)` of the index set such that, for every `l`, the
+families `x` and `y` cut down to `A l` and `B l` are `λ⁻`-braided, `x` and `y` are `λ⁻`-braided.
+
+The well-order the paper produces is the lexicographic one on the pairs `(l, μ)`; here that is the
+index structure with block set `ι × ι`, and Lemma 3.5 (via `comap` along an injection
+`ι × ι ↪ ι`, which exists because `ι` is infinite) turns it back into the normal form. -/
+theorem isBraided_of_blocks [Infinite ι] {A B : ι → Set ι}
+    (hAdisj : ∀ l l', l ≠ l' → Disjoint (A l) (A l'))
+    (hBdisj : ∀ l l', l ≠ l' → Disjoint (B l) (B l'))
+    (hAcov : (⋃ l, A l) = Set.univ) (hBcov : (⋃ l, B l) = Set.univ)
+    (h : ∀ l, IsBraided lam (Set.indicator (A l) x) (Set.indicator (B l) y)) :
+    IsBraided lam x y := by
+  classical
+  have d : ∀ l, BraidingData lam (Set.indicator (A l) x) (Set.indicator (B l) y) :=
+    fun l => (h l).some
+  -- the braiding with block set `ι × ι`: block `(l, b)` is block `b` of the `l`-th braiding,
+  -- cut down to `A l`
+  have hIsmall : ∀ p : (ι × ι) × ℕ, #((d p.1.1).I (p.1.2, p.2) ∩ A p.1.1 : Set ι) < lam :=
+    fun p => lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset Set.inter_subset_left)
+      ((d p.1.1).I_small (p.1.2, p.2))
+  have hJsmall : ∀ p : (ι × ι) × ℕ, #((d p.1.1).J (p.1.2, p.2) ∩ B p.1.1 : Set ι) < lam :=
+    fun p => lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset Set.inter_subset_left)
+      ((d p.1.1).J_small (p.1.2, p.2))
+  -- on `A l` the `l`-th padded family is `x`, and off it the padded family vanishes
+  have hIsum : ∀ p : (ι × ι) × ℕ,
+      lsumOf (lam := lam) (hIsmall p)
+          (fun i : ((d p.1.1).I (p.1.2, p.2) ∩ A p.1.1 : Set ι) => x (i : ι))
+        = (d p.1.1).v (p.1.2, p.2) + (d p.1.1).u (p.1.2, p.2) := by
+    rintro ⟨⟨l, b⟩, m⟩
+    rw [show (fun i : ((d l).I (b, m) ∩ A l : Set ι) => x (i : ι))
+        = (fun i : ((d l).I (b, m) ∩ A l : Set ι) => Set.indicator (A l) x (i : ι)) from
+      funext fun i => (Set.indicator_of_mem i.2.2 x).symm,
+      ← LMonoid.lsumOf_of_subset ((d l).I_small (b, m)) (hIsmall ⟨(l, b), m⟩)
+        Set.inter_subset_left _
+        (fun i hi hni => Set.indicator_of_notMem (fun hA => hni ⟨hi, hA⟩) x)]
+    exact (d l).hI (b, m)
+  have hJsum : ∀ p : (ι × ι) × ℕ,
+      lsumOf (lam := lam) (hJsmall p)
+          (fun j : ((d p.1.1).J (p.1.2, p.2) ∩ B p.1.1 : Set ι) => y (j : ι))
+        = (d p.1.1).v (p.1.2, p.2 + 1) + (d p.1.1).u (p.1.2, p.2) := by
+    rintro ⟨⟨l, b⟩, m⟩
+    rw [show (fun j : ((d l).J (b, m) ∩ B l : Set ι) => y (j : ι))
+        = (fun j : ((d l).J (b, m) ∩ B l : Set ι) => Set.indicator (B l) y (j : ι)) from
+      funext fun j => (Set.indicator_of_mem j.2.2 y).symm,
+      ← LMonoid.lsumOf_of_subset ((d l).J_small (b, m)) (hJsmall ⟨(l, b), m⟩)
+        Set.inter_subset_left _
+        (fun j hj hnj => Set.indicator_of_notMem (fun hB => hnj ⟨hj, hB⟩) y)]
+    exact (d l).hJ (b, m)
+  have hdisj : ∀ {S : ι → ι × ℕ → Set ι} {C : ι → Set ι},
+      (∀ l, ∀ p q : ι × ℕ, p ≠ q → Disjoint (S l p) (S l q)) →
+      (∀ l l', l ≠ l' → Disjoint (C l) (C l')) →
+      ∀ p q : (ι × ι) × ℕ, p ≠ q →
+        Disjoint (S p.1.1 (p.1.2, p.2) ∩ C p.1.1) (S q.1.1 (q.1.2, q.2) ∩ C q.1.1) := by
+    rintro S C hS hC ⟨⟨l, b⟩, m⟩ ⟨⟨l', b'⟩, m'⟩ hne
+    by_cases hll : l = l'
+    · subst hll
+      refine Disjoint.mono Set.inter_subset_left Set.inter_subset_left (hS l (b, m) (b', m') ?_)
+      intro hbm
+      have hb : b = b' := congrArg Prod.fst hbm
+      have hm : m = m' := congrArg Prod.snd hbm
+      exact hne (by rw [hb, hm])
+    · exact Disjoint.mono Set.inter_subset_right Set.inter_subset_right (hC l l' hll)
+  have hcov : ∀ {S : ι → ι × ℕ → Set ι} {C : ι → Set ι},
+      (∀ l, (⋃ p, S l p) = Set.univ) → ((⋃ l, C l) = Set.univ) →
+      (⋃ p : (ι × ι) × ℕ, S p.1.1 (p.1.2, p.2) ∩ C p.1.1) = Set.univ := by
+    intro S C hS hC
+    refine Set.eq_univ_of_forall fun i => ?_
+    obtain ⟨l, hl⟩ := Set.mem_iUnion.mp (hC ▸ Set.mem_univ i)
+    obtain ⟨⟨b, m⟩, hbm⟩ := Set.mem_iUnion.mp ((hS l) ▸ Set.mem_univ i)
+    exact Set.mem_iUnion.mpr ⟨((l, b), m), hbm, hl⟩
+  -- assemble, then move back to the normal form along an injection `ι × ι ↪ ι`
+  let e : BraidingDataOn lam (LimitSucc.prodNat (ι × ι)) x y :=
+    { I := fun p => (d p.1.1).I (p.1.2, p.2) ∩ A p.1.1
+      J := fun p => (d p.1.1).J (p.1.2, p.2) ∩ B p.1.1
+      I_disjoint := hdisj (fun l => (d l).I_disjoint) hAdisj
+      J_disjoint := hdisj (fun l => (d l).J_disjoint) hBdisj
+      I_cover := hcov (fun l => (d l).I_cover) hAcov
+      J_cover := hcov (fun l => (d l).J_cover) hBcov
+      I_small := hIsmall
+      J_small := hJsmall
+      u := fun p => (d p.1.1).u (p.1.2, p.2)
+      v := fun p => (d p.1.1).v (p.1.2, p.2)
+      v_limit := by rintro ⟨⟨l, b⟩, m⟩ hm; subst hm; exact (d l).v_limit b
+      hI := hIsum
+      hJ := hJsum }
+  obtain ⟨f⟩ : Nonempty (ι × ι ↪ ι) := by
+    rw [← Cardinal.le_def]
+    have hinf : ℵ₀ ≤ #ι := Cardinal.infinite_iff.mp ‹Infinite ι›
+    exact le_of_eq (by simp [Cardinal.mk_prod, Cardinal.mul_eq_self hinf])
+  refine isBraided_iff_isBraidedOn_prodNat.mpr
+    (IsBraidedOn.comap ⟨e⟩ (fun p => (f p.1, p.2)) ?_ (fun _ => rfl) (fun _ hp => hp))
+  have hinj : Function.Injective (fun p : (ι × ι) × ℕ => (f p.1, p.2)) := by
+    intro p p' hpp
+    simp only [Prod.mk.injEq] at hpp
+    exact Prod.ext (f.injective hpp.1) hpp.2
+  exact fun q => Set.Subsingleton.finite fun p hp p' hp' => hinj (hp.trans hp'.symm)
+
+end Blocks
+
 /-! ## Lemma 3.5
 
 Both directions are `comap` along a map between the two index structures, read off the `ω`-block
