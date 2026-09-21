@@ -47,6 +47,8 @@ namespace KappaMonoid
 #assert_axioms not_isBraidedOver_ineqSystem []
 #assert_axioms not_prop_3_15_two_ineqSystem []
 #assert_axioms example_3_16 []
+#assert_axioms not_isSaturatedFin_ineqSystem []
+#assert_axioms example_3_17_slack_iso []
 
 /-! ## §4 — Bergman–Dicks in one direction of Corollary 4.7(1), nothing else -/
 

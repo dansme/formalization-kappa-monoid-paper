@@ -127,20 +127,37 @@ alias lemma_3_14_2_lemma_3_14_sub_of_subset := KappaMonoid.lemma_3_14_sub_of_sub
 /-- **Proposition 3.15(1)** — `KappaMonoid.prop_3_15_one`, in `Examples/Diophantine.lean`. -/
 alias proposition_3_15_1_prop_3_15_one := KappaMonoid.prop_3_15_one
 
-/-- **Proposition 3.15(2)** — `KappaMonoid.prop_3_15_two`, in `Examples/Diophantine.lean`. -/
+/-- **Proposition 3.15(2)** — `KappaMonoid.prop_3_15_two_of_ineqs_empty`, in
+`Examples/Diophantine.lean`: for a system of equations and congruences, which is what the
+proposition is stated for. -/
+alias proposition_3_15_2_prop_3_15_two_of_ineqs_empty := KappaMonoid.prop_3_15_two_of_ineqs_empty
+
+/-- **Proposition 3.15(2)**, generalised — `KappaMonoid.prop_3_15_two`, in
+`Examples/Diophantine.lean`: the same conclusion for any system whose solution monoid is
+saturated in `ℕ₀^n`, which is what the proof actually needs. -/
 alias proposition_3_15_2_prop_3_15_two := KappaMonoid.prop_3_15_two
-
-/-- **Proposition 3.15(2) for a system of equations and congruences** — `KappaMonoid.prop_3_15_two_of_ineqs_empty`, in `Examples/Diophantine.lean`. -/
-alias proposition_3_15_2_for_a_system_of_equations_and_congruences_prop_3_15_two_of_ineqs_empty := KappaMonoid.prop_3_15_two_of_ineqs_empty
-
-/-- **Proposition 3.15(2) is false without the saturation hypothesis** —
-`KappaMonoid.not_prop_3_15_two_ineqSystem`, in `Examples/Diophantine.lean`: for
-`H = {(a,b) ∈ ℕ₀² : a ≤ 2b}` the monoid `H + ℵ₀H` is not the universal `ℵ₀`-extension of `H`,
-because it is not braided over it (`not_isBraidedOver_ineqSystem`). -/
-alias proposition_3_15_2_counterexample := KappaMonoid.not_prop_3_15_two_ineqSystem
 
 /-- **Example 3.16** — `KappaMonoid.example_3_16`, in `Examples/Diophantine.lean`. -/
 alias example_3_16_example_3_16 := KappaMonoid.example_3_16
+
+/-- **Example 3.17**, `H` is not saturated — `KappaMonoid.not_isSaturatedFin_ineqSystem`, in
+`Examples/Diophantine.lean`. -/
+alias example_3_17_not_saturated := KappaMonoid.not_isSaturatedFin_ineqSystem
+
+/-- **Example 3.17**, the two families are not braided —
+`KappaMonoid.not_isBraidedOver_ineqSystem`, in `Examples/Diophantine.lean`. -/
+alias example_3_17_not_braided := KappaMonoid.not_isBraidedOver_ineqSystem
+
+/-- **Example 3.17**: for `H = {(a,b) ∈ ℕ₀² : a ≤ b}` the monoid `H + ℵ₀H` is *not* the universal
+`ℵ₀`-extension of `H` — `KappaMonoid.not_prop_3_15_two_ineqSystem`, in
+`Examples/Diophantine.lean`.  This is why Proposition 3.15(2) excludes inequalities. -/
+alias example_3_17_not_universal := KappaMonoid.not_prop_3_15_two_ineqSystem
+
+/-- **Example 3.17**, the repair — `KappaMonoid.example_3_17_slack_iso`, in
+`Examples/Diophantine.lean`: `H ≅ H' = {(a,b,c) ∈ ℕ₀³ : b = a + c}`, a system of equations, to
+which Proposition 3.15(2) does apply. -/
+alias example_3_17_slack_iso := KappaMonoid.example_3_17_slack_iso
+
 
 
 /-! ## Not formalised, deliberately
