@@ -248,8 +248,8 @@ theorem trivExt_sigma_coe_nat_of_infinite {ι : Type u} {x : ι → ℕ}
   TrivExt.sigma_eq_top_of_infinite (by rw [support_coe_withTop_nat]; exact hx)
 
 /-- **Examples 3.3(1)**: the trivial `ℵ₀`-extension `ℕ₀ ∪ {∞}` is `ℵ₀⁻`-braided over `ℕ₀`, hence
-(by Theorem 3.11(2)) *is* the universal `ℵ₀`-extension of `ℕ₀`.  This is the first entry of
-Examples 3.12. -/
+(by Theorem 3.12(2)) *is* the universal `ℵ₀`-extension of `ℕ₀`.  This is the first entry of
+Examples 3.13. -/
 theorem isBraidedOver_withTop_nat :
     letI := LMonoid.ofAddCommMonoid ℕ
     letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
@@ -293,8 +293,8 @@ theorem isBraidedOver_withTop_nat :
       exact absurd hxy.symm WithTop.coe_ne_top
     · exact isBraided_nat_of_infinite_support hidx x y hfx hfy
 
-/-- **Examples 3.12**, first entry: `ℕ̂₀ = ℕ₀ ∪ {∞}`.  Combining `isBraidedOver_withTop_nat` with
-Theorem 3.11(2), the universal `ℵ₀`-extension of `ℕ₀` is its trivial `ℵ₀`-extension. -/
+/-- **Examples 3.13**, first entry: `ℕ̂₀ = ℕ₀ ∪ {∞}`.  Combining `isBraidedOver_withTop_nat` with
+Theorem 3.12(2), the universal `ℵ₀`-extension of `ℕ₀` is its trivial `ℵ₀`-extension. -/
 theorem isUniversalKExtension_withTop_nat :
     letI := LMonoid.ofAddCommMonoid ℕ
     letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl

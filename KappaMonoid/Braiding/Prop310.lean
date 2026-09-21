@@ -1,5 +1,5 @@
 /-
-**Proposition 3.9** (extension of a `λ⁻`-homomorphism along a braiding) and **Definition 3.10**
+**Proposition 3.10** (extension of a `λ⁻`-homomorphism along a braiding) and **Definition 3.11**
 (`IsUniversalKExtension`), with its transports.
 -/
 import KappaMonoid.Braiding.UnivAux
@@ -14,11 +14,11 @@ open KMonoid LMonoid
 
 variable {lam κ : Cardinal.{u}}
 
-/-! ## Proposition 3.9 -/
+/-! ## Proposition 3.10 -/
 
 variable {lam κ : Cardinal.{u}}
 
-/-- Proposition 3.9: if the `κ`-monoid `H` is `λ⁻`-braided over `X`, then every
+/-- Proposition 3.10: if the `κ`-monoid `H` is `λ⁻`-braided over `X`, then every
 `λ⁻`-homomorphism from `X` to a `κ`-monoid `K` extends uniquely to a `κ`-homomorphism on
 `H`.
 
@@ -90,9 +90,9 @@ theorem extend_lhom {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
       _ = ψ h := rfl
 
 
-/-! ## Definition 3.10 -/
+/-! ## Definition 3.11 -/
 
-/-- Definition 3.10: `Ĥ` (with structure map `f`) is a *universal `κ`-extension* of the
+/-- Definition 3.11: `Ĥ` (with structure map `f`) is a *universal `κ`-extension* of the
 `λ⁻`-monoid `X`.
 
 The universe `z` of the test objects is a **parameter**, independent of `Ĥ`'s own universe `w`.
@@ -182,7 +182,7 @@ its test objects fixed to the extension's own universe, could not express.
 Each extension is needed twice over: `h₁` extends into `H₂` and `h₂` into `H₁`, while `h₁'` and
 `h₂'` supply the two identity-uniqueness steps.  Both are available in practice, because the
 constructions that produce universal extensions — `IsBraidedOver.isUniversalKExtension` and hence
-`theorem_3_11`, `lemma_3_13_free`, `krsa_ascent` — are polymorphic in the test universe. -/
+`theorem_3_12`, `lemma_3_14_free`, `krsa_ascent` — are polymorphic in the test universe. -/
 theorem isUniversalKExtension_unique' {X : Type v} {H₁ : Type w} {H₂ : Type t}
     [LMonoid lam X] [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ κ)
     {f₁ : X → H₁} {f₂ : X → H₂}
@@ -408,7 +408,7 @@ theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMo
       (congrArg Subtype.val (D.hJ p))).2.2
 
 /-- Being `λ⁻`-braided over `X` implies being the universal `κ`-extension of `X`
-(the second half of Theorem 3.11(2)); it is immediate from Proposition 3.9. -/
+(the second half of Theorem 3.12(2)); it is immediate from Proposition 3.10. -/
 theorem IsBraidedOver.isUniversalKExtension {X : Type v} {H : Type w}
     [LMonoid lam X] [KMonoid κ H] (hlk : lam ≤ κ) {f : X → H}
     (hbr : IsBraidedOver lam κ X H hlk f) :

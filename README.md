@@ -5,7 +5,7 @@ Sections 2–5 of the paper.
 ## Status
 
 Complete and `sorry`-free: `lake build` checks every definition and every theorem, including
-Theorem 3.11 (universal `κ`-extensions), Proposition 3.14 (universal extensions of Diophantine
+Theorem 3.12 (universal `κ`-extensions), Proposition 3.15 (universal extensions of Diophantine
 monoids), Theorem 4.3 (`V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`), Theorem 5.3 (which
 two-generated `ℵ₀`-monoids are `V^{ℵ₀}(R)` for a hereditary ring) and all of §§2–5.
 
@@ -26,9 +26,9 @@ assumed result, or — since the core does not say `import Mathlib` — most of 
 |---|---|---|
 | `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean`, `FreeRank.lean`, `HomDirectSum.lean` + `SimpleMultiplicity.lean`, `CyclicMonoid.lean` (also `C_{m,n}` as a monoid), `Kaplansky.lean` and `Albrecht.lean` — see "Classical results proved here" |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
-| `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop39` (**Proposition 3.9**, Definition 3.10), `UnivExt` (**Theorem 3.11** and its converse), `Saturated` (**Lemma 3.13**) |
+| `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop310` (**Proposition 3.10**, Definition 3.11), `UnivExt` (**Theorem 3.12** and its converse), `Saturated` (**Lemma 3.14**) |
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky in `κ`-monoid form, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
-| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.14**, its counterexample, **Example 3.15**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**) |
+| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.15**, its counterexample, **Example 3.16**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
 | `KappaMonoid/Axioms/` | Mathlib | The one classical result assumed rather than proved — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
@@ -220,16 +220,16 @@ This is the hazard the axiom discipline exists for, and the two CI checks would 
 check *which* axioms exist and *who* uses them, not whether an axiom is true. Only a `Nontrivial R`
 field makes such a falsity visible at all.
 
-### The hypothesis added to Theorem 3.11
+### The hypothesis added to Theorem 3.12
 
-Theorem 3.11(1) asserts, for an arbitrary `λ⁻`-monoid `H`, the existence of a `κ`-monoid
+Theorem 3.12(1) asserts, for an arbitrary `λ⁻`-monoid `H`, the existence of a `κ`-monoid
 `Ĥ ⊇ H` which is a `λ⁻`-overmonoid of `H`. But Lemma 2.8(1) says every `κ`-monoid is
 reduced, and a `λ⁻`-submonoid of a reduced monoid is reduced. So no non-reduced `H` can
 admit such an `Ĥ`. For `λ = ℵ₀` a `λ⁻`-monoid is just a commutative monoid, and `H = ℤ` is
 a counterexample: the construction `Ĥ = H^κ/≈` still goes through as a `κ`-monoid, but the
 map `H → Ĥ` is not injective, so `Ĥ` is not an *over*monoid.
 
-`theorem_3_11` therefore adds `IsConical X` (= reduced, = conical), and three facts pin the
+`theorem_3_12` therefore adds `IsConical X` (= reduced, = conical), and three facts pin the
 hypothesis down exactly:
 
 * `isConical_of_isUniversalKExtension` — reducedness is *necessary*: any `λ⁻`-monoid
@@ -238,7 +238,7 @@ hypothesis down exactly:
   namely injectivity of `x ↦ [(x,0,0,…)]`. The argument: in a braiding of `(x,0,0,…)` with
   `(y,0,0,…)`, all but at most one of the defining equations reads `0 = v μ + u μ`, so
   reducedness kills those `u`'s and `v`'s, and the surviving equations give `x = y`.
-* `theorem_3_11_of_aleph0_lt` — for `λ > ℵ₀` the hypothesis is automatic, so the statement is
+* `theorem_3_12_of_aleph0_lt` — for `λ > ℵ₀` the hypothesis is automatic, so the statement is
   the paper's verbatim. This rests on `LMonoid.isConical`, the analogue of Lemma 2.8(1) for
   `λ⁻`-monoids, which the paper asserts at the end of §2.4.
 
@@ -246,19 +246,19 @@ So the deviation is confined to `λ = ℵ₀`, which is (per Lemma 3.4(4)) the i
 Example 2.3(1) already flags reducedness as necessary in exactly this situation, so this looks like
 an omission in transcription rather than an error in the mathematics.
 
-### The hypothesis added to Proposition 3.14(2)
+### The hypothesis added to Proposition 3.15(2)
 
-The remark before Proposition 3.14 asserts that a submonoid of `ℕ₀^n` defined by homogeneous
+The remark before Proposition 3.15 asserts that a submonoid of `ℕ₀^n` defined by homogeneous
 linear equations, inequalities and congruences is saturated, by cancellativity of `ℕ₀^n`. For
 equations and congruences that is right — cancel the `t`-part — but for inequalities it is false,
-and Proposition 3.14(2), whose proof opens by invoking it, fails with it. Take
+and Proposition 3.15(2), whose proof opens by invoking it, fails with it. Take
 `H = {(a,b) ∈ ℕ₀² : a ≤ 2b}`, cut out by the single inequality `x₁ ≤ 2x₂`. Then
 
 * `(2,1) = (0,1) + (2,0)` with `(2,1)`, `(0,1) ∈ H` and `(2,0) ∉ H`, so `H` is not saturated
   (`not_isSaturatedFin_ineqSystem`);
 * `H + ℵ₀H` is not `ℵ₀⁻`-braided over `H` (`not_isBraidedOver_ineqSystem`), so by
   `isBraidedOver_of_isUniversalKExtension` it is *not* the universal `ℵ₀`-extension of this `H`
-  either (`not_prop_3_14_two_ineqSystem`). The witnesses are the constant families `x ≡ (2,1)` and
+  either (`not_prop_3_15_two_ineqSystem`). The witnesses are the constant families `x ≡ (2,1)` and
   `y ≡ (2,2)`, which have the same `ℵ₀`-sum `(ℵ₀, ℵ₀) ∈ H + ℵ₀H`. The formalised argument is
   shorter than the paper's telescoping one: the slack `δ(a,b) = 2b - a` is a monoid homomorphism
   `H → ℕ₀` — that the subtraction is exact is exactly `a ≤ 2b` — and it vanishes on `(2,1)`, so
@@ -266,11 +266,11 @@ and Proposition 3.14(2), whose proof opens by invoking it, fails with it. Take
   `J`-equation to read `Σ_{j ∈ J p} δ(y j) = 0` with `δ(y j) = 2`; the `J`-pieces cover the index
   set, so one of them is nonempty.
 
-`prop_3_14_two` therefore takes the saturation of `H` as a hypothesis (`IsSaturatedFin`), which is
-exactly what Lemma 3.13(2) needs. For a system of **equations and congruences** the paper's
+`prop_3_15_two` therefore takes the saturation of `H` as a hypothesis (`IsSaturatedFin`), which is
+exactly what Lemma 3.14(2) needs. For a system of **equations and congruences** the paper's
 argument is correct and the hypothesis costs nothing: `isSaturatedFin_of_ineqs_empty` proves it
 (all values in a finite solution are finite, so every linear form has a natural-number shadow and
-the cancellation happens in `ℕ₀`), and `prop_3_14_two_of_ineqs_empty` is Proposition 3.14(2) for
+the cancellation happens in `ℕ₀`), and `prop_3_15_two_of_ineqs_empty` is Proposition 3.15(2) for
 such a system with no hypothesis beyond `sys.ineqs = ∅`. So the correction is confined to
 inequalities.
 
@@ -329,7 +329,7 @@ files these travel as separate arguments, which is why they are visible there at
 
 * **Lemma 3.4(2)(3) and Lemma 3.5** — their content *is* the `ι × ℕ` normal form that
   `BraidingData` is built on; see "The limit well-order" below.
-* **Remark 3.16** — a pointer to the literature.
+* **Remark 3.18** — a pointer to the literature.
 * **Corollary 4.6** — Corollary 4.5(3) together with six results quoted from the literature, none
   of them monoid-theoretic and none in Mathlib. It stays a documented stub in
   `Modules/Projective.lean`.
@@ -337,7 +337,7 @@ files these travel as separate arguments, which is why they are visible there at
   printed: `krsa_ascent`, `krsa_ascent_free`, `krsa_ascent_iso` are the general `λ⁻` form, from
   which the finite-KRSA and the countable/Kaplansky readings are the cases `λ = ℵ₀` and `λ = ℵ₁`.
   Its closing caution — `⟨V(R)⟩_κ` is braided over `V(R)` but need not be divisor-closed in
-  `V^κ(R)` — has its positive half available as `lemma_3_13_sub` applied to `addOf_unitClass_eq`,
+  `V^κ(R)` — has its positive half available as `lemma_3_14_sub` applied to `addOf_unitClass_eq`,
   but is not stated at the module level, and the negative half is a remark with no proof in the
   paper. The rest:
   * **(2)** is a question (Herbera–Příhoda–Wiegand, Question 1.1) translated into `κ`-monoid
@@ -352,8 +352,8 @@ files these travel as separate arguments, which is why they are visible there at
     non-finitely-generated projectives over a connected commutative noetherian ring are free (5),
     Herbera–Příhoda's description of `V^*(R)` for semilocal noetherian `R` (6), Levy–Robson's
     theory of HNP rings (7) — and the `κ`-monoid step on top of it is in each case Theorem 4.3 or
-    Proposition 3.14, both formalised. Item (7) explicitly declines to carry out its own
-    computation. Note that item (6)'s appeal to Proposition 3.14(2) inherits the `IsSaturatedFin`
+    Proposition 3.15, both formalised. Item (7) explicitly declines to carry out its own
+    computation. Note that item (6)'s appeal to Proposition 3.15(2) inherits the `IsSaturatedFin`
     hypothesis that part needs; see the deviations above.
 
 One typo in the paper, unrelated to the formalisation: Corollary 5.5(3) reads "The converse is not

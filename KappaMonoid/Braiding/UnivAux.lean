@@ -1,5 +1,5 @@
 /-
-Auxiliary lemmas on `λ⁻`-sums, braidings and `λ⁻`-homomorphisms, used by Proposition 3.9 and
+Auxiliary lemmas on `λ⁻`-sums, braidings and `λ⁻`-homomorphisms, used by Proposition 3.10 and
 the construction of the universal `κ`-extension.
 -/
 import KappaMonoid.Braiding.Over
@@ -126,7 +126,7 @@ sets `A a`, one for each `a : ι`, such that `x` sums over `A a` to `y a` and va
 
 The `BraidingData` is the obvious one: `A a` against `{a}` on level `0`, and the indices no `A a`
 covers — where `x` vanishes — parked on level `1` against the empty set.  Both braidings needed for
-Proposition 3.9 are of this shape, with `A a` a one- or two-element set. -/
+Proposition 3.10 are of this shape, with `A a` a one- or two-element set. -/
 theorem of_aggregation {ι : Type u} {x y : ι → X} (A : ι → Set ι)
     (hdisj : ∀ a b, a ≠ b → Disjoint (A a) (A b)) (hsmall : ∀ a, #(A a) < lam)
     (hzero : ∀ i, i ∉ ⋃ a, A a → x i = 0)
@@ -379,7 +379,7 @@ theorem IsBraided.map_lhom (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) 
            hJ := fun p => by
              rw [hpush (d.J_small p) y, d.hJ p, IsLHom.map_add hlk hf] }⟩
 
-/-- The telescoping principle in the form needed for Proposition 3.9: a `λ⁻`-homomorphism
+/-- The telescoping principle in the form needed for Proposition 3.10: a `λ⁻`-homomorphism
 into a `κ`-monoid takes braided families to families with equal `κ`-sums. -/
 theorem sumOf_map_eq_of_isBraided (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f)
     {ι : Type u} (hι : #ι ≤ κ) {x y : ι → X} (h : IsBraided lam x y) :

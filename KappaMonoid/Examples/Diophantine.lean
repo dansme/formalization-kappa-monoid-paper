@@ -1,6 +1,6 @@
 /-
-**§3.2: Proposition 3.14**, monoids defined by linear equations, inequalities and congruences,
-the counterexample showing the saturation hypothesis cannot be dropped, and **Example 3.15**.
+**§3.2: Proposition 3.15**, monoids defined by linear equations, inequalities and congruences,
+the counterexample showing the saturation hypothesis cannot be dropped, and **Example 3.16**.
 -/
 import KappaMonoid.Examples.NatBraiding
 
@@ -10,12 +10,12 @@ open Cardinal Function Set
 
 namespace KappaMonoid
 
-/-! ## Proposition 3.14: monoids defined by linear equations, inequalities and congruences
+/-! ## Proposition 3.15: monoids defined by linear equations, inequalities and congruences
 
 A homogeneous system in `n` unknowns over `F_κ` consists of equations
 `a₁x₁ + ⋯ + aₙxₙ = b₁x₁ + ⋯ + bₙxₙ`, inequalities `a₁x₁ + ⋯ + aₙxₙ ≤ b₁x₁ + ⋯ + bₙxₙ`, and
 congruences `a₁x₁ + ⋯ + aₙxₙ ∈ d·F_κ`, all with natural-number coefficients.  The same system can
-be read over `F_κ` for any `κ`, which is what makes Proposition 3.14 expressible. -/
+be read over `F_κ` for any `κ`, which is what makes Proposition 3.15 expressible. -/
 
 section Diophantine
 
@@ -328,7 +328,7 @@ theorem csum_finset_le {J : Type w} (s : Finset J) (f : J → Cardinal.{u}) {c :
       exact Cardinal.add_le_of_le hc (hf j (Finset.mem_cons_self _ _))
         (ih fun k hk => hf k (Finset.mem_cons_of_mem hk))
 
-/-- **The generation statement behind Proposition 3.14(1)**: every `κ`-solution is a `κ`-sum of
+/-- **The generation statement behind Proposition 3.15(1)**: every `κ`-solution is a `κ`-sum of
 images of `ℵ₀`-solutions.
 
 `α = β + Σ_{j : α_j infinite} α_j · γ^{(α_j)}`: in a finite component both sides are `α_i`, since
@@ -427,12 +427,12 @@ theorem LinSystem.solutions_subset_kclosure (hκ0 : ℵ₀ ≤ κ) :
 
 /-! ### `F_κ^n` is `λ⁻`-braided over `F_{ℵ₀}^n`
 
-The ambient braided extension that Lemma 3.13(2) needs.  Lemma 3.13(1) gives it for the free
+The ambient braided extension that Lemma 3.14(2) needs.  Lemma 3.14(1) gives it for the free
 objects `F_{λ⁻}(B) ⊆ F_κ(B)`, which are *subtypes* of the products and need `B : Type u`, while
 §3.2 works with the plain products over `Fin n`.  For a basis of size `< λ` the support condition
 is vacuous, so the two differ only by the coercion out of the subtype composed with the reindexing
-along `ULift (Fin n) ≃ Fin n`; that is an isomorphism on both sides, and Theorem 3.11 read as an
-equivalence turns the universal property of Lemma 3.13(1) into a braiding, which then transports
+along `ULift (Fin n) ≃ Fin n`; that is an isomorphism on both sides, and Theorem 3.12 read as an
+equivalence turns the universal property of Lemma 3.14(1) into a braiding, which then transports
 (`IsBraidedOver.of_iso`, `IsBraidedOver.of_base_iso`). -/
 
 /-- Every family indexed by a basis of size `< λ` lies in `F_{λ⁻}(B)`: its support is a subset of
@@ -462,11 +462,11 @@ theorem isBraidedOver_pi_fcard (hκ : Order.succ ℵ₀ ≤ κ) :
     lt_of_lt_of_le hBlt (Order.le_succ _)
   have hBk : #(ULift.{u} (Fin n)) < Order.succ κ :=
     lt_of_lt_of_le hBlt (le_trans hκ0 (Order.le_succ _))
-  -- Lemma 3.13(1) at `λ = ℵ₁`, read as a braiding
+  -- Lemma 3.14(1) at `λ = ℵ₁`, read as a braiding
   have hcon : IsConical ↥(FreeL (Order.succ (ℵ₀ : Cardinal.{u})) (ULift.{u} (Fin n))) :=
     LMonoid.isConical (lam := Order.succ ℵ₀) (Order.lt_succ_iff.mpr le_rfl)
   have hbr := isBraidedOver_of_isUniversalKExtension (Cardinal.isRegular_succ le_rfl) hκ hcon
-    (lemma_3_13_free (lam := Order.succ ℵ₀) (κ := κ) (B := ULift.{u} (Fin n))
+    (lemma_3_14_free (lam := Order.succ ℵ₀) (κ := κ) (B := ULift.{u} (Fin n))
       (Cardinal.isRegular_succ le_rfl) hκ0 hκ)
   -- the extension side: `F_κ(ULift (Fin n)) ≅ F_κ^n`
   set e : ↥(FreeK κ (ULift.{u} (Fin n))) → (Fin n → Fcard κ) :=
@@ -486,14 +486,14 @@ theorem isBraidedOver_pi_fcard (hκ : Order.succ ℵ₀ ≤ κ) :
     (fun x => funext fun i => rfl) (fun s => Subtype.ext (funext fun b => rfl))
   exact hbr3
 
-/-- **Proposition 3.14(1)**: the universal `κ`-extension of the `ℵ₀`-monoid cut out of `F_{ℵ₀}^n`
+/-- **Proposition 3.15(1)**: the universal `κ`-extension of the `ℵ₀`-monoid cut out of `F_{ℵ₀}^n`
 by a system is the `κ`-submonoid of `F_κ^n` cut out by the *same* system.
 
 An `ℵ₀`-monoid is an `ℵ₁⁻`-monoid, which is why the extension is taken along `λ = ℵ₀⁺`.
 
 Paper proof: the solution set over `F_κ` is `ℵ₁⁻`-braided over the solution set over `F_{ℵ₀}`,
-so Theorem 3.11(2) identifies it as the universal `κ`-extension. -/
-theorem prop_3_14_one (hκ : Order.succ ℵ₀ ≤ κ) :
+so Theorem 3.12(2) identifies it as the universal `κ`-extension. -/
+theorem prop_3_15_one (hκ : Order.succ ℵ₀ ≤ κ) :
     letI hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
     letI := Fcard.instKMonoid (le_refl ℵ₀)
     letI := Fcard.instKMonoid hκ0
@@ -512,7 +512,7 @@ theorem prop_3_14_one (hκ : Order.succ ℵ₀ ≤ κ) :
   have hS : IsLSubmonoid (Order.succ ℵ₀) (sys.solutions (le_refl (ℵ₀ : Cardinal.{u}))) :=
     ⟨(sys.isKSubmonoid_solutions (le_refl ℵ₀)).zero_mem, fun {ι} h x hx =>
       (sys.isKSubmonoid_solutions (le_refl ℵ₀)).sumOf_mem (KMonoid.le_of_lt_succ h) x hx⟩
-  exact lemma_3_13_sub_of_subset hκ (isBraidedOver_pi_fcard hκ) _ hS
+  exact lemma_3_14_sub_of_subset hκ (isBraidedOver_pi_fcard hκ) _ hS
     (Or.inl (Order.lt_succ_iff.mpr le_rfl).ne') (sys.isKSubmonoid_solutions hκ0)
     (fun x hx => sys.mem_solutions_of_incl hκ0 hx) (sys.solutions_subset_kclosure hκ0)
 
@@ -523,11 +523,11 @@ noncomputable def alephPart {n : ℕ} (x : Fin n → Fcard ℵ₀) : Fin n → F
     else Fcard.mk ℵ₀ le_rfl
 
 /-- `H`, the solutions all of whose components are finite: the monoid `H ⊆ ℕ₀^n` of
-Proposition 3.14(2), viewed inside `F_{ℵ₀}^n`. -/
+Proposition 3.15(2), viewed inside `F_{ℵ₀}^n`. -/
 noncomputable def LinSystem.finSolutions : Set (Fin n → Fcard ℵ₀) :=
   {x ∈ sys.solutions (le_refl ℵ₀) | ∀ i, ((x i : Fcard ℵ₀) : Cardinal.{u}) < ℵ₀}
 
-/-- `H + ℵ₀H`, the candidate universal `ℵ₀`-extension of Proposition 3.14(2). -/
+/-- `H + ℵ₀H`, the candidate universal `ℵ₀`-extension of Proposition 3.15(2). -/
 noncomputable def LinSystem.alephExt : Set (Fin n → Fcard ℵ₀) :=
   letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
@@ -850,8 +850,8 @@ theorem LinSystem.alephExt_subset_solutions :
 
 /-! ### `F_{ℵ₀}^n` is `ℵ₀⁻`-braided over `ℕ₀^n`
 
-The ambient extension Proposition 3.14(2) is proved over: `ℕ₀^n = F_{ℵ₀⁻}^n` is the free
-`ℵ₀⁻`-monoid on `n` generators and `F_{ℵ₀}^n` the free `ℵ₀`-monoid, so this is Lemma 3.13(1) at
+The ambient extension Proposition 3.15(2) is proved over: `ℕ₀^n = F_{ℵ₀⁻}^n` is the free
+`ℵ₀⁻`-monoid on `n` generators and `F_{ℵ₀}^n` the free `ℵ₀`-monoid, so this is Lemma 3.14(1) at
 `λ = κ = ℵ₀` again — except that reducedness of the base now has to be checked by hand, `λ = ℵ₀`
 being the one case where it is not automatic. -/
 
@@ -956,11 +956,11 @@ theorem isBraidedOver_pi_lcard {n : ℕ} :
   have hBlt : #(ULift.{u} (Fin n)) < ℵ₀ := Cardinal.lt_aleph0_iff_finite.mpr inferInstance
   have hBk : #(ULift.{u} (Fin n)) < Order.succ (ℵ₀ : Cardinal.{u}) :=
     lt_of_lt_of_le hBlt (Order.le_succ _)
-  -- Lemma 3.13(1) at `λ = κ = ℵ₀`, read as a braiding
+  -- Lemma 3.14(1) at `λ = κ = ℵ₀`, read as a braiding
   have hcon : IsConical ↥(FreeL (ℵ₀ : Cardinal.{u}) (ULift.{u} (Fin n))) :=
     isLSubmonoid_FreeL.isConical (isConical_pi fun _ => isConical_lcard Cardinal.isRegular_aleph0)
   have hbr := isBraidedOver_of_isUniversalKExtension Cardinal.isRegular_aleph0 (le_refl ℵ₀) hcon
-    (lemma_3_13_free (lam := ℵ₀) (κ := ℵ₀) (B := ULift.{u} (Fin n))
+    (lemma_3_14_free (lam := ℵ₀) (κ := ℵ₀) (B := ULift.{u} (Fin n))
       Cardinal.isRegular_aleph0 le_rfl le_rfl)
   -- the extension side: `F_{ℵ₀}(ULift (Fin n)) ≅ F_{ℵ₀}^n`
   set e : ↥(FreeK (ℵ₀ : Cardinal.{u}) (ULift.{u} (Fin n))) → (Fin n → Fcard ℵ₀) :=
@@ -994,14 +994,14 @@ theorem alephPart_eq_ksum {n : ℕ} (x : Fin n → Fcard ℵ₀)
   · rw [if_pos h0, h0, mul_zero]
   · rw [if_neg h0, Cardinal.mul_eq_left le_rfl (hx i).le h0]
 
-/-- **`H` is saturated in `ℕ₀^n`**: the hypothesis Proposition 3.14(2) needs, spelled out for `H`
+/-- **`H` is saturated in `ℕ₀^n`**: the hypothesis Proposition 3.15(2) needs, spelled out for `H`
 sitting inside `F_{ℵ₀}^n` as `finSolutions` — a *finite* summand of an element of `H` lying in `H`
 has its complement in `H`.
 
 The paper asserts this for every `H` cut out by equations, inequalities and congruences, citing
-cancellativity of `ℕ₀^n` (the remark before Prop. 3.14).  For equations and congruences that is
+cancellativity of `ℕ₀^n` (the remark before Prop. 3.15).  For equations and congruences that is
 right — `isSaturatedFin_of_ineqs_empty` — but **it fails for inequalities**, and with it
-Proposition 3.14(2): see `not_isSaturatedFin_ineqSystem` below. -/
+Proposition 3.15(2): see `not_isSaturatedFin_ineqSystem` below. -/
 def LinSystem.IsSaturatedFin : Prop :=
   letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
@@ -1040,7 +1040,7 @@ theorem val_linEval_eq_linEvalNat (a : Fin n → ℕ) {x : Fin n → Fcard ℵ�
   rw [val_nsmul, Nat.cast_mul, Cardinal.cast_toNat_of_lt_aleph0 (hx i)]
 
 /-- **The paper's saturation remark, in the case where it is true**: a system of equations and
-congruences — no inequalities — cuts out a saturated submonoid of `ℕ₀^n`, so Proposition 3.14(2)
+congruences — no inequalities — cuts out a saturated submonoid of `ℕ₀^n`, so Proposition 3.15(2)
 applies to it with no hypothesis beyond the system.
 
 Paper proof: cancel the `t`-part.  For an equation, `A(s) = B(s)` and `A(t) = B(t)` together with
@@ -1120,16 +1120,16 @@ theorem LinSystem.isSaturatedFin_of_ineqs_empty (hineq : sys.ineqs = ∅) :
     refine ⟨Fcard.mk (k : Cardinal.{u}) Cardinal.natCast_lt_aleph0.le, Fcard.ext ?_⟩
     rw [val_linEval_eq_linEvalNat p.1 hz, val_nsmul, Fcard.val_mk, hk, Nat.cast_mul]
 
-/-- **Proposition 3.14(2)**: for a monoid `H ⊆ ℕ₀^n` cut out by a homogeneous system, the
+/-- **Proposition 3.15(2)**: for a monoid `H ⊆ ℕ₀^n` cut out by a homogeneous system, the
 universal `ℵ₀`-extension is `H + ℵ₀H ⊆ F_{ℵ₀}^n`.
 
 Both `λ` and `κ` are `ℵ₀` here: an `ℵ₀⁻`-monoid is an ordinary commutative monoid, which is what
 `H ⊆ ℕ₀^n` is.
 
-Paper proof: `H` is saturated in `ℕ₀^n`, so Lemma 3.13(2) applies with `λ = ℵ₀` and it is enough
+Paper proof: `H` is saturated in `ℕ₀^n`, so Lemma 3.14(2) applies with `λ = ℵ₀` and it is enough
 that `⟨H⟩_{ℵ₀} = H + ℵ₀H`, which is `isKSubmonoid_alephExt` in one direction and the finite-`J`
 argument inside `ksum_mem_alephExt` in the other.  Note this is genuinely *not* the solution set of
-the same system over `F_{ℵ₀}`, which is what distinguishes (2) from (1); Example 3.15 is the
+the same system over `F_{ℵ₀}`, which is what distinguishes (2) from (1); Example 3.16 is the
 witness.
 
 **Deviation from the paper.** The saturation of `H` is added as a hypothesis, because the paper's
@@ -1137,8 +1137,8 @@ remark that it is automatic is false for systems involving inequalities — see
 `LinSystem.IsSaturatedFin` and `not_isSaturatedFin_ineqSystem`.  It *is* automatic for systems of
 equations and congruences, the case the paper's applications use:
 `isSaturatedFin_of_ineqs_empty` supplies the hypothesis there, and
-`prop_3_14_two_of_ineqs_empty` is the resulting hypothesis-free statement. -/
-theorem prop_3_14_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
+`prop_3_15_two_of_ineqs_empty` is the resulting hypothesis-free statement. -/
+theorem prop_3_15_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     letI : AddCommMonoid ↥sys.finSolutions :=
@@ -1193,7 +1193,7 @@ theorem prop_3_14_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     refine hclos.add_mem (KMonoid.subset_kclosure (himg h hh)) ?_
     rw [alephPart_eq_ksum h' hh'.2]
     exact hclos.ksum_mem _ fun _ => KMonoid.subset_kclosure (himg h' hh')
-  -- Lemma 3.13(2) over `ℕ₀^n`, then transport the base from `S` to `H`
+  -- Lemma 3.14(2) over `ℕ₀^n`, then transport the base from `S` to `H`
   let := hS.lmonoid
   have hbrS := isBraidedOver_of_isLSubmonoid (le_refl (ℵ₀ : Cardinal.{u})) isBraidedOver_pi_lcard
     S hS (Or.inr hsatS) sys.isKSubmonoid_alephExt hfS hTgen
@@ -1229,10 +1229,10 @@ theorem prop_3_14_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     (fun s => Subtype.ext (funext fun i => LCard.ext rfl))
   exact hbr.isUniversalKExtension (le_refl ℵ₀)
 
-/-- **Proposition 3.14(2) for a system of equations and congruences**, with no hypothesis beyond
+/-- **Proposition 3.15(2) for a system of equations and congruences**, with no hypothesis beyond
 the system: such an `H` is saturated in `ℕ₀^n` by `isSaturatedFin_of_ineqs_empty`.  This is the
 form in which the paper's applications use it. -/
-theorem prop_3_14_two_of_ineqs_empty (hineq : sys.ineqs = ∅) :
+theorem prop_3_15_two_of_ineqs_empty (hineq : sys.ineqs = ∅) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     letI : AddCommMonoid ↥sys.finSolutions :=
@@ -1243,11 +1243,11 @@ theorem prop_3_14_two_of_ineqs_empty (hineq : sys.ineqs = ∅) :
     IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (le_refl ℵ₀)
       (fun h => ⟨(h : Fin n → Fcard ℵ₀), ⟨(h : Fin n → Fcard ℵ₀), h.2, 0,
         sys.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) :=
-  prop_3_14_two sys (sys.isSaturatedFin_of_ineqs_empty hineq)
+  prop_3_15_two sys (sys.isSaturatedFin_of_ineqs_empty hineq)
 
-/-! ### The saturation hypothesis in Proposition 3.14(2) cannot be dropped
+/-! ### The saturation hypothesis in Proposition 3.15(2) cannot be dropped
 
-The paper's remark before Proposition 3.14 asserts that a submonoid of `ℕ₀^n` defined by
+The paper's remark before Proposition 3.15 asserts that a submonoid of `ℕ₀^n` defined by
 homogeneous equations, inequalities and congruences is saturated, by cancellativity of `ℕ₀^n`.
 For equations `A(s) = B(s)` and congruences `A(s) ∈ dℕ₀` that argument is correct — cancel the
 `t`-part — but for an inequality it breaks down, and the conclusion is false. -/
@@ -1288,8 +1288,8 @@ theorem mem_finSolutions_ineqSystem (x : Fin 2 → Fcard (ℵ₀ : Cardinal.{u})
 `x₁ ≤ 2x₂` the monoid `H = {(a, b) ∈ ℕ₀² : a ≤ 2b}` is *not* saturated in `ℕ₀²`:
 `(2,1) = (0,1) + (2,0)` with `(2,1)`, `(0,1) ∈ H`, but `(2,0) ∉ H`.
 
-This also refutes Proposition 3.14(2) as printed, whose proof begins by asserting the saturation:
-`not_isBraidedOver_ineqSystem` and `not_prop_3_14_two_ineqSystem` below show that for this `H` the
+This also refutes Proposition 3.15(2) as printed, whose proof begins by asserting the saturation:
+`not_isBraidedOver_ineqSystem` and `not_prop_3_15_two_ineqSystem` below show that for this `H` the
 candidate extension `H + ℵ₀H` is not braided over `H`, hence not its universal `ℵ₀`-extension. -/
 theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSystem := by
   intro hsat
@@ -1324,7 +1324,7 @@ theorem not_isSaturatedFin_ineqSystem : ¬ LinSystem.IsSaturatedFin.{u} ineqSyst
 
 For the same `H` the candidate extension `H + ℵ₀H` is not even *braided* over `H`, so by
 `isBraidedOver_of_isUniversalKExtension` it is not the universal `ℵ₀`-extension either:
-Proposition 3.14(2) is false as printed, not merely unproved.
+Proposition 3.15(2) is false as printed, not merely unproved.
 
 The paper's argument telescopes the braiding equations along an `ω`-block.  The proof below is
 shorter.  The slack `δ(a,b) = 2b - a` is a monoid homomorphism `H → ℕ₀` — the subtraction is exact
@@ -1498,9 +1498,9 @@ theorem not_isBraidedOver_ineqSystem :
   have : δ (y j₀) = 2 := by rw [hδ]; exact ineqSlack_ptTwoTwo
   omega
 
-/-- **Proposition 3.14(2) is false without the saturation hypothesis**: for
+/-- **Proposition 3.15(2) is false without the saturation hypothesis**: for
 `H = {(a,b) ∈ ℕ₀² : a ≤ 2b}` the monoid `H + ℵ₀H` is not the universal `ℵ₀`-extension of `H`. -/
-theorem not_prop_3_14_two_ineqSystem :
+theorem not_prop_3_15_two_ineqSystem :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin 2 => Fcard ℵ₀) (le_refl ℵ₀)
     letI : AddCommMonoid ↥ineqSystem.finSolutions :=
@@ -1526,12 +1526,12 @@ theorem not_prop_3_14_two_ineqSystem :
   exact not_isBraidedOver_ineqSystem
     (isBraidedOver_of_isUniversalKExtension Cardinal.isRegular_aleph0 (le_refl ℵ₀) hcon huniv)
 
-/-! ### Example 3.15: at `κ = ℵ₀` the extension is not cut out by the same system
+/-! ### Example 3.16: at `κ = ℵ₀` the extension is not cut out by the same system
 
 `H = {(n,n)} ⊆ ℕ₀²` is the solution set of `x₁ = x₂` and also of `2x₁ = x₁ + x₂`.  Over `F_{ℵ₀}`
 the two systems part company: the first still cuts out the diagonal — which *is* the universal
 `ℵ₀`-extension `Ĥ = H ∪ {(ℵ₀,ℵ₀)} ≅ F_{ℵ₀}` — while the second also admits every `(ℵ₀, n)`.  So
-the conclusion of Proposition 3.14(1) genuinely fails at `κ = ℵ₀`, which is what (2) replaces it
+the conclusion of Proposition 3.15(1) genuinely fails at `κ = ℵ₀`, which is what (2) replaces it
 with (Herbera–Příhoda, Example 2.8). -/
 
 /-- The system `x₁ = x₂` in two unknowns. -/
@@ -1607,11 +1607,11 @@ theorem alephExt_congr {sys₁ sys₂ : LinSystem n}
   · exact ⟨a, (Set.ext_iff.mp h a).mp ha, b, (Set.ext_iff.mp h b).mp hb, rfl⟩
   · exact ⟨a, (Set.ext_iff.mp h a).mpr ha, b, (Set.ext_iff.mp h b).mpr hb, rfl⟩
 
-/-- **Example 3.15**: the systems `x₁ = x₂` and `2x₁ = x₁ + x₂` cut out the same `H ⊆ ℕ₀²`, hence
+/-- **Example 3.16**: the systems `x₁ = x₂` and `2x₁ = x₁ + x₂` cut out the same `H ⊆ ℕ₀²`, hence
 have the same universal `ℵ₀`-extension `H + ℵ₀H`; that extension is the solution set of the first
-system over `F_{ℵ₀}`, but *not* of the second.  So the conclusion of Proposition 3.14(1) — the
+system over `F_{ℵ₀}`, but *not* of the second.  So the conclusion of Proposition 3.15(1) — the
 extension is cut out by the same system — fails for `κ = ℵ₀`. -/
-theorem example_3_15 :
+theorem example_3_16 :
     (diagSystem.finSolutions : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u})))
         = doubleSystem.finSolutions ∧
       (diagSystem.alephExt : Set (Fin 2 → Fcard (ℵ₀ : Cardinal.{u}))) = doubleSystem.alephExt ∧

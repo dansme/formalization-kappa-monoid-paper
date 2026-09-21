@@ -1,5 +1,5 @@
 /-
-**Lemma 3.13**: the universal `κ`-extension of a free `λ⁻`-monoid (1), and of a saturated
+**Lemma 3.14**: the universal `κ`-extension of a free `λ⁻`-monoid (1), and of a saturated
 `λ⁻`-submonoid of one (2).  General theory, not an example: §4's Examples 4.8(1) uses (1).
 -/
 import KappaMonoid.Braiding.UnivExt
@@ -11,7 +11,7 @@ open Cardinal Function Set
 
 namespace KappaMonoid
 
-/-! ## Lemma 3.13(1): free objects
+/-! ## Lemma 3.14(1): free objects
 
 `F_{λ⁻}(B)` sits inside `F_κ(B)` — a family of cardinals `< λ` with support of size `< λ` is in
 particular a family of cardinals `≤ κ` with support of size `≤ κ` — and the universal property of
@@ -62,13 +62,13 @@ theorem isLHom_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
     rw [LCard.val_zero hlam, LCard.val_zero (Cardinal.isRegular_succ hκ)]
   · exact Subtype.ext (funext fun b => Subtype.ext rfl)
 
-/-- **Lemma 3.13(1)**: the free `κ`-monoid on `B` is the universal `κ`-extension of the free
+/-- **Lemma 3.14(1)**: the free `κ`-monoid on `B` is the universal `κ`-extension of the free
 `λ⁻`-monoid on `B`.
 
 Both universal properties are Proposition 2.9, at `λ` and at `κ⁺` respectively; the extension of
 `φ : F_{λ⁻}(B) → K` is `lift (φ ∘ ι)`, and both halves of the universal property are `hom_ext` —
 at level `λ` for the extension identity, at level `κ⁺` for uniqueness. -/
-theorem lemma_3_13_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) :
+theorem lemma_3_14_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) :
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     letI := instKMonoidFreeK κ hκ B
@@ -105,7 +105,7 @@ theorem lemma_3_13_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
 
 end Free
 
-/-! ## Saturated submonoids and Lemma 3.13(2) -/
+/-! ## Saturated submonoids and Lemma 3.14(2) -/
 
 /-- A submonoid `S ⊆ X` is *saturated* if a summand in `X` of an element of `S` that itself lies
 in `S` has its complement in `S`: from `s = t + h` with `s`, `t ∈ S` follows `h ∈ S`. -/
@@ -116,7 +116,7 @@ section Sub
 
 variable {lam κ : Cardinal.{u}} {X : Type v} {Hh : Type w}
 
-/-- **Lemma 3.13(2)**, in the form actually used: if `Ĥ` is `λ⁻`-braided over `X` and `S ⊆ X` is a
+/-- **Lemma 3.14(2)**, in the form actually used: if `Ĥ` is `λ⁻`-braided over `X` and `S ⊆ X` is a
 `λ⁻`-submonoid which is either saturated or sits over an uncountable `λ`, then *any* `κ`-submonoid
 `T` of `Ĥ` with `f(S) ⊆ T ⊆ ⟨f(S)⟩_κ` — that is, `T = ⟨S⟩_κ` described extensionally — is the
 universal `κ`-extension of `S`.  Stating the conclusion for such a `T` rather than for
@@ -190,9 +190,9 @@ theorem isBraidedOver_of_isLSubmonoid [LMonoid lam X] [KMonoid κ Hh] (hlk : lam
                hI := fun p => Subtype.ext (d.hI p)
                hJ := fun p => Subtype.ext (d.hJ p) }⟩
 
-/-- **Lemma 3.13(2)**, in the form used: any `κ`-submonoid `T` with `f(S) ⊆ T ⊆ ⟨f(S)⟩_κ` is the
+/-- **Lemma 3.14(2)**, in the form used: any `κ`-submonoid `T` with `f(S) ⊆ T ⊆ ⟨f(S)⟩_κ` is the
 universal `κ`-extension of `S`. -/
-theorem lemma_3_13_sub_of_subset [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
+theorem lemma_3_14_sub_of_subset [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
     (hbr : IsBraidedOver lam κ X Hh hlk f) (S : Set X) (hS : IsLSubmonoid lam S)
     (hsat : lam ≠ ℵ₀ ∨ IsSaturated S) {T : Set Hh} (hT : KMonoid.IsKSubmonoid κ T)
     (hfT : ∀ s ∈ S, f s ∈ T) (hTgen : T ⊆ KMonoid.kclosure κ (f '' S)) :
@@ -203,15 +203,15 @@ theorem lemma_3_13_sub_of_subset [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ 
   let := hT.kmonoid
   exact (isBraidedOver_of_isLSubmonoid hlk hbr S hS hsat hT hfT hTgen).isUniversalKExtension hlk
 
-/-- **Lemma 3.13(2)** as printed: `⟨S⟩_κ ⊆ Ĥ` is the universal `κ`-extension of `S`. -/
-theorem lemma_3_13_sub [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
+/-- **Lemma 3.14(2)** as printed: `⟨S⟩_κ ⊆ Ĥ` is the universal `κ`-extension of `S`. -/
+theorem lemma_3_14_sub [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
     (hbr : IsBraidedOver lam κ X Hh hlk f) (S : Set X) (hS : IsLSubmonoid lam S)
     (hsat : lam ≠ ℵ₀ ∨ IsSaturated S) :
     letI := hS.lmonoid
     letI := (KMonoid.isKSubmonoid_kclosure κ (f '' S)).kmonoid
     IsUniversalKExtension.{u, v, w, t} lam κ ↥S ↥(KMonoid.kclosure κ (f '' S)) hlk
       (fun s => ⟨f (s : X), KMonoid.subset_kclosure ⟨(s : X), s.2, rfl⟩⟩) :=
-  lemma_3_13_sub_of_subset hlk hbr S hS hsat (KMonoid.isKSubmonoid_kclosure κ (f '' S))
+  lemma_3_14_sub_of_subset hlk hbr S hS hsat (KMonoid.isKSubmonoid_kclosure κ (f '' S))
     (fun s hs => KMonoid.subset_kclosure ⟨s, hs, rfl⟩) subset_rfl
 
 end Sub

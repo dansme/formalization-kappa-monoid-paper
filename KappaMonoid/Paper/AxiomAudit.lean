@@ -35,18 +35,18 @@ namespace KappaMonoid
 
 /-! ## §3 — no axiom at all -/
 
-#assert_axioms theorem_3_11 []
-#assert_axioms theorem_3_11_of_aleph0_lt []
+#assert_axioms theorem_3_12 []
+#assert_axioms theorem_3_12_of_aleph0_lt []
 #assert_axioms isBraidedOver_of_isUniversalKExtension []
 #assert_axioms sumOf_eq_of_isBraided []
-#assert_axioms lemma_3_13_free []
-#assert_axioms lemma_3_13_sub []
-#assert_axioms prop_3_14_one []
-#assert_axioms prop_3_14_two []
-#assert_axioms prop_3_14_two_of_ineqs_empty []
+#assert_axioms lemma_3_14_free []
+#assert_axioms lemma_3_14_sub []
+#assert_axioms prop_3_15_one []
+#assert_axioms prop_3_15_two []
+#assert_axioms prop_3_15_two_of_ineqs_empty []
 #assert_axioms not_isBraidedOver_ineqSystem []
-#assert_axioms not_prop_3_14_two_ineqSystem []
-#assert_axioms example_3_15 []
+#assert_axioms not_prop_3_15_two_ineqSystem []
+#assert_axioms example_3_16 []
 
 /-! ## §4 — Bergman–Dicks in one direction of Corollary 4.7(1), nothing else -/
 

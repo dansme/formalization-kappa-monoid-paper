@@ -91,56 +91,56 @@ alias lemma_3_8_transitivity_trans := KappaMonoid.IsBraided.trans
 /-- **Lemma 3.8** — `KappaMonoid.braidingSetoid`, in `Braiding/TransUncountable.lean`. -/
 alias lemma_3_8_braidingSetoid := KappaMonoid.braidingSetoid
 
-/-- **Proposition 3.9** — `KappaMonoid.extend_lhom`, in `Braiding/Prop39.lean`. -/
-alias proposition_3_9_extend_lhom := KappaMonoid.extend_lhom
+/-- **Proposition 3.10** — `KappaMonoid.extend_lhom`, in `Braiding/Prop310.lean`. -/
+alias proposition_3_10_extend_lhom := KappaMonoid.extend_lhom
 
-/-- **Definition 3.10** — `KappaMonoid.IsUniversalKExtension`, in `Braiding/Prop39.lean`. -/
-alias definition_3_10_IsUniversalKExtension := KappaMonoid.IsUniversalKExtension
+/-- **Definition 3.11** — `KappaMonoid.IsUniversalKExtension`, in `Braiding/Prop310.lean`. -/
+alias definition_3_11_IsUniversalKExtension := KappaMonoid.IsUniversalKExtension
 
-/-- **Theorem 3.11 as an equivalence** — `KappaMonoid.isBraidedOver_of_isUniversalKExtension`, in `Braiding/UnivExt.lean`. -/
-alias theorem_3_11_as_an_equivalence_isBraidedOver_of_isUniversalKExtension := KappaMonoid.isBraidedOver_of_isUniversalKExtension
+/-- **Theorem 3.12 as an equivalence** — `KappaMonoid.isBraidedOver_of_isUniversalKExtension`, in `Braiding/UnivExt.lean`. -/
+alias theorem_3_12_as_an_equivalence_isBraidedOver_of_isUniversalKExtension := KappaMonoid.isBraidedOver_of_isUniversalKExtension
 
-/-- **Theorem 3.11** — `KappaMonoid.theorem_3_11`, in `Braiding/UnivExt.lean`. -/
-alias theorem_3_11_theorem_3_11 := KappaMonoid.theorem_3_11
+/-- **Theorem 3.12** — `KappaMonoid.theorem_3_12`, in `Braiding/UnivExt.lean`. -/
+alias theorem_3_12_theorem_3_12 := KappaMonoid.theorem_3_12
 
-/-- **Theorem 3.11** — `KappaMonoid.theorem_3_11_of_aleph0_lt`, in `Braiding/UnivExt.lean`. -/
-alias theorem_3_11_theorem_3_11_of_aleph0_lt := KappaMonoid.theorem_3_11_of_aleph0_lt
+/-- **Theorem 3.12** — `KappaMonoid.theorem_3_12_of_aleph0_lt`, in `Braiding/UnivExt.lean`. -/
+alias theorem_3_12_theorem_3_12_of_aleph0_lt := KappaMonoid.theorem_3_12_of_aleph0_lt
 
-/-- **Examples 3.12** — `KappaMonoid.RTilde.isUniversalKExtension_rtilde`, in `Examples/Reals.lean`. -/
-alias examples_3_12_isUniversalKExtension_rtilde := KappaMonoid.RTilde.isUniversalKExtension_rtilde
+/-- **Examples 3.13** — `KappaMonoid.RTilde.isUniversalKExtension_rtilde`, in `Examples/Reals.lean`. -/
+alias examples_3_13_isUniversalKExtension_rtilde := KappaMonoid.RTilde.isUniversalKExtension_rtilde
 
-/-- **Examples 3.12** — `KappaMonoid.isUniversalKExtension_withTop_nat`, in `Examples/NatBraiding.lean`. -/
-alias examples_3_12_isUniversalKExtension_withTop_nat := KappaMonoid.isUniversalKExtension_withTop_nat
+/-- **Examples 3.13** — `KappaMonoid.isUniversalKExtension_withTop_nat`, in `Examples/NatBraiding.lean`. -/
+alias examples_3_13_isUniversalKExtension_withTop_nat := KappaMonoid.isUniversalKExtension_withTop_nat
 
-/-- **Lemma 3.13(2)** — `KappaMonoid.isBraidedOver_of_isLSubmonoid`, in `Braiding/Saturated.lean`. -/
-alias lemma_3_13_2_isBraidedOver_of_isLSubmonoid := KappaMonoid.isBraidedOver_of_isLSubmonoid
+/-- **Lemma 3.14(2)** — `KappaMonoid.isBraidedOver_of_isLSubmonoid`, in `Braiding/Saturated.lean`. -/
+alias lemma_3_14_2_isBraidedOver_of_isLSubmonoid := KappaMonoid.isBraidedOver_of_isLSubmonoid
 
-/-- **Lemma 3.13(1)** — `KappaMonoid.lemma_3_13_free`, in `Braiding/Saturated.lean`. -/
-alias lemma_3_13_1_lemma_3_13_free := KappaMonoid.lemma_3_13_free
+/-- **Lemma 3.14(1)** — `KappaMonoid.lemma_3_14_free`, in `Braiding/Saturated.lean`. -/
+alias lemma_3_14_1_lemma_3_14_free := KappaMonoid.lemma_3_14_free
 
-/-- **Lemma 3.13(2)** — `KappaMonoid.lemma_3_13_sub`, in `Braiding/Saturated.lean`. -/
-alias lemma_3_13_2_lemma_3_13_sub := KappaMonoid.lemma_3_13_sub
+/-- **Lemma 3.14(2)** — `KappaMonoid.lemma_3_14_sub`, in `Braiding/Saturated.lean`. -/
+alias lemma_3_14_2_lemma_3_14_sub := KappaMonoid.lemma_3_14_sub
 
-/-- **Lemma 3.13(2)** — `KappaMonoid.lemma_3_13_sub_of_subset`, in `Braiding/Saturated.lean`. -/
-alias lemma_3_13_2_lemma_3_13_sub_of_subset := KappaMonoid.lemma_3_13_sub_of_subset
+/-- **Lemma 3.14(2)** — `KappaMonoid.lemma_3_14_sub_of_subset`, in `Braiding/Saturated.lean`. -/
+alias lemma_3_14_2_lemma_3_14_sub_of_subset := KappaMonoid.lemma_3_14_sub_of_subset
 
-/-- **Proposition 3.14(1)** — `KappaMonoid.prop_3_14_one`, in `Examples/Diophantine.lean`. -/
-alias proposition_3_14_1_prop_3_14_one := KappaMonoid.prop_3_14_one
+/-- **Proposition 3.15(1)** — `KappaMonoid.prop_3_15_one`, in `Examples/Diophantine.lean`. -/
+alias proposition_3_15_1_prop_3_15_one := KappaMonoid.prop_3_15_one
 
-/-- **Proposition 3.14(2)** — `KappaMonoid.prop_3_14_two`, in `Examples/Diophantine.lean`. -/
-alias proposition_3_14_2_prop_3_14_two := KappaMonoid.prop_3_14_two
+/-- **Proposition 3.15(2)** — `KappaMonoid.prop_3_15_two`, in `Examples/Diophantine.lean`. -/
+alias proposition_3_15_2_prop_3_15_two := KappaMonoid.prop_3_15_two
 
-/-- **Proposition 3.14(2) for a system of equations and congruences** — `KappaMonoid.prop_3_14_two_of_ineqs_empty`, in `Examples/Diophantine.lean`. -/
-alias proposition_3_14_2_for_a_system_of_equations_and_congruences_prop_3_14_two_of_ineqs_empty := KappaMonoid.prop_3_14_two_of_ineqs_empty
+/-- **Proposition 3.15(2) for a system of equations and congruences** — `KappaMonoid.prop_3_15_two_of_ineqs_empty`, in `Examples/Diophantine.lean`. -/
+alias proposition_3_15_2_for_a_system_of_equations_and_congruences_prop_3_15_two_of_ineqs_empty := KappaMonoid.prop_3_15_two_of_ineqs_empty
 
-/-- **Proposition 3.14(2) is false without the saturation hypothesis** —
-`KappaMonoid.not_prop_3_14_two_ineqSystem`, in `Examples/Diophantine.lean`: for
+/-- **Proposition 3.15(2) is false without the saturation hypothesis** —
+`KappaMonoid.not_prop_3_15_two_ineqSystem`, in `Examples/Diophantine.lean`: for
 `H = {(a,b) ∈ ℕ₀² : a ≤ 2b}` the monoid `H + ℵ₀H` is not the universal `ℵ₀`-extension of `H`,
 because it is not braided over it (`not_isBraidedOver_ineqSystem`). -/
-alias proposition_3_14_2_counterexample := KappaMonoid.not_prop_3_14_two_ineqSystem
+alias proposition_3_15_2_counterexample := KappaMonoid.not_prop_3_15_two_ineqSystem
 
-/-- **Example 3.15** — `KappaMonoid.example_3_15`, in `Examples/Diophantine.lean`. -/
-alias example_3_15_example_3_15 := KappaMonoid.example_3_15
+/-- **Example 3.16** — `KappaMonoid.example_3_16`, in `Examples/Diophantine.lean`. -/
+alias example_3_16_example_3_16 := KappaMonoid.example_3_16
 
 
 /-! ## Not formalised, deliberately
@@ -149,7 +149,7 @@ alias example_3_15_example_3_15 := KappaMonoid.example_3_15
   conversely, and the relation does not depend on the chosen limit well-order.  The `ι × ℕ` normal
   form of `BraidingData` *is* their content: restating them would mean reintroducing abstract
   limit well-orders purely to prove they do not matter.  See `README.md`, "The limit well-order".
-* **Remark 3.16**.  Saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids —
+* **Remark 3.18**.  Saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids —
   a pointer to the literature, not a theorem of the paper. -/
 
 end Paper

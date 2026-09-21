@@ -25,5 +25,5 @@ import KappaMonoid.Braiding.Sums
 import KappaMonoid.Braiding.TransUncountable
 import KappaMonoid.Braiding.Over
 import KappaMonoid.Braiding.UnivAux
-import KappaMonoid.Braiding.Prop39
+import KappaMonoid.Braiding.Prop310
 import KappaMonoid.Braiding.UnivExt

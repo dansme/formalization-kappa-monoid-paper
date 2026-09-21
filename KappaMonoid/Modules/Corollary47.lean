@@ -318,7 +318,7 @@ section Cor47
 variable {κ : Cardinal.{u}}
 
 /-- **The engine of Corollary 4.7(2)**: two `κ`-monoids braided over the same `λ⁻`-monoid are
-isomorphic.  Both are universal `κ`-extensions of it (Theorem 3.11(2)), and a universal
+isomorphic.  Both are universal `κ`-extensions of it (Theorem 3.12(2)), and a universal
 `κ`-extension is unique up to a unique isomorphism.
 
 This needs no external input, which is what keeps Corollary 4.7(2) axiom-free. -/
@@ -513,12 +513,12 @@ end Cor47
 
 If every module in `C` is a direct sum of `λ⁻`-small ones and `V^{λ⁻}(C_{λ⁻})` is a *free*
 `λ⁻`-monoid on `B`, then `V^κ(C)` is the free `κ`-monoid on `B`.  Theorem 4.3 makes `V^κ(C)`
-`λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`, hence its universal `κ`-extension (Theorem 3.11(2)), and
+`λ⁻`-braided over `V^{λ⁻}(C_{λ⁻})`, hence its universal `κ`-extension (Theorem 3.12(2)), and
 transporting that along the isomorphism of bases says exactly that `V^κ(C)` is the universal
 `κ`-extension of `F_{λ⁻}(B)`.
 
 **A universe remark on the statement.**  One would like to conclude `V^κ(C) ≅ F_κ(B)` by combining
-this with Lemma 3.13(1) and uniqueness.  That comparison is not available: `F_κ(B)` is cut out of
+this with Lemma 3.14(1) and uniqueness.  That comparison is not available: `F_κ(B)` is cut out of
 `B → F_κ` and so lives in `Type (u+1)`, while `V^κ(C)` lives in `Type u`, and
 `isUniversalKExtension_unique` — like the universal property itself, which quantifies over test
 objects in the *same* universe as the extension — compares two extensions in one universe only.
@@ -627,6 +627,6 @@ theorem krsa_ascent_iso {R : Type u} [Ring R] {κ : Cardinal.{u}}
   let := instKMonoidFreeK κ hκ B
   exact isUniversalKExtension_unique'.{u, u + 1, u, u + 1} hlk
     (hbrF.isUniversalKExtension hlk) (hbrF.isUniversalKExtension hlk)
-    (lemma_3_13_free hlam hκ hlk) (lemma_3_13_free hlam hκ hlk)
+    (lemma_3_14_free hlam hκ hlk) (lemma_3_14_free hlam hκ hlk)
 
 end KappaMonoid

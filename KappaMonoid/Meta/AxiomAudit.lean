@@ -5,7 +5,7 @@ CI already refuses a change to the *set* of `axiom` declarations under `KappaMon
 nothing about who depends on them, so a proof that quietly starts using Bergman–Dicks passes.
 `README.md` carries that information as prose, which is exactly the kind of claim that goes stale.
 
-    #assert_axioms KappaMonoid.theorem_3_11 []
+    #assert_axioms KappaMonoid.theorem_3_12 []
     #assert_axioms KappaMonoid.prop_2_16 [bergmanDicksData]
 
 `propext`, `Classical.choice` and `Quot.sound` are always permitted and never listed; everything

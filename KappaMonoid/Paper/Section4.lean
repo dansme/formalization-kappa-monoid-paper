@@ -98,7 +98,7 @@ alias example_4_8_1_free := KappaMonoid.krsa_ascent_free
   only the transport back to `V^{ℵ₀}(R)` is missing.  Items (4)–(7) are a survey, each resting on a
   classical description of `V(R)` quoted from the literature and not in Mathlib — Steinitz, Bass,
   Herbera–Příhoda, Levy–Robson — with the `κ`-monoid step on top being Theorem 4.3 or
-  Proposition 3.14.  See `README.md` for the itemised account. -/
+  Proposition 3.15.  See `README.md` for the itemised account. -/
 
 end Paper
 

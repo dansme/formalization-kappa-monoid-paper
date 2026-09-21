@@ -83,7 +83,7 @@ questions a build would answer, without a build. Prefer it throughout.
   are scoped `notation` in namespace `KappaMonoid`, not definitions: they expand to exactly the term
   that used to be written, so `rw` and every existing lemma still apply. State finite multiples as
   `n • x` (`KMonoid.cmul_natCast`) rather than `cmul (n : Cardinal) _ x`.
-- **Docstrings** open with the bold paper reference — `**Lemma 3.13(2)**`, `**Examples 3.3(2)**` —
+- **Docstrings** open with the bold paper reference — `**Lemma 3.14(2)**`, `**Examples 3.3(2)**` —
   and, when the argument is not obvious, carry a `Paper proof:` paragraph paraphrasing the source.
   This is the main navigation aid in the repo; keep it up.
 - **Instances**: defs producing them carry `@[instance_reducible]`. Instances that depend on
@@ -102,7 +102,7 @@ questions a build would answer, without a build. Prefer it throughout.
 - **Deviations from the paper are documented twice**: in the docstring of the affected result and
   in the "Deviations from the paper" section of `README.md`, which is the authoritative list — the
   `m ≥ 1` hypothesis added to Leavitt's theorem, without which it is *false*; the `IsConical`
-  hypothesis in Theorem 3.11; the `IsSaturatedFin` hypothesis in Proposition 3.14(2), with a
+  hypothesis in Theorem 3.12; the `IsSaturatedFin` hypothesis in Proposition 3.15(2), with a
   formalised counterexample showing the paper's claim is false; and three statements of §5.  Not
   every extra hypothesis is a deviation: `EveryProjectiveIsSumOfFG` in Corollary 5.5(1) and (3) is
   the paper's own condition, spelled out.  When the paper is wrong, formalise the repaired
@@ -199,9 +199,9 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 |---|---|
 | `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, `Hereditary.lean` (`IsLeftHereditary`/`IsRightHereditary`/`IsHereditary`), `FreeRank.lean` (invariance of infinite rank), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (multiplicities of simple modules), `CyclicMonoid.lean` (the classification, and `C_{m,n}` as a monoid), `Kaplansky.lean`, `Albrecht.lean`, `ProjectiveSplit.lean` (a surjection onto a projective splits; a one-sided inverse gives an idempotent).  Mathlib has none of them |
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
-| `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop39`, `UnivExt` (Thm 3.11), `Saturated` (Lemma 3.13) |
+| `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop310`, `UnivExt` (Thm 3.12), `Saturated` (Lemma 3.14) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
-| `Examples/` | `TrivExt`, `ENNReal`, `NatBraiding` (Examples 3.3(1), `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2 and the 3.14(2) counterexample), `NNReal` (braiding in `ℝ≥0`), `Reals` (`ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, and `ℚ≥0`) |
+| `Examples/` | `TrivExt`, `ENNReal`, `NatBraiding` (Examples 3.3(1), `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2 and the 3.15(2) counterexample), `NNReal` (braiding in `ℝ≥0`), `Reals` (`ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, and `ℚ≥0`) |
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`.  Everything but `Lemma51` and after is monoid theory |
 | `Axioms/` | `Modules`: Bergman–Dicks realisation, the one assumed result, and nothing else |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it |
@@ -218,7 +218,7 @@ move to that file's "not formalised" section with a reason.
 Before writing a new construction, check whether the analogous one exists, and prefer the builder
 to a hand-rolled `BraidingData`: `IsBraided.of_partition`, `of_levels`, `of_nat_blocks` (a bijection
 `ℕ ≃ ι` plus two block-boundary sequences — this is Examples 3.3(1) and (2)) and `of_aggregation`
-(pairwise disjoint small sets over which one family sums to the other — this is Proposition 3.9's
+(pairwise disjoint small sets over which one family sums to the other — this is Proposition 3.10's
 two braidings). The `Fcard`/`RTilde` `SumData`s and the `TrivExt` extension are the other
 templates.
 

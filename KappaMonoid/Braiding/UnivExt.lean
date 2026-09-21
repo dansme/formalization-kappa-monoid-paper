@@ -1,8 +1,8 @@
 /-
-The construction `Ĥ = X^κ / (λ⁻-braiding)` and **Theorem 3.11**, with the `IsConical`
+The construction `Ĥ = X^κ / (λ⁻-braiding)` and **Theorem 3.12**, with the `IsConical`
 hypothesis the paper omits, and its converse.
 -/
-import KappaMonoid.Braiding.Prop39
+import KappaMonoid.Braiding.Prop310
 import Mathlib.Algebra.Group.ULift
 import Mathlib.Algebra.Group.Int.Defs
 
@@ -23,7 +23,7 @@ section Construction
 variable (lam κ) (X : Type v) [LMonoid lam X]
 
 /-- The underlying type of the universal `κ`-extension: `κ`-indexed families over `X`
-modulo `λ⁻`-braiding (Theorem 3.11(1)). -/
+modulo `λ⁻`-braiding (Theorem 3.12(1)). -/
 def UnivExt : Type (max u v) := Quotient (braidingSetoid lam κ X)
 
 namespace UnivExt
@@ -256,7 +256,7 @@ theorem ksumQ_two (hκ : ℵ₀ ≤ κ) (a b : UnivExt lam κ X) (i₀ i₁ : Id
   exact (mk_eq_mk.mpr (isBraided_merge (slot hκ i₀) (slot hκ i₁) (slot_ne_slot hκ hne)
     (rep a) (rep b))).symm
 
-/-- The `κ`-monoid structure on `Ĥ` (Theorem 3.11(1)). -/
+/-- The `κ`-monoid structure on `Ĥ` (Theorem 3.12(1)). -/
 @[instance_reducible]
 noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ κ) :
     KMonoid κ (UnivExt lam κ X) :=
@@ -302,7 +302,7 @@ end UnivExt
 
 end Construction
 
-/-! ## Theorem 3.11 -/
+/-! ## Theorem 3.12 -/
 
 /-- **Injectivity of the canonical map**, and the reason reducedness is the right
 hypothesis: over a reduced `λ⁻`-monoid `X`, two families concentrated at a single index are
@@ -405,14 +405,14 @@ theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ κ) {X : Ty
         _ = d.v (bsucc q₀) + d.u q₀ := by rw [hu2, add_zero]
         _ = b := hb
 
-/-- **Theorem 3.11** (with the hypothesis `IsConical X` added, cf. the module docstring).
+/-- **Theorem 3.12** (with the hypothesis `IsConical X` added, cf. the module docstring).
 
 Let `λ ≤ κ` with `λ` regular and let `X` be a *reduced* `λ⁻`-monoid.  Then there is a
 `κ`-monoid `Ĥ` containing `X` as a `λ⁻`-submonoid such that
 
 1. `Ĥ` is `λ⁻`-braided over `X`, and
 2. `Ĥ` is the universal `κ`-extension of `X`. -/
-theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type v) [LMonoid lam X]
+theorem theorem_3_12 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type v) [LMonoid lam X]
     (hred : IsConical X) :
     ∃ (Hh : Type (max u v)) (_ : KMonoid κ Hh) (f : X → Hh),
       Function.Injective f ∧
@@ -474,50 +474,50 @@ theorem theorem_3_11 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type v) [LMo
   exact ⟨UnivExt lam κ X, inst, UnivExt.of i₀, UnivExt.of_injective hlam hlk hred i₀, hbraided,
     hbraided.isUniversalKExtension hlk⟩
 
-/-- **Theorem 3.11** for `λ > ℵ₀`, exactly as printed in the paper: there the hypothesis added
-to `theorem_3_11` is automatic, since a `λ⁻`-monoid with `ℵ₀ < λ` is reduced by
+/-- **Theorem 3.12** for `λ > ℵ₀`, exactly as printed in the paper: there the hypothesis added
+to `theorem_3_12` is automatic, since a `λ⁻`-monoid with `ℵ₀ < λ` is reduced by
 `LMonoid.isConical` (the analogue of Lemma 2.8(1) for `λ⁻`-monoids).
 
 So the deviation from the paper is confined to `λ = ℵ₀`, where a `λ⁻`-monoid is an arbitrary
 commutative monoid and the hypothesis is genuinely necessary — see
 `isConical_of_isUniversalKExtension` and the counterexample `ℤ` below. -/
-theorem theorem_3_11_of_aleph0_lt (hlam : lam.IsRegular) (hlk : lam ≤ κ) (hlam0 : ℵ₀ < lam)
+theorem theorem_3_12_of_aleph0_lt (hlam : lam.IsRegular) (hlk : lam ≤ κ) (hlam0 : ℵ₀ < lam)
     (X : Type v) [LMonoid lam X] :
     ∃ (Hh : Type (max u v)) (_ : KMonoid κ Hh) (f : X → Hh),
       Function.Injective f ∧
       IsBraidedOver lam κ X Hh hlk f ∧
       IsUniversalKExtension lam κ X Hh hlk f :=
-  theorem_3_11 hlam hlk X (LMonoid.isConical hlam0)
+  theorem_3_12 hlam hlk X (LMonoid.isConical hlam0)
 
-/-- **Theorem 3.11 as an equivalence**: a universal `κ`-extension of a reduced `λ⁻`-monoid `X` is
+/-- **Theorem 3.12 as an equivalence**: a universal `κ`-extension of a reduced `λ⁻`-monoid `X` is
 `λ⁻`-braided over `X`.  Together with `IsBraidedOver.isUniversalKExtension` this is the paper's
-remark after Definition 3.10 that "`Ĥ` is `λ⁻`-braided over `H`" and "`Ĥ` is the universal
+remark after Definition 3.11 that "`Ĥ` is `λ⁻`-braided over `H`" and "`Ĥ` is the universal
 `κ`-extension of `H`" are two descriptions of the same thing.
 
-Proof: `theorem_3_11` produces *some* extension that is both braided and universal, uniqueness of
+Proof: `theorem_3_12` produces *some* extension that is both braided and universal, uniqueness of
 universal extensions identifies it with the given one, and braidedness transports along that
 isomorphism (`IsBraidedOver.of_iso`).
 
-The universe `Type (max u v)` is where `theorem_3_11` puts its extension, and uniqueness compares
+The universe `Type (max u v)` is where `theorem_3_12` puts its extension, and uniqueness compares
 two extensions in the same universe; for `X : Type u` this is no restriction, and for
 `X : Type (u+1)` — the case of `F_κ` and its powers — it reads `Type (u+1)`. -/
 theorem isBraidedOver_of_isUniversalKExtension (hlam : lam.IsRegular) (hlk : lam ≤ κ)
     {X : Type v} [LMonoid lam X] (hred : IsConical X) {H : Type (max u v)} [KMonoid κ H]
     {f : X → H} (hu : IsUniversalKExtension.{u, v, max u v, max u v} lam κ X H hlk f) :
     IsBraidedOver lam κ X H hlk f := by
-  obtain ⟨Hh, _, g, _, hgbr, hgu⟩ := theorem_3_11 hlam hlk X hred
+  obtain ⟨Hh, _, g, _, hgbr, hgu⟩ := theorem_3_12 hlam hlk X hred
   obtain ⟨e, ⟨hehom, hecomm, hebij⟩, -⟩ := isUniversalKExtension_unique hlk hgu hu
   exact hgbr.of_iso hlk hehom hebij hecomm
 
 /-- Conversely, a `λ⁻`-monoid admitting a universal `κ`-extension into which it embeds must
-be reduced; so the hypothesis added in `theorem_3_11` cannot be dropped. -/
+be reduced; so the hypothesis added in `theorem_3_12` cannot be dropped. -/
 theorem isConical_of_isUniversalKExtension {X : Type v} {Hh : Type w}
     [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
     (hf : Function.Injective f) (hhom : IsLHom hlk f) : IsConical X :=
   LMonoid.isConical_of_injective (lam := lam) (κ := κ) f hf hhom.1
     (fun a b => IsLHom.map_add hlk hhom a b)
 
-/-- A concrete counterexample to Theorem 3.11 as printed: `ℤ` is an `ℵ₀⁻`-monoid (i.e. a
+/-- A concrete counterexample to Theorem 3.12 as printed: `ℤ` is an `ℵ₀⁻`-monoid (i.e. a
 commutative monoid) that is not reduced, hence embeds into no `κ`-monoid.
 
 Note that the `ℵ₀⁻`-monoid structure on `ULift ℤ` has to be the canonical one of

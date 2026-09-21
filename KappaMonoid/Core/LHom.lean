@@ -92,7 +92,7 @@ end LMonoid
 
 /-! ## The reducedness of `λ⁻`-monoids that embed into `κ`-monoids
 
-This is the observation behind the hypothesis that has to be added to Theorem 3.11. -/
+This is the observation behind the hypothesis that has to be added to Theorem 3.12. -/
 
 namespace LMonoid
 
@@ -106,7 +106,7 @@ def IsLHom {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KM
 variable {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
 
 /-- If a `λ⁻`-monoid `X` admits an injective additive map into a `κ`-monoid, then `X` is
-reduced.  Since Theorem 3.11 asserts the existence of a `κ`-monoid `Ĥ ⊇ H`, this shows that
+reduced.  Since Theorem 3.12 asserts the existence of a `κ`-monoid `Ĥ ⊇ H`, this shows that
 reducedness of `H` is a *necessary* hypothesis there. -/
 theorem isConical_of_injective (f : X → H) (hf : Function.Injective f) (h0 : f 0 = 0)
     (hadd : ∀ a b, f (a + b) = f a + f b) : IsConical X := by
