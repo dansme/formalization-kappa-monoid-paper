@@ -76,6 +76,7 @@ namespace KappaMonoid
 #assert_axioms TwoGen.theorem_5_3_forward []
 #assert_axioms TwoGen.theorem_5_3_backward [bergmanDicksData]
 #assert_axioms TwoGen.theorem_5_3 [bergmanDicksData]
+#assert_axioms TwoGen.theorem_5_3_sumFG [bergmanDicksData]
 #assert_axioms TwoGen.prop_5_4 []
 #assert_axioms TwoGen.prop_5_4_hereditary []
 #assert_axioms TwoGen.corollary_5_5_one [bergmanDicksData]

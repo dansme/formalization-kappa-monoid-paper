@@ -70,6 +70,38 @@ def Relations3 (x₁ x₂ : H) : Prop :=
   ∀ (n : ℕ) (β : ℕ∞), eval x₁ x₂ (⊤, (n : ℕ∞)) = eval x₁ x₂ (⊤, β) →
     β ≠ ⊤ ∧ ∃ m m' : ℕ, eval x₁ x₂ ((m : ℕ∞), β) = eval x₁ x₂ ((m' : ℕ∞), (n : ℕ∞))
 
+/-! ## Theorem 5.3, in the form the paper states it
+
+`TwoGen.theorem_5_3` is the equivalence for a *hereditary* `k`-algebra, which is the shape the
+proof produces.  The paper states the equivalence for `IsRealizableAsV` — "a ring `R` whose
+projective modules are direct sums of finitely generated modules" — and then adds: *"In fact, if
+`H` satisfies these conditions, then `H ≅ V^{ℵ₀}(R)` for a hereditary ring `R`."*  Both readings
+are recorded, and Albrecht's theorem is what makes them agree. -/
+
+section Theorem53Paper
+
+variable (x₁ x₂ : H)
+
+/-- **Theorem 5.3**: `H` is `V^{ℵ₀}(R)` for a ring whose projective modules are direct sums of
+finitely generated modules if and only if the three conditions hold.
+
+The "in fact" of the paper — that such an `R` may then be taken hereditary, and a `k`-algebra for
+any field `k` — is `theorem_5_3_backward`; conversely a hereditary ring satisfies the condition by
+Albrecht's theorem, so the two equivalences have the same right-hand side. -/
+theorem theorem_5_3_sumFG (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
+    (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
+    IsRealizableAsV H ↔
+      (Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂) := by
+  constructor
+  · rintro ⟨R, _, hfg, e, hhom, hbij⟩
+    exact theorem_5_3_forward x₁ x₂ R hfg hgen hnoncyclic e hhom hbij
+  · rintro ⟨hc1, hc1', hc2, hc2', hmix⟩
+    obtain ⟨R, hring, -, hher, e, hhom, hbij⟩ :=
+      theorem_5_3_backward x₁ x₂ (ULift.{u} ℚ) hgen hc1 hc1' hc2 hc2' hmix
+    exact ⟨R, hring, Albrecht.exists_directSum_fg, e, hhom, hbij⟩
+
+end Theorem53Paper
+
 /-! ## Corollary 5.5 (`hereditarycase`)
 
 Case analysis on how `add x₁` and `add x₂` compare.  All three parts are bookkeeping on top of

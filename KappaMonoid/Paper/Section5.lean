@@ -164,8 +164,17 @@ theorem theorem_5_3_backward (S : Setting5 H) (k : Type u) [Field k]
         IsKHom ℵ₀ e ∧ Function.Bijective e :=
   TwoGen.theorem_5_3_backward S.x₁ S.x₂ k S.gen hc1 hc1' hc2 hc2' hmix
 
-/-- **Theorem 5.3** as a single equivalence, in the library's form: realizability over a
-hereditary `k`-algebra is equivalent to the three conditions. -/
+/-- **Theorem 5.3** as the paper states it: `H ≅ V^{ℵ₀}(R)` for a ring `R` whose projective
+modules are direct sums of finitely generated modules if and only if the three conditions hold. -/
+theorem theorem_5_3_realizable (S : Setting5 H) :
+    IsRealizableAsV H ↔
+      (Cond1 S.x₁ S.x₂ ∧ Cond1 S.x₂ S.x₁ ∧ Cond2 S.x₁ S.x₂ ∧ Cond2 S.x₂ S.x₁ ∧
+        NoMixedForms S.x₁ S.x₂) :=
+  TwoGen.theorem_5_3_sumFG S.x₁ S.x₂ S.gen S.noncyclic
+
+/-- **Theorem 5.3**, the paper's closing sentence: *"In fact, if `H` satisfies these conditions,
+then `H ≅ V^{ℵ₀}(R)` for a hereditary ring `R`."*  Realizability over a hereditary `k`-algebra is
+equivalent to the same three conditions, for any field `k`. -/
 alias theorem_5_3 := TwoGen.theorem_5_3
 
 /-! ## Proposition 5.4 -/
