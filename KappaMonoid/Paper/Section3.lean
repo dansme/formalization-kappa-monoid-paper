@@ -166,6 +166,9 @@ alias example_3_17_slack_iso := KappaMonoid.example_3_17_slack_iso
   conversely, and the relation does not depend on the chosen limit well-order.  The `ι × ℕ` normal
   form of `BraidingData` *is* their content: restating them would mean reintroducing abstract
   limit well-orders purely to prove they do not matter.  See `README.md`, "The limit well-order".
+* **Remark 3.9**.  Why transitivity of braiding is easy for `λ > ℵ₀`: the common coarsening of two
+  partitions into `< λ`-sized pieces is again into `< λ`-sized pieces, by regularity.  A sketch
+  motivating Lemma 3.8, whose proof is formalised in full (`IsBraided.trans`).
 * **Remark 3.18**.  Saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids —
   a pointer to the literature, not a theorem of the paper. -/
 

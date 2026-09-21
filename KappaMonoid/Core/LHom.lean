@@ -92,7 +92,7 @@ end LMonoid
 
 /-! ## The reducedness of `λ⁻`-monoids that embed into `κ`-monoids
 
-This is the observation behind the hypothesis that has to be added to Theorem 3.12. -/
+This is the observation behind the reducedness hypothesis of Theorem 3.12. -/
 
 namespace LMonoid
 

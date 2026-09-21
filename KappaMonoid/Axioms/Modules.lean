@@ -83,7 +83,8 @@ Two differences from the sources, both checked:
   and the zero ring realises the trivial monoid — every ideal projective, `V(0)` trivial,
   `[0] = 0`.  Nothing here claims `Nontrivial R`, which is what keeps the degenerate case honest;
   a `Nontrivial R` field together with a monoid only the zero ring can realise is exactly what
-  makes the paper's blanket quotation of Leavitt's theorem false (see `README.md`).
+  makes a blanket quotation of Leavitt's theorem — one without `m ≥ 1` — false
+  (see `README.md`, "The hypothesis in Leavitt's theorem").
 
 The proof is a construction by universal localisation and is far out of reach here; Mathlib has
 neither hereditary rings nor universal localisation.  Corollary 4.7(1) uses this alongside

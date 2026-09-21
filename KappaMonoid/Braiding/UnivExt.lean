@@ -1,6 +1,6 @@
 /-
-The construction `Ĥ = X^κ / (λ⁻-braiding)` and **Theorem 3.12**, with the `IsConical`
-hypothesis the paper omits, and its converse.
+The construction `Ĥ = X^κ / (λ⁻-braiding)` and **Theorem 3.12**, whose hypothesis that `X` be
+reduced is `IsConical X` here, and its converse.
 -/
 import KappaMonoid.Braiding.Prop310
 import Mathlib.Algebra.Group.ULift
@@ -405,7 +405,8 @@ theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ Order.succ 
         _ = d.v (bsucc q₀) + d.u q₀ := by rw [hu2, add_zero]
         _ = b := hb
 
-/-- **Theorem 3.12** (with the hypothesis `IsConical X` added, cf. the module docstring).
+/-- **Theorem 3.12**.  The paper's "let `H` be a reduced `λ⁻`-monoid" is `IsConical X`, and it
+cannot be dropped: see `isConical_of_isUniversalKExtension` and the `ℤ` counterexample below.
 
 Let `λ ≤ κ⁺` with `λ` regular and let `X` be a *reduced* `λ⁻`-monoid.  Then there is a
 `κ`-monoid `Ĥ` containing `X` as a `λ⁻`-submonoid such that
@@ -474,12 +475,12 @@ theorem theorem_3_12 (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (X : T
   exact ⟨UnivExt lam κ X, inst, UnivExt.of i₀, UnivExt.of_injective hlam hlk hred i₀, hbraided,
     hbraided.isUniversalKExtension hlk⟩
 
-/-- **Theorem 3.12** for `λ > ℵ₀`, exactly as printed in the paper: there the hypothesis added
-to `theorem_3_12` is automatic, since a `λ⁻`-monoid with `ℵ₀ < λ` is reduced by
-`LMonoid.isConical` (the analogue of Lemma 2.8(1) for `λ⁻`-monoids).
+/-- **Theorem 3.12** for `λ > ℵ₀`, where the reducedness hypothesis costs nothing: a `λ⁻`-monoid
+with `ℵ₀ < λ` is reduced by `LMonoid.isConical` (the analogue of Lemma 2.8(1) for `λ⁻`-monoids,
+which is why the paper notes that that analogue needs `κ > ℵ₀`).
 
-So the deviation from the paper is confined to `λ = ℵ₀`, where a `λ⁻`-monoid is an arbitrary
-commutative monoid and the hypothesis is genuinely necessary — see
+So the hypothesis bites only at `λ = ℵ₀`, where a `λ⁻`-monoid is an arbitrary
+commutative monoid and it is genuinely necessary — see
 `isConical_of_isUniversalKExtension` and the counterexample `ℤ` below. -/
 theorem theorem_3_12_of_aleph0_lt (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (hlam0 : ℵ₀ < lam)
     (X : Type v) [LMonoid lam X] :
@@ -517,8 +518,8 @@ theorem isConical_of_isUniversalKExtension {X : Type v} {Hh : Type w}
   LMonoid.isConical_of_injective (lam := lam) (κ := κ) f hf hhom.1
     (fun a b => IsLHom.map_add hlk hhom a b)
 
-/-- A concrete counterexample to Theorem 3.12 as printed: `ℤ` is an `ℵ₀⁻`-monoid (i.e. a
-commutative monoid) that is not reduced, hence embeds into no `κ`-monoid.
+/-- A concrete witness that Theorem 3.12 needs its reducedness hypothesis: `ℤ` is an `ℵ₀⁻`-monoid
+(i.e. a commutative monoid) that is not reduced, hence embeds into no `κ`-monoid.
 
 Note that the `ℵ₀⁻`-monoid structure on `ULift ℤ` has to be the canonical one of
 `LMonoid.ofAddCommMonoid`: for an arbitrary `LMonoid ℵ₀ (ULift ℤ)` instance the underlying

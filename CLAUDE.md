@@ -99,14 +99,16 @@ questions a build would answer, without a build. Prefer it throughout.
   `.github/workflows/lean_action_ci.yml` fails if the set of `axiom` declarations under
   `KappaMonoid/` changes, so a deliberate addition means editing the expected list there *and* the
   `README.md` table in the same commit.
-- **Deviations from the paper are documented twice**: in the docstring of the affected result and
-  in the "Deviations from the paper" section of `README.md`, which is the authoritative list — the
-  `m ≥ 1` hypothesis added to Leavitt's theorem, without which it is *false*; the `IsConical`
-  hypothesis in Theorem 3.12; the `IsSaturatedFin` hypothesis in Proposition 3.15(2), with a
-  formalised counterexample showing the paper's claim is false; and three statements of §5.  Not
-  every extra hypothesis is a deviation: `EveryProjectiveIsSumOfFG` in Corollary 5.5(1) and (3) is
-  the paper's own condition, spelled out.  When the paper is wrong, formalise the repaired
-  statement and say so; do not quietly weaken or restate it.
+- **Anything the paper does not say is documented twice**: in the docstring of the affected result
+  and in the "Tracking the paper" section of `README.md`, which is the authoritative list.  The
+  current version of the paper states the four hypotheses that used to be deviations — `m ≥ 1` in
+  Leavitt's theorem, `reduced` in Theorem 3.12, no inequalities in Proposition 3.15(2),
+  `EveryProjectiveIsSumOfFG` in Theorem 5.3 — so what the README records is why each is needed,
+  together with the two places where the formalisation is deliberately *stronger*
+  (`prop_3_15_two`, Proposition 5.4's hereditary half).  Not every extra hypothesis is a
+  deviation: `EveryProjectiveIsSumOfFG` in Corollary 5.5(1) and (3) is the paper's own condition,
+  spelled out.  When the paper is wrong, formalise the repaired statement and say so; do not
+  quietly weaken or restate it.
 
 ## Elaboration traps
 
@@ -201,7 +203,7 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf` |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable`, `Over`, `UnivAux`, `Prop310`, `UnivExt` (Thm 3.12), `Saturated` (Lemma 3.14) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, and `Rings/` for §2.2–2.3 |
-| `Examples/` | `TrivExt`, `ENNReal`, `NatBraiding` (Examples 3.3(1), `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2 and the 3.15(2) counterexample), `NNReal` (braiding in `ℝ≥0`), `Reals` (`ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, and `ℚ≥0`) |
+| `Examples/` | `TrivExt`, `ENNReal`, `NatBraiding` (Examples 3.3(1), `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2, Examples 3.16 and 3.17), `NNReal` (braiding in `ℝ≥0`), `Reals` (`ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, and `ℚ≥0`) |
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`.  Everything but `Lemma51` and after is monoid theory |
 | `Axioms/` | `Modules`: Bergman–Dicks realisation, the one assumed result, and nothing else |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it |

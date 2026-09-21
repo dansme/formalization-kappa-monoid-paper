@@ -20,7 +20,8 @@ Two things this layer adds, both of which the library statements lack:
   does *not* use it: the paper states that one for a hereditary ring, and so does this
   formalisation.
 
-The deviations are in the docstrings, and in `README.md` under "Deviations from the paper".
+What the statements owe to the current version of the paper is in the docstrings, and in
+`README.md` under "Tracking the paper".
 -/
 import KappaMonoid.TwoGen
 
@@ -64,7 +65,7 @@ that already implies the condition (`everyProjectiveIsSumOfFG_of_free`).  Heredi
 too, by Albrecht's theorem (`ForMathlib/Albrecht.lean`), which is how Theorem 5.3's backward
 direction — stated for a hereditary ring, as in the paper — feeds these corollaries; the forward
 direction is stated for this weaker condition, because 5.5(2) has nothing stronger to offer it.
-See `README.md`, "The statements corrected in Section 5". -/
+See `README.md`, "The statements of Section 5". -/
 abbrev IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
   TwoGen.IsRealizableAsV H
 
