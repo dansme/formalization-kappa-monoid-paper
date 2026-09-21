@@ -431,7 +431,8 @@ The paper's Eilenberg–Mazur swindle, run with `ℵ₀` in place of `κ`: if `x
 `x = x + ℵ₀·0 = x + ℵ₀(x+y) = (x + ℵ₀x) + ℵ₀y = ℵ₀x + ℵ₀y = ℵ₀(x+y) = 0`.
 
 The hypothesis `ℵ₀ < λ` cannot be dropped: an `ℵ₀⁻`-monoid is an arbitrary commutative
-monoid (`LMonoid.ofAddCommMonoid`), and `ℤ` is not reduced. -/
+monoid (`LMonoid.ofAddCommMonoid`), and `ℤ` is not reduced.  This is the `κ > ℵ₀` the paper asks
+for when it says the analogues of Lemma 2.8 hold for `κ⁻`-monoids. -/
 theorem isConical (h : ℵ₀ < lam) : IsConical X := by
   have key : ∀ x y : X, x + y = 0 → x = 0 := by
     intro x y hxy

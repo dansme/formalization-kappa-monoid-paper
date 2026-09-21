@@ -1,3 +1,8 @@
 /.lake
 Scratch.lean
 .claude/settings.local.json
+
+# the v1 copies of the paper and their diff: kappa_monoids.tex/pdf is the source of truth
+changes.txt
+kappa_monoids-v1.tex
+kappa_monoids-v1.pdf
