@@ -20,6 +20,7 @@ on `KappaMonoid/Core/` alone — no module theory and no assumed result.
 -/
 import KappaMonoid.Braiding.Prelim
 import KappaMonoid.Braiding.Defs
+import KappaMonoid.Braiding.WellOrder
 import KappaMonoid.Braiding.TransAleph0
 import KappaMonoid.Braiding.Sums
 import KappaMonoid.Braiding.TransUncountable

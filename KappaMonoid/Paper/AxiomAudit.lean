@@ -35,6 +35,8 @@ namespace KappaMonoid
 
 /-! ## §3 — no axiom at all -/
 
+#assert_axioms isBraidedOn_iff_isBraided []
+#assert_axioms isBraidedOn_congr_self []
 #assert_axioms theorem_3_12 []
 #assert_axioms theorem_3_12_of_aleph0_lt []
 #assert_axioms isBraidedOver_of_isUniversalKExtension []

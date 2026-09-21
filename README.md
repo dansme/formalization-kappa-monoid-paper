@@ -26,7 +26,7 @@ assumed result, or — since the core does not say `import Mathlib` — most of 
 |---|---|---|
 | `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean`, `FreeRank.lean`, `HomDirectSum.lean` + `SimpleMultiplicity.lean`, `CyclicMonoid.lean` (also `C_{m,n}` as a monoid), `Kaplansky.lean` and `Albrecht.lean` — see "Classical results proved here" |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
-| `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `UnivAux`, `Prop310` (**Proposition 3.10**, Definition 3.11), `UnivExt` (**Theorem 3.12** and its converse), `Saturated` (**Lemma 3.14**) |
+| `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `WellOrder` (**Lemma 3.5**, and Definition 3.1(1) over an arbitrary limit well-order), `UnivAux`, `Prop310` (**Proposition 3.10**, Definition 3.11), `UnivExt` (**Theorem 3.12** and its converse), `Saturated` (**Lemma 3.14**) |
 | `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky in `κ`-monoid form, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
 | `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.15**, **Examples 3.16** and **3.17**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
@@ -46,7 +46,7 @@ mentions no module and uses no axiom. The module theory enters at `Lemma51`.
   elements `x₁` and `x₂`"* — which in the library travels as two loose arguments. And
   `IsRealizableAsV` names the nine-line "`H ≅ V^{ℵ₀}(R)` for a ring whose projectives are sums of
   finitely generated modules" that Theorem 5.3 and all three parts of Corollary 5.5 repeat.
-* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 103 entries between them,
+* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 107 entries between them,
   one per numbered result, each an `alias` naming the declaration that formalises it and the file
   it lives in. The alias fails to compile if the declaration goes, so the index cannot rot. Each
   closes with what the development deliberately does *not* formalise, and why.
@@ -196,8 +196,10 @@ Nothing here needs it.
 
 ## What is not formalised
 
-* **Lemma 3.4(2)(3) and Lemma 3.5** — their content *is* the `ι × ℕ` normal form that
-  `BraidingData` is built on; see "The limit well-order" below.
+* **Lemma 3.4(2)(3)** — that a braiding breaks into a disjoint union of countable ones, and
+  conversely. In the paper this is a step towards Lemma 3.5, which is proved here directly from the
+  `ω`-block decomposition of a limit well-order (`isBraidedOn_iff_isBraided`), so the intermediate
+  statement is not needed; see "The limit well-order" below.
 * **Remark 3.9** — why transitivity of braiding is easy for `λ > ℵ₀`: a sketch motivating
   Lemma 3.8, whose proof is formalised in full (`IsBraided.trans`).
 * **Remark 3.18** — a pointer to the literature.
@@ -315,21 +317,39 @@ two notions are shown to agree:
   `PaperKMonoid.toKMonoid_sumOf` / `toKMonoid_add` express the reconstructed sums and addition
   back in terms of `Σ`, so nothing is added by the reconstruction.
 
-**The limit well-order (the one substantive choice).** Definition 3.1 fixes a limit
-well-order on `κ` — a well-order in which every element has a successor, i.e. with no
-maximum — and speaks of `μ + 1` and of limit elements. Rather than carry an abstract
-well-order plus a successor function plus the predicate "is a limit", we use the canonical
-normal form: a limit well-order decomposes into `ω`-blocks indexed by its limit elements,
-and a limit well-order of cardinality `κ` has exactly `κ` blocks (since `κ · ℵ₀ = κ`).
-So braiding partitions and braiding families are indexed by `ι × ℕ`, with
-`bsucc (a, n) = (a, n+1)` and limit elements `(a, 0)`.
+**The limit well-order, and why the normal form is not a choice.** Definition 3.1 fixes a limit
+well-order on `κ` — a well-order in which every element has a successor, i.e. with no maximum —
+and speaks of `μ + 1` and of limit elements. Rather than carry an abstract well-order plus a
+successor function plus the predicate "is a limit" through every statement, `BraidingData` uses the
+canonical normal form: a limit well-order decomposes into `ω`-blocks indexed by its limit elements,
+so braiding partitions and braiding families are indexed by `ι × ℕ`, with `bsucc (a, n) = (a, n+1)`
+and limit elements `(a, 0)`. That keeps `BraidingData` a plain structure with no order-theoretic
+side conditions, and the whole of §3 is proved against it.
 
-This is not a loss of generality — it *is* the content of Lemma 3.4(2)(3) (every braiding
-breaks up into a disjoint union of countable ones, and conversely) together with Lemma 3.5
-(independence of the well-order). Those two lemmas consequently do not appear as separate
-results: they are absorbed into the definition, which is why `BraidingData` is a plain
-structure over `ι × ℕ` with no order-theoretic side conditions. The cost is that if you ever
-want to reason with a *given* well-order you must transport across the normal form first.
+**That this loses nothing is proved, not assumed** — it is Lemma 3.5, in
+`Braiding/WellOrder.lean`:
+
+* `LimitSucc M` is the combinatorial content of a limit well-order on `M`: an injective successor
+  whose image is exactly the non-limit elements, whose iterates from the limit elements exhaust
+  `M`. `LimitSucc.ofWellOrder` builds one from any `LinearOrder` + `WellFoundedLT` + `NoMaxOrder`
+  (the successor being the least element above, `wsucc`), and `LimitSucc.prodNat` is the normal
+  form. `LimitSucc.blockEquiv` is the `ω`-block decomposition `Lim × ℕ ≃ M`.
+* `BraidingDataOn lam W x y` is Definition 3.1(1) *verbatim* over such an index structure `W`, and
+  `BraidingData` is the case `W = LimitSucc.prodNat ι`.
+* `isBraidedOn_iff_isBraided` — **Lemma 3.5** — says that for any `W` on a set of the same
+  cardinality as the index set, `IsBraidedOn lam W x y ↔ IsBraided lam x y`; `isBraidedOn_congr_self`
+  is the paper's phrasing, that two limit well-orders on `κ` define the same relation, and
+  `isBraidedOn_ofWellOrder_iff` is the form taking the order from the instances on `ι`.
+
+Everything rests on one construction, `BraidingDataOn.comap`: braiding data pushes forward along
+any map `Φ` of index structures that commutes with the successor, reflects limit elements and has
+finite fibres, by taking unions and sums over the fibres. Both directions of Lemma 3.5 are
+instances — the forward one reads off block and offset, the backward one either relabels block by
+block (when there are `#ι` blocks) or folds all of `ι × ℕ` into one block along the anti-diagonal
+`(a, n) ↦ e a + n + 1` (when there are finitely many, so that `ι` is countable). That second case
+is the paper's diagonal argument; the `+ 1` is what keeps the new `v` zero at the limit element,
+which in the paper is the step "keeping in mind `v_{l_i} = 0`". Unlike the paper's proof, none of
+this splits on whether `λ` is countable.
 
 **The test universe of `IsUniversalKExtension` is a parameter.** Examples 4.8(1) concludes
 `V^κ(C) ≅ F_κ(B)` across a universe gap: `F_κ(B)` is cut out of `B → F_κ`, so it lives in

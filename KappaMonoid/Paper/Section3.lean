@@ -70,6 +70,24 @@ alias lemma_3_4_4_isBraided_iff_of_ne_aleph0 := KappaMonoid.isBraided_iff_of_ne_
 /-- **Lemma 3.4(1)** — `KappaMonoid.isBraided_of_small_support`, in `Braiding/Sums.lean`. -/
 alias lemma_3_4_1_isBraided_of_small_support := KappaMonoid.isBraided_of_small_support
 
+/-- **Definition 3.1(1) over an arbitrary limit well-order** — `KappaMonoid.BraidingDataOn`, in
+`Braiding/WellOrder.lean`: the definition as the paper states it, with the successor and the limit
+elements taken from an index structure `LimitSucc` rather than from the `ι × ℕ` normal form. -/
+alias definition_3_1_1_BraidingDataOn := KappaMonoid.BraidingDataOn
+
+/-- **Lemma 3.5** — `KappaMonoid.isBraidedOn_iff_isBraided`, in `Braiding/WellOrder.lean`:
+braidedness with respect to any limit well-order on an index set of the same size as the family
+index set is `IsBraided`.  This is what licenses the `ι × ℕ` normal form of `BraidingData`. -/
+alias lemma_3_5_isBraidedOn_iff_isBraided := KappaMonoid.isBraidedOn_iff_isBraided
+
+/-- **Lemma 3.5** as printed — `KappaMonoid.isBraidedOn_congr_self`, in
+`Braiding/WellOrder.lean`: being `λ⁻`-braided does not depend on the choice of limit well-order. -/
+alias lemma_3_5_isBraidedOn_congr_self := KappaMonoid.isBraidedOn_congr_self
+
+/-- **Lemma 3.5** for a well-order given by the order instances on the index type —
+`KappaMonoid.isBraidedOn_ofWellOrder_iff`, in `Braiding/WellOrder.lean`. -/
+alias lemma_3_5_isBraidedOn_ofWellOrder_iff := KappaMonoid.isBraidedOn_ofWellOrder_iff
+
 /-- **Lemma 3.6(1)** — `KappaMonoid.IsBraided.of_perm`, in `Braiding/Defs.lean`. -/
 alias lemma_3_6_1_of_perm := KappaMonoid.IsBraided.of_perm
 
@@ -162,10 +180,11 @@ alias example_3_17_slack_iso := KappaMonoid.example_3_17_slack_iso
 
 /-! ## Not formalised, deliberately
 
-* **Lemma 3.4(2)(3)** and **Lemma 3.5**.  A braiding decomposes into countable braidings and
-  conversely, and the relation does not depend on the chosen limit well-order.  The `ι × ℕ` normal
-  form of `BraidingData` *is* their content: restating them would mean reintroducing abstract
-  limit well-orders purely to prove they do not matter.  See `README.md`, "The limit well-order".
+* **Lemma 3.4(2)(3)**.  A braiding decomposes into a disjoint union of countable braidings, one per
+  limit element, and conversely.  In the paper this is a step towards Lemma 3.5, which is proved
+  here directly (`isBraidedOn_iff_isBraided`) from the `ω`-block decomposition of a limit
+  well-order, so the intermediate statement is not needed.  See `README.md`, "The limit
+  well-order".
 * **Remark 3.9**.  Why transitivity of braiding is easy for `λ > ℵ₀`: the common coarsening of two
   partitions into `< λ`-sized pieces is again into `< λ`-sized pieces, by regularity.  A sketch
   motivating Lemma 3.8, whose proof is formalised in full (`IsBraided.trans`).
