@@ -877,7 +877,7 @@ equations at level `k` now give
 with `m = #I (a,k) ≥ 1` and `s = #J (a,k)`, so `x₁ ≼ m (x₁ + x₂) ≼ (r + s) x₂`. -/
 theorem lemma_5_2_five
     (hbr :
-      IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H le_rfl (fun y => (y : H))) :
+      IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H (Order.le_succ ℵ₀) (fun y => (y : H))) :
     x₁ ∈ add(x₂) ↔
       ℵ₀∙(x₁ + x₂) = ℵ₀∙x₂ := by
   classical

@@ -84,7 +84,7 @@ theorem lemma_5_1 (S : Setting5 H) (R : Type u) [Ring R] (hfg : EveryProjectiveI
     (e : H → V(R).carrier)
     (hhom : letI := V(R).instKMonoid le_rfl; IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
-    IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H le_rfl (fun y => (y : H)) :=
+    IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H (Order.le_succ ℵ₀) (fun y => (y : H)) :=
   TwoGen.lemma_5_1 R hfg S.x₁ S.x₂ S.gen S.noncyclic e hhom hbij
 
 /-! ## Lemma 5.2 -/
@@ -136,7 +136,7 @@ theorem lemma_5_2_four (S : Setting5 H) (hmem : S.x₁ ∉ add(S.x₂))
 
 /-- **Lemma 5.2(5)**.  Given the braiding of Lemma 5.1, `x₁ ∈ add x₂` iff `ℵ₀(x₁+x₂) = ℵ₀x₂`. -/
 theorem lemma_5_2_five (S : Setting5 H)
-    (hbr :      IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H le_rfl (fun y => (y : H))) :
+    (hbr :      IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H (Order.le_succ ℵ₀) (fun y => (y : H))) :
     S.x₁ ∈ add(S.x₂) ↔
       ℵ₀∙(S.x₁ + S.x₂) = ℵ₀∙S.x₂ :=
   TwoGen.lemma_5_2_five S.x₁ S.x₂ hbr

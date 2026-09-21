@@ -22,20 +22,20 @@ section Free
 variable {lam κ : Cardinal.{u}} {B : Type u}
 
 /-- The inclusion `F_{λ⁻}(B) ↪ F_κ(B)`. -/
-def freeIncl (_hlam : lam.IsRegular) (_hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) (x : ↥(FreeL lam B)) :
+def freeIncl (_hlam : lam.IsRegular) (_hκ : ℵ₀ ≤ κ) (hlk : lam ≤ Order.succ κ) (x : ↥(FreeL lam B)) :
     ↥(FreeK κ B) :=
   ⟨fun b => ⟨((x : B → LCard lam) b : Cardinal.{u}),
-      lt_of_lt_of_le ((x : B → LCard lam) b).2 (le_trans hlk (Order.le_succ κ))⟩,
-    lt_of_lt_of_le x.2 (le_trans hlk (Order.le_succ κ))⟩
+      lt_of_lt_of_le ((x : B → LCard lam) b).2 (hlk)⟩,
+    lt_of_lt_of_le x.2 (hlk)⟩
 
-@[simp] theorem val_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ)
+@[simp] theorem val_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ Order.succ κ)
     (x : ↥(FreeL lam B)) (b : B) :
     (((freeIncl hlam hκ hlk x : ↥(FreeK κ B)) : B → Fcard κ) b : Cardinal.{u})
       = ((x : B → LCard lam) b : Cardinal.{u}) := rfl
 
 /-- `freeIncl` carries the generator `ι(b)` of `F_{λ⁻}(B)` to the generator `ι(b)` of
 `F_κ(B)`. -/
-theorem freeIncl_iota (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) (b : B) :
+theorem freeIncl_iota (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ Order.succ κ) (b : B) :
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     freeIncl hlam hκ hlk (iota (lam := lam) b) = iota (lam := Order.succ κ) b := by
@@ -48,7 +48,7 @@ theorem freeIncl_iota (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam �
   · rw [val_iotaFun_of_ne (lam := lam) h, val_iotaFun_of_ne (lam := Order.succ κ) h]
 
 /-- `freeIncl` is a `λ⁻`-homomorphism: on both sides a coordinate is the same cardinal sum. -/
-theorem isLHom_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) :
+theorem isLHom_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ Order.succ κ) :
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     letI := instKMonoidFreeK κ hκ B
@@ -68,7 +68,7 @@ theorem isLHom_freeIncl (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
 Both universal properties are Proposition 2.9, at `λ` and at `κ⁺` respectively; the extension of
 `φ : F_{λ⁻}(B) → K` is `lift (φ ∘ ι)`, and both halves of the universal property are `hom_ext` —
 at level `λ` for the extension identity, at level `κ⁺` for uniqueness. -/
-theorem lemma_3_14_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ κ) :
+theorem lemma_3_14_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ Order.succ κ) :
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     letI := instKMonoidFreeK κ hκ B
@@ -90,7 +90,7 @@ theorem lemma_3_14_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
       intro ι h x
       show ψ (freeIncl hlam hκ hlk (LMonoid.lsumOf (lam := lam) h x)) = _
       rw [(isLHom_freeIncl (B := B) hlam hκ hlk).2 h x]
-      exact isLMonoidHom_lift _ (KMonoid.lt_succ (h.le.trans hlk)) _
+      exact isLMonoidHom_lift _ (KMonoid.lt_succ (le_of_lt_of_le_succ hlk h)) _
     have key := hom_ext (lam := lam) (X := K)
       (g₁ := fun x => ψ (freeIncl hlam hκ hlk x)) (g₂ := φ) hcomp
       (isLMonoidHom_of_isLHom hlam hlk hφ)
@@ -128,7 +128,7 @@ Lemma 3.4(4) — take `v ≡ 0`, so `u_μ` is a partial sum of elements of `S`. 
 transfinite induction along the blocks: at a limit `v_μ = 0` and `u_μ ∈ S`, and
 `u_{μ+n} + v_{μ+n}` and `u_{μ+n} + v_{μ+n+1}` both lie in `S`, so saturatedness pushes `u` and
 `v` into `S` one step at a time. -/
-theorem isBraidedOver_of_isLSubmonoid [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
+theorem isBraidedOver_of_isLSubmonoid [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ Order.succ κ) {f : X → Hh}
     (hbr : IsBraidedOver lam κ X Hh hlk f) (S : Set X) (hS : IsLSubmonoid lam S)
     (hsat : lam ≠ ℵ₀ ∨ IsSaturated S) {T : Set Hh} (hT : KMonoid.IsKSubmonoid κ T)
     (hfT : ∀ s ∈ S, f s ∈ T) (hTgen : T ⊆ KMonoid.kclosure κ (f '' S)) :
@@ -192,7 +192,7 @@ theorem isBraidedOver_of_isLSubmonoid [LMonoid lam X] [KMonoid κ Hh] (hlk : lam
 
 /-- **Lemma 3.14(2)**, in the form used: any `κ`-submonoid `T` with `f(S) ⊆ T ⊆ ⟨f(S)⟩_κ` is the
 universal `κ`-extension of `S`. -/
-theorem lemma_3_14_sub_of_subset [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
+theorem lemma_3_14_sub_of_subset [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ Order.succ κ) {f : X → Hh}
     (hbr : IsBraidedOver lam κ X Hh hlk f) (S : Set X) (hS : IsLSubmonoid lam S)
     (hsat : lam ≠ ℵ₀ ∨ IsSaturated S) {T : Set Hh} (hT : KMonoid.IsKSubmonoid κ T)
     (hfT : ∀ s ∈ S, f s ∈ T) (hTgen : T ⊆ KMonoid.kclosure κ (f '' S)) :
@@ -204,7 +204,7 @@ theorem lemma_3_14_sub_of_subset [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ 
   exact (isBraidedOver_of_isLSubmonoid hlk hbr S hS hsat hT hfT hTgen).isUniversalKExtension hlk
 
 /-- **Lemma 3.14(2)** as printed: `⟨S⟩_κ ⊆ Ĥ` is the universal `κ`-extension of `S`. -/
-theorem lemma_3_14_sub [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
+theorem lemma_3_14_sub [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ Order.succ κ) {f : X → Hh}
     (hbr : IsBraidedOver lam κ X Hh hlk f) (S : Set X) (hS : IsLSubmonoid lam S)
     (hsat : lam ≠ ℵ₀ ∨ IsSaturated S) :
     letI := hS.lmonoid

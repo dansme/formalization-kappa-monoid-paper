@@ -322,7 +322,7 @@ the two families are simultaneously finitely supported. -/
 theorem isBraidedOver_rtilde :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
-    IsBraidedOver (ℵ₀ : Cardinal.{u}) ℵ₀ ℝ≥0 RTilde le_rfl ofReal := by
+    IsBraidedOver (ℵ₀ : Cardinal.{u}) ℵ₀ ℝ≥0 RTilde (Order.le_succ ℵ₀) ofReal := by
   let := LMonoid.ofAddCommMonoid ℝ≥0
   let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
   classical
@@ -427,10 +427,10 @@ theorem isBraidedOver_rtilde :
 theorem isUniversalKExtension_rtilde :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
-    IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ℝ≥0 RTilde le_rfl ofReal := by
+    IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ℝ≥0 RTilde (Order.le_succ ℵ₀) ofReal := by
   let := LMonoid.ofAddCommMonoid ℝ≥0
   let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := instKMonoid
-  exact isBraidedOver_rtilde.isUniversalKExtension le_rfl
+  exact isBraidedOver_rtilde.isUniversalKExtension (Order.le_succ ℵ₀)
 
 /-! ### `H` is not `ℵ₀⁻`-braided over itself
 
@@ -446,10 +446,10 @@ theorem tilde_ne_zero (a : ℝ≥0) (ha : a ≠ 0) : tilde a ha ≠ 0 := by
 in `H` with the same `ℵ₀`-sum that are not `ℵ₀⁻`-braided. -/
 theorem not_isBraidedOver_rtilde_self :
     letI : KMonoid (ℵ₀ : Cardinal.{0}) RTilde := instKMonoid
-    letI := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{0}))
-    ¬ IsBraidedOver (ℵ₀ : Cardinal.{0}) ℵ₀ RTilde RTilde le_rfl id := by
+    letI := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (Order.le_succ (ℵ₀ : Cardinal.{0}))
+    ¬ IsBraidedOver (ℵ₀ : Cardinal.{0}) ℵ₀ RTilde RTilde (Order.le_succ ℵ₀) id := by
   let : KMonoid (ℵ₀ : Cardinal.{0}) RTilde := instKMonoid
-  let := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{0}))
+  let := KMonoid.toLMonoidOfLE RTilde Cardinal.isRegular_aleph0 (Order.le_succ (ℵ₀ : Cardinal.{0}))
   intro hbr
   classical
   -- a countable index type
@@ -731,11 +731,11 @@ theorem isUniversalKExtension_ratSet :
     letI := (KMonoid.isKSubmonoid_kclosure (ℵ₀ : Cardinal.{u})
       (RTilde.ofReal '' ratSet)).kmonoid
     IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ↥ratSet
-      ↥(KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet)) le_rfl
+      ↥(KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet)) (Order.le_succ ℵ₀)
       (fun s => ⟨RTilde.ofReal (s : ℝ≥0), KMonoid.subset_kclosure ⟨(s : ℝ≥0), s.2, rfl⟩⟩) := by
   let := LMonoid.ofAddCommMonoid ℝ≥0
   let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
-  exact lemma_3_14_sub le_rfl RTilde.isBraidedOver_rtilde ratSet isLSubmonoid_ratSet
+  exact lemma_3_14_sub (Order.le_succ ℵ₀) RTilde.isBraidedOver_rtilde ratSet isLSubmonoid_ratSet
     (Or.inr isSaturated_ratSet)
 
 /-- The elements of `H` that an `ℵ₀`-sum of rationals can reach: everything tilded, `∞`, and the

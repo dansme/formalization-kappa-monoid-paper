@@ -114,14 +114,14 @@ end IsLSubmonoid
 
 /-- A subset of a `κ`-monoid closed under `λ⁻`-sums. -/
 structure IsLSubset (lam : Cardinal.{u}) {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
-    (hlk : lam ≤ κ) (S : Set H) : Prop where
+    (hlk : lam ≤ Order.succ κ) (S : Set H) : Prop where
   zero_mem : (0 : H) ∈ S
   sumOf_mem : ∀ {ι : Type u} (h : #ι < lam) (x : ι → H), (∀ i, x i ∈ S) →
-    KMonoid.sumOf (κ := κ) (h.le.trans hlk) x ∈ S
+    KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk h) x ∈ S
 
 /-- A `λ⁻`-closed subset is closed under binary sums: `a + b` is a sum indexed by `Bool`, and
 `#(ULift Bool) < ℵ₀ ≤ lam`. -/
-theorem IsLSubset.add_mem {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {hlk : lam ≤ κ}
+theorem IsLSubset.add_mem {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {hlk : lam ≤ Order.succ κ}
     {S : Set H} (hS : IsLSubset lam hlk S) (hlam : ℵ₀ ≤ lam) {a b : H} (ha : a ∈ S)
     (hb : b ∈ S) : a + b ∈ S := by
   classical
@@ -129,10 +129,10 @@ theorem IsLSubset.add_mem {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {h
     lt_of_lt_of_le (Cardinal.lt_aleph0_iff_finite.mpr inferInstance) hlam
   have hmem := hS.sumOf_mem hUB (fun p : ULift.{u} Bool => if p.down then a else b)
     (by rintro ⟨(_ | _)⟩ <;> simpa)
-  rwa [KMonoid.sumOf_two a b (hUB.le.trans hlk)] at hmem
+  rwa [KMonoid.sumOf_two a b (le_of_lt_of_le_succ hlk hUB)] at hmem
 
 /-- A `λ⁻`-closed subset is closed under finite multiples. -/
-theorem IsLSubset.nsmul_mem {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {hlk : lam ≤ κ}
+theorem IsLSubset.nsmul_mem {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H] {hlk : lam ≤ Order.succ κ}
     {S : Set H} (hS : IsLSubset lam hlk S) (hlam : ℵ₀ ≤ lam) {a : H} (ha : a ∈ S) (n : ℕ) :
     n • a ∈ S := by
   induction n with
@@ -167,7 +167,7 @@ noncomputable def IsKSubmonoid.kmonoid {S : Set H} (hS : IsKSubmonoid κ S) : KM
 
 /-- A `λ⁻`-closed subset of a `κ`-monoid is a `λ⁻`-monoid. -/
 @[instance_reducible]
-noncomputable def _root_.KappaMonoid.IsLSubset.lmonoid {lam : Cardinal.{u}} {hlk : lam ≤ κ} {S : Set H}
+noncomputable def _root_.KappaMonoid.IsLSubset.lmonoid {lam : Cardinal.{u}} {hlk : lam ≤ Order.succ κ} {S : Set H}
     (hlam : lam.IsRegular) (hS : IsLSubset lam hlk S) : LMonoid lam ↥S :=
   letI hadd : ∀ a ∈ S, ∀ b ∈ S, a + b ∈ S := by
     intro a ha b hb
@@ -175,21 +175,21 @@ noncomputable def _root_.KappaMonoid.IsLSubset.lmonoid {lam : Cardinal.{u}} {hlk
       lt_of_lt_of_le (Cardinal.lt_aleph0_iff_finite.mpr inferInstance) hlam.aleph0_le
     have hmem := hS.sumOf_mem hUB (fun p : ULift.{u} Bool => if p.down then a else b)
       (by rintro ⟨(_ | _)⟩ <;> simpa)
-    rwa [sumOf_two a b (hUB.le.trans hlk)] at hmem
+    rwa [sumOf_two a b (le_of_lt_of_le_succ hlk hUB)] at hmem
   letI acm : AddCommMonoid ↥S := addCommMonoidOfClosed hS.zero_mem hadd
   { toAddCommMonoid := acm
     isRegular := hlam
     lsumOf := fun {ι} h x =>
-      ⟨sumOf (κ := κ) (h.le.trans hlk) fun i => (x i : H), hS.sumOf_mem h _ fun i => (x i).2⟩
+      ⟨sumOf (κ := κ) (le_of_lt_of_le_succ hlk h) fun i => (x i : H), hS.sumOf_mem h _ fun i => (x i).2⟩
     lsumOf_congr := fun h h' e x =>
-      Subtype.ext (sumOf_equiv (h'.le.trans hlk) (h.le.trans hlk) e fun i => (x i : H)).symm
-    lsumOf_unique := fun h x => Subtype.ext (sumOf_unique (h.le.trans hlk) fun i => (x i : H))
+      Subtype.ext (sumOf_equiv (le_of_lt_of_le_succ hlk h') (le_of_lt_of_le_succ hlk h) e fun i => (x i : H)).symm
+    lsumOf_unique := fun h x => Subtype.ext (sumOf_unique (le_of_lt_of_le_succ hlk h) fun i => (x i : H))
     lsumOf_sigma := fun h hρ x hσ =>
-      Subtype.ext (sumOf_sigma (h.le.trans hlk) (fun i => (hρ i).le.trans hlk)
-        (hσ.le.trans hlk) fun i j => (x i j : H))
+      Subtype.ext (sumOf_sigma (le_of_lt_of_le_succ hlk h) (fun i => le_of_lt_of_le_succ hlk (hρ i))
+        (le_of_lt_of_le_succ hlk hσ) fun i j => (x i j : H))
     add_eq_lsumOf := fun h a b => Subtype.ext (by
-      show (a : H) + (b : H) = sumOf (κ := κ) (h.le.trans hlk) _
-      rw [LMonoid.add_eq_lsumOf (lam := Order.succ κ) (lt_succ (h.le.trans hlk)) (a : H) (b : H)]
+      show (a : H) + (b : H) = sumOf (κ := κ) (le_of_lt_of_le_succ hlk h) _
+      rw [LMonoid.add_eq_lsumOf (lam := Order.succ κ) (lt_succ (le_of_lt_of_le_succ hlk h)) (a : H) (b : H)]
       exact congrArg _ (funext fun p => by rcases p with p | p <;> rfl)) }
 
 /-- The inclusion of a `κ`-submonoid preserves sums over arbitrary small index types. -/
@@ -205,23 +205,23 @@ theorem IsKSubmonoid.coe_ksum {T : Set H} (hT : IsKSubmonoid κ T) (z : Idx κ �
 
 /-- The inclusion of a `λ⁻`-closed subset preserves `λ⁻`-sums: they are computed as the
 ambient `κ`-sums. -/
-theorem _root_.KappaMonoid.IsLSubset.coe_lsumOf {lam : Cardinal.{u}} {hlk : lam ≤ κ} {S : Set H}
+theorem _root_.KappaMonoid.IsLSubset.coe_lsumOf {lam : Cardinal.{u}} {hlk : lam ≤ Order.succ κ} {S : Set H}
     (hlam : lam.IsRegular) (hS : IsLSubset lam hlk S) {ι : Type u} (hι : #ι < lam) (z : ι → S) :
     letI := hS.lmonoid hlam
     ((LMonoid.lsumOf (lam := lam) hι z : S) : H)
-      = sumOf (κ := κ) (hι.le.trans hlk) fun i => (z i : H) := rfl
+      = sumOf (κ := κ) (le_of_lt_of_le_succ hlk hι) fun i => (z i : H) := rfl
 
-/-- A `κ`-monoid is a `λ⁻`-monoid for every regular `λ ≤ κ` (Remark 2.19). -/
+/-- A `κ`-monoid is a `λ⁻`-monoid for every regular `λ ≤ κ⁺` (Remark 2.19). -/
 @[instance_reducible]
 noncomputable def toLMonoidOfLE (H : Type v) [KMonoid κ H] {lam : Cardinal.{u}}
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ) : LMonoid lam H :=
-  LMonoid.ofLE (lam₂ := Order.succ κ) hlam (hlk.trans (Order.le_succ κ))
+    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) : LMonoid lam H :=
+  LMonoid.ofLE (lam₂ := Order.succ κ) hlam (hlk)
 
 /-- The `λ⁻`-sums induced on a `κ`-monoid by `toLMonoidOfLE` are its `κ`-sums. -/
-theorem toLMonoidOfLE_lsumOf {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+theorem toLMonoidOfLE_lsumOf {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ)
     {ι : Type u} (h : #ι < lam) (x : ι → H) :
     letI := toLMonoidOfLE H hlam hlk
-    LMonoid.lsumOf (lam := lam) h x = sumOf (κ := κ) (h.le.trans hlk) x := rfl
+    LMonoid.lsumOf (lam := lam) h x = sumOf (κ := κ) (le_of_lt_of_le_succ hlk h) x := rfl
 
 /-- The first bullet after Lemma 2.5: restricting `Σ` to families indexed by a type of
 cardinality `≤ α` makes a `κ`-monoid an `α`-monoid, for every infinite `α ≤ κ`. -/

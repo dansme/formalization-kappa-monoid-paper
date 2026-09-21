@@ -18,7 +18,7 @@ open KMonoid LMonoid
 section Ambient
 
 variable {lam κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
-  (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+  (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ)
 
 /-- Lemma 3.2 (telescoping): braided families have equal `κ`-sums.
 
@@ -31,8 +31,8 @@ theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
   obtain ⟨d⟩ := h
   have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
   have hP : #(ι × ℕ) ≤ κ := mk_prod_nat_le hκ hι
-  have hIle : ∀ p, #(d.I p) ≤ κ := fun p => (d.I_small p).le.trans hlk
-  have hJle : ∀ p, #(d.J p) ≤ κ := fun p => (d.J_small p).le.trans hlk
+  have hIle : ∀ p, #(d.I p) ≤ κ := fun p => le_of_lt_of_le_succ hlk (d.I_small p)
+  have hJle : ∀ p, #(d.J p) ≤ κ := fun p => le_of_lt_of_le_succ hlk (d.J_small p)
   -- Regroup each side along its braiding partition and use the defining equations.
   have hxsum : sumOf (κ := κ) hι x = sumOf (κ := κ) hP (fun p => d.v p + d.u p) := by
     rw [← sumOf_biUnion d.I d.I_disjoint d.I_cover hP hι hIle x]

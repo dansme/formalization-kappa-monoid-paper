@@ -323,7 +323,7 @@ isomorphic.  Both are universal `κ`-extensions of it (Theorem 3.12(2)), and a u
 
 This needs no external input, which is what keeps Corollary 4.7(2) axiom-free. -/
 theorem isKIso_of_braidedOver_same {lam : Cardinal.{u}} {S : Type u} [LMonoid lam S]
-    {H₁ H₂ : Type u} [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ κ)
+    {H₁ H₂ : Type u} [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ Order.succ κ)
     {f : S → H₁} {g : S → H₂}
     (hbr₁ : IsBraidedOver lam κ S H₁ hlk f) (hbr₂ : IsBraidedOver lam κ S H₂ hlk g) :
     ∃ e : H₁ → H₂, KMonoid.IsKHom κ e ∧ (∀ s, e (f s) = g s) ∧ Function.Bijective e :=
@@ -340,15 +340,15 @@ The `S` of the paper is `add_{ℵ₀} x` for a suitable `x ∈ H`; the statement
 `S` because that is what the proof uses, and `addOfCard` supplies the paper's instance. -/
 theorem corollary_4_7_two {S : Type u} [LMonoid ℵ₀ S] {H : Type u} [KMonoid κ H]
     (R : Type u) [Ring R] (hκ : ℵ₀ ≤ κ) {f : S → H}
-    (hbr : IsBraidedOver ℵ₀ κ S H hκ f)
+    (hbr : IsBraidedOver ℵ₀ κ S H (le_succ_of_le hκ) f)
     {g : S → (projClass R κ hκ).carrier}
     (hbr' : letI := (projClass R κ hκ).instKMonoid hκ
-      IsBraidedOver ℵ₀ κ S (projClass R κ hκ).carrier hκ g) :
+      IsBraidedOver ℵ₀ κ S (projClass R κ hκ).carrier (le_succ_of_le hκ) g) :
     letI := (projClass R κ hκ).instKMonoid hκ
     ∃ e : H → (projClass R κ hκ).carrier,
       KMonoid.IsKHom κ e ∧ (∀ s, e (f s) = g s) ∧ Function.Bijective e := by
   let := (projClass R κ hκ).instKMonoid hκ
-  exact isKIso_of_braidedOver_same hκ hbr hbr'
+  exact isKIso_of_braidedOver_same (le_succ_of_le hκ) hbr hbr'
 
 /-- **Corollary 4.7(1)**, (iii) ⇒ (i): if `V^κ(R) ≅ H` for a ring `R` all of whose projectives
 are direct sums of finitely generated modules — in particular a hereditary ring, by Corollary 4.6
@@ -360,7 +360,7 @@ theorem corollary_4_7_one_backward (R : Type u) [Ring R] (hκ : ℵ₀ ≤ κ)
       KMonoid.KGenerates κ (KMonoid.addOf (κ := κ) x) := by
   let := (projClass R κ hκ).instKMonoid hκ
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
   obtain ⟨k⟩ := nonempty_Idx hκ
   refine ⟨Projective.unitClass R κ hκ k, ?_⟩
   rw [addOf_unitClass_eq R κ hκ k]
@@ -379,11 +379,11 @@ theorem corollary_4_7_one_backward_braided (R : Type u) [Ring R] (hκ : ℵ₀ �
     letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
       (KMonoid.addOf_isLSubset hκ (Projective.unitClass R κ hκ k))
     IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) (Projective.unitClass R κ hκ k))
-      (projClass R κ hκ).carrier hκ (fun y => (y : (projClass R κ hκ).carrier)) := by
+      (projClass R κ hκ).carrier (le_succ_of_le hκ) (fun y => (y : (projClass R κ hκ).carrier)) := by
   let := (projClass R κ hκ).instKMonoid hκ
   exact IsBraidedOver.of_set_eq Cardinal.isRegular_aleph0
     (KMonoid.addOf_isLSubset hκ (Projective.unitClass R κ hκ k))
-    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
     (addOf_unitClass_eq R κ hκ k) (corollary_4_5_three.{u, u} R κ hκ hfg).1
 
 /-- **The isomorphism `M ≅ V(R)` packaged by `BergmanDicksData`.**  The four conditions
@@ -399,12 +399,12 @@ theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M
     (hκ : ℵ₀ ≤ κ) :
     letI := (projClass bd.R κ hκ).instKMonoid hκ
     letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-      ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+      ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
     ∃ Φ : M → ↥((projClass bd.R κ hκ).lambdaSmallPart ℵ₀),
       IsLMonoidHom ℵ₀ Φ ∧ Function.Injective Φ ∧ Function.Surjective Φ := by
   let := (projClass bd.R κ hκ).instKMonoid hκ
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+    ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
   classical
   -- each `P a` is a finitely generated projective module, hence an `ℵ₀⁻`-small class
   have hclass : ∀ a : M, ∃ c : (projClass bd.R κ hκ).carrier,
@@ -455,7 +455,7 @@ its projectives — Albrecht's theorem recovers `EveryProjectiveIsSumOfFG R` fro
 theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ κ)
     (k : Type u) [Field k] (x : H)
     (hbr : letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset hκ x)
-      IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) H hκ (fun y => (y : H))) :
+      IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) H (le_succ_of_le hκ) (fun y => (y : H))) :
     ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
       letI := (projClass R κ hκ).instKMonoid hκ
       ∃ e : (projClass R κ hκ).carrier → H, KMonoid.IsKHom κ e ∧ Function.Bijective e := by
@@ -491,7 +491,7 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
   refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, ?_⟩
   let := (projClass bd.R κ hκ).instKMonoid hκ
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+    ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
   -- Step 3: Albrecht's theorem for the hereditary `R` is the hypothesis of Corollary 4.5(3)
   obtain ⟨hbr₂, -⟩ := corollary_4_5_three.{u, u} bd.R κ hκ Albrecht.exists_directSum_fg
   -- Step 4: transport that braiding along `add x ≅ V(R)`
@@ -499,12 +499,12 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
   have hΦΦ' : ∀ a, Function.invFun Φ (Φ a) = a := Function.leftInverse_invFun hΦinj
   have hΦ'Φ : ∀ c, Φ (Function.invFun Φ c) = c := fun c => Function.invFun_eq (hΦsurj c)
   have hΦ'hom : IsLMonoidHom ℵ₀ (Function.invFun Φ) := hΦhom.inv hΦΦ' hΦ'Φ
-  have hbr₁ : IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) (projClass bd.R κ hκ).carrier hκ
+  have hbr₁ : IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) (projClass bd.R κ hκ).carrier (le_succ_of_le hκ)
       (fun a => ((Φ a : ↥((projClass bd.R κ hκ).lambdaSmallPart ℵ₀)) :
         (projClass bd.R κ hκ).carrier)) :=
-    hbr₂.of_base_iso hκ (g := Φ) (g' := Function.invFun Φ) hΦhom hΦ'hom hΦΦ' hΦ'Φ
+    hbr₂.of_base_iso (le_succ_of_le hκ) (g := Φ) (g' := Function.invFun Φ) hΦhom hΦ'hom hΦΦ' hΦ'Φ
   -- Step 5: two `κ`-monoids braided over `add x` are isomorphic
-  obtain ⟨e, hehom, -, hebij⟩ := isKIso_of_braidedOver_same hκ hbr₁ hbr
+  obtain ⟨e, hehom, -, hebij⟩ := isKIso_of_braidedOver_same (le_succ_of_le hκ) hbr₁ hbr
   exact ⟨e, hehom, hebij⟩
 
 end Cor47
@@ -533,7 +533,7 @@ variable {R : Type u} [Ring R] {κ : Cardinal.{u}}
 /-- **Example 4.8(1)**: finite KRSA ascends to infinite KRSA — if `V^{λ⁻}(C_{λ⁻})` is free on `B`,
 then `V^κ(C)` is the universal `κ`-extension of the free `λ⁻`-monoid on `B`. -/
 theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
-    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (B : Type u)
+    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
     (hfree : letI : Fact lam.IsRegular := ⟨hlam⟩
       letI := C.instKMonoid hκ
       letI := IsLSubset.lmonoid hlam (C.lambdaSmallPart_isLSubset hκ lam hlam hlk)
@@ -563,7 +563,7 @@ theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤
 /-- The `B`-indexed form: `V^κ(C)` has the universal property of the free `κ`-monoid on `B`.  Every
 map from `B` into a `κ`-monoid extends uniquely along the generators `ι(b)`. -/
 theorem krsa_ascent_free (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
-    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (B : Type u)
+    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
     {f : letI : Fact lam.IsRegular := ⟨hlam⟩; ↥(FreeL lam B) → C.carrier}
     (huniv : letI : Fact lam.IsRegular := ⟨hlam⟩
       letI := C.instKMonoid hκ
@@ -587,7 +587,7 @@ theorem krsa_ascent_free (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ�
   have hcomp0 : LMonoid.IsLHom hlk (fun y : ↥(FreeL lam B) => ψ' (f y)) := by
     refine ⟨by show ψ' (f 0) = 0; rw [huniv.isLHom.1, hψ'hom.1], fun {ι} hι y => ?_⟩
     show ψ' (f (LMonoid.lsumOf hι y)) = _
-    rw [huniv.isLHom.2 hι y, hψ'hom.map_sumOf (hι.le.trans hlk) (f ∘ y)]
+    rw [huniv.isLHom.2 hι y, hψ'hom.map_sumOf (le_of_lt_of_le_succ hlk hι) (f ∘ y)]
     rfl
   have hcomp : IsLMonoidHom lam (fun y : ↥(FreeL lam B) => ψ' (f y)) :=
     isLMonoidHom_of_isLHom hlam hlk hcomp0
@@ -608,7 +608,7 @@ The two sides live in different universes: `F_κ(B)` is cut out of `B → F_κ` 
 property, is the companion statement. -/
 theorem krsa_ascent_iso {R : Type u} [Ring R] {κ : Cardinal.{u}}
     (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
-    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (B : Type u)
+    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
     {f : letI : Fact lam.IsRegular := ⟨hlam⟩
       letI := C.instKMonoid hκ
       ↥(FreeL lam B) → C.carrier}

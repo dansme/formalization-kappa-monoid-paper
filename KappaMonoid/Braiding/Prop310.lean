@@ -26,7 +26,7 @@ Paper proof: uniqueness is clear since `X` generates `H`.  For existence, well-d
 of `φ̄ (Σᵢ xᵢ) := Σᵢ φ (xᵢ)` follows by telescoping along a braiding of two representations
 `Σᵢ xᵢ = Σⱼ yⱼ`. -/
 theorem extend_lhom {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
-    (hlk : lam ≤ κ) (f : X → H) (hbr : IsBraidedOver lam κ X H hlk f)
+    (hlk : lam ≤ Order.succ κ) (f : X → H) (hbr : IsBraidedOver lam κ X H hlk f)
     {K : Type t} [KMonoid κ K] (φ : X → K) (hφ : IsLHom hlk φ) :
     ∃! ψ : H → K, IsKHom κ ψ ∧ ∀ x, ψ (f x) = φ x := by
   classical
@@ -102,7 +102,7 @@ enough for Examples 4.8(1): there `V^κ(C) ≅ F_κ(B)` compares a `Type u` with
 `F_κ(B)` is built from cardinals.  The construction costs nothing: `extend_lhom` extends into a
 `K` in any universe. -/
 structure IsUniversalKExtension (lam κ : Cardinal.{u}) (X : Type v) (Hh : Type w)
-    [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) (f : X → Hh) : Prop where
+    [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ Order.succ κ) (f : X → Hh) : Prop where
   isLHom : IsLHom hlk f
   universal : ∀ (K : Type t) [KMonoid κ K] (φ : X → K), IsLHom hlk φ →
     ∃! ψ : Hh → K, IsKHom κ ψ ∧ ∀ x, ψ (f x) = φ x
@@ -110,7 +110,7 @@ structure IsUniversalKExtension (lam κ : Cardinal.{u}) (X : Type v) (Hh : Type 
 /-- Being a universal `κ`-extension transports along an isomorphism of the base — a purely formal
 consequence of the universal property, needing no reducedness. -/
 theorem IsUniversalKExtension.of_base_iso {X₁ : Type v} {X₂ : Type z} {Hh : Type w}
-    [LMonoid lam X₁] [LMonoid lam X₂] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X₁ → Hh}
+    [LMonoid lam X₁] [LMonoid lam X₂] [KMonoid κ Hh] (hlk : lam ≤ Order.succ κ) {f : X₁ → Hh}
     (h : IsUniversalKExtension.{u, v, w, t} lam κ X₁ Hh hlk f) (g : X₂ → X₁) (g' : X₁ → X₂)
     (hg : IsLMonoidHom lam g) (hg' : IsLMonoidHom lam g')
     (hgg' : ∀ x, g' (g x) = x) (hg'g : ∀ x, g (g' x) = x) :
@@ -139,7 +139,7 @@ theorem IsUniversalKExtension.of_base_iso {X₁ : Type v} {X₂ : Type z} {Hh : 
 /-- A universal `κ`-extension is unique up to a unique isomorphism, as for any object
 defined by a universal property. -/
 theorem isUniversalKExtension_unique {X : Type v} {H₁ H₂ : Type w}
-    [LMonoid lam X] [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ κ)
+    [LMonoid lam X] [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ Order.succ κ)
     {f₁ : X → H₁} {f₂ : X → H₂}
     (h₁ : IsUniversalKExtension.{u, v, w, w} lam κ X H₁ hlk f₁)
     (h₂ : IsUniversalKExtension.{u, v, w, w} lam κ X H₂ hlk f₂) :
@@ -184,7 +184,7 @@ Each extension is needed twice over: `h₁` extends into `H₂` and `h₂` into 
 constructions that produce universal extensions — `IsBraidedOver.isUniversalKExtension` and hence
 `theorem_3_12`, `lemma_3_14_free`, `krsa_ascent` — are polymorphic in the test universe. -/
 theorem isUniversalKExtension_unique' {X : Type v} {H₁ : Type w} {H₂ : Type t}
-    [LMonoid lam X] [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ κ)
+    [LMonoid lam X] [KMonoid κ H₁] [KMonoid κ H₂] (hlk : lam ≤ Order.succ κ)
     {f₁ : X → H₁} {f₂ : X → H₂}
     (h₁ : IsUniversalKExtension.{u, v, w, t} lam κ X H₁ hlk f₁)
     (h₁' : IsUniversalKExtension.{u, v, w, w} lam κ X H₁ hlk f₁)
@@ -254,7 +254,7 @@ theorem isLMonoidHom_aleph0_of_add {X : Type v} {Y : Type w} [LMonoid (ℵ₀ : 
 `λ⁻`-braided over `X₁` and `g : X₂ → X₁` is an isomorphism of `λ⁻`-monoids, then `H` is
 `λ⁻`-braided over `X₂` along `f ∘ g`. -/
 theorem IsBraidedOver.of_base_iso {X₁ : Type v} {X₂ : Type z} {H : Type w} [LMonoid lam X₁]
-    [LMonoid lam X₂] [KMonoid κ H] (hlk : lam ≤ κ) {f : X₁ → H}
+    [LMonoid lam X₂] [KMonoid κ H] (hlk : lam ≤ Order.succ κ) {f : X₁ → H}
     (hbr : IsBraidedOver lam κ X₁ H hlk f) {g : X₂ → X₁} {g' : X₁ → X₂}
     (hg : IsLMonoidHom lam g) (hg' : IsLMonoidHom lam g')
     (hgg' : ∀ x, g' (g x) = x) (hg'g : ∀ x, g (g' x) = x) :
@@ -279,14 +279,14 @@ theorem IsBraidedOver.of_base_iso {X₁ : Type v} {X₂ : Type z} {H : Type w} [
 and `e : H₁ → H₂` is a bijective `κ`-homomorphism commuting with the two structure maps, then
 `H₂` is `λ⁻`-braided over `X` as well. -/
 theorem IsBraidedOver.of_iso {X : Type v} {H₁ H₂ : Type w} [LMonoid lam X] [KMonoid κ H₁]
-    [KMonoid κ H₂] (hlk : lam ≤ κ) {f₁ : X → H₁} {f₂ : X → H₂}
+    [KMonoid κ H₂] (hlk : lam ≤ Order.succ κ) {f₁ : X → H₁} {f₂ : X → H₂}
     (hbr : IsBraidedOver lam κ X H₁ hlk f₁) {e : H₁ → H₂} (he : IsKHom κ e)
     (hbij : Function.Bijective e) (hcomm : ∀ x, e (f₁ x) = f₂ x) :
     IsBraidedOver lam κ X H₂ hlk f₂ where
   isLHom := by
     refine ⟨by rw [← hcomm 0, hbr.isLHom.1, he.1], fun {ι} h x => ?_⟩
     rw [← hcomm (lsumOf (lam := lam) h x), hbr.isLHom.2 h x,
-      he.map_sumOf (h.le.trans hlk) (f₁ ∘ x)]
+      he.map_sumOf (le_of_lt_of_le_succ hlk h) (f₁ ∘ x)]
     exact congrArg _ (funext fun i => hcomm (x i))
   injective := fun a b hab => hbr.injective (hbij.1 (by rw [hcomm a, hcomm b]; exact hab))
   generates := fun h => by
@@ -305,7 +305,7 @@ theorem IsBraidedOver.of_iso {X : Type v} {H₁ H₂ : Type w} [LMonoid lam X] [
 /-- A `κ`-monoid braided over a subset `S` is generated by `S` as a `κ`-monoid: that is the
 `generates` field, read as a statement about the `κ`-closure. -/
 theorem IsBraidedOver.kGenerates_coe {H : Type v} [KMonoid κ H] {S : Set H} [LMonoid lam ↥S]
-    {hlk : lam ≤ κ} (hbr : IsBraidedOver lam κ ↥S H hlk (fun y => (y : H))) :
+    {hlk : lam ≤ Order.succ κ} (hbr : IsBraidedOver lam κ ↥S H hlk (fun y => (y : H))) :
     KGenerates κ S := by
   refine kGenerates_iff.mpr fun h => ?_
   obtain ⟨x, hx⟩ := hbr.generates h
@@ -317,7 +317,7 @@ is closed: two such proofs are proofs of the same proposition, so the induced `�
 structures are definitionally equal.  This is what lets a braiding be moved along an equality of
 subsets, such as `V(R) = add [R]` in Corollary 4.7(1). -/
 theorem IsBraidedOver.of_set_eq {H : Type v} [KMonoid κ H] (hlam : lam.IsRegular)
-    {hlk : lam ≤ κ} {S T : Set H} (hS : IsLSubset lam hlk S) (hT : IsLSubset lam hlk T)
+    {hlk : lam ≤ Order.succ κ} {S T : Set H} (hS : IsLSubset lam hlk S) (hT : IsLSubset lam hlk T)
     (hST : S = T)
     (hbr : letI := hT.lmonoid hlam
       IsBraidedOver lam κ ↥T H hlk (fun y => (y : H))) :
@@ -343,7 +343,7 @@ then pulled back through `e` and land in `T` because each block sum `Σ_{I_μ} x
 `u_μ`, `v_μ` are summands of it.  This is how Lemma 5.1 replaces the base `V(R)` — where the
 braiding of Corollary 4.5(3) lives — by the smaller base `add (x₁ + x₂)`. -/
 theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMonoid κ H₂]
-    (hlam : lam.IsRegular) {hlk : lam ≤ κ} {S : Set H₂} {T : Set H₁}
+    (hlam : lam.IsRegular) {hlk : lam ≤ Order.succ κ} {S : Set H₂} {T : Set H₁}
     (hS : IsLSubset lam hlk S) (hT : IsLSubset lam hlk T)
     (hbr : letI := hS.lmonoid hlam
       IsBraidedOver lam κ ↥S H₂ hlk (fun y => (y : H₂)))
@@ -372,19 +372,19 @@ theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMo
     (fun i => ⟨e (y i : H₁), himg (y i)⟩) (by rw [← hksum x, ← hksum y, hxy])
   -- every `u`, `v` of the braiding pulls back into `T`
   have hpull : ∀ (z : Idx κ → ↥T) (p : Idx κ × ℕ) (P : Set (Idx κ)) (hP : #P < lam)
-      (a b : ↥S), KMonoid.sumOf (κ := κ) (hP.le.trans hlk) (fun i : P => e (z i : H₁))
+      (a b : ↥S), KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk hP) (fun i : P => e (z i : H₁))
         = ((a : H₂) + (b : H₂)) →
       einv (a : H₂) ∈ T ∧ einv (b : H₂) ∈ T ∧
-        KMonoid.sumOf (κ := κ) (hP.le.trans hlk) (fun i : P => (z i : H₁))
+        KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk hP) (fun i : P => (z i : H₁))
           = einv (a : H₂) + einv (b : H₂) := by
     intro z p P hP a b hab
-    have hblock : KMonoid.sumOf (κ := κ) (hP.le.trans hlk) (fun i : P => (z i : H₁)) ∈ T :=
+    have hblock : KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk hP) (fun i : P => (z i : H₁)) ∈ T :=
       hT.sumOf_mem hP _ fun i => (z i).2
-    have hsplit : KMonoid.sumOf (κ := κ) (hP.le.trans hlk) (fun i : P => (z i : H₁))
+    have hsplit : KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk hP) (fun i : P => (z i : H₁))
         = einv (a : H₂) + einv (b : H₂) := by
       refine hbij.1 ?_
       rw [he.map_add, hri (a : H₂), hri (b : H₂), ← hab]
-      exact he.map_sumOf (hP.le.trans hlk) (fun i : P => (z i : H₁))
+      exact he.map_sumOf (le_of_lt_of_le_succ hlk hP) (fun i : P => (z i : H₁))
     exact ⟨hsat _ hblock _ _ hsplit, hsat _ hblock _ _ (hsplit.trans (add_comm _ _)), hsplit⟩
   have huv : ∀ p : Idx κ × ℕ, einv (D.v p : H₂) ∈ T ∧ einv (D.u p : H₂) ∈ T := by
     intro p
@@ -410,7 +410,7 @@ theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMo
 /-- Being `λ⁻`-braided over `X` implies being the universal `κ`-extension of `X`
 (the second half of Theorem 3.12(2)); it is immediate from Proposition 3.10. -/
 theorem IsBraidedOver.isUniversalKExtension {X : Type v} {H : Type w}
-    [LMonoid lam X] [KMonoid κ H] (hlk : lam ≤ κ) {f : X → H}
+    [LMonoid lam X] [KMonoid κ H] (hlk : lam ≤ Order.succ κ) {f : X → H}
     (hbr : IsBraidedOver lam κ X H hlk f) :
     IsUniversalKExtension lam κ X H hlk f :=
   { isLHom := hbr.isLHom

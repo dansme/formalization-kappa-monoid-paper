@@ -31,7 +31,8 @@ def addOfCard {lam : Cardinal.{u}} (hlam : lam ≤ κ) (x : H) : Set H :=
 /-- `add x` is a submonoid: it contains `0` and is closed under finite sums.  Stated as
 `IsLSubset ℵ₀`, which is exactly closure under sums over index types of cardinality `< ℵ₀`, so
 that the subtype picks up an `LMonoid ℵ₀` instance through `IsLSubset.lmonoid`. -/
-theorem addOf_isLSubset (hκ : ℵ₀ ≤ κ) (x : H) : IsLSubset ℵ₀ hκ (addOf (κ := κ) x) := by
+theorem addOf_isLSubset (hκ : ℵ₀ ≤ κ) (x : H) :
+    IsLSubset ℵ₀ (le_succ_of_le hκ) (addOf (κ := κ) x) := by
   classical
   constructor
   · -- `0 = 0 + 0` is a summand of `0 · x`
@@ -82,7 +83,7 @@ theorem addOf_isSaturated (x : H) :
 
 /-- `add_λ x` is a `λ⁻`-submonoid of `H`. -/
 theorem addOfCard_isLSubset {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ κ) (x : H) :
-    IsLSubset lam hlk (addOfCard hlk x) := by
+    IsLSubset lam (hlk.trans (Order.le_succ κ)) (addOfCard hlk x) := by
   classical
   constructor
   · exact ⟨cmul (κ := κ) lam hlk x, zero_add _⟩

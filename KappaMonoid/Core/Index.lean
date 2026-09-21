@@ -81,6 +81,30 @@ theorem mk_union_lt {ι : Type u} {S T : Set ι} (hS : #S < lam) (hT : #T < lam)
 
 end Regular
 
+/-! ### The paper's `λ ≤ κ⁺`
+
+Definition 3.1(2) and everything built on it relate a `λ⁻`-monoid to a `κ`-monoid under the
+hypothesis `λ ≤ κ⁺`.  All that is ever used of it is that a `< λ`-sized index set has size `≤ κ`,
+which is `le_of_lt_of_le_succ`.  The hypothesis is genuinely weaker than `λ ≤ κ`: at `κ = ℵ₀` it
+also admits `λ = ℵ₁`, which is the case Kaplansky's theorem supplies in Corollary 4.5. -/
+
+/-- The content of the paper's `λ ≤ κ⁺`: a family indexed by fewer than `λ` elements is indexed
+by at most `κ` elements. -/
+theorem le_of_lt_of_le_succ {a lam κ : Cardinal.{u}} (hlk : lam ≤ Order.succ κ) (h : a < lam) :
+    a ≤ κ :=
+  Order.lt_succ_iff.mp (h.trans_le hlk)
+
+/-- The converse direction: `λ ≤ κ` is the stronger hypothesis. -/
+theorem le_succ_of_le {lam κ : Cardinal.{u}} (h : lam ≤ κ) : lam ≤ Order.succ κ :=
+  h.trans (Order.le_succ κ)
+
+/-- `ℵ₀ ≤ κ⁺` forces `ℵ₀ ≤ κ`: `ℵ₀` is a limit cardinal, so it is not `≤` any successor of a
+finite cardinal.  This is what lets `λ ≤ κ⁺` with `λ` infinite keep `κ` infinite without a
+separate hypothesis. -/
+theorem aleph0_le_of_aleph0_le_succ {κ : Cardinal.{u}} (h : ℵ₀ ≤ Order.succ κ) : ℵ₀ ≤ κ := by
+  by_contra hc
+  exact absurd h (not_le.mpr (Cardinal.isSuccLimit_aleph0.succ_lt (not_le.mp hc)))
+
 theorem mk_lt_of_injective {lam : Cardinal.{u}} {α β : Type u} (hβ : #β < lam) (f : α → β)
     (hf : Function.Injective f) : #α < lam :=
   (Cardinal.mk_le_of_injective hf).trans_lt hβ

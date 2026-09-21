@@ -443,15 +443,13 @@ theorem mem_FreeL_of_mk_lt {lam : Cardinal.{u}} [Fact lam.IsRegular] {B : Type u
 
 /-- **`F_κ^n` is `ℵ₁⁻`-braided over `F_{ℵ₀}^n`**, along the coordinatewise inclusion: the free
 `κ`-monoid on `n` generators over the free `ℵ₁⁻`-monoid on the same generators. -/
-theorem isBraidedOver_pi_fcard (hκ : Order.succ ℵ₀ ≤ κ) :
-    letI hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
+theorem isBraidedOver_pi_fcard (hκ0 : ℵ₀ ≤ κ) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := Fcard.instKMonoid hκ0
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
-    IsBraidedOver (Order.succ ℵ₀) κ (Fin n → Fcard ℵ₀) (Fin n → Fcard κ) hκ
+    IsBraidedOver (Order.succ ℵ₀) κ (Fin n → Fcard ℵ₀) (Fin n → Fcard κ) (Order.succ_le_succ hκ0)
       (fun x i => fcardIncl hκ0 (x i)) := by
-  let hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
   let := Fcard.instKMonoid hκ0
   let := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
   let : Fact (Order.succ (ℵ₀ : Cardinal.{u})).IsRegular := ⟨Cardinal.isRegular_succ le_rfl⟩
@@ -465,15 +463,15 @@ theorem isBraidedOver_pi_fcard (hκ : Order.succ ℵ₀ ≤ κ) :
   -- Lemma 3.14(1) at `λ = ℵ₁`, read as a braiding
   have hcon : IsConical ↥(FreeL (Order.succ (ℵ₀ : Cardinal.{u})) (ULift.{u} (Fin n))) :=
     LMonoid.isConical (lam := Order.succ ℵ₀) (Order.lt_succ_iff.mpr le_rfl)
-  have hbr := isBraidedOver_of_isUniversalKExtension (Cardinal.isRegular_succ le_rfl) hκ hcon
+  have hbr := isBraidedOver_of_isUniversalKExtension (Cardinal.isRegular_succ le_rfl) (Order.succ_le_succ hκ0) hcon
     (lemma_3_14_free (lam := Order.succ ℵ₀) (κ := κ) (B := ULift.{u} (Fin n))
-      (Cardinal.isRegular_succ le_rfl) hκ0 hκ)
+      (Cardinal.isRegular_succ le_rfl) hκ0 (Order.succ_le_succ hκ0))
   -- the extension side: `F_κ(ULift (Fin n)) ≅ F_κ^n`
   set e : ↥(FreeK κ (ULift.{u} (Fin n))) → (Fin n → Fcard κ) :=
     fun s => fun i => (s : ULift.{u} (Fin n) → Fcard κ) (ULift.up i) with hedef
   set e' : (Fin n → Fcard κ) → ↥(FreeK κ (ULift.{u} (Fin n))) :=
     fun x => ⟨fun b => x b.down, mem_FreeL_of_mk_lt hBk _⟩ with he'def
-  have hbr2 := hbr.of_iso hκ (e := e) ⟨funext fun _ => rfl, fun _ => funext fun _ => rfl⟩
+  have hbr2 := hbr.of_iso (Order.succ_le_succ hκ0) (e := e) ⟨funext fun _ => rfl, fun _ => funext fun _ => rfl⟩
     (Function.bijective_iff_has_inverse.mpr ⟨e', fun s => Subtype.ext (funext fun b => rfl),
       fun x => funext fun i => rfl⟩) (fun _ => rfl)
   -- the base side: `F_{ℵ₁⁻}(ULift (Fin n)) ≅ F_{ℵ₀}^n`
@@ -481,7 +479,7 @@ theorem isBraidedOver_pi_fcard (hκ : Order.succ ℵ₀ ≤ κ) :
     fun x => ⟨fun b => x b.down, mem_FreeL_of_mk_lt hBlam _⟩ with hgdef
   set g' : ↥(FreeL (Order.succ (ℵ₀ : Cardinal.{u})) (ULift.{u} (Fin n))) → (Fin n → Fcard ℵ₀) :=
     fun s => fun i => (s : ULift.{u} (Fin n) → Fcard ℵ₀) (ULift.up i) with hg'def
-  have hbr3 := hbr2.of_base_iso hκ (g := g) (g' := g')
+  have hbr3 := hbr2.of_base_iso (Order.succ_le_succ hκ0) (g := g) (g' := g')
     (fun h x => Subtype.ext (funext fun b => rfl)) (fun h s => funext fun i => rfl)
     (fun x => funext fun i => rfl) (fun s => Subtype.ext (funext fun b => rfl))
   exact hbr3
@@ -489,12 +487,13 @@ theorem isBraidedOver_pi_fcard (hκ : Order.succ ℵ₀ ≤ κ) :
 /-- **Proposition 3.15(1)**: the universal `κ`-extension of the `ℵ₀`-monoid cut out of `F_{ℵ₀}^n`
 by a system is the `κ`-submonoid of `F_κ^n` cut out by the *same* system.
 
-An `ℵ₀`-monoid is an `ℵ₁⁻`-monoid, which is why the extension is taken along `λ = ℵ₀⁺`.
+An `ℵ₀`-monoid is an `ℵ₁⁻`-monoid, which is why the extension is taken along `λ = ℵ₀⁺ = ℵ₁`.
+That needs `ℵ₁ ≤ κ⁺`, i.e. `ℵ₀ ≤ κ`, and so holds for every infinite `κ` — it is `λ ≤ κ` that
+would have forced `κ ≥ ℵ₁` here.
 
 Paper proof: the solution set over `F_κ` is `ℵ₁⁻`-braided over the solution set over `F_{ℵ₀}`,
 so Theorem 3.12(2) identifies it as the universal `κ`-extension. -/
-theorem prop_3_15_one (hκ : Order.succ ℵ₀ ≤ κ) :
-    letI hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
+theorem prop_3_15_one (hκ0 : ℵ₀ ≤ κ) :
     letI := Fcard.instKMonoid (le_refl ℵ₀)
     letI := Fcard.instKMonoid hκ0
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
@@ -502,17 +501,16 @@ theorem prop_3_15_one (hκ : Order.succ ℵ₀ ≤ κ) :
     letI := (sys.isKSubmonoid_solutions (le_refl ℵ₀)).kmonoid
     letI := (sys.isKSubmonoid_solutions hκ0).kmonoid
     IsUniversalKExtension (Order.succ ℵ₀) κ ↥(sys.solutions (le_refl ℵ₀))
-      ↥(sys.solutions hκ0) hκ
+      ↥(sys.solutions hκ0) (Order.succ_le_succ hκ0)
       (fun x => ⟨fun i => fcardIncl hκ0 ((x : Fin n → Fcard ℵ₀) i),
         sys.mem_solutions_of_incl hκ0 x.2⟩) := by
-  let hκ0 : ℵ₀ ≤ κ := le_trans (Order.le_succ ℵ₀) hκ
   let := Fcard.instKMonoid hκ0
   let := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ0
   -- the `ℵ₀`-solutions form an `ℵ₁⁻`-submonoid of `F_{ℵ₀}^n`: an `ℵ₀`-monoid *is* an `ℵ₁⁻`-monoid
   have hS : IsLSubmonoid (Order.succ ℵ₀) (sys.solutions (le_refl (ℵ₀ : Cardinal.{u}))) :=
     ⟨(sys.isKSubmonoid_solutions (le_refl ℵ₀)).zero_mem, fun {ι} h x hx =>
       (sys.isKSubmonoid_solutions (le_refl ℵ₀)).sumOf_mem (KMonoid.le_of_lt_succ h) x hx⟩
-  exact lemma_3_14_sub_of_subset hκ (isBraidedOver_pi_fcard hκ) _ hS
+  exact lemma_3_14_sub_of_subset (Order.succ_le_succ hκ0) (isBraidedOver_pi_fcard hκ0) _ hS
     (Or.inl (Order.lt_succ_iff.mpr le_rfl).ne') (sys.isKSubmonoid_solutions hκ0)
     (fun x hx => sys.mem_solutions_of_incl hκ0 hx) (sys.solutions_subset_kclosure hκ0)
 
@@ -946,7 +944,7 @@ theorem isBraidedOver_pi_lcard {n : ℕ} :
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
     letI := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
       Cardinal.isRegular_aleph0
-    IsBraidedOver ℵ₀ ℵ₀ (Fin n → LCard (ℵ₀ : Cardinal.{u})) (Fin n → Fcard ℵ₀) (le_refl ℵ₀)
+    IsBraidedOver ℵ₀ ℵ₀ (Fin n → LCard (ℵ₀ : Cardinal.{u})) (Fin n → Fcard ℵ₀) (Order.le_succ ℵ₀)
       lcardInclPi := by
   let : Fact (ℵ₀ : Cardinal.{u}).IsRegular := ⟨Cardinal.isRegular_aleph0⟩
   let := LMonoid.pi (ℵ₀ : Cardinal.{u}) (fun _ : Fin n => LCard (ℵ₀ : Cardinal.{u}))
@@ -959,19 +957,19 @@ theorem isBraidedOver_pi_lcard {n : ℕ} :
   -- Lemma 3.14(1) at `λ = κ = ℵ₀`, read as a braiding
   have hcon : IsConical ↥(FreeL (ℵ₀ : Cardinal.{u}) (ULift.{u} (Fin n))) :=
     isLSubmonoid_FreeL.isConical (isConical_pi fun _ => isConical_lcard Cardinal.isRegular_aleph0)
-  have hbr := isBraidedOver_of_isUniversalKExtension Cardinal.isRegular_aleph0 (le_refl ℵ₀) hcon
+  have hbr := isBraidedOver_of_isUniversalKExtension Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀) hcon
     (lemma_3_14_free (lam := ℵ₀) (κ := ℵ₀) (B := ULift.{u} (Fin n))
-      Cardinal.isRegular_aleph0 le_rfl le_rfl)
+      Cardinal.isRegular_aleph0 le_rfl (Order.le_succ ℵ₀))
   -- the extension side: `F_{ℵ₀}(ULift (Fin n)) ≅ F_{ℵ₀}^n`
   set e : ↥(FreeK (ℵ₀ : Cardinal.{u}) (ULift.{u} (Fin n))) → (Fin n → Fcard ℵ₀) :=
     fun s => fun i => (s : ULift.{u} (Fin n) → Fcard ℵ₀) (ULift.up i) with hedef
-  have hbr2 := hbr.of_iso (le_refl ℵ₀) (e := e) ⟨funext fun _ => rfl, fun _ => funext fun _ => rfl⟩
+  have hbr2 := hbr.of_iso (Order.le_succ ℵ₀) (e := e) ⟨funext fun _ => rfl, fun _ => funext fun _ => rfl⟩
     (Function.bijective_iff_has_inverse.mpr
       ⟨fun x => ⟨fun b => x b.down, mem_FreeL_of_mk_lt hBk _⟩,
         fun s => Subtype.ext (funext fun b => rfl), fun x => funext fun i => rfl⟩)
     (fun _ => rfl)
   -- the base side: `F_{ℵ₀⁻}(ULift (Fin n)) ≅ ℕ₀^n`
-  exact hbr2.of_base_iso (le_refl ℵ₀)
+  exact hbr2.of_base_iso (Order.le_succ ℵ₀)
     (g := fun x => ⟨fun b => x b.down, mem_FreeL_of_mk_lt hBlt _⟩)
     (g' := fun s => fun i => (s : ULift.{u} (Fin n) → LCard (ℵ₀ : Cardinal.{u})) (ULift.up i))
     (fun h x => Subtype.ext (funext fun b => rfl)) (fun h s => funext fun i => rfl)
@@ -1146,7 +1144,7 @@ theorem prop_3_15_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
         (fun a ha b hb => sys.addSubmonoid_finSolutions.2 a ha b hb)
     letI := LMonoid.ofAddCommMonoid ↥sys.finSolutions
     letI := sys.isKSubmonoid_alephExt.kmonoid
-    IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (le_refl ℵ₀)
+    IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (Order.le_succ ℵ₀)
       (fun h => ⟨(h : Fin n → Fcard ℵ₀), ⟨(h : Fin n → Fcard ℵ₀), h.2, 0,
         sys.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
   let : AddCommMonoid ↥sys.finSolutions :=
@@ -1195,7 +1193,7 @@ theorem prop_3_15_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     exact hclos.ksum_mem _ fun _ => KMonoid.subset_kclosure (himg h' hh')
   -- Lemma 3.14(2) over `ℕ₀^n`, then transport the base from `S` to `H`
   let := hS.lmonoid
-  have hbrS := isBraidedOver_of_isLSubmonoid (le_refl (ℵ₀ : Cardinal.{u})) isBraidedOver_pi_lcard
+  have hbrS := isBraidedOver_of_isLSubmonoid (Order.le_succ (ℵ₀ : Cardinal.{u})) isBraidedOver_pi_lcard
     S hS (Or.inr hsatS) sys.isKSubmonoid_alephExt hfS hTgen
   have hg0 : down 0 = (0 : Fin n → LCard (ℵ₀ : Cardinal.{u})) := by
     refine funext fun i => LCard.ext ?_
@@ -1221,13 +1219,13 @@ theorem prop_3_15_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
       (g := fun s : ↥S =>
         (⟨lcardInclPi (s : Fin n → LCard (ℵ₀ : Cardinal.{u})), s.2⟩ : ↥sys.finSolutions))
       (Subtype.ext lcardInclPi_zero) fun a b => Subtype.ext (lcardInclPi_add _ _)
-  have hbr := hbrS.of_base_iso (le_refl (ℵ₀ : Cardinal.{u}))
+  have hbr := hbrS.of_base_iso (Order.le_succ (ℵ₀ : Cardinal.{u}))
     (g := fun y : ↥sys.finSolutions => (⟨down y, hdownS y⟩ : ↥S))
     (g' := fun s : ↥S =>
       (⟨lcardInclPi (s : Fin n → LCard (ℵ₀ : Cardinal.{u})), s.2⟩ : ↥sys.finSolutions))
     hg hg' (fun y => Subtype.ext (hdown y))
     (fun s => Subtype.ext (funext fun i => LCard.ext rfl))
-  exact hbr.isUniversalKExtension (le_refl ℵ₀)
+  exact hbr.isUniversalKExtension (Order.le_succ ℵ₀)
 
 /-- **Proposition 3.15(2) for a system of equations and congruences**, with no hypothesis beyond
 the system: such an `H` is saturated in `ℕ₀^n` by `isSaturatedFin_of_ineqs_empty`.  This is the
@@ -1240,7 +1238,7 @@ theorem prop_3_15_two_of_ineqs_empty (hineq : sys.ineqs = ∅) :
         (fun a ha b hb => sys.addSubmonoid_finSolutions.2 a ha b hb)
     letI := LMonoid.ofAddCommMonoid ↥sys.finSolutions
     letI := sys.isKSubmonoid_alephExt.kmonoid
-    IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (le_refl ℵ₀)
+    IsUniversalKExtension ℵ₀ ℵ₀ ↥sys.finSolutions ↥sys.alephExt (Order.le_succ ℵ₀)
       (fun h => ⟨(h : Fin n → Fcard ℵ₀), ⟨(h : Fin n → Fcard ℵ₀), h.2, 0,
         sys.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) :=
   prop_3_15_two sys (sys.isSaturatedFin_of_ineqs_empty hineq)
@@ -1425,7 +1423,7 @@ theorem not_isBraidedOver_ineqSystem :
         (fun a ha b hb => ineqSystem.addSubmonoid_finSolutions.2 a ha b hb)
     letI := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
     letI := ineqSystem.isKSubmonoid_alephExt.kmonoid
-    ¬ IsBraidedOver ℵ₀ ℵ₀ ↥ineqSystem.finSolutions ↥ineqSystem.alephExt (le_refl ℵ₀)
+    ¬ IsBraidedOver ℵ₀ ℵ₀ ↥ineqSystem.finSolutions ↥ineqSystem.alephExt (Order.le_succ ℵ₀)
       (fun h => ⟨(h : Fin 2 → Fcard ℵ₀), ⟨(h : Fin 2 → Fcard ℵ₀), h.2, 0,
         ineqSystem.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
   let : AddCommMonoid ↥ineqSystem.finSolutions :=
@@ -1509,7 +1507,7 @@ theorem not_prop_3_15_two_ineqSystem :
     letI := LMonoid.ofAddCommMonoid ↥ineqSystem.finSolutions
     letI := ineqSystem.isKSubmonoid_alephExt.kmonoid
     ¬ IsUniversalKExtension.{u, u + 1, u + 1, u + 1} ℵ₀ ℵ₀ ↥ineqSystem.finSolutions ↥ineqSystem.alephExt
-      (le_refl ℵ₀)
+      (Order.le_succ ℵ₀)
       (fun h => ⟨(h : Fin 2 → Fcard ℵ₀), ⟨(h : Fin 2 → Fcard ℵ₀), h.2, 0,
         ineqSystem.addSubmonoid_finSolutions.1, by rw [alephPart_zero, add_zero]⟩⟩) := by
   let : AddCommMonoid ↥ineqSystem.finSolutions :=
@@ -1524,7 +1522,7 @@ theorem not_prop_3_15_two_ineqSystem :
       (X := ↥ineqSystem.finSolutions) (H := Fin 2 → Fcard ℵ₀)
       (fun h => (h : Fin 2 → Fcard ℵ₀)) (fun _ _ h => Subtype.ext h) rfl fun _ _ => rfl
   exact not_isBraidedOver_ineqSystem
-    (isBraidedOver_of_isUniversalKExtension Cardinal.isRegular_aleph0 (le_refl ℵ₀) hcon huniv)
+    (isBraidedOver_of_isUniversalKExtension Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀) hcon huniv)
 
 /-! ### Example 3.16: at `κ = ℵ₀` the extension is not cut out by the same system
 

@@ -258,9 +258,9 @@ theorem ksumQ_two (hκ : ℵ₀ ≤ κ) (a b : UnivExt lam κ X) (i₀ i₁ : Id
 
 /-- The `κ`-monoid structure on `Ĥ` (Theorem 3.12(1)). -/
 @[instance_reducible]
-noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ κ) :
+noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) :
     KMonoid κ (UnivExt lam κ X) :=
-  letI hκ : ℵ₀ ≤ κ := hlam.aleph0_le.trans hlk
+  letI hκ : ℵ₀ ≤ κ := aleph0_le_of_aleph0_le_succ (hlam.aleph0_le.trans hlk)
   letI := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
   KMonoid.ofKsum
     { aleph0_le := hκ
@@ -270,11 +270,11 @@ noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ κ) :
     fun a b i₀ i₁ hne => ksumQ_two hκ a b i₀ i₁ hne
 
 /-- The `κ`-sum on `Ĥ` is the concatenation operation `ksumQ`. -/
-@[simp] theorem instKMonoid_ksum (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+@[simp] theorem instKMonoid_ksum (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ)
     (A : Idx κ → UnivExt lam κ X) :
     letI := instKMonoid (lam := lam) (κ := κ) (X := X) hlam hlk
-    ksum (κ := κ) A = ksumQ (hlam.aleph0_le.trans hlk) A := by
-  let hκ : ℵ₀ ≤ κ := hlam.aleph0_le.trans hlk
+    ksum (κ := κ) A = ksumQ (aleph0_le_of_aleph0_le_succ (hlam.aleph0_le.trans hlk)) A := by
+  let hκ : ℵ₀ ≤ κ := aleph0_le_of_aleph0_le_succ (hlam.aleph0_le.trans hlk)
   let := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
   exact KMonoid.ofKsum_ksum
     { aleph0_le := hκ
@@ -310,9 +310,9 @@ hypothesis: over a reduced `λ⁻`-monoid `X`, two families concentrated at a si
 
 Paper-style proof: in a braiding of `(x,0,0,…)` and `(y,0,0,…)`, reducedness forces
 `u μ = v μ = 0` for all but at most one index, and the remaining equations give `x = y`.
-(Neither the regularity of `λ` nor `λ ≤ κ` is used; the two hypotheses are kept for
+(Neither the regularity of `λ` nor `λ ≤ κ⁺` is used; the two hypotheses are kept for
 uniformity with the rest of the section.) -/
-theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ κ) {X : Type v}
+theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ Order.succ κ) {X : Type v}
     [LMonoid lam X] (hred : IsConical X) (i₀ : Idx κ) :
     Function.Injective (UnivExt.of (lam := lam) (κ := κ) (X := X) i₀) := by
   classical
@@ -407,19 +407,19 @@ theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ κ) {X : Ty
 
 /-- **Theorem 3.12** (with the hypothesis `IsConical X` added, cf. the module docstring).
 
-Let `λ ≤ κ` with `λ` regular and let `X` be a *reduced* `λ⁻`-monoid.  Then there is a
+Let `λ ≤ κ⁺` with `λ` regular and let `X` be a *reduced* `λ⁻`-monoid.  Then there is a
 `κ`-monoid `Ĥ` containing `X` as a `λ⁻`-submonoid such that
 
 1. `Ĥ` is `λ⁻`-braided over `X`, and
 2. `Ĥ` is the universal `κ`-extension of `X`. -/
-theorem theorem_3_12 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type v) [LMonoid lam X]
+theorem theorem_3_12 (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (X : Type v) [LMonoid lam X]
     (hred : IsConical X) :
     ∃ (Hh : Type (max u v)) (_ : KMonoid κ Hh) (f : X → Hh),
       Function.Injective f ∧
       IsBraidedOver lam κ X Hh hlk f ∧
       IsUniversalKExtension lam κ X Hh hlk f := by
   classical
-  have hκ : ℵ₀ ≤ κ := hlam.aleph0_le.trans hlk
+  have hκ : ℵ₀ ≤ κ := aleph0_le_of_aleph0_le_succ (hlam.aleph0_le.trans hlk)
   obtain ⟨i₀⟩ := nonempty_Idx hκ
   let inst : KMonoid κ (UnivExt lam κ X) := UnivExt.instKMonoid hlam hlk
   have hgen : ∀ w : Idx κ → X,
@@ -430,7 +430,7 @@ theorem theorem_3_12 (hlam : lam.IsRegular) (hlk : lam ≤ κ) (X : Type v) [LMo
     refine ⟨⟨hof0, ?_⟩, UnivExt.of_injective hlam hlk hred i₀, ?_, ?_⟩
     · -- `of i₀` is a `λ⁻`-homomorphism
       intro ι h z
-      have hg : #ι ≤ κ := h.le.trans hlk
+      have hg : #ι ≤ κ := le_of_lt_of_le_succ hlk h
       set g : ι ↪ Idx κ := emb hg with hgdef
       have hfam : Function.extend g (fun i => UnivExt.of (lam := lam) i₀ (z i)) 0
           = fun a => UnivExt.of (lam := lam) i₀ (Function.extend g z 0 a) := by
@@ -481,7 +481,7 @@ to `theorem_3_12` is automatic, since a `λ⁻`-monoid with `ℵ₀ < λ` is red
 So the deviation from the paper is confined to `λ = ℵ₀`, where a `λ⁻`-monoid is an arbitrary
 commutative monoid and the hypothesis is genuinely necessary — see
 `isConical_of_isUniversalKExtension` and the counterexample `ℤ` below. -/
-theorem theorem_3_12_of_aleph0_lt (hlam : lam.IsRegular) (hlk : lam ≤ κ) (hlam0 : ℵ₀ < lam)
+theorem theorem_3_12_of_aleph0_lt (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (hlam0 : ℵ₀ < lam)
     (X : Type v) [LMonoid lam X] :
     ∃ (Hh : Type (max u v)) (_ : KMonoid κ Hh) (f : X → Hh),
       Function.Injective f ∧
@@ -501,7 +501,7 @@ isomorphism (`IsBraidedOver.of_iso`).
 The universe `Type (max u v)` is where `theorem_3_12` puts its extension, and uniqueness compares
 two extensions in the same universe; for `X : Type u` this is no restriction, and for
 `X : Type (u+1)` — the case of `F_κ` and its powers — it reads `Type (u+1)`. -/
-theorem isBraidedOver_of_isUniversalKExtension (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+theorem isBraidedOver_of_isUniversalKExtension (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ)
     {X : Type v} [LMonoid lam X] (hred : IsConical X) {H : Type (max u v)} [KMonoid κ H]
     {f : X → H} (hu : IsUniversalKExtension.{u, v, max u v, max u v} lam κ X H hlk f) :
     IsBraidedOver lam κ X H hlk f := by
@@ -512,7 +512,7 @@ theorem isBraidedOver_of_isUniversalKExtension (hlam : lam.IsRegular) (hlk : lam
 /-- Conversely, a `λ⁻`-monoid admitting a universal `κ`-extension into which it embeds must
 be reduced; so the hypothesis added in `theorem_3_12` cannot be dropped. -/
 theorem isConical_of_isUniversalKExtension {X : Type v} {Hh : Type w}
-    [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ κ) {f : X → Hh}
+    [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ Order.succ κ) {f : X → Hh}
     (hf : Function.Injective f) (hhom : IsLHom hlk f) : IsConical X :=
   LMonoid.isConical_of_injective (lam := lam) (κ := κ) f hf hhom.1
     (fun a b => IsLHom.map_add hlk hhom a b)
@@ -523,7 +523,7 @@ commutative monoid) that is not reduced, hence embeds into no `κ`-monoid.
 Note that the `ℵ₀⁻`-monoid structure on `ULift ℤ` has to be the canonical one of
 `LMonoid.ofAddCommMonoid`: for an arbitrary `LMonoid ℵ₀ (ULift ℤ)` instance the underlying
 addition is arbitrary as well, and then `1 + (-1) = 0` is not available. -/
-example (hlk : (ℵ₀ : Cardinal.{u}) ≤ κ) {Hh : Type w} [KMonoid κ Hh]
+example (hlk : (ℵ₀ : Cardinal.{u}) ≤ Order.succ κ) {Hh : Type w} [KMonoid κ Hh]
     (f : ULift.{u} ℤ → Hh) (hf : Function.Injective f)
     (hhom : letI := LMonoid.ofAddCommMonoid (ULift.{u} ℤ); IsLHom hlk f) : False := by
   let := LMonoid.ofAddCommMonoid (ULift.{u} ℤ)

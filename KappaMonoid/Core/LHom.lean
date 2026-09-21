@@ -99,9 +99,9 @@ namespace LMonoid
 /-- A `λ⁻`-homomorphism from a `λ⁻`-monoid into (the underlying `λ⁻`-monoid of) a
 `κ`-monoid. -/
 def IsLHom {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
-    (hκ : lam ≤ κ) (f : X → H) : Prop :=
+    (hκ : lam ≤ Order.succ κ) (f : X → H) : Prop :=
   f 0 = 0 ∧ ∀ {ι : Type u} (h : #ι < lam) (x : ι → X),
-    f (lsumOf (lam := lam) h x) = KMonoid.sumOf (κ := κ) (h.le.trans hκ) (f ∘ x)
+    f (lsumOf (lam := lam) h x) = KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hκ h) (f ∘ x)
 
 variable {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
 

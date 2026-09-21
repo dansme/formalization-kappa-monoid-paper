@@ -289,7 +289,7 @@ which the inclusion preserves. -/
 theorem isLHom_coe_ennreal :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     letI : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
-    IsLHom (le_refl (ℵ₀ : Cardinal.{u})) (fun a : ℝ≥0 => (a : ℝ≥0∞)) := by
+    IsLHom (Order.le_succ (ℵ₀ : Cardinal.{u})) (fun a : ℝ≥0 => (a : ℝ≥0∞)) := by
   let := LMonoid.ofAddCommMonoid ℝ≥0
   let : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
   refine ⟨rfl, fun {ι} h x => ?_⟩
@@ -310,7 +310,7 @@ theorem esum_eq_of_isBraided {ι : Type u} (hι : #ι ≤ (ℵ₀ : Cardinal.{u}
       IsBraided (ℵ₀ : Cardinal.{u}) x y) : esum x = esum y := by
   let := LMonoid.ofAddCommMonoid ℝ≥0
   let : KMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0∞ := ENNRealExample.instKMonoid
-  have hb := sumOf_map_eq_of_isBraided (le_refl (ℵ₀ : Cardinal.{u})) isLHom_coe_ennreal hι h
+  have hb := sumOf_map_eq_of_isBraided (Order.le_succ (ℵ₀ : Cardinal.{u})) isLHom_coe_ennreal hι h
   exact (sumOf_coe_eq_esum hι x).symm.trans (hb.trans (sumOf_coe_eq_esum hι y))
 
 /-- `ℝ≥0` is reduced. -/

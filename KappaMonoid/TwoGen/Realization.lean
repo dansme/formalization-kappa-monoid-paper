@@ -69,7 +69,7 @@ This is what turns the hypothesis of Theorem 5.3's forward direction into the in
 5.2. -/
 theorem braidedForms_of_braidedOver
     (hbr :
-      IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H le_rfl (fun y => (y : H)))
+      IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H (Order.le_succ ℵ₀) (fun y => (y : H)))
     (F G : Form) (heq : eval x₁ x₂ F = eval x₁ x₂ G)
     (hFm : ∀ i, familyOfForm x₁ x₂ F i ∈ add((x₁ + x₂)))
     (hGm : ∀ i, familyOfForm x₁ x₂ G i ∈ add((x₁ + x₂))) :
@@ -204,7 +204,7 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
 counting step gives `x₁ ∈ add x₂`, and then `ℵ₀ x₂` absorbs `ℵ₀ x₁`. -/
 theorem cond1_of_braidedOver
     (hbr :
-      IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H le_rfl (fun y => (y : H))) :
+      IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H (Order.le_succ ℵ₀) (fun y => (y : H))) :
     Cond1 x₁ x₂ := by
   intro n hn
   have heval : eval x₁ x₂ ((n : ℕ∞), ⊤) = eval x₁ x₂ ((⊤ : ℕ∞), ⊤) := by
@@ -275,8 +275,8 @@ theorem theorem_5_3_forward (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfF
 
 /-- Braidedness of two families over a `λ⁻`-closed subset depends only on the subset: two proofs
 that the same set is closed give definitionally equal monoid structures (trap 13). -/
-theorem isBraided_base_eq {S T : Set H} (hS : IsLSubset (ℵ₀ : Cardinal.{u}) le_rfl S)
-    (hT : IsLSubset (ℵ₀ : Cardinal.{u}) le_rfl T) (hST : S = T) {ι : Type u} (f g : ι → H)
+theorem isBraided_base_eq {S T : Set H} (hS : IsLSubset (ℵ₀ : Cardinal.{u}) (Order.le_succ ℵ₀) S)
+    (hT : IsLSubset (ℵ₀ : Cardinal.{u}) (Order.le_succ ℵ₀) T) (hST : S = T) {ι : Type u} (f g : ι → H)
     (hfS : ∀ i, f i ∈ S) (hgS : ∀ i, g i ∈ S) (hfT : ∀ i, f i ∈ T) (hgT : ∀ i, g i ∈ T)
     (h : letI := hS.lmonoid Cardinal.isRegular_aleph0
       IsBraided ℵ₀ (fun i => (⟨f i, hfS i⟩ : ↥S)) (fun i => (⟨g i, hgS i⟩ : ↥S))) :
@@ -796,7 +796,7 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
         KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e := by
   classical
 
-  let := KMonoid.toLMonoidOfLE H Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{u}))
+  let := KMonoid.toLMonoidOfLE H Cardinal.isRegular_aleph0 (Order.le_succ (ℵ₀ : Cardinal.{u}))
   refine corollary_4_7_one_forward le_rfl k (x₁ + x₂) ?_
   -- `add (x₁ + x₂)` contains both generators, hence generates `H`
   have hx₁T : x₁ ∈ add((x₁ + x₂)) :=
@@ -819,7 +819,7 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
       KMonoid.ksum (κ := ℵ₀) (fun i => (y i : H)) = eval x₁ x₂ (C, D) := by
     intro y C D hy
     rw [← ksum_familyOfForm x₁ x₂ (C, D), ← KMonoid.sumOf_Idx, ← KMonoid.sumOf_Idx]
-    exact sumOf_eq_of_isBraided Cardinal.isRegular_aleph0 (le_refl (ℵ₀ : Cardinal.{u}))
+    exact sumOf_eq_of_isBraided Cardinal.isRegular_aleph0 (Order.le_succ (ℵ₀ : Cardinal.{u}))
       (le_of_eq (mk_Idx _)) _ _ (hy.map_lmonoidHom hcoehom)
   refine ⟨⟨rfl, fun {ι} h x => rfl⟩, Subtype.val_injective, fun h => ?_, fun a b hab => ?_⟩
   · obtain ⟨z, hzT, rfl⟩ := (KMonoid.mem_kclosure_iff

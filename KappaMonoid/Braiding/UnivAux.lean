@@ -316,7 +316,7 @@ section AuxHom
 variable {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
 
 /-- A `λ⁻`-homomorphism is additive: `+` is a `λ⁻`-sum over a two-element index type. -/
-theorem IsLHom.map_add (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) (a b : X) :
+theorem IsLHom.map_add (hlk : lam ≤ Order.succ κ) {f : X → H} (hf : IsLHom hlk f) (a b : X) :
     f (a + b) = f a + f b := by
   have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
   have hUB : #(ULift.{u} Bool) < lam := lt_of_lt_of_le (by simp) hlam0
@@ -328,11 +328,11 @@ theorem IsLHom.map_add (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) (a b
     match p with
     | ⟨true⟩ => rfl
     | ⟨false⟩ => rfl
-  rw [h1, h2, sumOf_two (f a) (f b) (hUB.le.trans hlk)]
+  rw [h1, h2, sumOf_two (f a) (f b) (le_of_lt_of_le_succ hlk hUB)]
 
 /-- A `λ⁻`-homomorphism into a `κ`-monoid is a homomorphism of `λ⁻`-monoids for the induced
 structure — the two notions differ only in how the target's sums are packaged. -/
-theorem isLMonoidHom_of_isLHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → H}
+theorem isLMonoidHom_of_isLHom (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) {f : X → H}
     (hf : IsLHom hlk f) :
     letI := KMonoid.toLMonoidOfLE H hlam hlk
     IsLMonoidHom lam f := by
@@ -342,7 +342,7 @@ theorem isLMonoidHom_of_isLHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X 
   exact hf.2 h x
 
 /-- The converse of `IsLHom.isLMonoidHom`. -/
-theorem isLHom_of_isLMonoidHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X → H}
+theorem isLHom_of_isLMonoidHom (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) {f : X → H}
     (hf : letI := KMonoid.toLMonoidOfLE H hlam hlk
       IsLMonoidHom lam f) : IsLHom hlk f := by
   let := KMonoid.toLMonoidOfLE H hlam hlk
@@ -351,7 +351,7 @@ theorem isLHom_of_isLMonoidHom (hlam : lam.IsRegular) (hlk : lam ≤ κ) {f : X 
   exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk h (f ∘ x)).symm
 
 /-- A `λ⁻`-homomorphism carries braided families to braided families. -/
-theorem IsBraided.map_lhom (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) {ι : Type u}
+theorem IsBraided.map_lhom (hlk : lam ≤ Order.succ κ) {f : X → H} (hf : IsLHom hlk f) {ι : Type u}
     {x y : ι → X} (h : IsBraided lam x y) :
     letI := KMonoid.toLMonoidOfLE H (‹LMonoid lam X›.isRegular) hlk
     IsBraided lam (f ∘ x) (f ∘ y) := by
@@ -381,7 +381,7 @@ theorem IsBraided.map_lhom (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f) 
 
 /-- The telescoping principle in the form needed for Proposition 3.10: a `λ⁻`-homomorphism
 into a `κ`-monoid takes braided families to families with equal `κ`-sums. -/
-theorem sumOf_map_eq_of_isBraided (hlk : lam ≤ κ) {f : X → H} (hf : IsLHom hlk f)
+theorem sumOf_map_eq_of_isBraided (hlk : lam ≤ Order.succ κ) {f : X → H} (hf : IsLHom hlk f)
     {ι : Type u} (hι : #ι ≤ κ) {x y : ι → X} (h : IsBraided lam x y) :
     sumOf (κ := κ) hι (f ∘ x) = sumOf (κ := κ) hι (f ∘ y) := by
   let := KMonoid.toLMonoidOfLE H (‹LMonoid lam X›.isRegular) hlk

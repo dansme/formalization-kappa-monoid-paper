@@ -467,7 +467,7 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
             ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
+    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   obtain ⟨e', hleft, hright, he', hgenp, hncp⟩ :=
     exists_inv_generators x₁ x₂ hgen hnoncyclic R e hhom hbij
@@ -497,7 +497,7 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
     exact ⟨e c, by rw [← KMonoid.IsKHom.map_add hhom, hc, hhom.map_cmul]⟩
   -- both generators are finitely generated
   have hWsub := V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀
-    Cardinal.isRegular_aleph0 le_rfl
+    Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   have hWsat : ∀ a ∈ V(R).lambdaSmallPart ℵ₀,
       ∀ b c : V(R).carrier, a = b + c →
       b ∈ V(R).lambdaSmallPart ℵ₀ :=

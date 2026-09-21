@@ -325,12 +325,16 @@ theorem kaplansky (hκ : ℵ₀ ≤ κ) :
   exact ⟨s, lt_of_le_of_lt hs Cardinal.aleph0_lt_aleph_one, hs.trans hκ, hsp⟩
 
 
-/-- **Corollary 4.5(1)(2)**: for every regular `λ` with `ℵ₁ ≤ λ ≤ κ` the `κ`-monoid `V^κ(R)`
+/-- **Corollary 4.5(1)(2)**: for every regular `λ` with `ℵ₁ ≤ λ ≤ κ⁺` the `κ`-monoid `V^κ(R)`
 is `λ⁻`-braided over, and hence is the universal `κ`-extension of, the `λ⁻`-monoid
 `V^{λ⁻}(R)` of `λ⁻`-small projective modules.  For `λ = ℵ₁` this is `V^{ℵ₀}(R)`, the countably
-generated projective modules: `V^{ℵ₀}(R)` determines `V^κ(R)`. -/
+generated projective modules: `V^{ℵ₀}(R)` determines `V^κ(R)`.
+
+The bound is the paper's `λ ≤ κ⁺`, not `λ ≤ κ`: at `κ = ℵ₀` it is `λ = ℵ₁` that Kaplansky's
+theorem supplies, and `λ ≤ κ` would exclude it.  Part (2) is therefore this statement at
+`λ = ℵ₁` for *every* infinite `κ`. -/
 theorem corollary_4_5 (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (hlam : lam.IsRegular)
-    (h₁ : ℵ₁ ≤ lam) (hlk : lam ≤ κ) :
+    (h₁ : ℵ₁ ≤ lam) (hlk : lam ≤ Order.succ κ) :
     letI := (projClass R κ hκ).instKMonoid hκ
     letI := IsLSubset.lmonoid hlam ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ lam hlam hlk)
     IsBraidedOver lam κ ((projClass R κ hκ).lambdaSmallPart lam)
@@ -354,14 +358,14 @@ theorem corollary_4_5_three (hκ : ℵ₀ ≤ κ)
           Nonempty (P ≃ₗ[R] ⨁ i, Q i)) :
     letI := (projClass R κ hκ).instKMonoid hκ
     letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-      ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+      ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
     IsBraidedOver ℵ₀ κ ((projClass R κ hκ).lambdaSmallPart ℵ₀)
-        (projClass R κ hκ).carrier hκ (fun a => (a : (projClass R κ hκ).carrier)) ∧
+        (projClass R κ hκ).carrier (le_succ_of_le hκ) (fun a => (a : (projClass R κ hκ).carrier)) ∧
       IsUniversalKExtension.{u, u, u, t} ℵ₀ κ ((projClass R κ hκ).lambdaSmallPart ℵ₀)
-        (projClass R κ hκ).carrier hκ (fun a => (a : (projClass R κ hκ).carrier)) := by
-  refine corollary_4_4 (projClass R κ hκ) hκ ℵ₀ Cardinal.isRegular_aleph0 hκ _
+        (projClass R κ hκ).carrier (le_succ_of_le hκ) (fun a => (a : (projClass R κ hκ).carrier)) := by
+  refine corollary_4_4 (projClass R κ hκ) hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ) _
     ((projClass R κ hκ).lambdaSmallPart_small ℵ₀)
-    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 hκ)
+    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
     ((projClass R κ hκ).lambdaSmallPart_summand hκ ℵ₀) ?_
   refine kGenerates_of_decomposition R κ hκ ℵ₀ Cardinal.isRegular_aleph0 ?_
   intro P _ _ hP

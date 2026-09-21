@@ -33,17 +33,17 @@ theorem lemma_5_1 (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
     (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
 
-    IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H le_rfl (fun y => (y : H)) := by
+    IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H (Order.le_succ ℵ₀) (fun y => (y : H)) := by
   classical
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
+    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
 
   -- Corollary 4.5(3): `V^{ℵ₀}(R)` is braided over `V(R)`, the `ℵ₀⁻`-small classes
   have hbrV := (corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1
   -- `S = e⁻¹(V(R))` is the set of elements of `H` corresponding to finitely generated modules
   set S : Set H := e ⁻¹' (V(R).lambdaSmallPart ℵ₀) with hSdef
   have hWsub := V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀
-    Cardinal.isRegular_aleph0 le_rfl
+    Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   have h0S : (0 : H) ∈ S := by
     show e 0 ∈ V(R).lambdaSmallPart ℵ₀
     rw [hhom.1]

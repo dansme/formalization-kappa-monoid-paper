@@ -319,7 +319,7 @@ structure DoubleDecomp {κ : Cardinal.{u}} (C : ModuleClass R κ)
     (lam : Cardinal.{u}) (M : Type u) [AddCommGroup M] [Module R M] where
   hκ : ℵ₀ ≤ κ
   hlam : lam.IsRegular
-  hlk : lam ≤ κ
+  hlk : lam ≤ Order.succ κ
   S : Set C.carrier
   hsmall : ∀ b ∈ S, IsLambdaSmall R lam (C.rep b)
   hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S
@@ -396,9 +396,9 @@ structure StepProps (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
   Tdisj : Disjoint st.Tsub (B.D₁.P (Uidx ∪ st.Iset))
   Teq : st.Tsub ⊔ B.D₁.P (Uidx ∪ st.Iset) = B.D₂.P (Jidx ∪ st.Jset)
   hI : letI := C.instKMonoid B.hκ
-    sumOf (κ := κ) (st.Ismall.le.trans B.hlk) (fun i : st.Iset => B.a₁ i.1) = vc + st.uc
+    sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk st.Ismall) (fun i : st.Iset => B.a₁ i.1) = vc + st.uc
   hJ : letI := C.instKMonoid B.hκ
-    sumOf (κ := κ) (st.Jsmall.le.trans B.hlk) (fun j : st.Jset => B.a₂ j.1) = st.tc + st.uc
+    sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk st.Jsmall) (fun j : st.Jset => B.a₂ j.1) = st.tc + st.uc
 
 /-! From here on the class must be closed under direct summands: the recursion splits off
 complements at every step.  See `ModuleClass.IsSummandClosed`. -/
@@ -455,7 +455,7 @@ theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
       rw [← sup_assoc, sup_comm (B.D₁.P Uidx) Told, heq, hs1]
     obtain ⟨eTS⟩ := iso_of_relCompl hd_U_TS hs_U_TS (B.D₁.P_disjoint hUdisjI)
       (B.D₁.P_union _ _).symm
-    have hIle : #((t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ))) ≤ κ := hIset_lt.le.trans B.hlk
+    have hIle : #((t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ))) ≤ κ := le_of_lt_of_le_succ B.hlk hIset_lt
     have hA₁rep : Nonempty (C.rep (sumOf (κ := κ) hIle
         (fun i : (t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ)) => B.a₁ i.1)) ≃ₗ[R]
           ↥(Told ⊔ Ssub)) :=
@@ -486,7 +486,7 @@ theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
       rw [← sup_assoc, hs1, hs2]
     obtain ⟨eST⟩ := iso_of_relCompl hd_J_ST hs_J_ST
       (B.D₂.P_disjoint ht'_disj.symm) (B.D₂.P_union _ _).symm
-    have hJle : #((t' : Set (Idx κ))) ≤ κ := ht'_lt.le.trans B.hlk
+    have hJle : #((t' : Set (Idx κ))) ≤ κ := le_of_lt_of_le_succ B.hlk ht'_lt
     have hA₂rep : Nonempty (C.rep (sumOf (κ := κ) hJle (fun j : (t' : Set (Idx κ)) => B.a₂ j.1))
         ≃ₗ[R] ↥(Tsub ⊔ Ssub)) :=
       ⟨((B.D₂.P_class B.hκ _ hJle).some.trans eST.symm).trans
@@ -1018,7 +1018,7 @@ theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B
     have hfun : (fun j : ↥((B.fam p).Jset) => ((y j.1 : C.carrier)))
         = fun j : ↥((B.fam p).Jset) => B.a₂ j.1 := funext fun j => hy j.1
     rw [hfun]
-    show sumOf (κ := κ) ((B.fam p).Jsmall.le.trans B.hlk)
+    show sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk (B.fam p).Jsmall)
         (fun j : (B.fam p).Jset => B.a₂ j.1) = B.vcm (bsucc p) + (B.fam p).uc
     rw [B.vcm_bsucc p]
     exact (B.spec p).hJ
@@ -1055,7 +1055,7 @@ The recursion step uses `λ⁻`-smallness of `T α` to find `I α`, then (M2) to
 translates the internal decompositions into the required isomorphisms. -/
 theorem exists_braided_of_iso (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
     (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ)
     (S : Set C.carrier)
     (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
     (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
@@ -1082,7 +1082,7 @@ theorem exists_braided_of_iso (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : 
 `⨁ᵢ A i ≅ ⨁ⱼ B j` (`ModuleClass.iso_of_dsum_eq`), so this is `exists_braided_of_iso`. -/
 theorem theorem_4_3_core (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
     (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ)
+    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ)
     (S : Set C.carrier)
     -- `S` consists of `λ⁻`-small modules …
     (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
@@ -1109,7 +1109,7 @@ theorem theorem_4_3_core (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ�
 `V^{λ⁻}(Cλ⁻)` is `λ⁻`-braided over `V^{λ⁻}(Cλ⁻)`. -/
 theorem theorem_4_3 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
     (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ) (S : Set C.carrier)
+    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (S : Set C.carrier)
     (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
     (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
     (hSsummand : letI := C.instKMonoid hκ; ∀ a ∈ S, ∀ b : C.carrier, (∃ c, b + c = a) → b ∈ S) :
@@ -1127,7 +1127,7 @@ theorem theorem_4_3 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤
   · -- the inclusion is a `λ⁻`-homomorphism: both sides are the ambient `κ`-sum
     intro ι h z
     apply Subtype.ext
-    rw [hSsub.coe_lsumOf hlam h z, hKsub.coe_sumOf (h.le.trans hlk)]
+    rw [hSsub.coe_lsumOf hlam h z, hKsub.coe_sumOf (le_of_lt_of_le_succ hlk h)]
     rfl
   · -- injectivity
     intro a b hab
@@ -1150,7 +1150,7 @@ direct sum of modules in `Cλ⁻`, then all of `V^κ(C)` is `λ⁻`-braided over
 `V^{λ⁻}(Cλ⁻)`, hence is its universal `κ`-extension. -/
 theorem corollary_4_4 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
     (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ) (S : Set C.carrier)
+    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (S : Set C.carrier)
     (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
     (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
     (hSsummand : letI := C.instKMonoid hκ; ∀ a ∈ S, ∀ b : C.carrier, (∃ c, b + c = a) → b ∈ S)

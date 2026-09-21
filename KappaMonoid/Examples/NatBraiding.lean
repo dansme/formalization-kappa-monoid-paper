@@ -253,7 +253,7 @@ Examples 3.13. -/
 theorem isBraidedOver_withTop_nat :
     letI := LMonoid.ofAddCommMonoid ℕ
     letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
-    IsBraidedOver (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) le_rfl (fun a => (a : WithTop ℕ)) := by
+    IsBraidedOver (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) (Order.le_succ ℵ₀) (fun a => (a : WithTop ℕ)) := by
   let := LMonoid.ofAddCommMonoid ℕ
   let := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
   classical
@@ -298,10 +298,10 @@ Theorem 3.12(2), the universal `ℵ₀`-extension of `ℕ₀` is its trivial `�
 theorem isUniversalKExtension_withTop_nat :
     letI := LMonoid.ofAddCommMonoid ℕ
     letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
-    IsUniversalKExtension.{u, 0, 0, t} (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) le_rfl
+    IsUniversalKExtension.{u, 0, 0, t} (ℵ₀ : Cardinal.{u}) ℵ₀ ℕ (WithTop ℕ) (Order.le_succ ℵ₀)
       (fun a => (a : WithTop ℕ)) := by
   let := LMonoid.ofAddCommMonoid ℕ
   let := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
-  exact isBraidedOver_withTop_nat.isUniversalKExtension le_rfl
+  exact isBraidedOver_withTop_nat.isUniversalKExtension (Order.le_succ ℵ₀)
 
 end KappaMonoid

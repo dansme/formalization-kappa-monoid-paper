@@ -372,12 +372,12 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
           Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 le_rfl)
+    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
       ({p₂, p₁} : Set V(R).carrier) := by rwa [Set.pair_comm]
   have hWsub := V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀
-    Cardinal.isRegular_aleph0 le_rfl
+    Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   -- both generators are finitely generated, by the paper's parenthetical
   have hWsat : ∀ a ∈ V(R).lambdaSmallPart ℵ₀,
       ∀ b c : V(R).carrier, a = b + c →

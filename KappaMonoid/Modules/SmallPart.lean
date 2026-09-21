@@ -27,7 +27,7 @@ theorem ModuleClass.isLambdaSmall_of_mem {a : C.carrier} {lam : Cardinal.{u}}
     (h : a ∈ C.lambdaSmallPart lam) : IsLambdaSmall R lam (C.rep a) := h
 
 theorem ModuleClass.lambdaSmallPart_isLSubset (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ κ) :
+    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) :
     letI := C.instKMonoid hκ
     IsLSubset lam hlk (C.lambdaSmallPart lam) := by
   let := C.instKMonoid hκ
@@ -42,7 +42,7 @@ theorem ModuleClass.lambdaSmallPart_isLSubset (hκ : ℵ₀ ≤ κ) (lam : Cardi
       isLambdaSmall_dsum hlam h (fun i => C.rep (x i)) fun i => C.isLambdaSmall_of_mem (hx i)
     intro ι₂ N iAG iMod f
     exact IsLambdaSmall.of_equiv hsmall
-      (C.rep_sumOf hκ (h.le.trans hlk) x).some.symm N iAG iMod f
+      (C.rep_sumOf hκ (le_of_lt_of_le_succ hlk h) x).some.symm N iAG iMod f
 
 theorem ModuleClass.lambdaSmallPart_summand (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) :
     letI := C.instKMonoid hκ
