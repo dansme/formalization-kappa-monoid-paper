@@ -1404,7 +1404,7 @@ theorem ptOneOne_mem : ptOneOne.{u} ∈ ineqSystem.finSolutions := by
 theorem ptOneTwo_mem : ptOneTwo.{u} ∈ ineqSystem.finSolutions := by
   refine mem_finSolutions_ineqSystem _ (Fcard.mk 1 Cardinal.one_lt_aleph0.le) (fun i => ?_) ?_
   · by_cases hi : i = 0 <;>
-      simp [ptOneTwo, hi, Cardinal.one_lt_aleph0, Cardinal.nat_lt_aleph0]
+      simp [ptOneTwo, hi, Cardinal.one_lt_aleph0]
   · simp [ptOneTwo]
     rw [show (2 : Cardinal.{u}) = 1 + 1 from (one_add_one_eq_two).symm]
 
