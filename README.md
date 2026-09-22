@@ -258,6 +258,13 @@ fixes `i = 1`, `j = 2`, and `Paper.Setting5.swap` exchanges the two generators, 
 because the standing hypothesis is symmetric in them; `Paper.Setting5.addBase_swap` says the base
 `add(x₁ + x₂)` does not move, and `Paper.lemma_5_2_five'` is a worked instance of the pattern.
 
+**Lemma 3.4(3) is stated in the normal form.** The paper concludes *"there exists a limit
+well-order on `κ` such that the families are `λ⁻`-braided"*; `isBraided_of_blocks` concludes plain
+`IsBraided`, which Lemma 3.5 (`isBraidedOn_iff_isBraided`) shows is the same thing. Its hypothesis
+is braidedness of the families cut down to the blocks and padded by zeroes, rather than of families
+indexed by `I(l)` and `J(l)`, and the paper's side condition that `|I(l)| = |J(l)|` be infinite is
+not needed — so the statement here is the stronger one.
+
 **Lemma 3.7 is proved in two cases.**
  The paper runs one transfinite recursion for every `λ`,
 allowing infinite intervals once `λ > ℵ₀`. Here the countable case is that recursion

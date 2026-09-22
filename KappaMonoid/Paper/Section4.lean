@@ -116,6 +116,11 @@ alias corollary_4_7_2_addOfCard_unitClass_eq := KappaMonoid.addOfCard_unitClass_
 `λ⁻`-braided over `F_{λ⁻}(B)`. -/
 alias example_4_8_1_krsa_ascent := KappaMonoid.krsa_ascent
 
+/-- **Example 4.8(1)** as printed — `KappaMonoid.krsa_ascent_lambdaGen`: the case where the base
+is `V^{λ⁻}(C_{λ⁻})` with `C_{λ⁻}` the `<λ`-generated modules, the braiding supplied by
+Corollary 4.4(2). -/
+alias example_4_8_1_krsa_ascent_lambdaGen := KappaMonoid.krsa_ascent_lambdaGen
+
 /-- **Example 4.8(1)**, the isomorphism `V^κ(C) ≅ F_κ(B)` the paper states —
 `KappaMonoid.krsa_ascent_iso`, in `Modules/Corollary47.lean`.  The two sides live one universe
 apart, which is why the test universe of `IsUniversalKExtension` is a parameter. -/

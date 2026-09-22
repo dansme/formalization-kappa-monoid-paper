@@ -827,35 +827,66 @@ section KRSA
 
 variable {R : Type u} [Ring R] {κ : Cardinal.{u}}
 
-/-- **Example 4.8(1)**: finite KRSA ascends to infinite KRSA — if `V^{λ⁻}(C_{λ⁻})` is free on `B`,
-then `V^κ(C)` is the universal `κ`-extension of the free `λ⁻`-monoid on `B`. -/
+/-- **Example 4.8(1)**: finite KRSA ascends to infinite KRSA — if `V^κ(C)` is `λ⁻`-braided over a
+`λ⁻`-closed subset `S` which is free on `B`, then `V^κ(C)` is the universal `κ`-extension of the
+free `λ⁻`-monoid on `B`.
+
+Stated for an arbitrary `λ⁻`-closed `S` because the two readings of the paper's `C_{λ⁻}` both
+occur: Theorem 4.3 braids over the `λ⁻`-*small* classes (`lambdaSmallPart`) and Corollary 4.4 over
+the `<λ`-*generated* ones (`lambdaGenPart`), and the example is about the latter — see
+`krsa_ascent_lambdaGen`. -/
 theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
     {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
+    (S : Set C.carrier)
+    (hS : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
     (hfree : letI : Fact lam.IsRegular := ⟨hlam⟩
       letI := C.instKMonoid hκ
-      letI := IsLSubset.lmonoid hlam (C.lambdaSmallPart_isLSubset hκ lam hlam hlk)
-      ∃ e : ↥(C.lambdaSmallPart lam) → ↥(FreeL lam B),
-        IsLMonoidHom lam e ∧ Function.Bijective e)
+      letI := IsLSubset.lmonoid hlam hS
+      ∃ e : ↥S → ↥(FreeL lam B), IsLMonoidHom lam e ∧ Function.Bijective e)
     (hbr : letI := C.instKMonoid hκ
-      letI := IsLSubset.lmonoid hlam (C.lambdaSmallPart_isLSubset hκ lam hlam hlk)
-      IsBraidedOver lam κ ↥(C.lambdaSmallPart lam) C.carrier hlk (fun a => (a : C.carrier))) :
+      letI := IsLSubset.lmonoid hlam hS
+      IsBraidedOver lam κ ↥S C.carrier hlk (fun a => (a : C.carrier))) :
     letI : Fact lam.IsRegular := ⟨hlam⟩
     letI := C.instKMonoid hκ
     ∃ f : ↥(FreeL lam B) → C.carrier,
       IsBraidedOver lam κ ↥(FreeL lam B) C.carrier hlk f := by
   let : Fact lam.IsRegular := ⟨hlam⟩
   let := C.instKMonoid hκ
-  let := IsLSubset.lmonoid hlam (C.lambdaSmallPart_isLSubset hκ lam hlam hlk)
+  let := IsLSubset.lmonoid hlam hS
   classical
   obtain ⟨e, hehom, hebij⟩ := hfree
   -- the inverse of the isomorphism of bases is again a `λ⁻`-homomorphism
-  set e' : ↥(FreeL lam B) → ↥(C.lambdaSmallPart lam) := Function.invFun e with he'def
+  set e' : ↥(FreeL lam B) → ↥S := Function.invFun e with he'def
   have hee' : ∀ a, e' (e a) = a := Function.leftInverse_invFun hebij.injective
   have he'e : ∀ b, e (e' b) = b := fun b => Function.invFun_eq (hebij.surjective b)
   have he'hom : IsLMonoidHom lam e' := hehom.inv hee' he'e
-  -- `V^κ(C)` is the universal `κ`-extension of `V^{λ⁻}(C_{λ⁻})`, hence of `F_{λ⁻}(B)`
-  refine ⟨fun b => ((e' b : ↥(C.lambdaSmallPart lam)) : C.carrier), ?_⟩
+  -- `V^κ(C)` is the universal `κ`-extension of `S`, hence of `F_{λ⁻}(B)`
+  refine ⟨fun b => ((e' b : ↥S) : C.carrier), ?_⟩
   exact IsBraidedOver.of_base_iso hlk hbr he'hom hehom he'e hee'
+
+/-- **Example 4.8(1)** as the paper states it: if every module in `C` is a direct sum of at most
+`κ` many `<λ`-generated modules and `V^{λ⁻}(C_{λ⁻})` is free on `B`, then `V^κ(C)` is the
+universal `κ`-extension of the free `λ⁻`-monoid on `B`.  The braiding comes from Corollary
+4.4(2). -/
+theorem krsa_ascent_lambdaGen (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
+    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
+    (hdec : ∀ a : C.carrier, ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i))
+      (_ : ∀ i, Module R (Q i)), #ι ≤ κ ∧ (∀ i, IsLambdaGenerated R lam (Q i)) ∧
+        Nonempty (C.rep a ≃ₗ[R] ⨁ i, Q i))
+    (hfree : letI : Fact lam.IsRegular := ⟨hlam⟩
+      letI := C.instKMonoid hκ
+      letI := IsLSubset.lmonoid hlam (C.lambdaGenPart_isLSubset hκ lam hlam hlk)
+      ∃ e : ↥(C.lambdaGenPart lam) → ↥(FreeL lam B),
+        IsLMonoidHom lam e ∧ Function.Bijective e) :
+    letI : Fact lam.IsRegular := ⟨hlam⟩
+    letI := C.instKMonoid hκ
+    ∃ f : ↥(FreeL lam B) → C.carrier,
+      IsBraidedOver lam κ ↥(FreeL lam B) C.carrier hlk f := by
+  let : Fact lam.IsRegular := ⟨hlam⟩
+  let := C.instKMonoid hκ
+  exact krsa_ascent C hκ hlam hlk B (C.lambdaGenPart lam)
+    (C.lambdaGenPart_isLSubset hκ lam hlam hlk) hfree
+    (corollary_4_4_two.{u, u} C hκ lam hlam hlk hdec).1
 
 /-- The `B`-indexed form: `V^κ(C)` has the universal property of the free `κ`-monoid on `B`.  Every
 map from `B` into a `κ`-monoid extends uniquely along the generators `ι(b)`. -/

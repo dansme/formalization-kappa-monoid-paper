@@ -19,7 +19,23 @@ namespace KappaMonoid
 
 namespace Paper
 
+/-- **Definition 2.1** — `KappaMonoid.PaperKMonoid`, in `Paper/Definition21.lean`: the
+definition transcribed literally, with `KappaMonoid.PaperKMonoid.toKMonoid` and
+`KappaMonoid.KMonoid.toPaper` the two directions of its agreement with `KMonoid`. -/
+alias definition_2_1_PaperKMonoid := KappaMonoid.PaperKMonoid
+
+/-- **Remark 2.2(1)** — commutativity is automatic: it is (A3) of Lemma 2.5, which
+`KappaMonoid.KMonoid.ofBare` derives from (A1) and (A2) alone. -/
+alias remark_2_2_1_ofBare := KappaMonoid.KMonoid.ofBare
+
+/-- **Remark 2.2(2)** — summing over an arbitrary index set of cardinality `κ`:
+`KappaMonoid.KMonoid.sumOf` takes a family indexed by any type of the right size, and
+`KappaMonoid.KMonoid.sumOf_equiv` is the independence of the chosen bijection.  See
+`README.md`, "Index sets: arbitrary types, not the cardinal". -/
+alias remark_2_2_2_sumOf_equiv := KappaMonoid.KMonoid.sumOf_equiv
+
 /-- **Examples 2.3(2)** — `KappaMonoid.ENNRealExample.instKMonoid`, in `Examples/ENNReal.lean`. -/
+
 alias examples_2_3_2_instKMonoid := KappaMonoid.ENNRealExample.instKMonoid
 
 /-- **Examples 2.3(3)** — `KappaMonoid.Fcard.instKMonoid`, in `Core/Cardinal.lean`. -/
@@ -28,11 +44,29 @@ alias examples_2_3_3_instKMonoid := KappaMonoid.Fcard.instKMonoid
 /-- **Examples 2.3(1)** — `KappaMonoid.TrivExt.instKMonoid`, in `Examples/TrivExt.lean`. -/
 alias examples_2_3_1_instKMonoid := KappaMonoid.TrivExt.instKMonoid
 
-/-- **Definition 2.4(1)** — `KappaMonoid.FreeMod.freeClass`, in `Modules/Rings/FreeModules.lean`. -/
-alias definition_2_4_1_freeClass := KappaMonoid.FreeMod.freeClass
+/-- **Examples 2.3(4)** — `KappaMonoid.ModuleClass.instKMonoid`, in `Modules/Class.lean`: a class
+of modules closed under isomorphisms and `≤ κ`-indexed direct sums is a `κ`-monoid. -/
+alias examples_2_3_4_instKMonoid := KappaMonoid.ModuleClass.instKMonoid
 
-/-- **Definition 2.4(2)** — `KappaMonoid.projClass`, in `Modules/Projective.lean`. -/
+/-- **Definition 2.4(1)** — `KappaMonoid.ModuleClass`, in `Modules/Class.lean`: `V^κ(C)` is
+`C.carrier` with the `κ`-monoid structure of `ModuleClass.instKMonoid`. -/
+alias definition_2_4_1_ModuleClass := KappaMonoid.ModuleClass
+
+/-- The class `𝓕^κ` of free modules, an instance of Definition 2.4(1) —
+`KappaMonoid.FreeMod.freeClass`, in `Modules/Rings/FreeModules.lean`.  It is what
+Proposition 2.16 realises. -/
+alias freeClass := KappaMonoid.FreeMod.freeClass
+
+
+/-- **Definition 2.4(2)** — `KappaMonoid.projClass`, in `Modules/Projective.lean`.  The scoped
+notation `V(R)` abbreviates `projClass R ℵ₀ le_rfl`, which is the paper's `V^{ℵ₀}(R)`. -/
 alias definition_2_4_2_projClass := KappaMonoid.projClass
+
+/-- **Definition 2.4(3)** — the paper's `V(R)`, the monoid of finitely generated projective
+modules, is `(projClass R κ hκ).lambdaGenPart ℵ₀` — `KappaMonoid.ModuleClass.lambdaGenPart` at
+`λ = ℵ₀`.  `KappaMonoid.addOf_unitClass_eq` identifies it with `add [R]`. -/
+alias definition_2_4_3_lambdaGenPart := KappaMonoid.ModuleClass.lambdaGenPart
+
 
 /-- **Lemma 2.5** — `KappaMonoid.KMonoid.ofBare`, in `Core/Bare.lean`. -/
 alias lemma_2_5_ofBare := KappaMonoid.KMonoid.ofBare
@@ -46,7 +80,9 @@ alias definition_2_6_lcmul := KappaMonoid.LMonoid.lcmul
 /-- **Lemma 2.7(2) for a two-term sum of cardinals** — `KappaMonoid.KMonoid.cmul_add`, in `Core/KMonoid.lean`. -/
 alias lemma_2_7_2_for_a_two_term_sum_of_cardinals_cmul_add := KappaMonoid.KMonoid.cmul_add
 
-/-- **Lemma 2.7(4)** — `KappaMonoid.KMonoid.cmul_cmul`, in `Core/KMonoid.lean`. -/
+/-- **A companion of Lemma 2.7** — `KappaMonoid.KMonoid.cmul_cmul`, in `Core/KMonoid.lean`:
+`α(βx) = (αβ)x`.  The current Lemma 2.7 has three items and this is not one of them; it is the
+rule the proofs of (2) and (3) use. -/
 alias lemma_2_7_companion_cmul_cmul := KappaMonoid.KMonoid.cmul_cmul
 
 /-- **Lemma 2.7(1), second half** — `KappaMonoid.KMonoid.cmul_one`, in `Core/KMonoid.lean`. -/
@@ -151,15 +187,22 @@ alias proposition_2_17_2_simpleListPi := KappaMonoid.simpleListPi
 for every `n` there is a semisimple ring `R` with `V^κ(R) ≅ F_κ^n`. -/
 alias proposition_2_17_2_prop_2_17_two := KappaMonoid.prop_2_17_two
 
-/-- **Remark 2.19** — `KappaMonoid.LMonoid.ofLE`, in `Core/LMonoid.lean`. -/
+/-- **Definition 2.18** — `KappaMonoid.LMonoid`, in `Core/LMonoid.lean`: the class of
+`λ⁻`-monoids. -/
+alias definition_2_18_LMonoid := KappaMonoid.LMonoid
+
+/-- **Remark 2.19** — `KappaMonoid.LMonoid.ofLE`
+, in `Core/LMonoid.lean`. -/
 alias remark_2_19_ofLE := KappaMonoid.LMonoid.ofLE
 
 
 /-! ## Not formalised
 
-Nothing: every numbered result of §2 is above.  Definition 2.18 (`λ⁻`-monoids) and Remark 2.19
-(`κ`-monoids are the `λ⁻`-monoids for `λ = κ⁺`) are the classes `LMonoid`/`KMonoid` and
-`LMonoid.ofLE` themselves, so they appear as definitions rather than as results. -/
+Nothing: every numbered item of §2 is above, including the two remarks.  Definition 2.1,
+Definition 2.18 (`λ⁻`-monoids) and Remark 2.19 (`κ`-monoids are the `λ⁻`-monoids for `λ = κ⁺`) are
+the classes `KMonoid`/`LMonoid` and `LMonoid.ofLE` themselves, so they appear as definitions
+rather than as results; `Paper/Definition21.lean` transcribes Definition 2.1 literally and proves
+it agrees with `KMonoid`.  Remark 2.2(3) is a pointer to the literature. -/
 
 end Paper
 

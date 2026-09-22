@@ -188,7 +188,13 @@ alias examples_3_13_isUniversalKExtension_withTop_nat := KappaMonoid.isUniversal
 /-- **Lemma 3.14(2)** — `KappaMonoid.isBraidedOver_of_isLSubmonoid`, in `Braiding/Saturated.lean`. -/
 alias lemma_3_14_2_isBraidedOver_of_isLSubmonoid := KappaMonoid.isBraidedOver_of_isLSubmonoid
 
-/-- **Lemma 3.14(1)** — `KappaMonoid.lemma_3_14_free`, in `Braiding/Saturated.lean`. -/
+/-- **Examples 3.13**, third entry: `ℚ̂≥0 ≅ ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` —
+`KappaMonoid.isUniversalKExtension_ratSet`, in `Examples/Reals.lean`.  The same declaration is
+Examples 3.3(3). -/
+alias examples_3_13_isUniversalKExtension_ratSet := KappaMonoid.isUniversalKExtension_ratSet
+
+/-- **Lemma 3.14(1)**
+ — `KappaMonoid.lemma_3_14_free`, in `Braiding/Saturated.lean`. -/
 alias lemma_3_14_1_lemma_3_14_free := KappaMonoid.lemma_3_14_free
 
 /-- **Lemma 3.14(2)** — `KappaMonoid.lemma_3_14_sub`, in `Braiding/Saturated.lean`. -/

@@ -537,7 +537,10 @@ families `x` and `y` cut down to `A l` and `B l` are `λ⁻`-braided, `x` and `y
 
 The well-order the paper produces is the lexicographic one on the pairs `(l, μ)`; here that is the
 index structure with block set `ι × ι`, and Lemma 3.5 (via `comap` along an injection
-`ι × ι ↪ ι`, which exists because `ι` is infinite) turns it back into the normal form. -/
+`ι × ι ↪ ι`, which exists because `ι` is infinite) turns it back into the normal form.  So the
+conclusion, plain `IsBraided`, is the paper's *"there exists a limit well-order on `κ` such that
+…"*.  The paper's side condition that `|I(l)| = |J(l)|` be infinite is not used, so the statement
+here is the stronger one. -/
 theorem isBraided_of_blocks [Infinite ι] {A B : ι → Set ι}
     (hAdisj : ∀ l l', l ≠ l' → Disjoint (A l) (A l'))
     (hBdisj : ∀ l l', l ≠ l' → Disjoint (B l) (B l'))

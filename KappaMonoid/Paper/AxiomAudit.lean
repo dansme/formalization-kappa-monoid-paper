@@ -86,6 +86,7 @@ namespace KappaMonoid
 #assert_axioms corollary_4_7_two []
 #assert_axioms corollary_4_7_two_iff []
 #assert_axioms krsa_ascent []
+#assert_axioms krsa_ascent_lambdaGen []
 #assert_axioms krsa_ascent_free []
 #assert_axioms krsa_ascent_iso []
 #assert_axioms isUniversalKExtension_unique' []
