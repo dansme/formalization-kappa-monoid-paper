@@ -35,6 +35,10 @@ namespace KappaMonoid
 
 /-! ## §3 — no axiom at all -/
 
+#assert_axioms IsBraided.exists_aligned []
+#assert_axioms IsBraided.exists_aligned_eq_of_ne_aleph0 []
+#assert_axioms IsBraided.exists_aligned_of_data []
+#assert_axioms IsBraided.exists_aligned_cumulative []
 #assert_axioms BraidingData.isBraided_block []
 #assert_axioms isBraided_of_blocks []
 #assert_axioms isBraidedOn_iff_isBraided []
@@ -80,6 +84,10 @@ namespace KappaMonoid
 /-! ## §5 — Bergman–Dicks only, and only where Corollary 4.7(1) is invoked -/
 
 #assert_axioms TwoGen.lemma_5_1 []
+#assert_axioms TwoGen.lemma_5_1_core []
+#assert_axioms TwoGen.lemma_5_1_fg []
+#assert_axioms TwoGen.lemma_5_1_addOf_eq_closure []
+#assert_axioms TwoGen.lemma_5_1_iso []
 #assert_axioms TwoGen.lemma_5_2_one []
 #assert_axioms TwoGen.lemma_5_2_two []
 #assert_axioms TwoGen.lemma_5_2_three []
@@ -90,12 +98,15 @@ namespace KappaMonoid
 #assert_axioms TwoGen.theorem_5_3 [bergmanDicksData]
 #assert_axioms TwoGen.theorem_5_3_sumFG [bergmanDicksData]
 #assert_axioms TwoGen.prop_5_4 []
+#assert_axioms TwoGen.prop_5_4_free []
 #assert_axioms TwoGen.prop_5_4_hereditary []
 #assert_axioms TwoGen.corollary_5_5_one [bergmanDicksData]
 #assert_axioms TwoGen.corollary_5_5_two [bergmanDicksData]
 #assert_axioms TwoGen.corollary_5_5_three [bergmanDicksData]
 #assert_axioms TwoGen.corollary_5_5_three_nonfree [bergmanDicksData]
 #assert_axioms TwoGen.corollary_5_5_three_trace [bergmanDicksData]
+#assert_axioms TwoGen.cmul_top_add_ecmul_of_mem_addOf []
+#assert_axioms TwoGen.unique_infinite_form_of_addOf_eq []
 #assert_axioms TwoGen.cex_incomparable []
 #assert_axioms TwoGen.cex_absorb []
 

@@ -926,4 +926,65 @@ theorem krsa_ascent_iso {R : Type u} [Ring R] {κ : Cardinal.{u}}
     (hbrF.isUniversalKExtension hlk) (hbrF.isUniversalKExtension hlk)
     (lemma_3_14_free hlam hκ hlk) (lemma_3_14_free hlam hκ hlk)
 
+/-! ## `ℵ₀` copies of a class
+
+Two facts about `ℵ₀ [P]` in `V^{ℵ₀}(R)` used by both Lemma 5.1 and Proposition 5.4: its
+representative is the countable direct sum of the representatives, and it is finitely generated
+only when the class is zero. -/
+
+section CmulTop
+
+variable (R : Type u) [Ring R]
+
+/-- `ℵ₀` copies of a class are represented by the countable direct sum of its representative. -/
+theorem rep_cmul_top_dsum (p : V(R).carrier) :
+    Nonempty (V(R).rep (ℵ₀∙p)
+      ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u})) (fun _ => V(R).rep p)) := by
+  rw [show ℵ₀∙p
+      = KMonoid.sumOf (κ := ℵ₀) (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u})))
+        (fun _ : Idx (ℵ₀ : Cardinal.{u}) => p) from
+    (KMonoid.cmul_congr (mk_Idx (ℵ₀ : Cardinal.{u})).symm le_rfl
+        (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) p).trans
+      (KMonoid.cmul_eq_sumOf (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) p)]
+  exact V(R).rep_sumOf le_rfl (le_of_eq (mk_Idx _))
+    (fun _ : Idx (ℵ₀ : Cardinal.{u}) => p)
+
+/-- **`ℵ₀` copies of a nonzero class are never finitely generated.**
+
+If `rep (ℵ₀ p)` were finitely generated it would be `ℵ₀⁻`-small, so in its decomposition as
+`⨁_{Idx ℵ₀} rep p` only finitely many components could ever be nonzero; but every component is
+hit, so `rep p` is trivial.  This is what makes `ℵ₀ [P₁]` an admissible input to the "every
+countably but not finitely generated projective is free" hypothesis. -/
+theorem eq_zero_of_finite_cmul_top {p : V(R).carrier}
+    (h : letI := V(R).instKMonoid le_rfl
+      Module.Finite R (V(R).rep (ℵ₀∙p))) :
+    p = 0 := by
+  classical
+  -- the decomposition of `ℵ₀ p`
+  have e : V(R).rep (ℵ₀∙p)
+      ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u})) (fun _ => V(R).rep p) := by
+    exact (rep_cmul_top_dsum R p).some
+  obtain ⟨s, hs, hzero⟩ := isLambdaSmall_aleph0_of_fg R _ h
+    (fun _ : Idx (ℵ₀ : Cardinal.{u}) => V(R).rep p)
+    (fun _ => inferInstance) (fun _ => inferInstance) (e : _ →ₗ[R] _)
+  -- some index escapes the finite support
+  have hsfin : s.Finite := Cardinal.lt_aleph0_iff_set_finite.mp hs
+  have : Infinite (Idx (ℵ₀ : Cardinal.{u})) :=
+    Cardinal.infinite_iff.mpr (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u})).symm)
+  obtain ⟨i₀, hi₀⟩ := hsfin.infinite_compl.nonempty
+  -- so that component of `rep p` vanishes identically
+  refine V(R).eq_zero_of_subsingleton ⟨fun y z => ?_⟩
+  have hval : ∀ w : V(R).rep p, w = 0 := by
+    intro w
+    have := hzero (e.symm (DirectSum.lof R _
+      (fun _ : Idx (ℵ₀ : Cardinal.{u}) => V(R).rep p) i₀ w)) i₀ hi₀
+    rwa [show (e : _ →ₗ[R] _) (e.symm (DirectSum.lof R _ _ i₀ w))
+        = DirectSum.lof R _ (fun _ : Idx (ℵ₀ : Cardinal.{u}) =>
+          V(R).rep p) i₀ w from e.apply_symm_apply _,
+      DirectSum.component.lof_self] at this
+  rw [hval y, hval z]
+
+
+end CmulTop
+
 end KappaMonoid

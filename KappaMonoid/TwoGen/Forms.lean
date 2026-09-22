@@ -166,6 +166,68 @@ theorem exists_form (x₁ x₂ : H)
   · exact ⟨(1, 0), by rw [eval, ecmul_one, ecmul_zero, add_zero]⟩
   · exact ⟨(0, 1), by rw [eval, ecmul_one, ecmul_zero, zero_add]⟩
 
+/-! ### The two positive halves of Corollary 5.5(2) and 5.5(3)
+
+Both are statements about `add`, proved from Lemma 2.8(2) (`KMonoid.add_cmul_top_eq`): once a
+summand of `ℵ₀ x` has been found, adding it back changes nothing. -/
+
+/-- **Corollary 5.5(3)**, first sentence: if `x₁ ∈ add(x₂)` then `ℵ₀ x₂ = ℵ₀ x₂ + β x₁` for every
+cardinal `β ≤ ℵ₀`.
+
+Paper proof: `x₁` is a summand of some `n x₂`, hence of `ℵ₀ x₂`, so `x₁ + ℵ₀ x₂ = ℵ₀ x₂` by
+Lemma 2.8(2); scaling by `ℵ₀` gives `ℵ₀ x₁ + ℵ₀ x₂ = ℵ₀ x₂`, and `β x₁` is a summand of `ℵ₀ x₁`.
+
+The converse fails: `TwoGen.cex_absorb` together with `TwoGen.cex_incomparable`. -/
+theorem cmul_top_add_ecmul_of_mem_addOf {x₁ x₂ : H} (h : x₁ ∈ add(x₂)) (β : ℕ∞) :
+    ℵ₀∙x₂ + ecmul β x₁ = ℵ₀∙x₂ := by
+  obtain ⟨z, n, hzn⟩ := h
+  -- `n x₂` is a summand of `ℵ₀ x₂`, because `n + ℵ₀ = ℵ₀`
+  have hn : KMonoid.cmul (κ := ℵ₀) ((n : ℕ) : Cardinal.{u})
+        (le_of_lt (Cardinal.nat_lt_aleph0 n)) x₂ + ℵ₀∙x₂ = ℵ₀∙x₂ := by
+    rw [← KMonoid.cmul_add (κ := ℵ₀) (le_of_lt (Cardinal.nat_lt_aleph0 n)) le_rfl
+      (le_of_eq (Cardinal.nat_add_aleph0 n)) x₂]
+    exact KMonoid.cmul_congr (Cardinal.nat_add_aleph0 n) _ le_rfl x₂
+  -- hence so is `x₁`
+  have h1 : x₁ + (z + ℵ₀∙x₂) = ℵ₀∙x₂ := by rw [← add_assoc, hzn]; exact hn
+  have h2 : x₁ + ℵ₀∙x₂ = ℵ₀∙x₂ := KMonoid.add_cmul_top_eq h1
+  -- scaling by `ℵ₀`
+  have h3 : ℵ₀∙x₁ + ℵ₀∙x₂ = ℵ₀∙x₂ := by
+    have h := congrArg (fun t : H => ℵ₀∙t) h2
+    rwa [KMonoid.cmul_top_distrib, KMonoid.cmul_top_idem] at h
+  -- and `β x₁` is a summand of `ℵ₀ x₁`
+  obtain ⟨c, hc⟩ : ecmul β x₁ ≼ ℵ₀∙x₁ :=
+    KMonoid.cmul_le_cmul (Cardinal.ofENat_le_aleph0 β) le_rfl (Cardinal.ofENat_le_aleph0 β) x₁
+  have h4 : ecmul β x₁ + (c + ℵ₀∙x₂) = ℵ₀∙x₂ := by rw [← add_assoc, hc]; exact h3
+  rw [add_comm]
+  exact KMonoid.add_cmul_top_eq h4
+
+/-- **Corollary 5.5(2)**, first sentence, in the sharp form: if `add(x₁) = add(x₂)` then every
+infinite form evaluates to `ℵ₀ x₂`, so `H` has exactly one element with an infinite form.
+
+The converse fails: `TwoGen.cex_unique_infinite`. -/
+theorem eval_of_isInfinite_of_addOf_eq {x₁ x₂ : H} (h : add(x₁) = add(x₂))
+    {F : Form} (hF : F.IsInfinite) : eval x₁ x₂ F = ℵ₀∙x₂ := by
+  have h12 : ∀ β : ℕ∞, ℵ₀∙x₂ + ecmul β x₁ = ℵ₀∙x₂ :=
+    cmul_top_add_ecmul_of_mem_addOf (h ▸ KMonoid.self_mem_addOf x₁)
+  have h21 : ∀ β : ℕ∞, ℵ₀∙x₁ + ecmul β x₂ = ℵ₀∙x₁ :=
+    cmul_top_add_ecmul_of_mem_addOf (h ▸ KMonoid.self_mem_addOf x₂)
+  have hxx : ℵ₀∙x₁ = ℵ₀∙x₂ := by
+    have e₁ := h12 ⊤
+    have e₂ := h21 ⊤
+    rw [ecmul_top] at e₁ e₂
+    rw [← e₂, add_comm, e₁]
+  rcases hF with hc | hc
+  · rw [eval, hc, ecmul_top, h21 F.2, hxx]
+  · rw [eval, hc, ecmul_top, add_comm]
+    exact h12 F.1
+
+/-- **Corollary 5.5(2)**, first sentence: if `add(x₁) = add(x₂)` then `H` has only one element
+with an infinite form. -/
+theorem unique_infinite_form_of_addOf_eq {x₁ x₂ : H} (h : add(x₁) = add(x₂)) :
+    ∀ F G : Form, F.IsInfinite → G.IsInfinite → eval x₁ x₂ F = eval x₁ x₂ G :=
+  fun _ _ hF hG => (eval_of_isInfinite_of_addOf_eq h hF).trans
+    (eval_of_isInfinite_of_addOf_eq h hG).symm
+
 /-- The index type of a family in an `ℵ₀`-monoid: `ℕ`, lifted into `Type u` because `BraidingData`
 indexes by a type in the cardinal's universe. -/
 abbrev Nats : Type u := ULift.{u} ℕ

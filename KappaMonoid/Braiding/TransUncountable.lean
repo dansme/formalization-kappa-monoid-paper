@@ -494,6 +494,136 @@ theorem IsBraided.trans_of_ne_aleph0 (hlam : lam ≠ ℵ₀) {x y z : ι → X}
     _ = lsumOf (lam := lam) (hNsm μ) (fun k : regroup K GB μ => z k) :=
         lsumOf_regroup hKdisj hKsm (hGBsm μ) (hNsm μ) z
 
+namespace IsBraided
+
+/-! ## Lemma 3.7 for every `λ`
+
+For uncountable `λ` the regrouping above proves more than the paper's Lemma 3.7 asks for: the two
+braidings can be chosen with *equal* partitions of the middle family, so the two cumulative unions
+coincide instead of merely sandwiching one another.  Together with the `λ = ℵ₀` case
+(`IsBraided.exists_aligned`, which really does need the alignment recursion) this gives Lemma 3.7
+at every `λ`. -/
+
+/-- **Lemma 3.7** for uncountable `λ`, in the sharp form: two braidings sharing the middle family
+`y` can be replaced by braidings whose partitions of `y` are *equal*. -/
+theorem exists_aligned_eq_of_ne_aleph0 (hlam : lam ≠ ℵ₀) {x y z : ι → X}
+    (hxy : IsBraided lam x y) (hyz : IsBraided lam y z) :
+    ∃ (e₁ : BraidingData lam x y) (e₂ : BraidingData lam y z), ∀ p, e₁.J p = e₂.I p := by
+  classical
+  have hreg : lam.IsRegular := (‹LMonoid lam X›).isRegular
+  have hlam0 : ℵ₀ < lam := lt_of_le_of_ne (LMonoid.aleph0_le (lam := lam) (X := X)) (Ne.symm hlam)
+  obtain ⟨I, J, hIsm, hJsm, hIdisj, hJdisj, hIcov, hJcov, heq1⟩ :=
+    (isBraided_iff_of_ne_aleph0 hlam x y).mp hxy
+  obtain ⟨J', K, hJ'sm, hKsm, hJ'disj, hKdisj, hJ'cov, hKcov, heq2⟩ :=
+    (isBraided_iff_of_ne_aleph0 hlam y z).mp hyz
+  obtain ⟨GA, GB, hGAsm, hGBsm, hGAdisj, hGBdisj, hGAcov, hGBcov, hkey⟩ :=
+    exists_common_regrouping hreg hlam0 J J' hJdisj hJ'disj hJcov hJ'cov hJsm hJ'sm
+  have hMsm : ∀ μ, #(regroup I GA μ) < lam := fun μ => mk_regroup_lt hreg hIsm (hGAsm μ)
+  have hNsm : ∀ μ, #(regroup K GB μ) < lam := fun μ => mk_regroup_lt hreg hKsm (hGBsm μ)
+  have hYAsm : ∀ μ, #(regroup J GA μ) < lam := fun μ => mk_regroup_lt hreg hJsm (hGAsm μ)
+  have hYBsm : ∀ μ, #(regroup J' GB μ) < lam := fun μ => mk_regroup_lt hreg hJ'sm (hGBsm μ)
+  -- the two regrouped braidings
+  refine ⟨BraidingData.ofPartition (regroup I GA) (regroup J GA)
+      (fun p q h => regroup_disjoint hIdisj hGAdisj h)
+      (fun p q h => regroup_disjoint hJdisj hGAdisj h)
+      (regroup_cover hIcov hGAcov) (regroup_cover hJcov hGAcov) hMsm hYAsm (fun μ => ?_),
+    BraidingData.ofPartition (regroup J' GB) (regroup K GB)
+      (fun p q h => regroup_disjoint hJ'disj hGBdisj h)
+      (fun p q h => regroup_disjoint hKdisj hGBdisj h)
+      (regroup_cover hJ'cov hGBcov) (regroup_cover hKcov hGBcov) hYBsm hNsm (fun μ => ?_),
+    fun μ => hkey μ⟩
+  · calc lsumOf (lam := lam) (hMsm μ) (fun i : regroup I GA μ => x i)
+        = lsumOf (lam := lam) (hGAsm μ)
+            (fun p : GA μ => lsumOf (lam := lam) (hIsm _) (fun i : I (p : ι × ℕ) => x i)) :=
+          (lsumOf_regroup hIdisj hIsm (hGAsm μ) (hMsm μ) x).symm
+      _ = lsumOf (lam := lam) (hGAsm μ)
+            (fun p : GA μ => lsumOf (lam := lam) (hJsm _) (fun j : J (p : ι × ℕ) => y j)) := by
+          congr 1
+          exact funext fun p => heq1 _
+      _ = lsumOf (lam := lam) (hYAsm μ) (fun j : regroup J GA μ => y j) :=
+          lsumOf_regroup hJdisj hJsm (hGAsm μ) (hYAsm μ) y
+  · calc lsumOf (lam := lam) (hYBsm μ) (fun j : regroup J' GB μ => y j)
+        = lsumOf (lam := lam) (hGBsm μ)
+            (fun p : GB μ => lsumOf (lam := lam) (hJ'sm _) (fun j : J' (p : ι × ℕ) => y j)) :=
+          (lsumOf_regroup hJ'disj hJ'sm (hGBsm μ) (hYBsm μ) y).symm
+      _ = lsumOf (lam := lam) (hGBsm μ)
+            (fun p : GB μ => lsumOf (lam := lam) (hKsm _) (fun k : K (p : ι × ℕ) => z k)) := by
+          congr 1
+          exact funext fun p => heq2 _
+      _ = lsumOf (lam := lam) (hNsm μ) (fun k : regroup K GB μ => z k) :=
+          lsumOf_regroup hKdisj hKsm (hGBsm μ) (hNsm μ) z
+
+/-- **Lemma 3.7**, at every `λ`, in the block-by-block form: two braidings sharing the middle
+family `y` can be replaced by braidings whose partitions of `y` interleave block by block.  For
+`λ = ℵ₀` this is `IsBraided.exists_aligned`, the paper's transfinite recursion; for uncountable
+`λ` the partitions can even be taken equal. -/
+theorem exists_aligned_of_data {x y z : ι → X}
+    (d₁ : BraidingData lam x y) (d₂ : BraidingData lam y z) :
+    ∃ (e₁ : BraidingData lam x y) (e₂ : BraidingData lam y z),
+      (∀ p, e₂.I p ⊆ e₁.J p ∪ e₁.J (bsucc p)) ∧
+      (∀ p, e₁.J (bsucc p) ⊆ e₂.I p ∪ e₂.I (bsucc p)) ∧
+      (∀ a : ι, e₁.J (a, 0) ⊆ e₂.I (a, 0)) := by
+  by_cases hlam : lam = ℵ₀
+  · subst hlam
+    exact exists_aligned d₁ d₂
+  · obtain ⟨e₁, e₂, he⟩ := exists_aligned_eq_of_ne_aleph0 hlam ⟨d₁⟩ ⟨d₂⟩
+    exact ⟨e₁, e₂, fun p => by rw [← he p]; exact Set.subset_union_left,
+      fun p => by rw [he (bsucc p)]; exact Set.subset_union_right,
+      fun a => by rw [he (a, 0)]⟩
+
+/-- `bsucc` is strictly monotone for the limit well-order on `ι × ℕ`. -/
+theorem kOrd_bsucc_mono {ν μ : ι × ℕ} (h : kOrd ι ν μ) : kOrd ι (bsucc ν) (bsucc μ) := by
+  rw [kOrd_iff] at h ⊢
+  rcases h with h | ⟨h1, h2⟩
+  · exact Or.inl h
+  · exact Or.inr ⟨h1, by simpa [bsucc] using h2⟩
+
+/-- **Lemma 3.7**, exactly as the paper states it: with `(J_μ)` the partition of `y` in the first
+braiding and `(J'_μ)` the one in the second,
+
+    ⋃_{ν ≤ μ} J_ν ⊆ ⋃_{ν ≤ μ} J'_ν ⊆ ⋃_{ν ≤ μ+1} J_ν   for all μ.
+
+Here the paper's limit well-order on `κ` is the lexicographic order `kOrd` on `ι × ℕ`, whose limit
+elements are the pairs `(a, 0)` and whose successor is `bsucc` — by Lemma 3.5 (`Braiding/WellOrder.lean`)
+this is no loss of generality. -/
+theorem exists_aligned_cumulative {x y z : ι → X}
+    (d₁ : BraidingData lam x y) (d₂ : BraidingData lam y z) :
+    ∃ (e₁ : BraidingData lam x y) (e₂ : BraidingData lam y z), ∀ μ : ι × ℕ,
+      (⋃ ν ∈ {ν : ι × ℕ | kOrd ι ν μ ∨ ν = μ}, e₁.J ν)
+          ⊆ (⋃ ν ∈ {ν : ι × ℕ | kOrd ι ν μ ∨ ν = μ}, e₂.I ν) ∧
+        (⋃ ν ∈ {ν : ι × ℕ | kOrd ι ν μ ∨ ν = μ}, e₂.I ν)
+          ⊆ ⋃ ν ∈ {ν : ι × ℕ | kOrd ι ν (bsucc μ) ∨ ν = bsucc μ}, e₁.J ν := by
+  obtain ⟨e₁, e₂, h1, h2, h3⟩ := exists_aligned_of_data d₁ d₂
+  refine ⟨e₁, e₂, fun μ => ⟨?_, ?_⟩⟩
+  · -- `J_ν ⊆ J'_ν` at a limit `ν`, and `J_{ρ+1} ⊆ J'_ρ ∪ J'_{ρ+1}` at a successor
+    intro i hi
+    simp only [Set.mem_iUnion, Set.mem_setOf_eq, exists_prop] at hi ⊢
+    obtain ⟨ν, hνμ, hi⟩ := hi
+    obtain ⟨a, (_ | n)⟩ := ν
+    · exact ⟨(a, 0), hνμ, h3 a hi⟩
+    · rcases h2 (a, n) (by simpa [bsucc] using hi) with h | h
+      · exact ⟨(a, n), Or.inl (by
+          rcases hνμ with hν | hν
+          · exact kOrd_trans (kOrd_bsucc (a, n)) hν
+          · exact hν ▸ kOrd_bsucc (a, n)), h⟩
+      · exact ⟨(a, n + 1), hνμ, h⟩
+  · -- `J'_ν ⊆ J_ν ∪ J_{ν+1}`, and both indices are `≤ μ+1`
+    intro i hi
+    simp only [Set.mem_iUnion, Set.mem_setOf_eq, exists_prop] at hi ⊢
+    obtain ⟨ν, hνμ, hi⟩ := hi
+    have hνs : kOrd ι ν (bsucc μ) := by
+      rcases hνμ with hν | hν
+      · exact kOrd_trans hν (kOrd_bsucc μ)
+      · exact hν ▸ kOrd_bsucc μ
+    rcases h1 ν hi with h | h
+    · exact ⟨ν, Or.inl hνs, h⟩
+    · refine ⟨bsucc ν, ?_, h⟩
+      rcases hνμ with hν | hν
+      · exact Or.inl (kOrd_bsucc_mono hν)
+      · exact Or.inr (by rw [hν])
+
+end IsBraided
+
 end TransGeneral
 
 namespace IsBraided

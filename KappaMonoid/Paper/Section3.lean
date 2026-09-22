@@ -107,8 +107,23 @@ alias lemma_3_6_2_reflexivity_refl := KappaMonoid.IsBraided.refl
 /-- **Lemma 3.6(2), symmetry** — `KappaMonoid.IsBraided.symm`, in `Braiding/Defs.lean`. -/
 alias lemma_3_6_2_symmetry_symm := KappaMonoid.IsBraided.symm
 
-/-- **Lemma 3.7 (`λ = ℵ₀`)** — `KappaMonoid.IsBraided.exists_aligned`, in `Braiding/TransAleph0.lean`. -/
+/-- **Lemma 3.7** — `KappaMonoid.IsBraided.exists_aligned_cumulative`, in
+`Braiding/TransUncountable.lean`: the statement as printed, `⋃_{ν ≤ μ} J_ν ⊆ ⋃_{ν ≤ μ} J'_ν ⊆
+⋃_{ν ≤ μ+1} J_ν`, over the limit well-order `kOrd` on `ι × ℕ`. -/
+alias lemma_3_7_exists_aligned_cumulative := KappaMonoid.IsBraided.exists_aligned_cumulative
+
+/-- **Lemma 3.7**, block-by-block form — `KappaMonoid.IsBraided.exists_aligned_of_data`, in
+`Braiding/TransUncountable.lean`. -/
+alias lemma_3_7_exists_aligned_of_data := KappaMonoid.IsBraided.exists_aligned_of_data
+
+/-- **Lemma 3.7 (`λ = ℵ₀`)** — `KappaMonoid.IsBraided.exists_aligned`, in `Braiding/TransAleph0.lean`:
+the transfinite recursion of the paper's proof, which is what the countable case needs. -/
 alias lemma_3_7_exists_aligned := KappaMonoid.IsBraided.exists_aligned
+
+/-- **Lemma 3.7 (`λ > ℵ₀`)** — `KappaMonoid.IsBraided.exists_aligned_eq_of_ne_aleph0`: for
+uncountable `λ` the two partitions of the middle family can even be taken equal. -/
+alias lemma_3_7_exists_aligned_eq_of_ne_aleph0 :=
+  KappaMonoid.IsBraided.exists_aligned_eq_of_ne_aleph0
 
 /-- **Lemma 3.8's combinatorial core** — `KappaMonoid.IsBraided.of_aligned`, in `Braiding/TransAleph0.lean`. -/
 alias lemma_3_8_s_combinatorial_core_of_aligned := KappaMonoid.IsBraided.of_aligned

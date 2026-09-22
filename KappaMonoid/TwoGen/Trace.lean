@@ -35,19 +35,6 @@ variable (R : Type u) [Ring R]
 `R` a summand of a finite power of `P`, which is the divisibility `[R] ≼ n [P]` these lemmas
 extract. -/
 
-/-- `ℵ₀` copies of a class are represented by the countable direct sum of its representative. -/
-theorem rep_cmul_top_dsum (p : V(R).carrier) :
-    Nonempty (V(R).rep (ℵ₀∙p)
-      ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u})) (fun _ => V(R).rep p)) := by
-  rw [show ℵ₀∙p
-      = KMonoid.sumOf (κ := ℵ₀) (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u})))
-        (fun _ : Idx (ℵ₀ : Cardinal.{u}) => p) from
-    (KMonoid.cmul_congr (mk_Idx (ℵ₀ : Cardinal.{u})).symm le_rfl
-        (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) p).trans
-      (KMonoid.cmul_eq_sumOf (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) p)]
-  exact V(R).rep_sumOf le_rfl (le_of_eq (mk_Idx _))
-    (fun _ : Idx (ℵ₀ : Cardinal.{u}) => p)
-
 /-- **`Tr(P₁) = R` makes `R` a direct summand of a finite power of `P₁`**, hence `[R] ≼ n [P₁]`
 in `V^{ℵ₀}(R)`.
 
@@ -258,41 +245,6 @@ The second statement of Proposition 5.4 identifies equality of the two trace ide
 of every countably but not finitely generated projective.  The ingredients are that `ℵ₀[P]` is
 never finitely generated for `P ≠ 0`, and that a free `P^{(ℵ₀)}` forces `Tr(P) = R`. -/
 
-/-- **`ℵ₀` copies of a nonzero class are never finitely generated.**
-
-If `rep (ℵ₀ p)` were finitely generated it would be `ℵ₀⁻`-small, so in its decomposition as
-`⨁_{Idx ℵ₀} rep p` only finitely many components could ever be nonzero; but every component is
-hit, so `rep p` is trivial.  This is what makes `ℵ₀ [P₁]` an admissible input to the "every
-countably but not finitely generated projective is free" hypothesis. -/
-theorem eq_zero_of_finite_cmul_top {p : V(R).carrier}
-    (h : letI := V(R).instKMonoid le_rfl
-      Module.Finite R (V(R).rep (ℵ₀∙p))) :
-    p = 0 := by
-  classical
-  -- the decomposition of `ℵ₀ p`
-  have e : V(R).rep (ℵ₀∙p)
-      ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u})) (fun _ => V(R).rep p) := by
-    exact (rep_cmul_top_dsum R p).some
-  obtain ⟨s, hs, hzero⟩ := isLambdaSmall_aleph0_of_fg R _ h
-    (fun _ : Idx (ℵ₀ : Cardinal.{u}) => V(R).rep p)
-    (fun _ => inferInstance) (fun _ => inferInstance) (e : _ →ₗ[R] _)
-  -- some index escapes the finite support
-  have hsfin : s.Finite := Cardinal.lt_aleph0_iff_set_finite.mp hs
-  have : Infinite (Idx (ℵ₀ : Cardinal.{u})) :=
-    Cardinal.infinite_iff.mpr (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u})).symm)
-  obtain ⟨i₀, hi₀⟩ := hsfin.infinite_compl.nonempty
-  -- so that component of `rep p` vanishes identically
-  refine V(R).eq_zero_of_subsingleton ⟨fun y z => ?_⟩
-  have hval : ∀ w : V(R).rep p, w = 0 := by
-    intro w
-    have := hzero (e.symm (DirectSum.lof R _
-      (fun _ : Idx (ℵ₀ : Cardinal.{u}) => V(R).rep p) i₀ w)) i₀ hi₀
-    rwa [show (e : _ →ₗ[R] _) (e.symm (DirectSum.lof R _ _ i₀ w))
-        = DirectSum.lof R _ (fun _ : Idx (ℵ₀ : Cardinal.{u}) =>
-          V(R).rep p) i₀ w from e.apply_symm_apply _,
-      DirectSum.component.lof_self] at this
-  rw [hval y, hval z]
-
 /-- **A free `P^{(ℵ₀)}` forces `Tr(P) = R`.**  The basis is nonempty because `ℵ₀ [P] ≠ 0`, so the
 free module has full trace ideal; and the trace ideal of `P^{(ℵ₀)}` is contained in that of `P`,
 being a direct sum of copies of it. -/
@@ -337,6 +289,39 @@ theorem traceIdeal_eq_top_of_iso_free {p : V(R).carrier}
   exact le_trans (traceIdeal_dsum_le R (fun _ : Idx (ℵ₀ : Cardinal.{u}) =>
     V(R).rep p)) (iSup_le fun _ => le_rfl)
 
+
+/-- **Proposition 5.4**, clause (iv): `Tr(P₁) = R` if and only if `P₁^{(ℵ₀)}` is free.
+
+Paper proof: from `Tr(P₁) = R` the class `ℵ₀ [R]` is a summand of `ℵ₀ [P₁]`
+(`cmul_top_unitClass_addLe`), and `[R]` is an order-unit, so Lemma 2.8(2) collapses `ℵ₀ [P₁]` to
+`ℵ₀ [R]` — which is represented by `R^{(ℵ₀)}`.  Conversely a free `P₁^{(ℵ₀)}` has full trace ideal
+(`traceIdeal_eq_top_of_iso_free`), the basis being nonempty because `[P₁] ≠ 0`.
+
+Together with `prop_5_4` this is the paper's four-way equivalence
+`Tr(P₂) ⊆ Tr(P₁)` ⟺ `Tr(P₁) = R` ⟺ `P₂ | P₁^{(ℵ₀)}` ⟺ `P₁^{(ℵ₀)}` free. -/
+theorem prop_5_4_free (p₁ p₂ : V(R).carrier)
+    (hgen : letI := V(R).instKMonoid le_rfl
+      KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
+    (hnoncyclic : letI := V(R).instKMonoid le_rfl
+      ∀ x : V(R).carrier,
+        ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier)) :
+    traceIdeal R (V(R).rep p₁) = ⊤ ↔
+      ∃ ι : Type u, #ι ≤ ℵ₀ ∧
+        letI := V(R).instKMonoid le_rfl
+        Nonempty (V(R).rep (ℵ₀∙p₁) ≃ₗ[R] DirectSum ι (fun _ => R)) := by
+  classical
+  let := V(R).instKMonoid le_rfl
+  obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
+  constructor
+  · intro h
+    obtain ⟨w, hw⟩ := cmul_top_unitClass_addLe R p₁ k h
+    have hcollapse : ℵ₀∙p₁ = ℵ₀∙(Projective.unitClass R ℵ₀ le_rfl k) :=
+      KMonoid.eq_cmul_top_of_add (Projective.isOrderUnit_unitClass R ℵ₀ le_rfl k) w hw.symm
+    refine ⟨Idx (ℵ₀ : Cardinal.{u}), le_of_eq (mk_Idx _), ?_⟩
+    rw [hcollapse]
+    exact ⟨(Projective.rep_cmul_unitClass R ℵ₀ le_rfl le_rfl k).some⟩
+  · rintro ⟨ι, -, e⟩
+    exact traceIdeal_eq_top_of_iso_free R (ne_zero_of_not_cyclic p₁ p₂ hgen hnoncyclic).1 e
 
 /-- **Proposition 5.4**, final statement: `Tr(P₁) = Tr(P₂)` exactly when every countably but not
 finitely generated projective module is free.

@@ -166,6 +166,28 @@ the index set into pieces of size `< λ` whose partial sums *agree piece by piec
 are `λ⁻`-braided — take `v ≡ 0` and let `u` be the common partial sums.
 
 This is the easy half of Lemma 3.4(4), and it needs no hypothesis on `λ`. -/
+def _root_.KappaMonoid.BraidingData.ofPartition {x y : ι → X} (I J : ι × ℕ → Set ι)
+    (hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
+    (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q))
+    (hIcov : (⋃ p, I p) = Set.univ) (hJcov : (⋃ p, J p) = Set.univ)
+    (hIsmall : ∀ p, #(I p) < lam) (hJsmall : ∀ p, #(J p) < lam)
+    (heq : ∀ p, lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
+        = lsumOf (lam := lam) (hJsmall p) (fun j : J p => y j)) :
+    BraidingData lam x y where
+  I := I
+  J := J
+  I_disjoint := hIdisj
+  J_disjoint := hJdisj
+  I_cover := hIcov
+  J_cover := hJcov
+  I_small := hIsmall
+  J_small := hJsmall
+  u := fun p => lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
+  v := fun _ => 0
+  v_limit := fun _ => rfl
+  hI := fun _ => (zero_add _).symm
+  hJ := fun p => (heq p).symm.trans (zero_add _).symm
+
 theorem of_partition {x y : ι → X} (I J : ι × ℕ → Set ι)
     (hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
     (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q))
@@ -174,19 +196,7 @@ theorem of_partition {x y : ι → X} (I J : ι × ℕ → Set ι)
     (heq : ∀ p, lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
         = lsumOf (lam := lam) (hJsmall p) (fun j : J p => y j)) :
     IsBraided lam x y :=
-  ⟨{ I := I
-     J := J
-     I_disjoint := hIdisj
-     J_disjoint := hJdisj
-     I_cover := hIcov
-     J_cover := hJcov
-     I_small := hIsmall
-     J_small := hJsmall
-     u := fun p => lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
-     v := fun _ => 0
-     v_limit := fun _ => rfl
-     hI := fun _ => (zero_add _).symm
-     hJ := fun p => (heq p).symm.trans (zero_add _).symm }⟩
+  ⟨BraidingData.ofPartition I J hIdisj hJdisj hIcov hJcov hIsmall hJsmall heq⟩
 
 /-- **Braiding from two level functions.**
 
