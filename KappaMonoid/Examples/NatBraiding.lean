@@ -247,6 +247,67 @@ theorem trivExt_sigma_coe_nat_of_infinite {ι : Type u} {x : ι → ℕ}
     TrivExt.sigma (fun i => ((x i : ℕ) : WithTop ℕ)) = ⊤ :=
   TrivExt.sigma_eq_top_of_infinite (by rw [support_coe_withTop_nat]; exact hx)
 
+/-- The inclusion `ℕ₀ → ℕ₀ ∪ {∞}` is an `ℵ₀⁻`-homomorphism: both sides of a finite sum are the
+finite sum of the entries. -/
+theorem isLHom_coe_withTop_nat :
+    letI := LMonoid.ofAddCommMonoid ℕ
+    letI := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+    LMonoid.IsLHom (Order.le_succ (ℵ₀ : Cardinal.{u})) (fun a : ℕ => ((a : ℕ) : WithTop ℕ)) := by
+  let := LMonoid.ofAddCommMonoid ℕ
+  let := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+  refine ⟨rfl, fun {ι} h x => ?_⟩
+  have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
+  have : Fintype ι := Fintype.ofFinite ι
+  rw [LMonoid.lsumOf_aleph0_eq_finsum h x, KMonoid.sumOf_eq_sum]
+  simp
+
+/-- **Examples 3.3(1)**, the characterization: two families in `ℕ₀` indexed by `ℵ₀` are
+`ℵ₀⁻`-braided *if and only if* they both have finite support and the same sum, or both have
+infinite support.
+
+The two implications going in are `isBraided_nat_of_finite_support` and
+`isBraided_nat_of_infinite_support`.  Coming out: reducedness of `ℕ₀` makes the support of one
+family small exactly when the other's is (`IsBraided.mk_support_lt`), and a braiding is carried by
+the `ℵ₀⁻`-homomorphism `ℕ₀ → ℕ₀ ∪ {∞}` to two families with equal `ℵ₀`-sums, which for finite
+support is the equality of the finite sums. -/
+theorem isBraided_nat_iff (x y : Idx (ℵ₀ : Cardinal.{u}) → ℕ) :
+    letI := LMonoid.ofAddCommMonoid ℕ
+    IsBraided (ℵ₀ : Cardinal.{u}) x y ↔
+      (((Function.support x).Finite ∧ (Function.support y).Finite ∧ ∑ᶠ i, x i = ∑ᶠ i, y i) ∨
+        ((Function.support x).Infinite ∧ (Function.support y).Infinite)) := by
+  classical
+  let := LMonoid.ofAddCommMonoid ℕ
+  let := TrivExt.instKMonoid (M := ℕ) (κ := (ℵ₀ : Cardinal.{u})) (fun a b h => by omega) le_rfl
+  have hcon : IsConical ℕ := fun a b h => by omega
+  have hidx : #(Idx (ℵ₀ : Cardinal.{u})) ≤ (ℵ₀ : Cardinal.{u}) := le_of_eq (mk_Idx _)
+  constructor
+  · intro h
+    have hfin : (Function.support x).Finite ↔ (Function.support y).Finite := by
+      constructor
+      · intro hx
+        exact Cardinal.lt_aleph0_iff_set_finite.mp
+          (h.mk_support_lt hcon (Cardinal.lt_aleph0_iff_set_finite.mpr hx))
+      · intro hy
+        exact Cardinal.lt_aleph0_iff_set_finite.mp
+          ((IsBraided.symm h).mk_support_lt hcon (Cardinal.lt_aleph0_iff_set_finite.mpr hy))
+    by_cases hx : (Function.support x).Finite
+    · refine Or.inl ⟨hx, hfin.mp hx, ?_⟩
+      have hsum := sumOf_map_eq_of_isBraided (Order.le_succ (ℵ₀ : Cardinal.{u}))
+        isLHom_coe_withTop_nat hidx h
+      rw [KMonoid.sumOf_Idx, KMonoid.sumOf_Idx, TrivExt.instKMonoid_ksum hcon le_rfl,
+        TrivExt.instKMonoid_ksum hcon le_rfl] at hsum
+      show (∑ᶠ i, x i) = ∑ᶠ i, y i
+      have hx2 : TrivExt.sigma ((fun a : ℕ => ((a : ℕ) : WithTop ℕ)) ∘ x) = ((∑ᶠ i, x i : ℕ) : WithTop ℕ) :=
+        trivExt_sigma_coe_nat_of_finite hx
+      have hy2 : TrivExt.sigma ((fun a : ℕ => ((a : ℕ) : WithTop ℕ)) ∘ y) = ((∑ᶠ i, y i : ℕ) : WithTop ℕ) :=
+        trivExt_sigma_coe_nat_of_finite (hfin.mp hx)
+      rw [hx2, hy2] at hsum
+      exact_mod_cast hsum
+    · exact Or.inr ⟨hx, fun hy => hx (hfin.mpr hy)⟩
+  · rintro (⟨hx, hy, hsum⟩ | ⟨hx, hy⟩)
+    · exact isBraided_nat_of_finite_support x y hx hy hsum
+    · exact isBraided_nat_of_infinite_support hidx x y hx hy
+
 /-- **Examples 3.3(1)**: the trivial `ℵ₀`-extension `ℕ₀ ∪ {∞}` is `ℵ₀⁻`-braided over `ℕ₀`, hence
 (by Theorem 3.12(2)) *is* the universal `ℵ₀`-extension of `ℕ₀`.  This is the first entry of
 Examples 3.13. -/

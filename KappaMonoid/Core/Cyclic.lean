@@ -123,6 +123,47 @@ noncomputable def equivFinitePartSumCard {u : H} (hu : IsFaithful (κ := κ) u)
     · exact ⟨Sum.inl ⟨x, hfin⟩, rfl⟩
     · exact ⟨Sum.inr ⟨α, hα0, hα⟩, rfl⟩
 
+/-- **Lemma 2.15**, the operation: *"with the obvious operation"*.
+
+The bijection `equivFinitePartSumCard` carries the operation of `H` to the obvious one on
+`C₀ ⊎ {α : ℵ₀ ≤ α ≤ κ}`: `C₀` is closed under `+`, an infinite multiple `α u` absorbs every
+element of `C₀`, and two infinite multiples add to the multiple indexed by the larger cardinal.
+These three clauses determine the operation on the disjoint union completely, so together with
+the bijection they *are* the isomorphism the lemma asserts.
+
+None of it needs faithfulness of `u`: the three identities are the cardinal arithmetic
+`n + m`, `n + α = α` and `α + β = max α β` read through Lemma 2.7(2). -/
+theorem lemma_2_15_add (u : H) :
+    (∀ p ∈ finitePart (κ := κ) u, ∀ q ∈ finitePart (κ := κ) u,
+        p + q ∈ finitePart (κ := κ) u) ∧
+      (∀ p ∈ finitePart (κ := κ) u, ∀ (α : Cardinal.{u}) (_hα0 : ℵ₀ ≤ α) (hα : α ≤ κ),
+        p + cmul (κ := κ) α hα u = cmul (κ := κ) α hα u) ∧
+      (∀ (α β : Cardinal.{u}) (_hα0 : ℵ₀ ≤ α) (_hβ0 : ℵ₀ ≤ β) (hα : α ≤ κ) (hβ : β ≤ κ),
+        cmul (κ := κ) α hα u + cmul (κ := κ) β hβ u
+          = cmul (κ := κ) (max α β) (max_le hα hβ) u) := by
+  have hnat : ∀ n : ℕ, ((n : ℕ) : Cardinal.{u}) ≤ κ := fun n =>
+    le_trans (le_of_lt Cardinal.natCast_lt_aleph0) (aleph0_le (κ := κ) (H := H))
+  refine ⟨?_, ?_, ?_⟩
+  · rintro p ⟨n, rfl⟩ q ⟨m, rfl⟩
+    have hsum : ((n : ℕ) : Cardinal.{u}) + ((m : ℕ) : Cardinal.{u}) = ((n + m : ℕ) : Cardinal.{u}) := by
+      push_cast; ring
+    have hle : ((n : ℕ) : Cardinal.{u}) + ((m : ℕ) : Cardinal.{u}) ≤ κ := hsum.trans_le (hnat (n + m))
+    refine ⟨n + m, ?_⟩
+    rw [← cmul_add (hnat n) (hnat m) hle u]
+    exact cmul_congr hsum hle (hnat (n + m)) u
+  · rintro p ⟨n, rfl⟩ α hα0 hα
+    have hsum : ((n : ℕ) : Cardinal.{u}) + α = α := by
+      rw [add_comm]
+      exact Cardinal.add_eq_left hα0 (le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hα0)
+    have hle : ((n : ℕ) : Cardinal.{u}) + α ≤ κ := hsum.trans_le hα
+    rw [← cmul_add (hnat n) hα hle u]
+    exact cmul_congr hsum hle hα u
+  · intro α β hα0 hβ0 hα hβ
+    have hsum : α + β = max α β := Cardinal.add_eq_max hα0
+    have hle : α + β ≤ κ := hsum.trans_le (max_le hα hβ)
+    rw [← cmul_add hα hβ hle u]
+    exact cmul_congr hsum hle (max_le hα hβ) u
+
 end KMonoid
 
 end KappaMonoid

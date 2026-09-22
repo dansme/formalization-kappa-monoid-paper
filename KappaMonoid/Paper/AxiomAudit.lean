@@ -31,10 +31,15 @@ namespace KappaMonoid
 #assert_axioms Projective.isFaithful_unitClass []
 #assert_axioms Projective.isOrderUnit_unitClass []
 #assert_axioms KMonoid.lemma_2_15 []
+#assert_axioms KMonoid.lemma_2_15_add []
+#assert_axioms prop_2_17_two []
 #assert_axioms exists_unique_lift []
 
 /-! ## §3 — no axiom at all -/
 
+#assert_axioms isBraided_nat_iff []
+#assert_axioms not_isBraidedOver_ennreal []
+#assert_axioms not_isBraidedOver_trivExt_nnreal []
 #assert_axioms IsBraided.exists_aligned []
 #assert_axioms IsBraided.exists_aligned_eq_of_ne_aleph0 []
 #assert_axioms IsBraided.exists_aligned_of_data []
@@ -60,6 +65,7 @@ namespace KappaMonoid
 
 /-! ## §4 — Bergman–Dicks in one direction of Corollary 4.7(1), nothing else -/
 
+#assert_axioms IsLambdaSmallLe.isLambdaSmall_succ []
 #assert_axioms theorem_4_3 []
 #assert_axioms corollary_4_4 []
 #assert_axioms corollary_4_4_one []

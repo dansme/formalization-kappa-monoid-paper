@@ -249,7 +249,19 @@ The `κ`-monoid structures at the fixed cardinal — `F_{ℵ₀}`, `V^{ℵ₀}(R
 every proof. In `Examples/` the statement-level `letI`s stay even so: there they also pin the
 universe of `ℵ₀`, which is otherwise auto-bound afresh in each half of a statement.
 
-**Lemma 3.7 is proved in two cases.** The paper runs one transfinite recursion for every `λ`,
+**Left modules, right modules.** The paper works with right modules and says "right hereditary";
+Mathlib's `Module R` is a left module, so the development works throughout with left modules and
+`IsLeftHereditary`. The two readings are mirror images of one another — pass to the opposite ring
+— so every statement here is the paper's statement for `Rᵒᵖ`. This is a global convention, not a
+weakening: see "Classical results proved here" for what `IsLeftHereditary` records.
+
+**`i` and `j` in §5.** The paper's §5 statements are quantified over `1 ≤ i ≠ j ≤ 2`. The library
+fixes `i = 1`, `j = 2`, and `Paper.Setting5.swap` exchanges the two generators, which is legitimate
+because the standing hypothesis is symmetric in them; `Paper.Setting5.addBase_swap` says the base
+`add(x₁ + x₂)` does not move, and `Paper.lemma_5_2_five'` is a worked instance of the pattern.
+
+**Lemma 3.7 is proved in two cases.**
+ The paper runs one transfinite recursion for every `λ`,
 allowing infinite intervals once `λ > ℵ₀`. Here the countable case is that recursion
 (`IsBraided.exists_aligned`, `Braiding/TransAleph0.lean`) and the uncountable case goes through
 Lemma 3.4(4) and connected components (`IsBraided.exists_aligned_eq_of_ne_aleph0`), which proves

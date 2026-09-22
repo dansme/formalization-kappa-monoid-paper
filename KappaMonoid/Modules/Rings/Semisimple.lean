@@ -601,6 +601,22 @@ noncomputable def simpleListPi : SimpleList (Fin n → K) n where
   distinct := fun i j h => coord_distinct K n i j h
   complete := fun T _ _ hT => coord_complete K n T hT
 
+/-- **Proposition 2.17(2)**: for every `n ≥ 0` there is a semisimple ring `R` with
+`V^κ(R) ≅ F_κ^n`.
+
+Take `R = Fin n → k` for any field `k`: it is semisimple, and `simpleListPi` exhibits its `n`
+isomorphism classes of simple modules, so Proposition 2.17(1) applies. -/
+theorem prop_2_17_two (κ : Cardinal.{u}) (hκ : ℵ₀ ≤ κ) (n : ℕ) :
+    ∃ (R : Type u) (_ : Ring R) (_ : IsSemisimpleRing R),
+      letI := (projClass R κ hκ).instKMonoid hκ
+      letI := Fcard.instKMonoid hκ
+      letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
+      ∃ f : (projClass R κ hκ).carrier → (Fin n → Fcard κ),
+        KMonoid.IsKHom κ f ∧ Function.Bijective f :=
+  ⟨Fin n → ULift.{u} ℚ, inferInstance, inferInstance,
+    multMap (simpleListPi (ULift.{u} ℚ) n) hκ,
+    prop_2_17_one (simpleListPi (ULift.{u} ℚ) n) hκ⟩
+
 end Exists
 
 end KappaMonoid

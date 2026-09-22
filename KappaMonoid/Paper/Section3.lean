@@ -43,6 +43,10 @@ alias examples_3_3_1_isBraidedOver_withTop_nat := KappaMonoid.isBraidedOver_with
 /-- **Examples 3.3(1)** — `KappaMonoid.isBraided_nat_of_infinite_support`, in `Examples/NatBraiding.lean`. -/
 alias examples_3_3_1_isBraided_nat_of_infinite_support := KappaMonoid.isBraided_nat_of_infinite_support
 
+/-- **Examples 3.3(1)**, the characterization — `KappaMonoid.isBraided_nat_iff`: two families in
+`ℕ₀` are braided iff both have finite support and equal sums, or both have infinite support. -/
+alias examples_3_3_1_isBraided_nat_iff := KappaMonoid.isBraided_nat_iff
+
 /-- **Examples 3.3(2)** — `KappaMonoid.isBraided_nnreal_iff`, in `Examples/NNReal.lean`. -/
 alias examples_3_3_2_isBraided_nnreal_iff := KappaMonoid.isBraided_nnreal_iff
 
@@ -60,6 +64,15 @@ alias examples_3_3_2_not_isBraided_geom_two_geom := KappaMonoid.not_isBraided_ge
 
 /-- **Examples 3.3(2)** — `KappaMonoid.not_isBraided_single2_geom`, in `Examples/NNReal.lean`. -/
 alias examples_3_3_2_not_isBraided_single2_geom := KappaMonoid.not_isBraided_single2_geom
+
+/-- **Examples 3.3(2)** — `KappaMonoid.not_isBraidedOver_ennreal`: `ℝ≥0∞` is not `ℵ₀⁻`-braided
+over `ℝ≥0`. -/
+alias examples_3_3_2_not_isBraidedOver_ennreal := KappaMonoid.not_isBraidedOver_ennreal
+
+/-- **Examples 3.3(2)** — `KappaMonoid.not_isBraidedOver_trivExt_nnreal`: neither is the trivial
+`ℵ₀`-extension of `ℝ≥0`. -/
+alias examples_3_3_2_not_isBraidedOver_trivExt_nnreal :=
+  KappaMonoid.not_isBraidedOver_trivExt_nnreal
 
 /-- **Examples 3.3(3)** — `KappaMonoid.ofReal_notMem_kclosure_of_not_mem_ratSet`, in `Examples/Reals.lean`. -/
 alias examples_3_3_3_ofReal_notMem_kclosure_of_not_mem_ratSet := KappaMonoid.ofReal_notMem_kclosure_of_not_mem_ratSet

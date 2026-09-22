@@ -54,6 +54,22 @@ structure Setting5 (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] where
   /-- `H` is not cyclic. -/
   noncyclic : ∀ x : H, ¬ KGenerates ℵ₀ ({x} : Set H)
 
+/-- **Exchanging the two generators.**  The paper's §5 statements are quantified over `1 ≤ i ≠ j ≤ 2`;
+the library fixes `i = 1`, `j = 2`, and the case `i = 2`, `j = 1` is the same statement applied to
+this swapped setting.  Nothing is lost, because the standing hypothesis is symmetric in the two
+generators. -/
+def Setting5.swap {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H] (S : Setting5 H) : Setting5 H where
+  x₁ := S.x₂
+  x₂ := S.x₁
+  gen := by rw [Set.pair_comm]; exact S.gen
+  noncyclic := S.noncyclic
+
+@[simp] theorem Setting5.swap_x₁ {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H] (S : Setting5 H) :
+    S.swap.x₁ = S.x₂ := rfl
+
+@[simp] theorem Setting5.swap_x₂ {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H] (S : Setting5 H) :
+    S.swap.x₂ = S.x₁ := rfl
+
 /-- **Realizability**, the conclusion of Theorem 5.3 and of all three parts of Corollary 5.5:
 `H` is isomorphic, as an `ℵ₀`-monoid, to `V^{ℵ₀}(R)` for a ring `R` over which every projective
 module is a direct sum of finitely generated ones.
@@ -73,7 +89,13 @@ abbrev IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :
 over. -/
 abbrev addBase (S : Setting5 H) : Set H := add((S.x₁ + S.x₂))
 
+/-- The base `add (x₁ + x₂)` does not see the exchange of the two generators. -/
+theorem Setting5.addBase_swap (S : Setting5 H) : addBase S.swap = addBase S := by
+  show add((S.x₂ + S.x₁)) = add((S.x₁ + S.x₂))
+  rw [add_comm]
+
 /-! ## Lemma 5.1 -/
+
 
 /-- **Lemma 5.1** (`l:twogen-braided`).  *Suppose `H ≅ V^{ℵ₀}(R)` for some ring `R` over which
 projective modules are direct sums of finitely generated modules.  Then `x₁` and `x₂` correspond
@@ -162,7 +184,25 @@ theorem lemma_5_2_five (S : Setting5 H)
       ℵ₀∙(S.x₁ + S.x₂) = ℵ₀∙S.x₂ :=
   TwoGen.lemma_5_2_five S.x₁ S.x₂ hbr
 
+/-- **Lemma 5.2(5)** with the two generators exchanged — the case `i = 2`, `j = 1` of the paper's
+`1 ≤ i ≠ j ≤ 2`.  It is the statement above applied to `Setting5.swap`, and every other `i ≠ j`
+statement of the section is obtained the same way; `Setting5.addBase_swap` says the base is
+unchanged. -/
+theorem lemma_5_2_five' (S : Setting5 H)
+    (hbr : IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S) H (Order.le_succ ℵ₀) (fun y => (y : H))) :
+    S.x₂ ∈ add(S.x₁) ↔
+      ℵ₀∙(S.x₁ + S.x₂) = ℵ₀∙S.x₁ := by
+  have hbr' : IsBraidedOver ℵ₀ ℵ₀ ↥(addBase S.swap) H (Order.le_succ ℵ₀) (fun y => (y : H)) :=
+    IsBraidedOver.of_set_eq Cardinal.isRegular_aleph0
+      (KMonoid.addOf_isLSubset (κ := (ℵ₀ : Cardinal.{u})) le_rfl (S.swap.x₁ + S.swap.x₂))
+      (KMonoid.addOf_isLSubset (κ := (ℵ₀ : Cardinal.{u})) le_rfl (S.x₁ + S.x₂))
+      (Setting5.addBase_swap S) hbr
+  have h := lemma_5_2_five S.swap hbr'
+  rw [Setting5.swap_x₁, Setting5.swap_x₂, add_comm] at h
+  exact h
+
 /-! ## Theorem 5.3 -/
+
 
 /-- **Theorem 5.3** (`hereditarycasecor`), forward direction.  If `H` is realizable then the three
 conditions hold, for both orderings of the generators. -/

@@ -22,7 +22,32 @@ namespace Paper
 /-- **Definition 4.1** — `KappaMonoid.IsLambdaSmall`, in `Modules/Small.lean`. -/
 alias definition_4_1_IsLambdaSmall := KappaMonoid.IsLambdaSmall
 
+/-- **Example 4.2(1)** — `KappaMonoid.IsLambdaSmallLe`, in `Modules/Small.lean`: the non-strict
+variant of Definition 4.1. -/
+alias example_4_2_1_IsLambdaSmallLe := KappaMonoid.IsLambdaSmallLe
+
+/-- **Example 4.2(1)** — `KappaMonoid.IsLambdaSmallLe.isLambdaSmall_succ`: every `λ`-small module
+is `(λ⁺)⁻`-small. -/
+alias example_4_2_1_isLambdaSmall_succ := KappaMonoid.IsLambdaSmallLe.isLambdaSmall_succ
+
+/-- **Example 4.2(3)** — `KappaMonoid.IsLambdaGenerated.isLambdaSmall`: the members of `C_{λ⁻}`
+are `λ⁻`-small. -/
+alias example_4_2_3_isLambdaSmall := KappaMonoid.IsLambdaGenerated.isLambdaSmall
+
+/-- **Example 4.2(3)** — `KappaMonoid.isLambdaGenerated_dsum`: `C_{λ⁻}` is closed under direct
+sums over index sets of cardinality `< λ`. -/
+alias example_4_2_3_dsum := KappaMonoid.isLambdaGenerated_dsum
+
+/-- **Example 4.2(3)** — `KappaMonoid.IsLambdaGenerated.of_prod_left`: `C_{λ⁻}` is closed under
+direct summands. -/
+alias example_4_2_3_of_prod_left := KappaMonoid.IsLambdaGenerated.of_prod_left
+
+/-- **Example 4.2(3)** — `KappaMonoid.IsLambdaGenerated.of_equiv`: `C_{λ⁻}` is closed under
+isomorphisms. -/
+alias example_4_2_3_of_equiv := KappaMonoid.IsLambdaGenerated.of_equiv
+
 /-- **Example 4.2(2)** — `KappaMonoid.isLambdaSmall_aleph0_of_fg`, in `Modules/Small.lean`. -/
+
 alias example_4_2_2_isLambdaSmall_aleph0_of_fg := KappaMonoid.isLambdaSmall_aleph0_of_fg
 
 /-- **Example 4.2(2)** — `KappaMonoid.isLambdaSmall_of_span`, in `Modules/Small.lean`. -/

@@ -6,6 +6,7 @@ universal `ℵ₀`-extension is built in `Examples/RTilde.lean`.
 -/
 import KappaMonoid.Braiding
 import KappaMonoid.Examples.ENNReal
+import KappaMonoid.Examples.TrivExt
 import KappaMonoid.Examples.Diophantine
 
 universe u v
@@ -452,5 +453,74 @@ theorem infinite_support_geomTo {a : ℝ≥0} (ha : a ≠ 0) :
     positivity
   rw [hsupp]
   exact Set.infinite_univ
+
+/-! ### Neither `ℵ₀`-monoid structure on `ℝ≥0 ∪ {∞}` is braided over `ℝ≥0`
+
+The two witnesses above refute the braiding condition itself; these two statements package them as
+the assertion Examples 3.3(2) makes. -/
+
+/-- A countable index type for the families below. -/
+theorem nonempty_idx_equiv_nat : Nonempty (Idx (ℵ₀ : Cardinal.{0}) ≃ ℕ) :=
+  Cardinal.eq.mp ((mk_Idx (ℵ₀ : Cardinal.{0})).trans Cardinal.mk_nat.symm)
+
+/-- **Examples 3.3(2)**: `ℝ≥0∞`, the `ℵ₀`-monoid structure of Examples 2.3(2) on `ℝ≥0 ∪ {∞}`, is
+*not* `ℵ₀⁻`-braided over `ℝ≥0`.  Witness: `single2` and `geom` have the same sum `2` but different
+support behaviour. -/
+theorem not_isBraidedOver_ennreal :
+    letI := LMonoid.ofAddCommMonoid ℝ≥0
+    letI : KMonoid (ℵ₀ : Cardinal.{0}) ℝ≥0∞ := ENNRealExample.instKMonoid
+    ¬ IsBraidedOver (ℵ₀ : Cardinal.{0}) ℵ₀ ℝ≥0 ℝ≥0∞ (Order.le_succ ℵ₀)
+        (fun a : ℝ≥0 => ((a : ℝ≥0) : ℝ≥0∞)) := by
+  let _ : LMonoid (ℵ₀ : Cardinal.{0}) ℝ≥0 := LMonoid.ofAddCommMonoid ℝ≥0
+  let _ : KMonoid (ℵ₀ : Cardinal.{0}) ℝ≥0∞ := ENNRealExample.instKMonoid
+  intro hbr
+  obtain ⟨e⟩ := nonempty_idx_equiv_nat
+  have hsum : (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{0})) fun i => ((single2 (e i) : ℝ≥0) : ℝ≥0∞))
+      = KMonoid.ksum (κ := (ℵ₀ : Cardinal.{0})) fun i => ((geom (e i) : ℝ≥0) : ℝ≥0∞) := by
+    rw [← KMonoid.sumOf_Idx, ← KMonoid.sumOf_Idx,
+      ENNRealExample.instKMonoid_sumOf (le_of_eq (mk_Idx _)),
+      ENNRealExample.instKMonoid_sumOf (le_of_eq (mk_Idx _)),
+      e.tsum_eq fun n => ((single2 n : ℝ≥0) : ℝ≥0∞),
+      e.tsum_eq fun n => ((geom n : ℝ≥0) : ℝ≥0∞)]
+    exact esum_single2.trans esum_geom.symm
+  have hb := (hbr.braided _ _ hsum).comp_equiv e.symm
+  simp only [Equiv.apply_symm_apply] at hb
+  exact not_isBraided_single2_geom hb
+
+/-- **Examples 3.3(2)**: the *trivial* `ℵ₀`-extension of `ℝ≥0` (Examples 2.3(1)) is not
+`ℵ₀⁻`-braided over `ℝ≥0` either.  Witness: `geom` and `2 · geom` both have infinite support, so
+both sum to `∞` there, but their series sums differ. -/
+theorem not_isBraidedOver_trivExt_nnreal :
+    letI := LMonoid.ofAddCommMonoid ℝ≥0
+    letI := TrivExt.instKMonoid (M := ℝ≥0) (κ := (ℵ₀ : Cardinal.{0})) isConical_nnreal le_rfl
+    ¬ IsBraidedOver (ℵ₀ : Cardinal.{0}) ℵ₀ ℝ≥0 (WithTop ℝ≥0) (Order.le_succ ℵ₀)
+        (fun a : ℝ≥0 => ((a : ℝ≥0) : WithTop ℝ≥0)) := by
+  let _ : LMonoid (ℵ₀ : Cardinal.{0}) ℝ≥0 := LMonoid.ofAddCommMonoid ℝ≥0
+  let _ : KMonoid (ℵ₀ : Cardinal.{0}) (WithTop ℝ≥0) :=
+    TrivExt.instKMonoid (M := ℝ≥0) (κ := (ℵ₀ : Cardinal.{0})) isConical_nnreal le_rfl
+  intro hbr
+  obtain ⟨e⟩ := nonempty_idx_equiv_nat
+  have hinf : ∀ f : ℕ → ℝ≥0, (∀ n, f n ≠ 0) →
+      (Function.support fun i : Idx (ℵ₀ : Cardinal.{0}) => ((f (e i) : ℝ≥0) : WithTop ℝ≥0)).Infinite := by
+    intro f hf
+    have : Infinite (Idx (ℵ₀ : Cardinal.{0})) := infinite_Idx le_rfl
+    have hsupp : (Function.support fun i : Idx (ℵ₀ : Cardinal.{0}) =>
+        ((f (e i) : ℝ≥0) : WithTop ℝ≥0)) = Set.univ :=
+      Set.eq_univ_of_forall fun i => by
+        simp only [Function.mem_support, ne_eq, WithTop.coe_eq_zero]
+        exact hf (e i)
+    rw [hsupp]
+    exact Set.infinite_univ
+  have hsum : (KMonoid.ksum (κ := (ℵ₀ : Cardinal.{0})) fun i => ((geom (e i) : ℝ≥0) : WithTop ℝ≥0))
+      = KMonoid.ksum (κ := (ℵ₀ : Cardinal.{0}))
+          fun i => (((2 * geom (e i) : ℝ≥0)) : WithTop ℝ≥0) := by
+    rw [TrivExt.instKMonoid_ksum isConical_nnreal le_rfl,
+      TrivExt.instKMonoid_ksum isConical_nnreal le_rfl,
+      TrivExt.sigma_eq_top_of_infinite (hinf geom geom_ne_zero).not_finite,
+      TrivExt.sigma_eq_top_of_infinite
+        (hinf (fun n => 2 * geom n) fun n => mul_ne_zero two_ne_zero (geom_ne_zero n)).not_finite]
+  have hb := (hbr.braided _ _ hsum).comp_equiv e.symm
+  simp only [Equiv.apply_symm_apply] at hb
+  exact not_isBraided_geom_two_geom hb
 
 end KappaMonoid

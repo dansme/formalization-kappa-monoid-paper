@@ -47,7 +47,7 @@ alias definition_2_6_lcmul := KappaMonoid.LMonoid.lcmul
 alias lemma_2_7_2_for_a_two_term_sum_of_cardinals_cmul_add := KappaMonoid.KMonoid.cmul_add
 
 /-- **Lemma 2.7(4)** — `KappaMonoid.KMonoid.cmul_cmul`, in `Core/KMonoid.lean`. -/
-alias lemma_2_7_4_cmul_cmul := KappaMonoid.KMonoid.cmul_cmul
+alias lemma_2_7_companion_cmul_cmul := KappaMonoid.KMonoid.cmul_cmul
 
 /-- **Lemma 2.7(1), second half** — `KappaMonoid.KMonoid.cmul_one`, in `Core/KMonoid.lean`. -/
 alias lemma_2_7_1_second_half_cmul_one := KappaMonoid.KMonoid.cmul_one
@@ -127,8 +127,16 @@ alias example_2_13_isOrderUnit_unitClass := KappaMonoid.Projective.isOrderUnit_u
 /-- **Lemma 2.14** — `KappaMonoid.KMonoid.eq_cmul_top_of_add`, in `Core/OrderUnit.lean`. -/
 alias lemma_2_14_eq_cmul_top_of_add := KappaMonoid.KMonoid.eq_cmul_top_of_add
 
-/-- **Lemma 2.15** — `KappaMonoid.KMonoid.lemma_2_15`, in `Core/Cyclic.lean`. -/
+/-- **Lemma 2.15** — `KappaMonoid.KMonoid.lemma_2_15`, in `Core/Cyclic.lean`: the disjointness
+and the parametrisation. -/
 alias lemma_2_15_lemma_2_15 := KappaMonoid.KMonoid.lemma_2_15
+
+/-- **Lemma 2.15**, the bijection — `KappaMonoid.KMonoid.equivFinitePartSumCard`. -/
+alias lemma_2_15_equivFinitePartSumCard := KappaMonoid.KMonoid.equivFinitePartSumCard
+
+/-- **Lemma 2.15**, *"with the obvious operation"* — `KappaMonoid.KMonoid.lemma_2_15_add`, the
+three rules that determine the operation on `C₀ ⊎ {α : ℵ₀ ≤ α ≤ κ}`. -/
+alias lemma_2_15_lemma_2_15_add := KappaMonoid.KMonoid.lemma_2_15_add
 
 /-- **Proposition 2.16** — `KappaMonoid.prop_2_16`, in `Modules/Rings/Realisation.lean`. -/
 alias proposition_2_16_prop_2_16 := KappaMonoid.prop_2_16
@@ -138,6 +146,10 @@ alias proposition_2_17_1_prop_2_17_one := KappaMonoid.prop_2_17_one
 
 /-- **Proposition 2.17(2)** — `KappaMonoid.simpleListPi`, in `Modules/Rings/Semisimple.lean`. -/
 alias proposition_2_17_2_simpleListPi := KappaMonoid.simpleListPi
+
+/-- **Proposition 2.17(2)** — `KappaMonoid.prop_2_17_two`, in `Modules/Rings/Semisimple.lean`:
+for every `n` there is a semisimple ring `R` with `V^κ(R) ≅ F_κ^n`. -/
+alias proposition_2_17_2_prop_2_17_two := KappaMonoid.prop_2_17_two
 
 /-- **Remark 2.19** — `KappaMonoid.LMonoid.ofLE`, in `Core/LMonoid.lean`. -/
 alias remark_2_19_ofLE := KappaMonoid.LMonoid.ofLE
