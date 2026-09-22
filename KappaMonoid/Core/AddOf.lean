@@ -106,6 +106,41 @@ theorem addOfCard_isLSubset {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : l
           (le_of_eq_of_le hsum hlk) x]
       exact cmul_congr hsum _ hlk x
 
+/-- `add_α x` is closed under sums of size `< lam` for every `lam ≤ α⁺`, not just `lam ≤ α`:
+at most `α` summands of `α · x` again add up to a summand of `α · x`, because `#ι · α = α`.
+
+This is what makes `add_{ℵ₀} x` an `ℵ₁⁻`-monoid — the base of Corollary 4.7(2) — over a `κ`
+that may be much larger than `ℵ₀`. -/
+theorem addOfCard_isLSubset_succ {alpha lam : Cardinal.{u}} (halpha : ℵ₀ ≤ alpha)
+    (hak : alpha ≤ κ) (hla : lam ≤ Order.succ alpha) (x : H) :
+    IsLSubset lam (hla.trans (Order.succ_le_succ hak)) (addOfCard hak x) := by
+  classical
+  constructor
+  · exact ⟨cmul (κ := κ) alpha hak x, zero_add _⟩
+  · intro ι hι y hy
+    choose z hz using hy
+    have hια : #ι ≤ alpha := Order.lt_succ_iff.mp (lt_of_lt_of_le hι hla)
+    have hidx : #ι ≤ κ := hια.trans hak
+    rcases isEmpty_or_nonempty ι with hemp | hne
+    · have := hemp
+      refine ⟨cmul (κ := κ) alpha hak x, ?_⟩
+      rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty _ y, zero_add]
+    · have hmk : #ι * alpha = alpha :=
+        Cardinal.mul_eq_right halpha hια (Cardinal.mk_ne_zero_iff.mpr hne)
+      have hsum : Cardinal.sum (fun _ : ι => alpha) = alpha :=
+        (Cardinal.sum_const' ι alpha).trans hmk
+      refine ⟨sumOf (κ := κ) hidx z, ?_⟩
+      rw [← sumOf_add hidx y z, funext hz,
+        ← cmul_sumOf_cardinal hidx (fun _ : ι => alpha) (fun _ => hak)
+          (le_of_eq_of_le hsum hak) x]
+      exact cmul_congr hsum _ hak x
+
+/-- `add_λ x` is divisor-closed. -/
+theorem addOfCard_isSaturated {lam : Cardinal.{u}} (hlk : lam ≤ κ) (x : H) :
+    ∀ a ∈ addOfCard hlk x, ∀ b c : H, a = b + c → b ∈ addOfCard hlk x := by
+  rintro a ⟨z, hz⟩ b c rfl
+  exact ⟨c + z, by rw [← add_assoc]; exact hz⟩
+
 end KMonoid
 
 /-- `add(x)` at `κ = ℵ₀`, the paper's `add(x)`.  Notation, not a definition: it expands to

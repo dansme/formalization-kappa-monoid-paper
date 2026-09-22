@@ -13,9 +13,9 @@ One classical theorem is assumed rather than proved — Bergman–Dicks realisat
 result". Everything else, §3 and the monoid-theoretic parts of §§4–5 included, depends only on
 `propext`, `Classical.choice` and `Quot.sound`.
 
-The statements follow the current version of `kappa_monoids.tex`. "Tracking the paper" says what
-changed from the previous version and where the hypotheses that look like additions come from;
-"What is not formalised" lists the deliberate omissions.
+The statements follow the current version of `kappa_monoids.tex`. "Encoding decisions" records
+where a result is rendered differently from the paper's prose and why; "What is not formalised"
+lists the deliberate omissions.
 
 The development is layered by subject, and each layer is an entry point of its own: importing
 `KappaMonoid.Core` or `KappaMonoid.Braiding` gets the monoid theory without the module theory, the
@@ -27,7 +27,7 @@ assumed result, or — since the core does not say `import Mathlib` — most of 
 | `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean`, `FreeRank.lean`, `HomDirectSum.lean` + `SimpleMultiplicity.lean`, `CyclicMonoid.lean` (also `C_{m,n}` as a monoid), `Kaplansky.lean` and `Albrecht.lean` — see "Classical results proved here" |
 | `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (Lemmas 3.7, 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable`, `Over` (Definition 3.1(2)), `WellOrder` (**Lemma 3.4(2)(3)**, **Lemma 3.5**, and Definition 3.1(1) over an arbitrary limit well-order), `UnivAux`, `Prop310` (**Proposition 3.10**, Definition 3.11), `UnivExt` (**Theorem 3.12** and its converse), `Saturated` (**Lemma 3.14**) |
-| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, Cor. 4.4), `SmallPart`, `Projective` (Cor. 4.5, Kaplansky in `κ`-monoid form, the Cor. 4.6 stub), `Corollary47` (`V(R) = add [R]`, **Corollary 4.7**, **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
+| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, the general form of Cor. 4.4), `SmallPart` (**Corollary 4.4**(1)(2)), `Projective` (**Corollary 4.5**(1)(2)(3), Kaplansky in `κ`-monoid form), `Corollary47` (`V(R) = add [R]`, `add_{ℵ₀} [R] = V^{ℵ₀}(R)`, **Corollary 4.7**(1)(2), **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
 | `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.15**, **Examples 3.16** and **3.17**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
 | `KappaMonoid/Axioms/` | Mathlib | The one classical result assumed rather than proved — see below |
@@ -200,8 +200,12 @@ Nothing here needs it.
   Lemma 3.8, whose proof is formalised in full (`IsBraided.trans`).
 * **Remark 3.18** — a pointer to the literature.
 * **Corollary 4.6** — Corollary 4.5(3) together with six results quoted from the literature, none
-  of them monoid-theoretic and none in Mathlib. It stays a documented stub in
-  `Modules/Projective.lean`.
+  of them monoid-theoretic and none in Mathlib (weakly semihereditary and one-sided semihereditary,
+  Bergman; exchange, Warfield; semiperfect, Mueller; weakly noetherian commutative, Hinohara;
+  Bézout with one-sided Krull dimension, McGovern–Puninski–Rothmaler). `EveryProjectiveIsSumOfFG`
+  in `Modules/Corollary47.lean` names the hypothesis all six supply, and it is what
+  `corollary_4_5_three` takes; the *hereditary* case — Albrecht's theorem, the one §§4–5 use — is
+  proved, in `ForMathlib/Albrecht.lean`. There is no declaration for the corollary itself.
 * **Examples 4.8(2)–(7).** Of the seven items, only (1) is formalised, and it is formalised as
   printed: `krsa_ascent`, `krsa_ascent_free`, `krsa_ascent_iso` are the general `λ⁻` form, from
   which the finite-KRSA and the countable/Kaplansky readings are the cases `λ = ℵ₀` and `λ = ℵ₁`.
@@ -212,7 +216,7 @@ Nothing here needs it.
   * **(2)** is a question (Herbera–Příhoda–Wiegand, Question 1.1) translated into `κ`-monoid
     language — when is `⟨V(C_fg)⟩_κ` divisor-closed in `V^κ(C)`? — not a claim.
   * **(3)** is Corollary 4.7 instantiated at three monoids. The general statement and all three
-    monoid-side computations are formalised — `corollary_4_7_two`, and `ℕ₀ ∪ {∞}`
+    monoid-side computations are formalised — `corollary_4_7_two_iff`, and `ℕ₀ ∪ {∞}`
     (`Examples/ENNReal.lean`), `ℝ≥0`/`ℚ≥0` (`Examples/NNReal.lean`, `Examples/Reals.lean`), the Diophantine case
     (`Examples/Diophantine.lean`). What is missing is only the transport: reading each computation
     back as a description of `V^{ℵ₀}(R)` for a ring with `V(R)` isomorphic to that monoid.
@@ -244,6 +248,23 @@ The `κ`-monoid structures at the fixed cardinal — `F_{ℵ₀}`, `V^{ℵ₀}(R
 `ℵ₀`-monoids — are instances rather than a `letI` threaded through every statement and repeated in
 every proof. In `Examples/` the statement-level `letI`s stay even so: there they also pin the
 universe of `ℵ₀`, which is otherwise auto-bound afresh in each half of a statement.
+
+**`<λ`-generated, not `λ⁻`-small, in Corollaries 4.4 and 4.5.** Definition 4.1's `λ⁻`-small is
+what Theorem 4.3 needs; Corollaries 4.4 and 4.5 are about the modules generated by strictly fewer
+than `λ` elements, which the paper writes `C_{λ⁻}` and `V^{λ⁻}(R)`. The two notions are separate
+declarations here — `IsLambdaSmall` and `IsLambdaGenerated`, with `C.lambdaSmallPart` and
+`C.lambdaGenPart` the corresponding subclasses. `<λ`-generated implies `λ⁻`-small for regular `λ`
+(`IsLambdaGenerated.isLambdaSmall`, the paper's Example 4.2(2)), which is how Corollary 4.4
+reduces to Theorem 4.3; for a *projective* module over any ring the two coincide
+(`projClass_lambdaSmallPart_eq_lambdaGenPart`), which is how Kaplansky's theorem feeds
+Corollary 4.5.
+
+**`V^{ℵ₀}(R)` in Corollary 4.7(2)** is `(projClass R κ hκ).lambdaGenPart ℵ₁`, the classes of the
+countably generated projective modules inside `V^κ(R)`, and `add_{ℵ₀}(x)` carries the `ℵ₁⁻`-monoid
+structure of `KMonoid.addOfCard_isLSubset_succ`. The isomorphism the corollary asserts is one of
+`ℵ₁⁻`-monoids, which — since `ℵ₁ = ℵ₀⁺` — is what an isomorphism of `ℵ₀`-monoids is. The
+identification that makes both directions work is `addOfCard_unitClass_eq`:
+`add_{ℵ₀} [R] = V^{ℵ₀}(R)`, the countable analogue of `V(R) = add [R]`.
 
 **Index sets: arbitrary types, not the cardinal.** The paper indexes by the von Neumann
 cardinal `κ` itself. Here the summation operation is applied directly to a family indexed by

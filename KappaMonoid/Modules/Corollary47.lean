@@ -35,24 +35,6 @@ variable (R : Type u) [Ring R] (κ : Cardinal.{u})
 
 open DirectSum
 
-/-- An element of `R^{(κ)}` whose coordinates vanish off `s` lies in the span of the standard
-generators indexed by `s`. -/
-theorem mem_span_freeGen_of_component_eq_zero {x : freeMod R κ} {s : Set (Idx κ)}
-    (h : ∀ i ∉ s, (DirectSum.component R (Idx κ) (fun _ => R) i) x = 0) :
-    x ∈ Submodule.span R (freeGen R κ '' s) := by
-  classical
-  rw [← DFinsupp.sum_single (f := x)]
-  refine Submodule.sum_mem _ fun i hi => ?_
-  have hmem : i ∈ s := by
-    by_contra hns
-    exact (DFinsupp.mem_support_iff.mp hi) (h i hns)
-  have hsingle : (DFinsupp.single i (x i) : freeMod R κ) = (x i) • freeGen R κ i := by
-    show (DirectSum.lof R (Idx κ) (fun _ => R) i) (x i) = _
-    rw [freeGen, ← LinearMap.map_smul]
-    simp
-  rw [hsingle]
-  exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨i, hmem, rfl⟩)
-
 /-- **An `ℵ₀⁻`-small summand of `R^{(κ)}` is finitely generated.** -/
 theorem finite_of_isLambdaSmall_aleph0 (P : Summand R κ) (h : IsLambdaSmall R ℵ₀ ↥P.1) :
     Module.Finite R ↥P.1 := by
@@ -110,7 +92,7 @@ theorem exists_isCompl_of_projective {M : Type u} [AddCommGroup M] [Module R M]
 `R^{(κ)}`, and finitely generated modules are `ℵ₀⁻`-small (Example 4.2(2)). -/
 theorem exists_class_of_fg_projective (hκ : ℵ₀ ≤ κ) (Q : Type u) [AddCommGroup Q] [Module R Q]
     (hproj : Module.Projective R Q) (hfin : Module.Finite R Q) :
-    ∃ a : (projClass R κ hκ).carrier, a ∈ (projClass R κ hκ).lambdaSmallPart ℵ₀ ∧
+    ∃ a : (projClass R κ hκ).carrier, a ∈ (projClass R κ hκ).lambdaGenPart ℵ₀ ∧
       Nonempty ((projClass R κ hκ).rep a ≃ₗ[R] Q) := by
   have := hproj
   obtain ⟨s, hs⟩ := hfin.fg_top
@@ -122,10 +104,9 @@ theorem exists_class_of_fg_projective (hκ : ℵ₀ ≤ κ) (Q : Type u) [AddCom
   -- through `projClass` (trap 1), so `⟦P⟧` must not appear in an index of a class
   have e : ↥((⟦P⟧ : Quotient (summandSetoid R κ)).out.1) ≃ₗ[R] Q :=
     (Quotient.mk_out (s := summandSetoid R κ) P).some.trans hP.some
-  have hsmall : IsLambdaSmall R ℵ₀ ↥((⟦P⟧ : Quotient (summandSetoid R κ)).out.1) :=
-    IsLambdaSmall.of_equiv (M := Q) (M' := ↥((⟦P⟧ : Quotient (summandSetoid R κ)).out.1))
-      (isLambdaSmall_aleph0_of_fg R Q hfin) e.symm
-  exact ⟨⟦P⟧, hsmall, ⟨e⟩⟩
+  have hgen : IsLambdaGenerated R ℵ₀ ↥((⟦P⟧ : Quotient (summandSetoid R κ)).out.1) :=
+    (isLambdaGenerated_aleph0_of_finite hfin).of_equiv e.symm
+  exact ⟨⟦P⟧, hgen, ⟨e⟩⟩
 
 end FgSmall
 
@@ -185,7 +166,7 @@ projective modules — is the set of summands of the finite multiples of the cla
 theorem addOf_unitClass_eq (k : Idx κ) :
     letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.addOf (κ := κ) (Projective.unitClass R κ hκ k)
-      = (projClass R κ hκ).lambdaSmallPart ℵ₀ := by
+      = (projClass R κ hκ).lambdaGenPart ℵ₀ := by
   let := (projClass R κ hκ).instKMonoid hκ
   refine Set.Subset.antisymm (fun y hy => ?_) (fun y hy => ?_)
   · -- a summand of `R^n` is finitely generated, hence `ℵ₀⁻`-small
@@ -204,13 +185,86 @@ theorem addOf_unitClass_eq (k : Idx κ) :
     have hfiny : Module.Finite R ((projClass R κ hκ).rep y) :=
       Module.Finite.of_surjective (LinearMap.fst R ((projClass R κ hκ).rep y)
         ((projClass R κ hκ).rep z)) Prod.fst_surjective
-    -- `IsLambdaSmall` unfolds to a `∀`, so the goal has to be put in that form before `exact`
-    show IsLambdaSmall R ℵ₀ ((projClass R κ hκ).rep y)
-    exact isLambdaSmall_aleph0_of_fg R ((projClass R κ hκ).rep y) hfiny
+    obtain ⟨t, ht⟩ := hfiny.fg_top
+    exact ⟨(↑t : Set ((projClass R κ hκ).rep y)),
+      by rw [Cardinal.lt_aleph0_iff_set_finite]; exact t.finite_toSet, ht⟩
   · -- an `ℵ₀⁻`-small class has a finitely generated representative, hence divides some `n·[R]`
-    obtain ⟨c, n, hcn⟩ := exists_add_eq_cmul_unitClass R κ hκ k y
-      (finite_of_isLambdaSmall_aleph0 R κ y.out ((projClass R κ hκ).isLambdaSmall_of_mem hy))
+    obtain ⟨t, htlt, htspan⟩ := (projClass R κ hκ).isLambdaGenerated_of_mem hy
+    have hfin : Module.Finite R ((projClass R κ hκ).rep y) :=
+      ⟨Submodule.fg_def.mpr ⟨t, Cardinal.lt_aleph0_iff_set_finite.mp htlt, htspan⟩⟩
+    obtain ⟨c, n, hcn⟩ := exists_add_eq_cmul_unitClass R κ hκ k y hfin
     exact ⟨c, n, hcn⟩
+
+/-! ### `add_{ℵ₀} [R] = V^{ℵ₀}(R)`
+
+The countable analogue of `V(R) = add [R]`: the summands of `R^{(ℵ₀)}` are exactly the countably
+generated — that is, `<ℵ₁`-generated — projective modules.  This is the identification behind both
+directions of Corollary 4.7(2). -/
+
+/-- The generating-family form of `exists_add_eq_cmul_unitClass`: if the representative of `a` is
+spanned by a family indexed by `ι` with `#ι ≤ κ`, then `a` is a summand of `#ι · [R]`. -/
+theorem exists_add_eq_cmul_unitClass_family (k : Idx κ) (a : (projClass R κ hκ).carrier)
+    {ι : Type u} (hι : #ι ≤ κ) (g : ι → (projClass R κ hκ).rep a)
+    (hg : Submodule.span R (Set.range g) = ⊤) :
+    letI := (projClass R κ hκ).instKMonoid hκ
+    ∃ c : (projClass R κ hκ).carrier,
+      a + c = KMonoid.cmul (κ := κ) #ι hι (Projective.unitClass R κ hκ k) := by
+  let := (projClass R κ hκ).instKMonoid hκ
+  classical
+  obtain ⟨Y, Z, hYZ, hY⟩ := exists_isCompl_of_projective R (summand_projective R κ a.out) g hg
+  have hA := rep_cmul_mk_unitClass R κ hκ hι k
+  obtain ⟨c, hc⟩ := (projClass R κ hκ).exists_class_of_summand _ hA.some hYZ.symm
+  exact ⟨c, (projClass R κ hκ).add_eq_of_relCompl hκ hYZ.disjoint
+    (codisjoint_iff.mp hYZ.codisjoint) ⟨hY.some.symm⟩ hc
+    ⟨hA.some.trans Submodule.topEquiv.symm⟩⟩
+
+/-- **`add_{ℵ₀} [R] = V^{ℵ₀}(R)`**: the summands of `R^{(ℵ₀)}` are exactly the countably generated
+projective modules.
+
+Paper proof: a summand of `R^{(ℵ₀)}` is a quotient of `R^{(ℵ₀)}`, hence generated by `ℵ₀` elements;
+conversely a projective module with a countable generating family is a summand of the free module
+on that family, which — after padding the family out to one indexed by `Idx ℵ₀` — is `R^{(ℵ₀)}`. -/
+theorem addOfCard_unitClass_eq (k : Idx κ) :
+    letI := (projClass R κ hκ).instKMonoid hκ
+    KMonoid.addOfCard (κ := κ) hκ (Projective.unitClass R κ hκ k)
+      = (projClass R κ hκ).lambdaGenPart ℵ₁ := by
+  let := (projClass R κ hκ).instKMonoid hκ
+  classical
+  have hR : IsLambdaGenerated R ℵ₁ R :=
+    (isLambdaGenerated_aleph0_of_finite (M := R) inferInstance).mono
+      Cardinal.isRegular_aleph_one.aleph0_le
+  refine Set.Subset.antisymm (fun y hy => ?_) (fun y hy => ?_)
+  · -- a summand of `R^{(ℵ₀)}` is countably generated
+    obtain ⟨z, hzn⟩ := hy
+    have hiso : Nonempty (((projClass R κ hκ).rep y × (projClass R κ hκ).rep z)
+        ≃ₗ[R] ⨁ _ : Idx (ℵ₀ : Cardinal.{u}), R) :=
+      ⟨((projClass R κ hκ).rep_add hκ y z).some.symm.trans
+        (((projClass R κ hκ).iso_of_eq hzn).some.trans
+          (Projective.rep_cmul_unitClass R κ hκ hκ k).some)⟩
+    have hfree : IsLambdaGenerated R ℵ₁ (⨁ _ : Idx (ℵ₀ : Cardinal.{u}), R) :=
+      isLambdaGenerated_dsum Cardinal.isRegular_aleph_one
+        (by rw [mk_Idx]; exact Cardinal.aleph0_lt_aleph_one) _ fun _ => hR
+    exact ((hfree.of_equiv (hiso.some.symm)).of_surjective
+      (LinearMap.fst R ((projClass R κ hκ).rep y) ((projClass R κ hκ).rep z))
+      Prod.fst_surjective : IsLambdaGenerated R ℵ₁ ((projClass R κ hκ).rep y))
+  · -- a countably generated class is a summand of `R^{(ℵ₀)}`
+    obtain ⟨t, htlt, htspan⟩ := (projClass R κ hκ).isLambdaGenerated_of_mem hy
+    have hmk : #(↑t : Set ((projClass R κ hκ).rep y)) ≤ #(Idx (ℵ₀ : Cardinal.{u})) := by
+      rw [mk_Idx]
+      exact Order.lt_succ_iff.mp (lt_of_lt_of_le htlt
+        (Cardinal.aleph_one_le_iff.mpr (Order.lt_succ_iff.mpr le_rfl)))
+    obtain ⟨f⟩ := Cardinal.le_def _ _ |>.mp hmk
+    set g : Idx (ℵ₀ : Cardinal.{u}) → (projClass R κ hκ).rep y :=
+      Function.extend f (fun i => (i : (projClass R κ hκ).rep y)) 0 with hgdef
+    have hsub : (↑t : Set ((projClass R κ hκ).rep y)) ⊆ Set.range g := by
+      rintro v hv
+      exact ⟨f ⟨v, hv⟩, by rw [hgdef, f.injective.extend_apply]⟩
+    have hgspan : Submodule.span R (Set.range g) = ⊤ :=
+      top_le_iff.mp (htspan ▸ Submodule.span_mono hsub)
+    obtain ⟨c, hc⟩ := exists_add_eq_cmul_unitClass_family R κ hκ k y
+      (le_of_eq_of_le (mk_Idx (ℵ₀ : Cardinal.{u})) hκ) g hgspan
+    exact ⟨c, hc.trans (KMonoid.cmul_congr (mk_Idx (ℵ₀ : Cardinal.{u})) _ hκ
+      (Projective.unitClass R κ hκ k))⟩
 
 end AddUnit
 
@@ -223,11 +277,11 @@ follows from `corollary_4_5_three`, which is *proved*.
 
 Those six implications are the quoted results (Bergman; Warfield; Mueller; Hinohara;
 McGovern–Puninski–Rothmaler), and Corollary 4.6 is exactly `corollary_4_5_three` plus those
-citations, so the documented stub in `Modules/Projective.lean` is the right treatment and this file
-adds
-nothing for it.  `EveryProjectiveIsSumOfFG` names the hypothesis they supply — and the one case
-this development needs, the *hereditary* one, is not quoted but proved:
-`Albrecht.exists_directSum_fg` in `ForMathlib/Albrecht.lean`. -/
+citations, so there is no declaration for it: the corollary is recorded among the deliberate
+omissions in `Paper/Section4.lean` and in `README.md` instead.  `EveryProjectiveIsSumOfFG` below
+names the hypothesis the six results supply — and the one case this development needs, the
+*hereditary* one, is not quoted but proved: `Albrecht.exists_directSum_fg` in
+`ForMathlib/Albrecht.lean`. -/
 
 /-- The property quoted from the literature for each of the six classes of Corollary 4.6. -/
 def EveryProjectiveIsSumOfFG (R : Type u) [Ring R] : Prop :=
@@ -338,21 +392,21 @@ theorem isKIso_of_braidedOver_same {lam : Cardinal.{u}} {S : Type u} [LMonoid la
 
 The `S` of the paper is `add_{ℵ₀} x` for a suitable `x ∈ H`; the statement is given for a general
 `S` because that is what the proof uses, and `addOfCard` supplies the paper's instance. -/
-theorem corollary_4_7_two {S : Type u} [LMonoid ℵ₀ S] {H : Type u} [KMonoid κ H]
-    (R : Type u) [Ring R] (hκ : ℵ₀ ≤ κ) {f : S → H}
-    (hbr : IsBraidedOver ℵ₀ κ S H (le_succ_of_le hκ) f)
+theorem corollary_4_7_two {lam : Cardinal.{u}} {S : Type u} [LMonoid lam S] {H : Type u}
+    [KMonoid κ H] (R : Type u) [Ring R] (hκ : ℵ₀ ≤ κ) (hlk : lam ≤ Order.succ κ) {f : S → H}
+    (hbr : IsBraidedOver lam κ S H hlk f)
     {g : S → (projClass R κ hκ).carrier}
     (hbr' : letI := (projClass R κ hκ).instKMonoid hκ
-      IsBraidedOver ℵ₀ κ S (projClass R κ hκ).carrier (le_succ_of_le hκ) g) :
+      IsBraidedOver lam κ S (projClass R κ hκ).carrier hlk g) :
     letI := (projClass R κ hκ).instKMonoid hκ
     ∃ e : H → (projClass R κ hκ).carrier,
       KMonoid.IsKHom κ e ∧ (∀ s, e (f s) = g s) ∧ Function.Bijective e := by
   let := (projClass R κ hκ).instKMonoid hκ
-  exact isKIso_of_braidedOver_same (le_succ_of_le hκ) hbr hbr'
+  exact isKIso_of_braidedOver_same hlk hbr hbr'
 
 /-- **Corollary 4.7(1)**, (iii) ⇒ (i): if `V^κ(R) ≅ H` for a ring `R` all of whose projectives
-are direct sums of finitely generated modules — in particular a hereditary ring, by Corollary 4.6
-— then `V^κ(R)` is `κ`-generated by `add [R]`, since `V(R) = add [R]`. -/
+are direct sums of finitely generated modules — in particular a hereditary ring, by Albrecht's
+theorem — then `V^κ(R)` is `κ`-generated by `add [R]`, since `V(R) = add [R]`. -/
 theorem corollary_4_7_one_backward (R : Type u) [Ring R] (hκ : ℵ₀ ≤ κ)
     (hfg : EveryProjectiveIsSumOfFG R) :
     letI := (projClass R κ hκ).instKMonoid hκ
@@ -360,7 +414,7 @@ theorem corollary_4_7_one_backward (R : Type u) [Ring R] (hκ : ℵ₀ ≤ κ)
       KMonoid.KGenerates κ (KMonoid.addOf (κ := κ) x) := by
   let := (projClass R κ hκ).instKMonoid hκ
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
+    ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
   obtain ⟨k⟩ := nonempty_Idx hκ
   refine ⟨Projective.unitClass R κ hκ k, ?_⟩
   rw [addOf_unitClass_eq R κ hκ k]
@@ -383,7 +437,7 @@ theorem corollary_4_7_one_backward_braided (R : Type u) [Ring R] (hκ : ℵ₀ �
   let := (projClass R κ hκ).instKMonoid hκ
   exact IsBraidedOver.of_set_eq Cardinal.isRegular_aleph0
     (KMonoid.addOf_isLSubset hκ (Projective.unitClass R κ hκ k))
-    ((projClass R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
+    ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
     (addOf_unitClass_eq R κ hκ k) (corollary_4_5_three.{u, u} R κ hκ hfg).1
 
 /-- **The isomorphism `M ≅ V(R)` packaged by `BergmanDicksData`.**  The four conditions
@@ -399,16 +453,16 @@ theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M
     (hκ : ℵ₀ ≤ κ) :
     letI := (projClass bd.R κ hκ).instKMonoid hκ
     letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-      ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
-    ∃ Φ : M → ↥((projClass bd.R κ hκ).lambdaSmallPart ℵ₀),
+      ((projClass bd.R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
+    ∃ Φ : M → ↥((projClass bd.R κ hκ).lambdaGenPart ℵ₀),
       IsLMonoidHom ℵ₀ Φ ∧ Function.Injective Φ ∧ Function.Surjective Φ := by
   let := (projClass bd.R κ hκ).instKMonoid hκ
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
+    ((projClass bd.R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
   classical
   -- each `P a` is a finitely generated projective module, hence an `ℵ₀⁻`-small class
   have hclass : ∀ a : M, ∃ c : (projClass bd.R κ hκ).carrier,
-      c ∈ (projClass bd.R κ hκ).lambdaSmallPart ℵ₀ ∧
+      c ∈ (projClass bd.R κ hκ).lambdaGenPart ℵ₀ ∧
         Nonempty ((projClass bd.R κ hκ).rep c ≃ₗ[bd.R] bd.P a) := fun a =>
     exists_class_of_fg_projective bd.R κ hκ (bd.P a) (bd.proj a) (bd.fin a)
   choose Φ₀ hmem hiso using hclass
@@ -424,11 +478,11 @@ theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M
         ((projClass bd.R κ hκ).rep_add hκ (Φ₀ a) (Φ₀ b)).some.symm)))
   -- `IsLMonoidHom` is a plain `def`, so the map has to be pinned by an ascription (trap 7)
   have hhom : IsLMonoidHom (ℵ₀ : Cardinal.{u})
-      (fun a : M => (⟨Φ₀ a, hmem a⟩ : ↥((projClass bd.R κ hκ).lambdaSmallPart ℵ₀))) :=
+      (fun a : M => (⟨Φ₀ a, hmem a⟩ : ↥((projClass bd.R κ hκ).lambdaGenPart ℵ₀))) :=
     isLMonoidHom_aleph0_of_add
-      (g := fun a : M => (⟨Φ₀ a, hmem a⟩ : ↥((projClass bd.R κ hκ).lambdaSmallPart ℵ₀)))
+      (g := fun a : M => (⟨Φ₀ a, hmem a⟩ : ↥((projClass bd.R κ hκ).lambdaGenPart ℵ₀)))
       (Subtype.ext h0) fun a b => Subtype.ext (hadd a b)
-  refine ⟨fun a : M => (⟨Φ₀ a, hmem a⟩ : ↥((projClass bd.R κ hκ).lambdaSmallPart ℵ₀)), hhom,
+  refine ⟨fun a : M => (⟨Φ₀ a, hmem a⟩ : ↥((projClass bd.R κ hκ).lambdaGenPart ℵ₀)), hhom,
     fun a b hab => ?_, ?_⟩
   · -- injectivity is `inj`
     exact bd.inj a b ⟨(hiso a).some.symm.trans
@@ -436,8 +490,7 @@ theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M
   · -- surjectivity is `surj`, applied to the representative of an `ℵ₀⁻`-small class
     rintro ⟨c, hc⟩
     have hfin : Module.Finite bd.R ((projClass bd.R κ hκ).rep c) :=
-      finite_of_isLambdaSmall_aleph0 bd.R κ c.out
-        ((projClass bd.R κ hκ).isLambdaSmall_of_mem hc)
+      IsLambdaGenerated.finite_aleph0 ((projClass bd.R κ hκ).isLambdaGenerated_of_mem hc)
     obtain ⟨a, ha⟩ := bd.surj ((projClass bd.R κ hκ).rep c) inferInstance inferInstance
       (summand_projective bd.R κ c.out) hfin
     exact ⟨a, Subtype.ext ((projClass bd.R κ hκ).eq_of_iso ((hiso a).some.trans ha.some.symm))⟩
@@ -491,7 +544,7 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
   refine ⟨bd.R, bd.ring, bd.algebra, bd.hereditary, ?_⟩
   let := (projClass bd.R κ hκ).instKMonoid hκ
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass bd.R κ hκ).lambdaSmallPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
+    ((projClass bd.R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ))
   -- Step 3: Albrecht's theorem for the hereditary `R` is the hypothesis of Corollary 4.5(3)
   obtain ⟨hbr₂, -⟩ := corollary_4_5_three.{u, u} bd.R κ hκ Albrecht.exists_directSum_fg
   -- Step 4: transport that braiding along `add x ≅ V(R)`
@@ -500,7 +553,7 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
   have hΦ'Φ : ∀ c, Φ (Function.invFun Φ c) = c := fun c => Function.invFun_eq (hΦsurj c)
   have hΦ'hom : IsLMonoidHom ℵ₀ (Function.invFun Φ) := hΦhom.inv hΦΦ' hΦ'Φ
   have hbr₁ : IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) (projClass bd.R κ hκ).carrier (le_succ_of_le hκ)
-      (fun a => ((Φ a : ↥((projClass bd.R κ hκ).lambdaSmallPart ℵ₀)) :
+      (fun a => ((Φ a : ↥((projClass bd.R κ hκ).lambdaGenPart ℵ₀)) :
         (projClass bd.R κ hκ).carrier)) :=
     hbr₂.of_base_iso (le_succ_of_le hκ) (g := Φ) (g' := Function.invFun Φ) hΦhom hΦ'hom hΦΦ' hΦ'Φ
   -- Step 5: two `κ`-monoids braided over `add x` are isomorphic
@@ -508,6 +561,250 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
   exact ⟨e, hehom, hebij⟩
 
 end Cor47
+
+/-! ## Corollary 4.7(1) as an equivalence
+
+For a `κ`-monoid `H` the three statements
+
+* `(i)`   there is an `x ∈ H` over which `H` is braided;
+* `(ii)`  for every field `k` there is a hereditary `k`-algebra `R` with `V^κ(R) ≅ H`;
+* `(iii)` there is a hereditary ring `R` with `V^κ(R) ≅ H`
+
+are equivalent.  `(i) ⇒ (ii)` is `corollary_4_7_one_forward`, the direction that rests on
+Bergman–Dicks realisation; `(ii) ⇒ (iii)` instantiates the field; and `(iii) ⇒ (i)` is Albrecht's
+theorem — over a hereditary ring every projective module is a direct sum of finitely generated
+ones — followed by `corollary_4_7_one_backward_braided` and transport along the isomorphism. -/
+
+section Cor47Equiv
+
+variable {κ : Cardinal.{u}}
+
+/-- A `κ`-isomorphism carries `add x` onto `add (e x)`. -/
+theorem image_addOf_of_kIso {H K : Type u} [KMonoid κ H] [KMonoid κ K] {e : H → K}
+    (he : KMonoid.IsKHom κ e) (hbij : Function.Bijective e) (x : H) :
+    e '' (KMonoid.addOf (κ := κ) x) = KMonoid.addOf (κ := κ) (e x) := by
+  have hnsmul : ∀ (n : ℕ) (a : H), e (n • a) = n • e a := by
+    intro n a
+    induction n with
+    | zero => rw [zero_nsmul, zero_nsmul, he.1]
+    | succ m ih => rw [succ_nsmul, succ_nsmul, he.map_add, ih]
+  have hmem : ∀ (y z : H) (n : ℕ), (y + z = n • x) ↔ (e y + e z = n • e x) := by
+    intro y z n
+    constructor
+    · intro h; rw [← he.map_add, h, hnsmul]
+    · intro h; exact hbij.1 (by rw [he.map_add, h, hnsmul])
+  refine Set.eq_of_subset_of_subset ?_ ?_
+  · rintro _ ⟨y, ⟨z, n, hzn⟩, rfl⟩
+    rw [KMonoid.cmul_natCast] at hzn
+    exact ⟨e z, n, by rw [KMonoid.cmul_natCast]; exact (hmem y z n).mp hzn⟩
+  · rintro y' ⟨z', n, hzn⟩
+    obtain ⟨y, rfl⟩ := hbij.2 y'
+    obtain ⟨z, rfl⟩ := hbij.2 z'
+    rw [KMonoid.cmul_natCast] at hzn
+    exact ⟨y, ⟨z, n, by rw [KMonoid.cmul_natCast]; exact (hmem y z n).mpr hzn⟩, rfl⟩
+
+/-- **Corollary 4.7(1)**, `(iii) ⇒ (i)`: if `H ≅ V^κ(R)` for a ring over which every projective
+module is a direct sum of finitely generated ones — a hereditary ring, by Albrecht's theorem —
+then `H` is braided over `add x` for `x` the image of the class of `R`. -/
+theorem corollary_4_7_one_backward_iso {H : Type u} [KMonoid κ H] (R : Type u) [Ring R]
+    (hκ : ℵ₀ ≤ κ) (hfg : EveryProjectiveIsSumOfFG R)
+    (e : letI := (projClass R κ hκ).instKMonoid hκ; (projClass R κ hκ).carrier → H)
+    (he : letI := (projClass R κ hκ).instKMonoid hκ; KMonoid.IsKHom κ e)
+    (hbij : Function.Bijective e) :
+    ∃ x : H, letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset hκ x)
+      IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) H (le_succ_of_le hκ)
+        (fun y => (y : H)) := by
+  classical
+  let := (projClass R κ hκ).instKMonoid hκ
+  obtain ⟨k⟩ := nonempty_Idx hκ
+  set u : (projClass R κ hκ).carrier := Projective.unitClass R κ hκ k with hu
+  refine ⟨e u, ?_⟩
+  -- the inverse isomorphism, and the two facts it transports
+  set E : (projClass R κ hκ).carrier ≃ H := Equiv.ofBijective e hbij with hE
+  have hEinv : Function.RightInverse E.symm e := E.apply_symm_apply
+  have hsymhom : KMonoid.IsKHom κ E.symm := he.inv hbij hEinv
+  have hsymbij : Function.Bijective E.symm := E.symm.bijective
+  have himg : E.symm '' (KMonoid.addOf (κ := κ) (e u)) = KMonoid.addOf (κ := κ) u := by
+    rw [image_addOf_of_kIso hsymhom hsymbij (e u)]
+    exact congrArg _ (E.symm_apply_apply u)
+  -- `V^κ(R)` is braided over `add u`, and `add (e u)` generates `H`
+  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset hκ u)
+  have hbrV : IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) u) (projClass R κ hκ).carrier
+      (le_succ_of_le hκ) (fun y => (y : (projClass R κ hκ).carrier)) :=
+    corollary_4_7_one_backward_braided R hκ hfg k
+  have hgenU : KMonoid.KGenerates κ (KMonoid.addOf (κ := κ) u) := by
+    let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
+      ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
+        (le_succ_of_le hκ))
+    rw [addOf_unitClass_eq R κ hκ k]
+    exact (corollary_4_5_three.{u, u} R κ hκ hfg).1.kGenerates_coe
+  have hgenX : KMonoid.KGenerates κ (KMonoid.addOf (κ := κ) (e u)) := by
+    have := KMonoid.KGenerates.map he hbij.2 hgenU
+    rwa [image_addOf_of_kIso he hbij u] at this
+  exact IsBraidedOver.of_kIso_subset Cardinal.isRegular_aleph0
+    (KMonoid.addOf_isLSubset hκ u) (KMonoid.addOf_isLSubset hκ (e u)) hbrV hsymhom hsymbij
+    (fun a ha => himg ▸ ⟨a, ha, rfl⟩)
+    (fun a ha b c habc => KMonoid.addOf_isSaturated (e u) a ha b c habc) hgenX
+
+/-- **Corollary 4.7(1)**: for a `κ`-monoid `H`, being braided over some `add x`, being `V^κ(R)`
+for a hereditary `k`-algebra for every field `k`, and being `V^κ(R)` for some hereditary ring are
+equivalent. -/
+theorem corollary_4_7_one {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ κ) :
+    ((∃ x : H, letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset hκ x)
+      IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) H (le_succ_of_le hκ) (fun y => (y : H)))
+      ↔ (∀ (k : Type u) [Field k], ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R)
+          (_ : IsLeftHereditary R),
+          letI := (projClass R κ hκ).instKMonoid hκ
+          ∃ e : (projClass R κ hκ).carrier → H, KMonoid.IsKHom κ e ∧ Function.Bijective e))
+    ∧ ((∀ (k : Type u) [Field k], ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R)
+          (_ : IsLeftHereditary R),
+          letI := (projClass R κ hκ).instKMonoid hκ
+          ∃ e : (projClass R κ hκ).carrier → H, KMonoid.IsKHom κ e ∧ Function.Bijective e)
+      ↔ (∃ (R : Type u) (_ : Ring R) (_ : IsLeftHereditary R),
+          letI := (projClass R κ hκ).instKMonoid hκ
+          ∃ e : (projClass R κ hκ).carrier → H, KMonoid.IsKHom κ e ∧ Function.Bijective e)) := by
+  classical
+  constructor
+  · constructor
+    · rintro ⟨x, hbr⟩ k _
+      exact corollary_4_7_one_forward hκ k x hbr
+    · intro h
+      obtain ⟨R, hring, -, hher, e, he, hbij⟩ := h (ULift.{u} ℚ)
+      exact corollary_4_7_one_backward_iso R hκ Albrecht.exists_directSum_fg e he hbij
+  · constructor
+    · intro h
+      obtain ⟨R, hring, -, hher, e, he, hbij⟩ := h (ULift.{u} ℚ)
+      exact ⟨R, hring, hher, e, he, hbij⟩
+    · rintro ⟨R, hring, hher, e, he, hbij⟩ k _
+      obtain ⟨x, hbr⟩ :=
+        corollary_4_7_one_backward_iso R hκ Albrecht.exists_directSum_fg e he hbij
+      exact corollary_4_7_one_forward hκ k x hbr
+
+/-! ### Corollary 4.7(2)
+
+For a ring `R` and a `κ`-monoid `H` the two statements
+
+* `(i)` there is an `x ∈ H` with `H` `ℵ₁⁻`-braided over `add_{ℵ₀}(x)` and
+  `V^{ℵ₀}(R) ≅ add_{ℵ₀}(x)` as `ℵ₁⁻`-monoids;
+* `(ii)` `V^κ(R) ≅ H`
+
+are equivalent.  Here `V^{ℵ₀}(R)` is the `ℵ₁⁻`-monoid of countably generated projective modules,
+that is, `V^κ(R)_{ℵ₁⁻}`.  No axiom is involved in either direction: `(i) ⇒ (ii)` is Corollary
+4.5(2) plus uniqueness of the universal `κ`-extension, and `(ii) ⇒ (i)` is Corollary 4.5(2) plus
+the identification `add_{ℵ₀} [R] = V^{ℵ₀}(R)`. -/
+
+/-- A `κ`-isomorphism carries `add_λ x` onto `add_λ (e x)`. -/
+theorem image_addOfCard_of_kIso {H K : Type u} [KMonoid κ H] [KMonoid κ K] {lam : Cardinal.{u}}
+    (hlk : lam ≤ κ) {e : H → K} (he : KMonoid.IsKHom κ e) (hbij : Function.Bijective e) (x : H) :
+    e '' (KMonoid.addOfCard (κ := κ) hlk x) = KMonoid.addOfCard (κ := κ) hlk (e x) := by
+  refine Set.eq_of_subset_of_subset ?_ ?_
+  · rintro _ ⟨y, ⟨z, hz⟩, rfl⟩
+    exact ⟨e z, by rw [← he.map_add, hz, he.map_cmul]⟩
+  · rintro y' ⟨z', hz⟩
+    obtain ⟨y, rfl⟩ := hbij.2 y'
+    obtain ⟨z, rfl⟩ := hbij.2 z'
+    exact ⟨y, ⟨z, hbij.1 (by rw [he.map_add, hz, he.map_cmul])⟩, rfl⟩
+
+/-- `add_{ℵ₀} x` is an `ℵ₁⁻`-submonoid of `H`: the `ℵ₁ ≤ ℵ₀⁺` case of
+`KMonoid.addOfCard_isLSubset_succ`. -/
+theorem addOfCard_aleph0_isLSubset {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ κ) (x : H) :
+    IsLSubset ℵ₁ (aleph_one_le_succ κ hκ) (KMonoid.addOfCard (κ := κ) hκ x) :=
+  KMonoid.addOfCard_isLSubset_succ le_rfl hκ (aleph_one_le_succ (ℵ₀ : Cardinal.{u}) le_rfl) x
+
+/-- **Corollary 4.7(2)**: for a ring `R` and a `κ`-monoid `H`,
+
+    (∃ x, H is ℵ₁⁻-braided over add_{ℵ₀}(x) and V^{ℵ₀}(R) ≅ add_{ℵ₀}(x))  ↔  V^κ(R) ≅ H.
+
+`V^{ℵ₀}(R)` is `(projClass R κ hκ).lambdaGenPart ℵ₁`, the classes of the countably generated
+projective modules, and the isomorphism on the left is one of `ℵ₁⁻`-monoids — which is what an
+isomorphism of `ℵ₀`-monoids is, since `ℵ₁ = ℵ₀⁺`. -/
+theorem corollary_4_7_two_iff {H : Type u} [KMonoid κ H] (R : Type u) [Ring R] (hκ : ℵ₀ ≤ κ) :
+    (letI := (projClass R κ hκ).instKMonoid hκ
+     letI := IsLSubset.lmonoid Cardinal.isRegular_aleph_one
+       ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₁ Cardinal.isRegular_aleph_one
+         (aleph_one_le_succ κ hκ))
+     ∃ x : H,
+       letI := IsLSubset.lmonoid Cardinal.isRegular_aleph_one (addOfCard_aleph0_isLSubset hκ x)
+       IsBraidedOver ℵ₁ κ ↥(KMonoid.addOfCard (κ := κ) hκ x) H (aleph_one_le_succ κ hκ)
+           (fun y => (y : H)) ∧
+         ∃ φ : ↥((projClass R κ hκ).lambdaGenPart ℵ₁) → ↥(KMonoid.addOfCard (κ := κ) hκ x),
+           IsLMonoidHom ℵ₁ φ ∧ Function.Bijective φ)
+    ↔ (letI := (projClass R κ hκ).instKMonoid hκ
+       ∃ e : H → (projClass R κ hκ).carrier, KMonoid.IsKHom κ e ∧ Function.Bijective e) := by
+  classical
+  let := (projClass R κ hκ).instKMonoid hκ
+  let hV : IsLSubset ℵ₁ (aleph_one_le_succ κ hκ) ((projClass R κ hκ).lambdaGenPart ℵ₁) :=
+    (projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₁ Cardinal.isRegular_aleph_one
+      (aleph_one_le_succ κ hκ)
+  let := IsLSubset.lmonoid Cardinal.isRegular_aleph_one hV
+  have hbrV : IsBraidedOver ℵ₁ κ ↥((projClass R κ hκ).lambdaGenPart ℵ₁)
+      (projClass R κ hκ).carrier (aleph_one_le_succ κ hκ)
+      (fun a => (a : (projClass R κ hκ).carrier)) := (corollary_4_5_two.{u, u} R κ hκ).1
+  constructor
+  · -- `(i) ⇒ (ii)`: both `H` and `V^κ(R)` are `ℵ₁⁻`-braided over `add_{ℵ₀}(x)`
+    rintro ⟨x, hbrH, φ, hφ, hφbij⟩
+    let := IsLSubset.lmonoid Cardinal.isRegular_aleph_one (addOfCard_aleph0_isLSubset hκ x)
+    set Φ := Equiv.ofBijective φ hφbij with hΦ
+    have hψ : IsLMonoidHom ℵ₁ Φ.symm :=
+      hφ.inv (fun a => Φ.symm_apply_apply a) (fun a => Φ.apply_symm_apply a)
+    have hbrV' : IsBraidedOver ℵ₁ κ ↥(KMonoid.addOfCard (κ := κ) hκ x)
+        (projClass R κ hκ).carrier (aleph_one_le_succ κ hκ)
+        (fun y => ((Φ.symm y : ↥((projClass R κ hκ).lambdaGenPart ℵ₁)) :
+          (projClass R κ hκ).carrier)) :=
+      hbrV.of_base_iso (aleph_one_le_succ κ hκ) hψ hφ
+        (fun a => Φ.apply_symm_apply a) (fun a => Φ.symm_apply_apply a)
+    obtain ⟨e, he, -, hbij⟩ :=
+      isKIso_of_braidedOver_same (aleph_one_le_succ κ hκ) hbrH hbrV'
+    exact ⟨e, he, hbij⟩
+  · -- `(ii) ⇒ (i)`: take `x` to be the preimage of the class of `R`
+    rintro ⟨e, he, hbij⟩
+    obtain ⟨k⟩ := nonempty_Idx hκ
+    set u : (projClass R κ hκ).carrier := Projective.unitClass R κ hκ k with hu
+    set E : H ≃ (projClass R κ hκ).carrier := Equiv.ofBijective e hbij with hE
+    have hsymhom : KMonoid.IsKHom κ E.symm := he.inv hbij E.apply_symm_apply
+    have hsymbij : Function.Bijective E.symm := E.symm.bijective
+    set x : H := E.symm u with hx
+    let := IsLSubset.lmonoid Cardinal.isRegular_aleph_one (addOfCard_aleph0_isLSubset hκ x)
+    -- `V^κ(R)` is `ℵ₁⁻`-braided over `add_{ℵ₀} [R] = V^{ℵ₀}(R)`
+    let := IsLSubset.lmonoid Cardinal.isRegular_aleph_one (addOfCard_aleph0_isLSubset hκ u)
+    have hbrU : IsBraidedOver ℵ₁ κ ↥(KMonoid.addOfCard (κ := κ) hκ u)
+        (projClass R κ hκ).carrier (aleph_one_le_succ κ hκ)
+        (fun y => (y : (projClass R κ hκ).carrier)) :=
+      IsBraidedOver.of_set_eq Cardinal.isRegular_aleph_one (addOfCard_aleph0_isLSubset hκ u) hV
+        (addOfCard_unitClass_eq R κ hκ k) hbrV
+    -- transport it to `H` along `e`
+    have himg : E.symm '' (KMonoid.addOfCard (κ := κ) hκ u) = KMonoid.addOfCard (κ := κ) hκ x :=
+      image_addOfCard_of_kIso hκ hsymhom hsymbij u
+    have hgenU : KMonoid.KGenerates κ (KMonoid.addOfCard (κ := κ) hκ u) := hbrU.kGenerates_coe
+    have hgenX : KMonoid.KGenerates κ (KMonoid.addOfCard (κ := κ) hκ x) := by
+      have := KMonoid.KGenerates.map hsymhom hsymbij.2 hgenU
+      rwa [himg] at this
+    have hmapsE : ∀ a ∈ KMonoid.addOfCard (κ := κ) hκ x, e a ∈ KMonoid.addOfCard (κ := κ) hκ u := by
+      intro a ha
+      rw [← himg] at ha
+      obtain ⟨b, hb, rfl⟩ := ha
+      have hEb : e (E.symm b) = b := E.apply_symm_apply b
+      rwa [hEb]
+    refine ⟨x, IsBraidedOver.of_kIso_subset Cardinal.isRegular_aleph_one
+        (addOfCard_aleph0_isLSubset hκ u) (addOfCard_aleph0_isLSubset hκ x) hbrU he hbij hmapsE
+        (fun a ha b c habc => KMonoid.addOfCard_isSaturated hκ x a ha b c habc) hgenX, ?_⟩
+    -- and `E.symm` restricts to an isomorphism `V^{ℵ₀}(R) ≅ add_{ℵ₀}(x)`
+    have hmaps : ∀ a ∈ (projClass R κ hκ).lambdaGenPart ℵ₁,
+        E.symm a ∈ KMonoid.addOfCard (κ := κ) hκ x := by
+      intro a ha
+      rw [← addOfCard_unitClass_eq R κ hκ k] at ha
+      exact himg ▸ ⟨a, ha, rfl⟩
+    refine ⟨fun a => ⟨E.symm a, hmaps a a.2⟩,
+      hsymhom.restrict_isLMonoidHom Cardinal.isRegular_aleph_one hV
+        (addOfCard_aleph0_isLSubset hκ x) hmaps, ?_, ?_⟩
+    · exact fun a b hab => Subtype.ext (E.symm.injective (Subtype.ext_iff.mp hab))
+    · rintro ⟨b, hb⟩
+      rw [← himg] at hb
+      obtain ⟨a, ha, hab⟩ := hb
+      rw [addOfCard_unitClass_eq R κ hκ k] at ha
+      exact ⟨⟨a, ha⟩, Subtype.ext hab⟩
+
+end Cor47Equiv
 
 /-! ## Example 4.8(1): ascent of KRSA
 

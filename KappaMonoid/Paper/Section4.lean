@@ -40,20 +40,31 @@ alias theorem_4_3_theorem_4_3 := KappaMonoid.theorem_4_3
 /-- **Theorem 4.3** — `KappaMonoid.theorem_4_3_core`, in `Modules/Theorem43.lean`. -/
 alias theorem_4_3_theorem_4_3_core := KappaMonoid.theorem_4_3_core
 
-/-- **Corollary 4.4(2)** — `KappaMonoid.corollary_4_4`, in `Modules/Theorem43.lean`. -/
-alias corollary_4_4_2_corollary_4_4 := KappaMonoid.corollary_4_4
+/-- **Corollary 4.4** — `KappaMonoid.corollary_4_4`, in `Modules/Theorem43.lean`: the form over
+an arbitrary `λ⁻`-closed, summand-closed subset of `V^κ(C)`, from which both parts follow. -/
+alias corollary_4_4_corollary_4_4 := KappaMonoid.corollary_4_4
 
-/-- **Corollary 4.5(1)(2)** — `KappaMonoid.corollary_4_5`, in `Modules/Projective.lean`. -/
-alias corollary_4_5_1_2_corollary_4_5 := KappaMonoid.corollary_4_5
+/-- **Corollary 4.4(1)** — `KappaMonoid.corollary_4_4_one`, in `Modules/SmallPart.lean`. -/
+alias corollary_4_4_1_corollary_4_4_one := KappaMonoid.corollary_4_4_one
+
+/-- **Corollary 4.4(2)** — `KappaMonoid.corollary_4_4_two`, in `Modules/SmallPart.lean`. -/
+alias corollary_4_4_2_corollary_4_4_two := KappaMonoid.corollary_4_4_two
+
+/-- **Corollary 4.5(1)** — `KappaMonoid.corollary_4_5`, in `Modules/Projective.lean`. -/
+alias corollary_4_5_1_corollary_4_5 := KappaMonoid.corollary_4_5
+
+/-- **Corollary 4.5(2)** — `KappaMonoid.corollary_4_5_two`, in `Modules/Projective.lean`. -/
+alias corollary_4_5_2_corollary_4_5_two := KappaMonoid.corollary_4_5_two
 
 /-- **Corollary 4.5(3)** — `KappaMonoid.corollary_4_5_three`, in `Modules/Projective.lean`. -/
 alias corollary_4_5_3_corollary_4_5_three := KappaMonoid.corollary_4_5_three
 
-/-- **Corollary 4.6** — `KappaMonoid.corollary_4_6`, in `Modules/Projective.lean`. -/
-alias corollary_4_6_corollary_4_6 := KappaMonoid.corollary_4_6
+/-- **Corollary 4.7(1)** — `KappaMonoid.corollary_4_7_one`, in `Modules/Corollary47.lean`: the
+three-way equivalence, stated as the two implications (i) ⇔ (ii) and (ii) ⇔ (iii). -/
+alias corollary_4_7_1_corollary_4_7_one := KappaMonoid.corollary_4_7_one
 
-/-- **Corollary 4.7(1)** — `KappaMonoid.corollary_4_7`, in `Modules/Projective.lean`. -/
-alias corollary_4_7_1_corollary_4_7 := KappaMonoid.corollary_4_7
+/-- **Corollary 4.7(1)**, (iii) ⇒ (i) — `KappaMonoid.corollary_4_7_one_backward_iso`. -/
+alias corollary_4_7_1_corollary_4_7_one_backward_iso := KappaMonoid.corollary_4_7_one_backward_iso
 
 /-- **Corollary 4.7(1)** — `KappaMonoid.corollary_4_7_one_backward`, in `Modules/Corollary47.lean`. -/
 alias corollary_4_7_1_corollary_4_7_one_backward := KappaMonoid.corollary_4_7_one_backward
@@ -64,8 +75,17 @@ alias corollary_4_7_1_corollary_4_7_one_backward_braided := KappaMonoid.corollar
 /-- **Corollary 4.7(1)** — `KappaMonoid.corollary_4_7_one_forward`, in `Modules/Corollary47.lean`. -/
 alias corollary_4_7_1_corollary_4_7_one_forward := KappaMonoid.corollary_4_7_one_forward
 
-/-- **Corollary 4.7(2)** — `KappaMonoid.corollary_4_7_two`, in `Modules/Corollary47.lean`. -/
+/-- **Corollary 4.7(2)** — `KappaMonoid.corollary_4_7_two_iff`, in `Modules/Corollary47.lean`:
+the equivalence itself, over `add_{ℵ₀}(x)` and `V^{ℵ₀}(R)`. -/
+alias corollary_4_7_2_corollary_4_7_two_iff := KappaMonoid.corollary_4_7_two_iff
+
+/-- **Corollary 4.7(2)** — `KappaMonoid.corollary_4_7_two`, in `Modules/Corollary47.lean`: the
+engine, for an arbitrary `λ⁻`-monoid base braiding both `H` and `V^κ(R)`. -/
 alias corollary_4_7_2_corollary_4_7_two := KappaMonoid.corollary_4_7_two
+
+/-- **`add_{ℵ₀} [R] = V^{ℵ₀}(R)`** — `KappaMonoid.addOfCard_unitClass_eq`, the identification
+behind both directions of Corollary 4.7(2). -/
+alias corollary_4_7_2_addOfCard_unitClass_eq := KappaMonoid.addOfCard_unitClass_eq
 
 /-- **Example 4.8(1)** — `KappaMonoid.krsa_ascent`, in `Modules/Corollary47.lean`: `V^κ(C)` is
 `λ⁻`-braided over `F_{λ⁻}(B)`. -/
@@ -86,8 +106,8 @@ alias example_4_8_1_free := KappaMonoid.krsa_ascent_free
   weakly semihereditary (Bergman), one-sided semihereditary (Bergman), exchange (Warfield),
   semiperfect (Mueller), weakly noetherian commutative (Hinohara), Bézout with one-sided Krull
   dimension (McGovern–Puninski–Rothmaler) — none of them monoid-theoretic and none in Mathlib.
-  `corollary_4_6` is a documented stub, and `EveryProjectiveIsSumOfFG` is the hypothesis the six
-  would supply.  The *hereditary* case of the second — Albrecht's theorem — is proved, in
+  `EveryProjectiveIsSumOfFG` is the hypothesis those six results supply, and it is what
+  `corollary_4_5_three` takes.  The *hereditary* case of the second — Albrecht's theorem — is proved, in
   `ForMathlib/Albrecht.lean`, and is the one §4 and §5 actually use; the other five stay quoted.
 * **Examples 4.8(2)–(7)**.  Of the seven items only (1) is formalised, and it *is* formalised as
   printed, `V^κ(C) ≅ F_κ(B)` included (`krsa_ascent_iso`); the general `λ⁻` form above has the

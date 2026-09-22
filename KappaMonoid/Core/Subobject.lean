@@ -211,6 +211,24 @@ theorem _root_.KappaMonoid.IsLSubset.coe_lsumOf {lam : Cardinal.{u}} {hlk : lam 
     ((LMonoid.lsumOf (lam := lam) hι z : S) : H)
       = sumOf (κ := κ) (le_of_lt_of_le_succ hlk hι) fun i => (z i : H) := rfl
 
+/-- **A `κ`-homomorphism restricts to a homomorphism of `λ⁻`-monoids** between `λ⁻`-closed
+subsets it maps into one another: `λ⁻`-sums in a `λ⁻`-closed subset are the ambient `κ`-sums
+(`IsLSubset.coe_lsumOf`), which the `κ`-homomorphism preserves. -/
+theorem IsKHom.restrict_isLMonoidHom {K : Type v} [KMonoid κ K] {lam : Cardinal.{u}}
+    {hlk : lam ≤ Order.succ κ} {S : Set H} {T : Set K} (hlam : lam.IsRegular)
+    (hS : IsLSubset lam hlk S) (hT : IsLSubset lam hlk T) {e : H → K} (he : IsKHom κ e)
+    (hmaps : ∀ a ∈ S, e a ∈ T) :
+    letI := hS.lmonoid hlam
+    letI := hT.lmonoid hlam
+    IsLMonoidHom lam (fun a : ↥S => (⟨e a, hmaps a a.2⟩ : ↥T)) := by
+  let := hS.lmonoid hlam
+  let := hT.lmonoid hlam
+  intro ι h x
+  refine Subtype.ext ?_
+  show e ((LMonoid.lsumOf (lam := lam) h x : S) : H) = _
+  rw [hS.coe_lsumOf hlam h x, he.map_sumOf (le_of_lt_of_le_succ hlk h) (fun i => (x i : H))]
+  rfl
+
 /-- A `κ`-monoid is a `λ⁻`-monoid for every regular `λ ≤ κ⁺` (Remark 2.19). -/
 @[instance_reducible]
 noncomputable def toLMonoidOfLE (H : Type v) [KMonoid κ H] {lam : Cardinal.{u}}

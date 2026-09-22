@@ -372,18 +372,18 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
           Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
+    (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
       ({p₂, p₁} : Set V(R).carrier) := by rwa [Set.pair_comm]
-  have hWsub := V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀
+  have hWsub := V(R).lambdaGenPart_isLSubset le_rfl ℵ₀
     Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   -- both generators are finitely generated, by the paper's parenthetical
-  have hWsat : ∀ a ∈ V(R).lambdaSmallPart ℵ₀,
+  have hWsat : ∀ a ∈ V(R).lambdaGenPart ℵ₀,
       ∀ b c : V(R).carrier, a = b + c →
-      b ∈ V(R).lambdaSmallPart ℵ₀ :=
+      b ∈ V(R).lambdaGenPart ℵ₀ :=
     fun a ha b c habc =>
-      V(R).lambdaSmallPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
+      V(R).lambdaGenPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
   obtain ⟨hp₁W, hp₂W⟩ := mem_of_divisorClosed_of_generates p₁ p₂ hWsat
     ((corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1.kGenerates_coe) hgen hnoncyclic
   -- `V(R)` is closed under binary sums and finite multiples
@@ -411,8 +411,7 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
       push Not at hcon
       obtain ⟨a, ha⟩ : ∃ a : ℕ, F.1 = (a : ℕ∞) := ⟨F.1.toNat, (ENat.natCast_toNat hcon.1).symm⟩
       obtain ⟨b, hb⟩ : ∃ b : ℕ, F.2 = (b : ℕ∞) := ⟨F.2.toNat, (ENat.natCast_toNat hcon.2).symm⟩
-      refine hq (finite_of_isLambdaSmall_aleph0 R ℵ₀ q.out
-        (V(R).isLambdaSmall_of_mem ?_))
+      refine hq (IsLambdaGenerated.finite_aleph0 (V(R).isLambdaGenerated_of_mem ?_))
       rw [← hF, eval, ha, hb, ecmul_natCast, ecmul_natCast]
       exact hWsub.add_mem le_rfl (hWsub.nsmul_mem le_rfl hp₁W a)
         (hWsub.nsmul_mem le_rfl hp₂W b)

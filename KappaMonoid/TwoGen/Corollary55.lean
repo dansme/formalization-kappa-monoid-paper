@@ -499,7 +499,7 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
             ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
   let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
+    (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   obtain ⟨e', hleft, hright, he', hgenp, hncp⟩ :=
     exists_inv_generators x₁ x₂ hgen hnoncyclic R e hhom hbij
@@ -528,21 +528,19 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
     rintro a b ⟨c, hc⟩
     exact ⟨e c, by rw [← KMonoid.IsKHom.map_add hhom, hc, hhom.map_cmul]⟩
   -- both generators are finitely generated
-  have hWsub := V(R).lambdaSmallPart_isLSubset le_rfl ℵ₀
+  have hWsub := V(R).lambdaGenPart_isLSubset le_rfl ℵ₀
     Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
-  have hWsat : ∀ a ∈ V(R).lambdaSmallPart ℵ₀,
+  have hWsat : ∀ a ∈ V(R).lambdaGenPart ℵ₀,
       ∀ b c : V(R).carrier, a = b + c →
-      b ∈ V(R).lambdaSmallPart ℵ₀ :=
+      b ∈ V(R).lambdaGenPart ℵ₀ :=
     fun a ha b c habc =>
-      V(R).lambdaSmallPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
+      V(R).lambdaGenPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
   obtain ⟨hp₁W, hp₂W⟩ := mem_of_divisorClosed_of_generates (e' x₁) (e' x₂) hWsat
     ((corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1.kGenerates_coe) hgenp hncp
   have hfin₁ : Module.Finite R (V(R).rep (e' x₁)) :=
-    finite_of_isLambdaSmall_aleph0 R ℵ₀ (e' x₁).out
-      (V(R).isLambdaSmall_of_mem hp₁W)
+    IsLambdaGenerated.finite_aleph0 (V(R).isLambdaGenerated_of_mem hp₁W)
   have hfin₂ : Module.Finite R (V(R).rep (e' x₂)) :=
-    finite_of_isLambdaSmall_aleph0 R ℵ₀ (e' x₂).out
-      (V(R).isLambdaSmall_of_mem hp₂W)
+    IsLambdaGenerated.finite_aleph0 (V(R).isLambdaGenerated_of_mem hp₂W)
   -- `Tr(P₂) = R`, because `[P₁] ≼ ℵ₀ [P₂]`
   have htop₂ : traceIdeal R (V(R).rep (e' x₂)) = ⊤ :=
     traceIdeal_eq_top_of_addLe R (e' x₂) (e' x₁) (by rwa [Set.pair_comm]) hncp
