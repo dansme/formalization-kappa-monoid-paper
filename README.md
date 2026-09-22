@@ -196,8 +196,6 @@ Nothing here needs it.
 
 ## What is not formalised
 
-* **Remark 3.9** — why transitivity of braiding is easy for `λ > ℵ₀`: a sketch motivating
-  Lemma 3.8, whose proof is formalised in full (`IsBraided.trans`).
 * **Remark 3.18** — a pointer to the literature.
 * **Corollary 4.6** — Corollary 4.5(3) together with six results quoted from the literature, none
   of them monoid-theoretic and none in Mathlib (weakly semihereditary and one-sided semihereditary,
@@ -264,7 +262,8 @@ because the standing hypothesis is symmetric in them; `Paper.Setting5.addBase_sw
  The paper runs one transfinite recursion for every `λ`,
 allowing infinite intervals once `λ > ℵ₀`. Here the countable case is that recursion
 (`IsBraided.exists_aligned`, `Braiding/TransAleph0.lean`) and the uncountable case goes through
-Lemma 3.4(4) and connected components (`IsBraided.exists_aligned_eq_of_ne_aleph0`), which proves
+Lemma 3.4(4) and connected components (`IsBraided.exists_aligned_eq_of_ne_aleph0`) — this is the
+argument of Remark 3.9, whose own statement is `exists_common_coarsening` — and it proves
 more than the lemma asks for: the two partitions of the middle family can be taken *equal*, so the
 two cumulative unions coincide rather than merely sandwiching one another.
 `IsBraided.exists_aligned_of_data` is the two cases combined, block by block, and

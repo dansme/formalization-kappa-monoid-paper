@@ -37,6 +37,9 @@ namespace KappaMonoid
 
 /-! ## §3 — no axiom at all -/
 
+#assert_axioms exists_common_coarsening []
+#assert_axioms mk_ccomp_lt []
+#assert_axioms IsBraided.trans_of_ne_aleph0 []
 #assert_axioms isBraided_nat_iff []
 #assert_axioms not_isBraidedOver_ennreal []
 #assert_axioms not_isBraidedOver_trivExt_nnreal []

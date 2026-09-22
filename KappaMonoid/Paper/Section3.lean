@@ -144,7 +144,24 @@ alias lemma_3_8_s_combinatorial_core_of_aligned := KappaMonoid.IsBraided.of_alig
 /-- **Lemma 3.8, transitivity** — `KappaMonoid.IsBraided.trans`, in `Braiding/TransUncountable.lean`. -/
 alias lemma_3_8_transitivity_trans := KappaMonoid.IsBraided.trans
 
+/-- **Remark 3.9** — `KappaMonoid.exists_common_coarsening`, in `Braiding/TransUncountable.lean`:
+for regular uncountable `λ`, two partitions into pieces of size `< λ` have a common coarsening that
+is again one, which is why transitivity is easy above `ℵ₀`. -/
+alias remark_3_9_exists_common_coarsening := KappaMonoid.exists_common_coarsening
+
+/-- **Remark 3.9**, the graph — `KappaMonoid.ccomp`: the connected components of the relation
+"lie in a common piece of either partition". -/
+alias remark_3_9_ccomp := KappaMonoid.ccomp
+
+/-- **Remark 3.9**, the cardinality bound — `KappaMonoid.mk_ccomp_lt`: regularity of the
+uncountable `λ` keeps the components of size `< λ`. -/
+alias remark_3_9_mk_ccomp_lt := KappaMonoid.mk_ccomp_lt
+
+/-- **Remark 3.9**, the conclusion — `KappaMonoid.IsBraided.trans_of_ne_aleph0`. -/
+alias remark_3_9_trans_of_ne_aleph0 := KappaMonoid.IsBraided.trans_of_ne_aleph0
+
 /-- **Lemma 3.8** — `KappaMonoid.braidingSetoid`, in `Braiding/TransUncountable.lean`. -/
+
 alias lemma_3_8_braidingSetoid := KappaMonoid.braidingSetoid
 
 /-- **Proposition 3.10** — `KappaMonoid.extend_lhom`, in `Braiding/Prop310.lean`. -/
@@ -218,9 +235,6 @@ alias example_3_17_slack_iso := KappaMonoid.example_3_17_slack_iso
 
 /-! ## Not formalised, deliberately
 
-* **Remark 3.9**.  Why transitivity of braiding is easy for `λ > ℵ₀`: the common coarsening of two
-  partitions into `< λ`-sized pieces is again into `< λ`-sized pieces, by regularity.  A sketch
-  motivating Lemma 3.8, whose proof is formalised in full (`IsBraided.trans`).
 * **Remark 3.18**.  Saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids —
   a pointer to the literature, not a theorem of the paper. -/
 

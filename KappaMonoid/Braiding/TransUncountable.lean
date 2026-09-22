@@ -430,7 +430,45 @@ theorem mk_regroup_lt (hreg : lam.IsRegular) {P : ι × ℕ → Set ι} {G : ι 
   rw [heq]
   exact (Cardinal.card_iUnion_lt_iff_forall_of_isRegular hreg hG).mpr fun p => hPsm _
 
+/-- **Remark 3.9**: for a regular *uncountable* `λ`, two partitions of `ι` into pieces of
+cardinality `< λ` admit a **common coarsening** which is again a partition into pieces of
+cardinality `< λ`.
+
+This is the observation the remark makes.  Consider the graph on `ι` joining two indices when they
+lie in a common piece of either partition; its connected components are `ccomp J J'`, they are the
+pieces of the common coarsening, and regularity of the uncountable `λ` keeps them small
+(`mk_ccomp_lt`), each being built in countably many steps out of pieces of size `< λ`.
+
+It is what makes transitivity easy for `λ > ℵ₀` (`IsBraided.trans_of_ne_aleph0`): by Lemma 3.4(4)
+(`isBraided_iff_of_ne_aleph0`) both braidings are given by partitions with equal partial sums, and
+passing to the common coarsening of the two partitions of the middle family makes those sums match
+up.  For `λ = ℵ₀` the argument breaks down — a component can be countably infinite — which is why
+the countable case needs the alignment recursion of Lemma 3.7. -/
+theorem exists_common_coarsening (hreg : lam.IsRegular) (hlam0 : ℵ₀ < lam)
+    (J J' : ι × ℕ → Set ι)
+    (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q))
+    (hJ'disj : ∀ p q, p ≠ q → Disjoint (J' p) (J' q))
+    (hJcov : (⋃ p, J p) = Set.univ) (hJ'cov : (⋃ p, J' p) = Set.univ)
+    (hJsm : ∀ p, #(J p) < lam) (hJ'sm : ∀ p, #(J' p) < lam) :
+    ∃ P : ι × ℕ → Set ι,
+      (∀ μ, #(P μ) < lam) ∧ (∀ μ ν, μ ≠ ν → Disjoint (P μ) (P ν)) ∧
+      (⋃ μ, P μ) = Set.univ ∧
+      (∀ p, ∃ μ, J p ⊆ P μ) ∧ (∀ p, ∃ μ, J' p ⊆ P μ) := by
+  obtain ⟨GA, GB, hGAsm, hGBsm, hGAdisj, hGBdisj, hGAcov, hGBcov, hkey⟩ :=
+    exists_common_regrouping hreg hlam0 J J' hJdisj hJ'disj hJcov hJ'cov hJsm hJ'sm
+  refine ⟨regroup J GA, fun μ => mk_regroup_lt hreg hJsm (hGAsm μ),
+    fun μ ν h => regroup_disjoint hJdisj hGAdisj h, regroup_cover hJcov hGAcov, ?_, ?_⟩
+  · intro p
+    obtain ⟨μ, hμ⟩ := Set.mem_iUnion.mp (hGAcov ▸ Set.mem_univ p)
+    exact ⟨μ, Set.subset_biUnion_of_mem hμ⟩
+  · intro p
+    obtain ⟨μ, hμ⟩ := Set.mem_iUnion.mp (hGBcov ▸ Set.mem_univ p)
+    refine ⟨μ, ?_⟩
+    rw [show regroup J GA μ = regroup J' GB μ from hkey μ]
+    exact Set.subset_biUnion_of_mem hμ
+
 /-- A `λ⁻`-sum over a regrouped piece is the sum of the sums over its parts. -/
+
 theorem lsumOf_regroup {P : ι × ℕ → Set ι} {G : ι × ℕ → Set (ι × ℕ)}
     (hPdisj : ∀ p q, p ≠ q → Disjoint (P p) (P q)) (hPsm : ∀ p, #(P p) < lam)
     {μ : ι × ℕ} (hG : #(G μ) < lam) (hR : #(regroup P G μ) < lam) (f : ι → X) :
