@@ -308,7 +308,8 @@ theorem sumData_zero : B.sumData.zero = 0 := by
 
 end BareKMonoid
 
-/-- **Lemma 2.5**: a `κ`-monoid is determined by its `κ`-indexed summation. -/
+/-- A `κ`-monoid is determined by its `κ`-indexed summation: the bullets after **Lemma 2.5**,
+whose (A3) is `BareKMonoid.ksum_perm`. -/
 @[instance_reducible]
 noncomputable def KMonoid.ofBare {κ : Cardinal.{u}} {H : Type v} [Zero H]
     (B : BareKMonoid κ H) : KMonoid κ H :=

@@ -326,11 +326,10 @@ theorem prop_5_4_free (p₁ p₂ : V(R).carrier)
 /-- **Proposition 5.4**, final statement: `Tr(P₁) = Tr(P₂)` exactly when every countably but not
 finitely generated projective module is free.
 
-**Two corrections to the paper's transcription.**  Quantified over *all* projective modules the
-right-hand side is false as soon as `R ≠ 0` — `R^{(ℵ₁)}` is projective and not finitely generated,
-but is not free on a countable basis (invariance of infinite rank).  The paper says "any countably
-(non finitely) generated projective module", so the statement is over the classes of `V^{ℵ₀}(R)`,
-which are exactly those.  And hereditariness — the paper's hypothesis here — is *weakened* to
+The right-hand side ranges over the countably (non finitely) generated projectives, as the paper
+says, that is over the classes of `V^{ℵ₀}(R)`; over *all* projective modules it would be false as
+soon as `R ≠ 0` (`R^{(ℵ₁)}` is not free on a countable basis).  **Stronger than the paper:**
+hereditariness — the paper's hypothesis here — is *weakened* to
 `EveryProjectiveIsSumOfFG R`: what the proof needs is that `P₁` and `P₂` are finitely generated,
 which the paper gets from Lemma 5.1 through Corollary 4.6, and that is exactly this hypothesis.
 Albrecht's theorem (`ForMathlib/Albrecht.lean`) says hereditary rings have it, so the statement

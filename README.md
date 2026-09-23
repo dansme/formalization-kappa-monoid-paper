@@ -46,7 +46,7 @@ mentions no module and uses no axiom. The module theory enters at `Lemma51`.
   elements `x₁` and `x₂`"* — which in the library travels as two loose arguments. And
   `IsRealizableAsV` names the nine-line "`H ≅ V^{ℵ₀}(R)` for a ring whose projectives are sums of
   finitely generated modules" that Theorem 5.3 and all three parts of Corollary 5.5 repeat.
-* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 109 entries between them,
+* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 168 entries between them,
   one per numbered result, each an `alias` naming the declaration that formalises it and the file
   it lives in. The alias fails to compile if the declaration goes, so the index cannot rot. Each
   closes with what the development deliberately does *not* formalise, and why.
@@ -70,7 +70,7 @@ be checked against the literature before it is relied on.
 
 The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
 declarations under `KappaMonoid/` differs from the one above, so adding one means editing the
-workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 95
+workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 111
 headline results, whether each one uses it — with `#assert_axioms`, a command over `collectAxioms`
 that fails both when a result gains an axiom and when it loses one. The claims below are therefore
 checked, not merely written.
@@ -196,7 +196,9 @@ Nothing here needs it.
 
 ## What is not formalised
 
-* **Remark 3.18** — a pointer to the literature.
+* **Remark 3.18** — background from the literature (saturated submonoids of `ℕ₀^n` are the
+  finitely generated reduced Krull monoids, Chapman–Krause–Oeljeklaus) and its informal consequence
+  for Proposition 3.15; nothing later depends on it.
 * **Corollary 4.6** — Corollary 4.5(3) together with six results quoted from the literature, none
   of them monoid-theoretic and none in Mathlib (weakly semihereditary and one-sided semihereditary,
   Bergman; exchange, Warfield; semiperfect, Mueller; weakly noetherian commutative, Hinohara;
@@ -227,10 +229,18 @@ Nothing here needs it.
     literature and not in Mathlib — Bass's theorem that
     non-finitely-generated projectives over a connected commutative noetherian ring are free (5),
     Herbera–Příhoda's description of `V^*(R)` for semilocal noetherian `R` (6), Levy–Robson's
-    theory of HNP rings (7). For (5) Bass's theorem gives the description directly; for (6) the
-    `κ`-monoid step is Proposition 3.15(2), formalised. Item (7) explicitly declines to carry out its own
-    computation. Item (6) applies Proposition 3.15(2) to a system of equations and congruences,
-    which is the case the proposition is stated for.
+    theory of HNP rings (7). For (5) Bass's theorem gives the description directly. For (6) the
+    `κ`-monoid step is Proposition 3.15(1), which allows inequalities, and Proposition 3.15(2) is used
+    only to recover Herbera–Příhoda's description of `V^{ℵ₀}(R)`; both are formalised. Item (7)
+    explicitly declines to carry out its own computation.
+* **The remark after Corollary 4.7** (tex 1840) that without the sum-of-finitely-generated
+  hypothesis `V(R)` does not in general determine `V^{ℵ₀}(R)` — stated without proof or example.
+* **The §5 preamble** (tex 1989–1991): a cyclic `ℵ₀`-monoid `⟨x⟩` is `V^{ℵ₀}(R)` for a nonzero
+  hereditary ring iff `ℵ₀x ≠ nx` for all `n` — the one-generator counterpart of Theorem 5.3, which
+  the paper calls easy and does not prove; §5 assumes `H` non-cyclic throughout.
+* **Unnumbered prose of §2**: the only-if half of the list of realisable cyclic monoids, "the
+  generator of a cyclic `κ`-monoid is an order-unit", the "precisely" around Proposition 2.16, and
+  `add_λ(x) = add(⟨x⟩_λ)`.  See the foot of `Paper/Section2.lean`.
 
 ## Encoding decisions
 

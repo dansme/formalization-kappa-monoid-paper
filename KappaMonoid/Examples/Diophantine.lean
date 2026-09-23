@@ -996,10 +996,10 @@ theorem alephPart_eq_ksum {n : ℕ} (x : Fin n → Fcard ℵ₀)
 sitting inside `F_{ℵ₀}^n` as `finSolutions` — a *finite* summand of an element of `H` lying in `H`
 has its complement in `H`.
 
-The paper asserts this for every `H` cut out by equations, inequalities and congruences, citing
-cancellativity of `ℕ₀^n` (the remark before Prop. 3.15).  For equations and congruences that is
-right — `isSaturatedFin_of_ineqs_empty` — but **it fails for inequalities**, and with it
-Proposition 3.15(2): see `not_isSaturatedFin_ineqSystem` below. -/
+The paper asserts this for `H` cut out by equations and congruences, citing cancellativity of
+`ℕ₀^n` (the remark before Prop. 3.15); that is `isSaturatedFin_of_ineqs_empty`.  It fails once
+inequalities are allowed — `not_isSaturatedFin_ineqSystem` below, Example 3.17 — which is why
+Proposition 3.15(2) excludes them. -/
 def LinSystem.IsSaturatedFin : Prop :=
   letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
   letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
@@ -1130,12 +1130,10 @@ argument inside `ksum_mem_alephExt` in the other.  Note this is genuinely *not* 
 the same system over `F_{ℵ₀}`, which is what distinguishes (2) from (1); Example 3.16 is the
 witness.
 
-**Deviation from the paper.** The saturation of `H` is added as a hypothesis, because the paper's
-remark that it is automatic is false for systems involving inequalities — see
-`LinSystem.IsSaturatedFin` and `not_isSaturatedFin_ineqSystem`.  It *is* automatic for systems of
-equations and congruences, the case the paper's applications use:
-`isSaturatedFin_of_ineqs_empty` supplies the hypothesis there, and
-`prop_3_15_two_of_ineqs_empty` is the resulting hypothesis-free statement. -/
+**Stronger than the paper.** The paper states (2) for systems of equations and congruences; that
+statement is `prop_3_15_two_of_ineqs_empty`, where `isSaturatedFin_of_ineqs_empty` supplies the
+saturation.  This version allows inequalities as well, at the price of assuming saturation, which
+then can fail (`not_isSaturatedFin_ineqSystem`, Example 3.17). -/
 theorem prop_3_15_two (hsat : LinSystem.IsSaturatedFin.{u} sys) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
     letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)

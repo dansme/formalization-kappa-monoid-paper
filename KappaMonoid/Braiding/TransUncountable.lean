@@ -616,14 +616,17 @@ theorem kOrd_bsucc_mono {ν μ : ι × ℕ} (h : kOrd ι ν μ) : kOrd ι (bsucc
   · exact Or.inl h
   · exact Or.inr ⟨h1, by simpa [bsucc] using h2⟩
 
-/-- **Lemma 3.7**, exactly as the paper states it: with `(J_μ)` the partition of `y` in the first
+/-- **Lemma 3.7**, for the normal-form limit well-order: with `(J_μ)` the partition of `y` in the first
 braiding and `(J'_μ)` the one in the second,
 
     ⋃_{ν ≤ μ} J_ν ⊆ ⋃_{ν ≤ μ} J'_ν ⊆ ⋃_{ν ≤ μ+1} J_ν   for all μ.
 
-Here the paper's limit well-order on `κ` is the lexicographic order `kOrd` on `ι × ℕ`, whose limit
-elements are the pairs `(a, 0)` and whose successor is `bsucc` — by Lemma 3.5 (`Braiding/WellOrder.lean`)
-this is no loss of generality. -/
+Here the limit well-order is the lexicographic order `kOrd` on `ι × ℕ` (order type `ω · #ι`), whose
+limit elements are the pairs `(a, 0)` and whose successor is `bsucc`.  This is the paper's statement
+for that one order.  Lemma 3.5 (`Braiding/WellOrder.lean`) says that *whether* two families are
+braided does not depend on the limit well-order; it does not transfer these particular aligned
+partitions to another order, so the statement for an arbitrary limit well-order is not derived
+from this one. -/
 theorem exists_aligned_cumulative {x y z : ι → X}
     (d₁ : BraidingData lam x y) (d₂ : BraidingData lam y z) :
     ∃ (e₁ : BraidingData lam x y) (e₂ : BraidingData lam y z), ∀ μ : ι × ℕ,

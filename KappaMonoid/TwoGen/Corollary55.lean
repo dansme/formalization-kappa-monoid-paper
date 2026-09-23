@@ -142,8 +142,8 @@ The class of rings is the paper's own: part (1) reads "for a ring whose projecti
 direct sums of finitely generated modules", which is `EveryProjectiveIsSumOfFG R` verbatim — the
 corollary does not ask for hereditariness, and neither does this statement.
 
-**A correction to the paper's transcription.**  The condition is quantified over `1 ≤ i ≠ j ≤ 2`,
-so each of its two clauses has two instances, and both are needed.  Without the `X₂`-half of the first clause a finite and an infinite form could
+The condition is quantified over `1 ≤ i ≠ j ≤ 2`, as the paper says, so each of its two clauses has
+two instances, and both are needed.  Without the `X₂`-half of the first clause a finite and an infinite form could
 share a value, so condition (iii) of Theorem 5.3 would not follow; and the two halves of the second
 clause are exactly condition (ii) of Theorem 5.3 for the two orderings.
 

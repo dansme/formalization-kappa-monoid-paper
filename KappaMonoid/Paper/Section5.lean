@@ -16,12 +16,17 @@ Two things this layer adds, both of which the library statements lack:
 
 * **`IsRealizableAsV` names the conclusion.**  "`H ≅ V^{ℵ₀}(R)` for a ring over which projective
   modules are direct sums of finitely generated ones" is a nine-line blob repeated in all three
-  parts of Corollary 5.5.  Named once, the corollaries read as the paper writes them.  Theorem 5.3
-  does *not* use it: the paper states that one for a hereditary ring, and so does this
-  formalisation.
+  parts of Corollary 5.5 and in Theorem 5.3.  Named once, these read as the paper writes them.
+  Theorem 5.3 as the paper states it is `theorem_5_3_realizable`, over exactly this class of
+  rings; `theorem_5_3` is its closing "in fact" sentence, over a hereditary `k`-algebra.
+
+A warning on notation: the scoped `V(R)` of the development is `projClass R ℵ₀ le_rfl`, the paper's
+`V^{ℵ₀}(R)` of countably generated projectives.  The paper's `V(R)` (finitely generated ones) is
+`lambdaGenPart ℵ₀` inside it.
 
 What the statements owe to the current version of the paper is in the docstrings, and in
-`README.md` under "Tracking the paper".
+`README.md` under "Encoding decisions".  The unnumbered claims of §5 that are not formalised are
+listed at the foot of the file.
 -/
 import KappaMonoid.TwoGen
 
@@ -74,14 +79,12 @@ def Setting5.swap {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H] (S : Setting5
 `H` is isomorphic, as an `ℵ₀`-monoid, to `V^{ℵ₀}(R)` for a ring `R` over which every projective
 module is a direct sum of finitely generated ones.
 
-This is the paper's condition verbatim in Corollary 5.5(1) and (3), which read "for a ring whose
-projective modules are direct sums of finitely generated modules".  Corollary 5.5(2) does not use
-it: its clause names only the freeness of the countably (non finitely) generated projectives, and
-that already implies the condition (`everyProjectiveIsSumOfFG_of_free`).  Hereditariness implies it
-too, by Albrecht's theorem (`ForMathlib/Albrecht.lean`), which is how Theorem 5.3's backward
-direction — stated for a hereditary ring, as in the paper — feeds these corollaries; the forward
-direction is stated for this weaker condition, because 5.5(2) has nothing stronger to offer it.
-See `README.md`, "The statements of Section 5". -/
+This is the paper's condition verbatim in Theorem 5.3 and in Corollary 5.5(1) and (3), which read
+"for a ring whose projective modules are direct sums of finitely generated modules".  Corollary
+5.5(2) does not use it: its clause names only the freeness of the countably (non finitely)
+generated projectives, and that already implies the condition (`everyProjectiveIsSumOfFG_of_free`).
+Hereditariness implies it too, by Albrecht's theorem (`ForMathlib/Albrecht.lean`), which is how the
+closing sentence of Theorem 5.3 — a hereditary ring — feeds these corollaries. -/
 abbrev IsRealizableAsV (H : Type u) [KMonoid (ℵ₀ : Cardinal.{u}) H] : Prop :=
   TwoGen.IsRealizableAsV H
 
@@ -93,6 +96,11 @@ abbrev addBase (S : Setting5 H) : Set H := add((S.x₁ + S.x₂))
 theorem Setting5.addBase_swap (S : Setting5 H) : addBase S.swap = addBase S := by
   show add((S.x₂ + S.x₁)) = add((S.x₁ + S.x₂))
   rw [add_comm]
+
+/-- **The opening of §5**: every element of `H` is `αx₁ + βx₂` for some form, `0 ≤ α, β ≤ ℵ₀` —
+`TwoGen.exists_form`, in `TwoGen/Forms.lean`.  Only the generation half of `Setting5` is used. -/
+theorem exists_form (S : Setting5 H) (y : H) : ∃ F : Form, eval S.x₁ S.x₂ F = y :=
+  TwoGen.exists_form S.x₁ S.x₂ S.gen y
 
 /-! ## Lemma 5.1 -/
 
@@ -242,7 +250,10 @@ alias theorem_5_3 := TwoGen.theorem_5_3
 
 /-- **Proposition 5.4**.  For two generators `p₁`, `p₂` of `V^{ℵ₀}(R)` the four statements
 `Tr(P₂) ≤ Tr(P₁)`, `Tr(P₁) = R`, `P₂ | P₁^{(ℵ₀)}` and `P₁^{(ℵ₀)}` free are equivalent, recorded
-as the three implications chaining them.
+as three equivalences, each with `Tr(P₁) = R`.  The facts about trace ideals the paper recalls
+before the proposition — `Tr(P)` is an idempotent two-sided ideal, the least with `P = P Tr(P)` —
+are `traceIdeal_isTwoSided`, `traceIdeal_mul_self`, `smul_traceIdeal_eq` and
+`traceIdeal_le_of_smul_eq`, in `ForMathlib/TraceIdeal.lean`.
 
 Stated at `V^{ℵ₀}(R)` itself rather than through an isomorphism, as the paper does.  The standing
 assumptions of §5 appear here as explicit hypotheses rather than as a `Setting5`, because the
@@ -272,6 +283,18 @@ finitely generated ones, `Tr(P₁) = Tr(P₂)` exactly when every countably but 
 generated projective module is free. -/
 alias prop_5_4_hereditary := TwoGen.prop_5_4_hereditary
 
+/-! ## The remark before Corollary 5.5
+
+If `H ≅ V^{ℵ₀}(R)` for a ring whose projectives are direct sums of finitely generated modules,
+then `V^{ℵ₀}(R)` is braided over `add([R])` — `corollary_4_7_one_backward_braided`, in
+`Modules/Corollary47.lean` — and `H ≅ V^{ℵ₀}(S)` for a hereditary `k`-algebra `S`, which is
+`corollary_4_7_one_backward_iso` followed by `corollary_4_7_one_forward`.  Both hold for an arbitrary
+`κ`-monoid `H`, not only a two-generated one.  The "in particular" clause, that such an `H`
+satisfies (i)–(iii) of Theorem 5.3, is `theorem_5_3_forward` above. -/
+
+/-- **The remark before Corollary 5.5** — `KappaMonoid.corollary_4_7_one_backward_braided`. -/
+alias remark_before_5_5_braided := KappaMonoid.corollary_4_7_one_backward_braided
+
 /-! ## Corollary 5.5 -/
 
 /-- **Corollary 5.5(1)** (`hereditarycase`).  When `add x₁` and `add x₂` are incomparable, `H` is
@@ -291,9 +314,9 @@ theorem corollary_5_5_one (S : Setting5 H) (h₁ : S.x₁ ∉ add(S.x₂))
           ∃ n₁ n₂ : ℕ, eval S.x₁ S.x₂ (F.1, (n₁ : ℕ∞)) = eval S.x₁ S.x₂ (G.1, (n₂ : ℕ∞)))) :=
   TwoGen.corollary_5_5_one S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
 
-/-- **Corollary 5.5(2)**.  When `add x₁ = add x₂`, `H` is realizable — over a ring all of whose
-countably but not finitely generated projectives are free on a countable basis — iff no element
-has both a mixed infinite form and another form.
+/-- **Corollary 5.5(2)**.  `H` is realizable over a ring all of whose countably but not finitely
+generated projectives are free on a countable basis iff `add x₁ = add x₂` and `NoMixedForms x₁ x₂`
+holds.  Both conditions sit inside the equivalence; neither is a hypothesis.
 
 The freeness clause ranges over the classes of `V^{ℵ₀}(R)`, the countably generated projectives,
 not over all projective modules: for those it is false — `R^{(ℵ₁)}` is a counterexample, by
@@ -362,6 +385,14 @@ theorem corollary_5_5_three_trace (S : Setting5 H) (h₁ : S.x₁ ∈ add(S.x₂
     TwoGen.Relations3 S.x₁ S.x₂ ∧ NoMixedForms S.x₁ S.x₂ ↔
       TwoGen.IsRealizableAsVTracePair H :=
   TwoGen.corollary_5_5_three_trace S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
+
+/-! ## Not formalised
+
+Every numbered result of §5 is above.  One unnumbered claim is not formalised: the §5 preamble
+(tex 1989–1991) says that a cyclic `ℵ₀`-monoid `⟨x⟩` is `V^{ℵ₀}(R)` for a nonzero hereditary ring
+exactly when `ℵ₀x ≠ nx` for every `n ∈ ℕ₀`, equivalently when it is `C ∪ {∞}` for a nonzero
+cyclic monoid `C`.  It is the one-generator counterpart of Theorem 5.3, which the paper calls easy
+and does not prove, and nothing in §5 uses it: the section assumes `H` non-cyclic throughout. -/
 
 end Paper
 

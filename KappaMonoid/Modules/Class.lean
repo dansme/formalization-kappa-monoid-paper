@@ -18,8 +18,9 @@ variable (R : Type u) [Ring R]
 
 /-! ## Classes of modules and `V^κ(C)` -/
 
-/-- A class of `R`-modules, closed under `κ`-indexed direct sums, direct summands and
-isomorphisms, and whose isomorphism classes form the set `carrier` (Definition 2.4). -/
+/-- A class of `R`-modules, closed under `κ`-indexed direct sums and isomorphisms, and whose
+isomorphism classes form the set `carrier` (Definition 2.4).  Closure under direct summands is not
+part of the structure; it is the separate class `IsSummandClosed`. -/
 structure ModuleClass (κ : Cardinal.{u}) where
   /-- The set of isomorphism classes; this is `V^κ(C)`. -/
   carrier : Type u

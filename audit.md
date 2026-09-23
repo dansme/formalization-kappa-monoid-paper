@@ -173,3 +173,36 @@ All five major gaps above are closed; the build is green, `sorry`-free, and laye
 The index files, `Paper/AxiomAudit.lean` and `README.md` were updated to match, including the "Not formalised" note in `Paper/Section2.lean`, which was false.
 
 The minor findings and documentation errors listed above are not addressed by this commit.
+
+## Status of the documentation errors (follow-up commit)
+
+Every doc-mismatch finding of the audit, 53 in all, is addressed:
+
+- **The `Paper/` indices.**
+  - The headers no longer claim that an `alias` checks a type.
+  - Lemma 2.5, Remark 2.2 and Examples 3.13 point at the declarations that state them.
+  - Aliases now separate a partial result from the full one: the `corollary_4_7_one_backward` generation clause, the Lemma 3.8 core at λ = ℵ₀, the Theorem 4.3 core, and the `simpleListPi` witness.
+  - Missing entries were added:
+    - the class-level Example 4.2(3) lemmas;
+    - Theorem 4.3's "in particular";
+    - Lemma 2.7(1) `cmul_zero_cardinal`;
+    - §2.2.1 prose;
+    - `exists_form`;
+    - the remark before Cor. 5.5.
+  - Every `Paper/` file now has an accurate "Not formalised" section, and `Paper/Section5.lean` gained one.
+- **Library docstrings.**
+  - The "Deviation from the paper" for Prop. 3.15(2) is now correctly called a generalisation.
+  - Thm 5.3's hypothesis is described as the paper's own.
+  - Prop. 5.4 and Cor. 5.5 are no longer described as corrections of the paper.
+  - Lemma 3.7 is stated only for the normal-form order.
+  - `cmul_cmul` no longer cites a "Lemma 2.7(4)".
+  - The Lemma 2.8 idempotence step is labelled consistently.
+  - `ModuleClass` no longer mentions summand closure.
+  - Example 2.13's header is corrected.
+  - The two axiom paths are fixed.
+- **Rename.** `isConical_of_isUniversalKExtension` is now `isConical_of_injective_lhom`; it never assumed universality.
+- **README.** Examples 4.8(6) now cites Prop. 3.15(1) for the κ-step. The §5 preamble and the §2 prose appear under "What is not formalised", and the entry counts are updated.
+- **CI.** The axiom-set check now asks Lean (`scripts/list_axioms.lean`) instead of grepping source text, and the sorry-check step sets `pipefail`.
+- **`Paper/AxiomAudit.lean`** now covers Lemma 3.8, Prop. 3.10, the Examples 3.3(2)/3.13 universality results and the §5 `Paper.*` restatements: 111 assertions.
+
+Suggestions to add lemmas are not doc errors and were not taken up: an ext lemma for the Def. 2.1 round trip, and a commutativity statement for Remark 2.2(1).

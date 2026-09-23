@@ -1,6 +1,6 @@
 /-
 `SumData` — summation alone, with no `0` and no `+` — the classes `LMonoid` (Definition 2.18)
-and the additive structure it induces (**Lemma 2.5**), and conicality.
+and the additive structure it induces (the bullets after **Lemma 2.5**), and conicality.
 -/
 import KappaMonoid.Core.Index
 
@@ -106,7 +106,8 @@ theorem zero_add' (a : X) : S.add S.zero a = a := by
     show (Sum.elim PEmpty.elim fun _ : PUnit.{u + 1} => a) ∘
       (Equiv.emptySum PEmpty.{u + 1} PUnit.{u + 1}).symm = fun _ => a from rfl, S.sum_punit]
 
-/-- **Lemma 2.5**: the commutative monoid determined by the summation. -/
+/-- The commutative monoid determined by the summation — the second bullet after **Lemma 2.5**:
+`(H, Σ²)` is a commutative monoid. -/
 @[instance_reducible]
 noncomputable def addCommMonoid : AddCommMonoid X :=
   letI : Add X := ⟨S.add⟩

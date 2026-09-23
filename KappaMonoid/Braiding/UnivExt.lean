@@ -406,7 +406,7 @@ theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ Order.succ 
         _ = b := hb
 
 /-- **Theorem 3.12**.  The paper's "let `H` be a reduced `λ⁻`-monoid" is `IsConical X`, and it
-cannot be dropped: see `isConical_of_isUniversalKExtension` and the `ℤ` counterexample below.
+cannot be dropped: see `isConical_of_injective_lhom` and the `ℤ` counterexample below.
 
 Let `λ ≤ κ⁺` with `λ` regular and let `X` be a *reduced* `λ⁻`-monoid.  Then there is a
 `κ`-monoid `Ĥ` containing `X` as a `λ⁻`-submonoid such that
@@ -481,7 +481,7 @@ which is why the paper notes that that analogue needs `κ > ℵ₀`).
 
 So the hypothesis bites only at `λ = ℵ₀`, where a `λ⁻`-monoid is an arbitrary
 commutative monoid and it is genuinely necessary — see
-`isConical_of_isUniversalKExtension` and the counterexample `ℤ` below. -/
+`isConical_of_injective_lhom` and the counterexample `ℤ` below. -/
 theorem theorem_3_12_of_aleph0_lt (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (hlam0 : ℵ₀ < lam)
     (X : Type v) [LMonoid lam X] :
     ∃ (Hh : Type (max u v)) (_ : KMonoid κ Hh) (f : X → Hh),
@@ -510,9 +510,11 @@ theorem isBraidedOver_of_isUniversalKExtension (hlam : lam.IsRegular) (hlk : lam
   obtain ⟨e, ⟨hehom, hecomm, hebij⟩, -⟩ := isUniversalKExtension_unique hlk hgu hu
   exact hgbr.of_iso hlk hehom hebij hecomm
 
-/-- Conversely, a `λ⁻`-monoid admitting a universal `κ`-extension into which it embeds must
-be reduced; so the hypothesis added in `theorem_3_12` cannot be dropped. -/
-theorem isConical_of_isUniversalKExtension {X : Type v} {Hh : Type w}
+/-- A `λ⁻`-monoid that embeds into some `κ`-monoid by an injective `λ⁻`-homomorphism is reduced.
+In particular one that embeds into a universal `κ`-extension is, so the reducedness hypothesis of
+`theorem_3_12` cannot be dropped.  No universal property is assumed: injectivity and the
+homomorphism property are all that is used. -/
+theorem isConical_of_injective_lhom {X : Type v} {Hh : Type w}
     [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ Order.succ κ) {f : X → Hh}
     (hf : Function.Injective f) (hhom : IsLHom hlk f) : IsConical X :=
   LMonoid.isConical_of_injective (lam := lam) (κ := κ) f hf hhom.1
@@ -528,7 +530,7 @@ example (hlk : (ℵ₀ : Cardinal.{u}) ≤ Order.succ κ) {Hh : Type w} [KMonoid
     (f : ULift.{u} ℤ → Hh) (hf : Function.Injective f)
     (hhom : letI := LMonoid.ofAddCommMonoid (ULift.{u} ℤ); IsLHom hlk f) : False := by
   let := LMonoid.ofAddCommMonoid (ULift.{u} ℤ)
-  have hcon := isConical_of_isUniversalKExtension (lam := ℵ₀) hlk hf hhom
+  have hcon := isConical_of_injective_lhom (lam := ℵ₀) hlk hf hhom
   have h0 : (⟨1⟩ : ULift.{u} ℤ) + ⟨(-1 : ℤ)⟩ = 0 := by
     apply ULift.ext
     show (1 : ℤ) + (-1) = 0

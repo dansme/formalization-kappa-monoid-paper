@@ -140,10 +140,11 @@ noncomputable def KMonoid.toPaper (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H
 @[simp] theorem KMonoid.toPaper_sigma (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H]
     (x : Idx κ → H) : (KMonoid.toPaper κ H).sigma x = KMonoid.ksum (κ := κ) x := rfl
 
-/-- The two translations are mutually inverse on the data: `KMonoid.toPaper` changes neither `0`
-nor `Σ`, and `PaperKMonoid.toKMonoid` recovers them (`PaperKMonoid.toKMonoid_ksum`).  A `κ`-monoid
-structure is determined by that data, since `sumOf` and `+` are expressed in terms of it by
-`KMonoid.sumOf_eq_extend` and `KMonoid.ksum_two`. -/
+/-- The round trip `toPaper` then `toKMonoid` gives back the same `κ`-indexed `Σ`: `toPaper` changes
+neither `0` nor `Σ`, and `PaperKMonoid.toKMonoid` recovers them (`PaperKMonoid.toKMonoid_ksum`).
+What is proved is this equality of `Σ`, not an equality of `KMonoid` structures; the latter follows
+in substance, because `sumOf` and `+` are expressed in terms of `0` and `Σ` by
+`KMonoid.sumOf_eq_extend` and `KMonoid.ksum_two`, but it is not stated. -/
 theorem KMonoid.toPaper_toKMonoid_ksum (κ : Cardinal.{u}) (H : Type v) [inst : KMonoid κ H]
     (x : Idx κ → H) :
     @KMonoid.ksum κ H (KMonoid.toPaper κ H).toKMonoid x = @KMonoid.ksum κ H inst x :=

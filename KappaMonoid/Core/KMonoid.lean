@@ -1,6 +1,6 @@
 /-
 `KMonoid` (Definition 2.1) as a `λ⁻`-monoid for `λ = κ⁺`: summation, the canonical index type,
-cardinal scalar multiplication, reducedness (**Lemma 2.8**), homomorphisms, submonoids and
+cardinal scalar multiplication (Lemma 2.7), reducedness (**Lemma 2.8**), homomorphisms, submonoids and
 generation.
 -/
 import KappaMonoid.Core.LMonoid
@@ -310,7 +310,8 @@ theorem cmul_add {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hα
     cmul (κ := κ) α hα (0 : H) = 0 :=
   LMonoid.lcmul_zero (lam := Order.succ κ) (X := H) α _
 
-/-- Lemma 2.7(4): iterated scalar multiplication multiplies the cardinals. -/
+/-- Iterated scalar multiplication multiplies the cardinals: `α(βx) = (αβ)x`.  An auxiliary rule;
+the paper does not state it (Lemma 2.7 has three items). -/
 theorem cmul_cmul {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hαβ : α * β ≤ κ) (x : H) :
     cmul (κ := κ) α hα (cmul (κ := κ) β hβ x) = cmul (κ := κ) (α * β) hαβ x :=
   LMonoid.lcmul_lcmul (lam := Order.succ κ) (lt_succ_of_le hα) (lt_succ_of_le hβ)
@@ -374,14 +375,14 @@ theorem cmul_top_distrib (a b : H) :
   LMonoid.lcmul_distrib (lam := Order.succ κ) _ a b
 
 /-- The remark after Definition 2.6: for an infinite cardinal `α`, adding one more copy of `z` to
-`α`-many copies of `z` does not change the value.  With `α = κ` this is the key idempotence step
-of the swindle proving Lemma 2.8(1). -/
+`α`-many copies of `z` does not change the value.  With `α = κ` this is the idempotence step
+`x + κx = κx` used in the proofs of both parts of Lemma 2.8. -/
 theorem add_cmul_self {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α ≤ κ) (z : H) :
     z + cmul (κ := κ) α hα z = cmul (κ := κ) α hα z :=
   LMonoid.add_lcmul_self (lam := Order.succ κ) hα0 _ z
 
-/-- Lemma 2.8(2), the key idempotence step of the swindle: adding one more copy of `z` to
-`κ`-many copies of `z` does not change the value. -/
+/-- The idempotence step `x + κx = κx` used in the proofs of both parts of Lemma 2.8: adding one
+more copy of `z` to `κ`-many copies of `z` does not change the value. -/
 theorem add_cmul_top_self (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] (z : H) :
     z + cmul (κ := κ) κ le_rfl z = cmul (κ := κ) κ le_rfl z :=
   add_cmul_self (aleph0_le (κ := κ) (H := H)) le_rfl z

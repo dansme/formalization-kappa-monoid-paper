@@ -223,12 +223,11 @@ theorem cond1_of_braidedOver
 sums of finitely generated modules, then the three conditions hold for both orderings of the
 generators.
 
-**The hypothesis is weaker than the paper's.**  Theorem 5.3 is stated there for a hereditary ring,
-which is what the backward direction produces; this direction must make do with
-`EveryProjectiveIsSumOfFG`, because Corollary 5.5(2) applies it to a ring known only to have all of
-its countably (non finitely) generated projectives free — enough for this condition, by Kaplansky's
-theorem (`everyProjectiveIsSumOfFG_of_free`), but not for hereditariness.  Albrecht's theorem
-supplies it wherever the paper says "hereditary".
+The hypothesis is the paper's own: Theorem 5.3 is stated for a ring whose projective modules are
+direct sums of finitely generated modules, which is `EveryProjectiveIsSumOfFG`; hereditary rings
+appear only in its closing "in fact" sentence.  Corollary 5.5(2) applies this direction to a ring
+known only to have its countably (non finitely) generated projectives free, which suffices by
+Kaplansky's theorem (`everyProjectiveIsSumOfFG_of_free`).
 
 Lemma 5.1 supplies the braiding over `add (x₁ + x₂)`; (iii) is then Lemma 5.2(1), (ii) is Lemma
 5.2(4), and (i) is `cond1_of_braidedOver`. -/

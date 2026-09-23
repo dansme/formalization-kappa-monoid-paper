@@ -3,8 +3,9 @@
 
 Each entry names the paper result, and the declaration that formalises it.  Unlike
 `Paper/Section5.lean`, which restates §5 in the paper's own terms, this file is an index: the
-`alias` checks that the declaration exists and carries the type it is claimed to have, and the
-docstring says which paper result it stands for.  Follow the name to read the statement.
+`alias` checks only that the declaration exists — it copies the target's type, so it does not check
+what that type is — and the docstring says which paper result it stands for.  Follow the name, or
+`#check` the alias, to read the statement.
 
 Results the development deliberately does not formalise are recorded at the foot of the file.
 -/
@@ -122,7 +123,8 @@ alias lemma_3_6_2_symmetry_symm := KappaMonoid.IsBraided.symm
 
 /-- **Lemma 3.7** — `KappaMonoid.IsBraided.exists_aligned_cumulative`, in
 `Braiding/TransUncountable.lean`: the statement as printed, `⋃_{ν ≤ μ} J_ν ⊆ ⋃_{ν ≤ μ} J'_ν ⊆
-⋃_{ν ≤ μ+1} J_ν`, over the limit well-order `kOrd` on `ι × ℕ`. -/
+⋃_{ν ≤ μ+1} J_ν`, for the normal-form limit well-order `kOrd` on `ι × ℕ` (order type `ω · #ι`), not
+for an arbitrary limit well-order on `κ`. -/
 alias lemma_3_7_exists_aligned_cumulative := KappaMonoid.IsBraided.exists_aligned_cumulative
 
 /-- **Lemma 3.7**, block-by-block form — `KappaMonoid.IsBraided.exists_aligned_of_data`, in
@@ -138,8 +140,10 @@ uncountable `λ` the two partitions of the middle family can even be taken equal
 alias lemma_3_7_exists_aligned_eq_of_ne_aleph0 :=
   KappaMonoid.IsBraided.exists_aligned_eq_of_ne_aleph0
 
-/-- **Lemma 3.8's combinatorial core** — `KappaMonoid.IsBraided.of_aligned`, in `Braiding/TransAleph0.lean`. -/
-alias lemma_3_8_s_combinatorial_core_of_aligned := KappaMonoid.IsBraided.of_aligned
+/-- **Lemma 3.8 (`λ = ℵ₀`)**, the combinatorial core of the proof — `KappaMonoid.IsBraided.of_aligned`,
+in `Braiding/TransAleph0.lean`.  Stated only for `λ = ℵ₀`; transitivity for every `λ` is
+`IsBraided.trans` below. -/
+alias lemma_3_8_core_of_aligned := KappaMonoid.IsBraided.of_aligned
 
 /-- **Lemma 3.8, transitivity** — `KappaMonoid.IsBraided.trans`, in `Braiding/TransUncountable.lean`. -/
 alias lemma_3_8_transitivity_trans := KappaMonoid.IsBraided.trans
@@ -189,9 +193,14 @@ alias examples_3_13_isUniversalKExtension_withTop_nat := KappaMonoid.isUniversal
 alias lemma_3_14_2_isBraidedOver_of_isLSubmonoid := KappaMonoid.isBraidedOver_of_isLSubmonoid
 
 /-- **Examples 3.13**, third entry: `ℚ̂≥0 ≅ ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` —
-`KappaMonoid.isUniversalKExtension_ratSet`, in `Examples/Reals.lean`.  The same declaration is
-Examples 3.3(3). -/
+`KappaMonoid.isUniversalKExtension_ratSet`, in `Examples/Reals.lean`.  Its extension is the
+`ℵ₀`-closure of `ℚ≥0` in `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`; that this closure is `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` is
+`kclosure_ofReal_ratSet`, next.  The same declarations are Examples 3.3(3). -/
 alias examples_3_13_isUniversalKExtension_ratSet := KappaMonoid.isUniversalKExtension_ratSet
+
+/-- **Examples 3.13**, third entry, the carrier — `KappaMonoid.kclosure_ofReal_ratSet`, in
+`Examples/Reals.lean`: the `ℵ₀`-closure of `ℚ≥0` is `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}`. -/
+alias examples_3_13_kclosure_ofReal_ratSet := KappaMonoid.kclosure_ofReal_ratSet
 
 /-- **Lemma 3.14(1)**
  — `KappaMonoid.lemma_3_14_free`, in `Braiding/Saturated.lean`. -/
@@ -216,15 +225,18 @@ alias proposition_3_15_2_prop_3_15_two_of_ineqs_empty := KappaMonoid.prop_3_15_t
 saturated in `ℕ₀^n`, which is what the proof actually needs. -/
 alias proposition_3_15_2_prop_3_15_two := KappaMonoid.prop_3_15_two
 
-/-- **Example 3.16** — `KappaMonoid.example_3_16`, in `Examples/Diophantine.lean`. -/
+/-- **Example 3.16** — `KappaMonoid.example_3_16`, in `Examples/Diophantine.lean`.  It is stated for the
+set `H + ℵ₀H` (`alephExt`); that this set is the universal `ℵ₀`-extension `Ĥ` is
+`prop_3_15_two_of_ineqs_empty` applied to `diagSystem`. -/
 alias example_3_16_example_3_16 := KappaMonoid.example_3_16
 
 /-- **Example 3.17**, `H` is not saturated — `KappaMonoid.not_isSaturatedFin_ineqSystem`, in
 `Examples/Diophantine.lean`. -/
 alias example_3_17_not_saturated := KappaMonoid.not_isSaturatedFin_ineqSystem
 
-/-- **Example 3.17**, the two families are not braided —
-`KappaMonoid.not_isBraidedOver_ineqSystem`, in `Examples/Diophantine.lean`. -/
+/-- **Example 3.17**, `H + ℵ₀H` is not braided over `H` —
+`KappaMonoid.not_isBraidedOver_ineqSystem`, in `Examples/Diophantine.lean`.  The witnesses are the
+constant families `(1,1)` and `(1,2)`, not the paper's pair `(0,1),(1,1),…` and `(1,1),…`. -/
 alias example_3_17_not_braided := KappaMonoid.not_isBraidedOver_ineqSystem
 
 /-- **Example 3.17**: for `H = {(a,b) ∈ ℕ₀² : a ≤ b}` the monoid `H + ℵ₀H` is *not* the universal
@@ -241,8 +253,11 @@ alias example_3_17_slack_iso := KappaMonoid.example_3_17_slack_iso
 
 /-! ## Not formalised, deliberately
 
-* **Remark 3.18**.  Saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids —
-  a pointer to the literature, not a theorem of the paper. -/
+* **Remark 3.18**.  Saturated submonoids of `ℕ₀^n` are finitely generated reduced Krull monoids;
+  conversely every finitely generated reduced Krull monoid is a Diophantine monoid
+  (Chapman–Krause–Oeljeklaus, Theorem 3.1); so Proposition 3.15 determines the universal
+  `κ`-extensions of finitely generated reduced Krull monoids; and a note on terminology.  Background
+  and a citation, with an informal consequence; nothing later in the paper depends on it. -/
 
 end Paper
 

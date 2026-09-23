@@ -25,6 +25,7 @@ jobs:
       # Every file of the development, §§2-5, is part of the root target.
       - name: The root target is sorry-free
         run: |
+          set -o pipefail
           lake build KappaMonoid 2>&1 | tee build.log
           if grep -q 'declaration uses .sorry' build.log; then
             echo "::error::the root target is not sorry-free"
@@ -43,12 +44,12 @@ jobs:
       - name: The axiom list has not changed
         run: |
           cat > axioms.expected <<'EOF'
-          bergmanDicksData
+          KappaMonoid.bergmanDicksData
           EOF
-          # the identifier must be followed by a binder or a colon, so that a docstring line
-          # wrapping onto the word "axiom" is not counted as one
-          grep -rhE "^axiom [A-Za-z_][A-Za-z0-9_']*[ ({:]" KappaMonoid/ | awk '{print $2}' \
-            | sort > axioms.actual
+          # ask Lean, not grep: every `axiom` constant declared in a KappaMonoid module, however
+          # it is written (namespaced, private, indented, or produced by a macro)
+          set -o pipefail
+          lake env lean scripts/list_axioms.lean | sort > axioms.actual
           if ! diff -u axioms.expected axioms.actual; then
             echo "::error::the set of axiom declarations under KappaMonoid/ has changed"
             exit 1
