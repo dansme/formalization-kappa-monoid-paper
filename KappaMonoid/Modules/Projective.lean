@@ -285,7 +285,7 @@ theorem projClass_lambdaSmallPart_eq_lambdaGenPart (hκ : ℵ₀ ≤ κ) (lam : 
     (projClass R κ hκ).lambdaSmallPart lam = (projClass R κ hκ).lambdaGenPart lam := by
   refine Set.eq_of_subset_of_subset (fun a ha => ?_) (fun a ha => ?_)
   · exact isLambdaGenerated_of_isLambdaSmall R κ a.out ha
-  · exact IsLambdaGenerated.isLambdaSmall hlam ha
+  · exact IsLambdaGenerated.isLambdaSmall hlam.aleph0_le ha
 
 /-! ### Kaplansky's theorem and Corollary 4.5 -/
 
@@ -351,7 +351,7 @@ theorem kGenerates_of_decomposition (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (
     · obtain ⟨i, rfl⟩ := hk
       obtain ⟨s, hs, _, hsp⟩ := hgen i.1
       have hsmall : IsLambdaSmall R lam (Q i.1) :=
-        isLambdaSmall_of_span R hlam (Q i.1) s hs hsp
+        isLambdaSmall_of_span R hlam.aleph0_le (Q i.1) s hs hsp
       have hfinal : IsLambdaSmall R lam ((projClass R κ hκ).rep (b (emb hT i))) := by
         rw [hbc i]
         exact IsLambdaSmall.of_equiv hsmall (hrepc i).some.symm
@@ -400,7 +400,7 @@ theorem corollary_4_5 (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u}) (hlam : lam.IsR
         (projClass R κ hκ).carrier hlk (fun a => (a : (projClass R κ hκ).carrier)) := by
   let := (projClass R κ hκ).instKMonoid hκ
   refine corollary_4_4 (projClass R κ hκ) hκ lam hlam hlk ((projClass R κ hκ).lambdaGenPart lam)
-    (fun a ha => IsLambdaGenerated.isLambdaSmall hlam ha)
+    (fun a ha => IsLambdaGenerated.isLambdaSmall hlam.aleph0_le ha)
     ((projClass R κ hκ).lambdaGenPart_isLSubset hκ lam hlam hlk)
     ((projClass R κ hκ).lambdaGenPart_summand hκ lam)
     (KMonoid.KGenerates.mono ((projClass R κ hκ).lambdaGenPart_mono h₁) ?_)
@@ -443,7 +443,7 @@ theorem corollary_4_5_three (hκ : ℵ₀ ≤ κ)
   let := (projClass R κ hκ).instKMonoid hκ
   refine corollary_4_4 (projClass R κ hκ) hκ ℵ₀ Cardinal.isRegular_aleph0 (le_succ_of_le hκ)
     ((projClass R κ hκ).lambdaGenPart ℵ₀)
-    (fun a ha => IsLambdaGenerated.isLambdaSmall Cardinal.isRegular_aleph0 ha)
+    (fun a ha => IsLambdaGenerated.isLambdaSmall le_rfl ha)
     ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
       (le_succ_of_le hκ))
     ((projClass R κ hκ).lambdaGenPart_summand hκ ℵ₀) ?_

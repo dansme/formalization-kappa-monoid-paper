@@ -73,7 +73,7 @@ theorem ModuleClass.isLambdaGenerated_of_mem {a : C.carrier} {lam : Cardinal.{u}
 /-- **Example 4.2(3)**, first half: a `< λ`-generated module is `λ⁻`-small. -/
 theorem ModuleClass.lambdaGenPart_subset_lambdaSmallPart {lam : Cardinal.{u}}
     (hlam : lam.IsRegular) : C.lambdaGenPart lam ⊆ C.lambdaSmallPart lam :=
-  fun _ ha => IsLambdaGenerated.isLambdaSmall hlam ha
+  fun _ ha => IsLambdaGenerated.isLambdaSmall hlam.aleph0_le ha
 
 /-- **Example 4.2(3)**: `Cλ⁻` is closed under direct sums on index sets of cardinality `< λ`. -/
 theorem ModuleClass.lambdaGenPart_isLSubset (hκ : ℵ₀ ≤ κ) (lam : Cardinal.{u})
@@ -177,7 +177,7 @@ theorem corollary_4_4_one (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ�
   let := IsLSubset.lmonoid hlam (C.lambdaGenPart_isLSubset hκ lam hlam hlk)
   let := (KMonoid.isKSubmonoid_kclosure κ (C.lambdaGenPart lam)).kmonoid
   exact theorem_4_3 C hκ lam hlam hlk (C.lambdaGenPart lam)
-    (fun a ha => IsLambdaGenerated.isLambdaSmall hlam ha)
+    (fun a ha => IsLambdaGenerated.isLambdaSmall hlam.aleph0_le ha)
     (C.lambdaGenPart_isLSubset hκ lam hlam hlk) (C.lambdaGenPart_summand hκ lam)
 
 /-- **Corollary 4.4(2)**: if every module in `C` is a direct sum of at most `κ` many modules
@@ -196,7 +196,7 @@ theorem corollary_4_4_two (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ�
   let := C.instKMonoid hκ
   let := IsLSubset.lmonoid hlam (C.lambdaGenPart_isLSubset hκ lam hlam hlk)
   exact corollary_4_4 C hκ lam hlam hlk (C.lambdaGenPart lam)
-    (fun a ha => IsLambdaGenerated.isLambdaSmall hlam ha)
+    (fun a ha => IsLambdaGenerated.isLambdaSmall hlam.aleph0_le ha)
     (C.lambdaGenPart_isLSubset hκ lam hlam hlk) (C.lambdaGenPart_summand hκ lam)
     (C.kGenerates_lambdaGenPart hκ lam hdec)
 

@@ -10,6 +10,8 @@ Results the development deliberately does not formalise are recorded at the foot
 -/
 import KappaMonoid.Modules.Corollary47
 import KappaMonoid.Modules.Rings.Realisation
+import KappaMonoid.Modules.Rings.Progenerator
+import KappaMonoid.Core.Compatible
 import KappaMonoid.Modules.Rings.Semisimple
 import KappaMonoid.Examples
 import KappaMonoid.Core.Cyclic
@@ -195,14 +197,57 @@ alias definition_2_18_LMonoid := KappaMonoid.LMonoid
 , in `Core/LMonoid.lean`. -/
 alias remark_2_19_ofLE := KappaMonoid.LMonoid.ofLE
 
+/-- **Remark 2.19**, the converse — `KappaMonoid.LMonoid.ofCompatible`, in `Core/Compatible.lean`:
+a compatible family of `λ`-monoid structures for all infinite `λ < κ` (`κ` regular) defines a
+`κ⁻`-monoid structure.  It needs `κ > ℵ₀`, which the paper does not say: for `κ = ℵ₀` there is
+no infinite `λ < κ`, so the family is empty and determines nothing. -/
+alias remark_2_19_ofCompatible := KappaMonoid.LMonoid.ofCompatible
+
+/-- **Remark 2.19** — `KappaMonoid.LMonoid.kMonoidOfLT_ofCompatible`, in `Core/Compatible.lean`:
+restricting `ofCompatible` to `λ < κ` gives back the `λ`-monoid it was built from. -/
+alias remark_2_19_kMonoidOfLT_ofCompatible := KappaMonoid.LMonoid.kMonoidOfLT_ofCompatible
+
+/-- **Remark 2.19** — `KappaMonoid.LMonoid.ofCompatible_kMonoidOfLT`, in `Core/Compatible.lean`:
+a `κ⁻`-monoid is rebuilt by `ofCompatible` from its restrictions. -/
+alias remark_2_19_ofCompatible_kMonoidOfLT := KappaMonoid.LMonoid.ofCompatible_kMonoidOfLT
+
+/-- **Example 2.13** — `KappaMonoid.Projective.isFaithful_of_isProgenerator`, in
+`Modules/Rings/Progenerator.lean`: for a nonzero ring, the class of every progenerator is a
+faithful order-unit of `V^κ(R)`. -/
+alias example_2_13_isFaithful_of_isProgenerator :=
+  KappaMonoid.Projective.isFaithful_of_isProgenerator
+
+/-- **Example 2.13** (monoid half) — `KappaMonoid.KMonoid.IsFaithful.of_le_nsmul`, in
+`Core/OrderUnitTransfer.lean`: `v` is a faithful order-unit if `u` is and `u ≼ n v`, `v ≼ m u`. -/
+alias example_2_13_isFaithful_of_le_nsmul := KappaMonoid.KMonoid.IsFaithful.of_le_nsmul
+
+/-- **§2.2, before Definition 2.12** — `KappaMonoid.Projective.exists_add_eq_nsmul_of_isProgenerator`,
+in `Modules/Rings/Progenerator.lean`: in `V(R)` the class of every progenerator is an order-unit. -/
+alias section_2_2_orderUnit_of_isProgenerator :=
+  KappaMonoid.Projective.exists_add_eq_nsmul_of_isProgenerator
+
+/-- **Example 2.13** — `KappaMonoid.Projective.part_unitClass_eq_of_aleph0_le`, in
+`Modules/Rings/Progenerator.lean`: `H_α = V^α(R)` for every infinite `α ≤ κ`. -/
+alias example_2_13_part_unitClass_eq_of_aleph0_le :=
+  KappaMonoid.Projective.part_unitClass_eq_of_aleph0_le
+
+/-- **Example 2.13** — `KappaMonoid.Projective.part_unitClass_zero`: `H_0 = V(R)`. -/
+alias example_2_13_part_unitClass_zero := KappaMonoid.Projective.part_unitClass_zero
+
+/-- **Example 2.13** — `KappaMonoid.Projective.part_unitClass_aleph0`: `H_{ℵ₀} = V^{ℵ₀}(R)`. -/
+alias example_2_13_part_unitClass_aleph0 := KappaMonoid.Projective.part_unitClass_aleph0
+
 
 /-! ## Not formalised
 
-Nothing: every numbered item of §2 is above, including the two remarks.  Definition 2.1,
-Definition 2.18 (`λ⁻`-monoids) and Remark 2.19 (`κ`-monoids are the `λ⁻`-monoids for `λ = κ⁺`) are
-the classes `KMonoid`/`LMonoid` and `LMonoid.ofLE` themselves, so they appear as definitions
-rather than as results; `Paper/Definition21.lean` transcribes Definition 2.1 literally and proves
-it agrees with `KMonoid`.  Remark 2.2(3) is a pointer to the literature. -/
+Every numbered item of §2 is above, including both halves of Remark 2.19 and all of Example 2.13.
+Definition 2.1, Definition 2.18 (`λ⁻`-monoids) and the first half of Remark 2.19 (`κ`-monoids are
+the `λ⁻`-monoids for `λ = κ⁺`) are the classes `KMonoid`/`LMonoid` and `LMonoid.ofLE`
+themselves, so they appear as definitions rather than as results; `Paper/Definition21.lean`
+transcribes Definition 2.1 literally and proves it agrees with `KMonoid`.  Remark 2.2(3) is a
+pointer to the literature.  Some unnumbered prose of §2.2.1 has no statement of its own: the
+only-if half of the list of realisable cyclic monoids, and "the generator of a cyclic `κ`-monoid is
+an order-unit". -/
 
 end Paper
 

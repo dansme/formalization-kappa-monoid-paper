@@ -498,7 +498,7 @@ theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M
 /-- **Corollary 4.7(1)**, (i) ⇒ (ii), the direction that needs Bergman–Dicks.
 
 Given `x ∈ H` with `H` braided over `add x`, and a field `k`, the monoid `add x` is reduced with
-order-unit `x`, so the axiom supplies a left hereditary `k`-algebra `R` with `V(R) ≅ add x`.
+order-unit `x`, so the axiom supplies a hereditary `k`-algebra `R` with `V(R) ≅ add x`.
 Albrecht's theorem feeds `corollary_4_5_three`, making `V^κ(R)` braided over `V(R)`;
 `isKIso_of_braidedOver_same` then identifies `V^κ(R)` with `H`.
 
@@ -509,7 +509,7 @@ theorem corollary_4_7_one_forward {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ 
     (k : Type u) [Field k] (x : H)
     (hbr : letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset hκ x)
       IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) H (le_succ_of_le hκ) (fun y => (y : H))) :
-    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
+    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsHereditary R),
       letI := (projClass R κ hκ).instKMonoid hκ
       ∃ e : (projClass R κ hκ).carrier → H, KMonoid.IsKHom κ e ∧ Function.Bijective e := by
   classical
@@ -647,17 +647,22 @@ theorem corollary_4_7_one_backward_iso {H : Type u} [KMonoid κ H] (R : Type u) 
     (fun a ha b c habc => KMonoid.addOf_isSaturated (e u) a ha b c habc) hgenX
 
 /-- **Corollary 4.7(1)**: for a `κ`-monoid `H`, being braided over some `add x`, being `V^κ(R)`
-for a hereditary `k`-algebra for every field `k`, and being `V^κ(R)` for some hereditary ring are
-equivalent. -/
+for a hereditary `k`-algebra for every field `k`, and being `V^κ(R)` for some right hereditary ring
+are equivalent.
+
+As in the paper, (ii) asks for a *hereditary* algebra — left and right, `IsHereditary` — and (iii)
+only for a one-sided one.  The modules here are left modules, so the paper's "right hereditary" in
+(iii) is `IsLeftHereditary` (every ideal on the side of the modules is projective); passing to the
+opposite ring turns one reading into the other. -/
 theorem corollary_4_7_one {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ κ) :
     ((∃ x : H, letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0 (KMonoid.addOf_isLSubset hκ x)
       IsBraidedOver ℵ₀ κ ↥(KMonoid.addOf (κ := κ) x) H (le_succ_of_le hκ) (fun y => (y : H)))
       ↔ (∀ (k : Type u) [Field k], ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R)
-          (_ : IsLeftHereditary R),
+          (_ : IsHereditary R),
           letI := (projClass R κ hκ).instKMonoid hκ
           ∃ e : (projClass R κ hκ).carrier → H, KMonoid.IsKHom κ e ∧ Function.Bijective e))
     ∧ ((∀ (k : Type u) [Field k], ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R)
-          (_ : IsLeftHereditary R),
+          (_ : IsHereditary R),
           letI := (projClass R κ hκ).instKMonoid hκ
           ∃ e : (projClass R κ hκ).carrier → H, KMonoid.IsKHom κ e ∧ Function.Bijective e)
       ↔ (∃ (R : Type u) (_ : Ring R) (_ : IsLeftHereditary R),
@@ -674,7 +679,7 @@ theorem corollary_4_7_one {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ κ) :
   · constructor
     · intro h
       obtain ⟨R, hring, -, hher, e, he, hbij⟩ := h (ULift.{u} ℚ)
-      exact ⟨R, hring, hher, e, he, hbij⟩
+      exact ⟨R, hring, hher.toIsLeftHereditary, e, he, hbij⟩
     · rintro ⟨R, hring, hher, e, he, hbij⟩ k _
       obtain ⟨x, hbr⟩ :=
         corollary_4_7_one_backward_iso R hκ Albrecht.exists_directSum_fg e he hbij

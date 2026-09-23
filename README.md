@@ -25,10 +25,10 @@ assumed result, or — since the core does not say `import Mathlib` — most of 
 | Layer | Depends on | Contents |
 |---|---|---|
 | `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean`, `FreeRank.lean`, `HomDirectSum.lean` + `SimpleMultiplicity.lean`, `CyclicMonoid.lean` (also `C_{m,n}` as a monoid), `Kaplansky.lean` and `Albrecht.lean` — see "Classical results proved here" |
-| `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`) |
+| `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`), `OrderUnitTransfer` (faithful order-units move along `u ≼ n v ≼ m u`), `Compatible` (**Remark 2.19**, compatible families) |
 | `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (**Lemma 3.7** and Lemma 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable` (**Lemma 3.7** and Lemma 3.8 for `λ > ℵ₀`, and the two combined), `Over` (Definition 3.1(2)), `WellOrder` (**Lemma 3.4(2)(3)**, **Lemma 3.5**, and Definition 3.1(1) over an arbitrary limit well-order), `UnivAux`, `Prop310` (**Proposition 3.10**, Definition 3.11), `UnivExt` (**Theorem 3.12** and its converse), `Saturated` (**Lemma 3.14**) |
-| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, the general form of Cor. 4.4), `SmallPart` (**Corollary 4.4**(1)(2)), `Projective` (**Corollary 4.5**(1)(2)(3), Kaplansky in `κ`-monoid form), `Corollary47` (`V(R) = add [R]`, `add_{ℵ₀} [R] = V^{ℵ₀}(R)`, **Corollary 4.7**(1)(2), **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
-| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.15**, **Examples 3.16** and **3.17**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**) |
+| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, the general form of Cor. 4.4), `SmallPart` (**Corollary 4.4**(1)(2)), `Projective` (**Corollary 4.5**(1)(2)(3), Kaplansky in `κ`-monoid form), `Corollary47` (`V(R) = add [R]`, `add_{ℵ₀} [R] = V^{ℵ₀}(R)`, **Corollary 4.7**(1)(2), **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` and `Progenerator.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
+| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.15**, **Examples 3.16** and **3.17**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**), `Dedekind` (**Examples 4.8(4)**, the monoid side) |
 | `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
 | `KappaMonoid/Axioms/` | Mathlib | The one classical result assumed rather than proved — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
@@ -70,7 +70,7 @@ be checked against the literature before it is relied on.
 
 The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
 declarations under `KappaMonoid/` differs from the one above, so adding one means editing the
-workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 54
+workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 95
 headline results, whether each one uses it — with `#assert_axioms`, a command over `collectAxioms`
 that fails both when a result gains an axiom and when it loses one. The claims below are therefore
 checked, not merely written.
@@ -110,11 +110,11 @@ nothing else in the development and are the natural shape for upstreaming.
 every left ideal is projective, `IsRightHereditary R` says every right ideal is — equivalently,
 every left ideal of `Rᵐᵒᵖ` — and `IsHereditary R` is both. The development is about *left* modules
 and the paper about right ones, so the mirror of the paper's "right hereditary ring" is
-`IsLeftHereditary`, and that is what A1 records and what Theorem 5.3 and Corollary 4.7(1) produce.
-Bergman's Theorem 6.2 gives a ring hereditary on *both* sides, so `IsHereditary R` would be the
-fully faithful transcription of A1 and of the paper's Corollary 4.7(1)(ii); only the left half is
-recorded, because it is the only half anything uses and recording less is the safe direction for an
-assumption.
+`IsLeftHereditary`; that is Corollary 4.7(1)(iii). Bergman's Theorem 6.2 gives a ring hereditary on
+*both* sides, and A1 records exactly that (`IsHereditary`), so the "hereditary" of Corollary
+4.7(1)(ii) and of the last sentence of Theorem 5.3 is formalised on both sides, as printed. The
+side of the modules is moved by passing to the opposite ring, which is again a hereditary
+`k`-algebra, and whose left modules are the right modules of the original.
 
 **Invariance of infinite rank** (`FreeRank.lean`). A free module with an infinite basis is not
 generated by fewer elements than its rank: `mk_le_of_span_eq_top`. Mathlib's `Module.Basis.le_span`
@@ -188,8 +188,8 @@ step of the filtration splits off a finitely generated projective complement. Th
 independent and sum to the whole image — the same assembly lemma `iSupIndep_of_disjoint_lt` that
 Kaplansky's proof uses.
 
-The hypothesis is *hereditary*, all left ideals projective, which is what
-`corollary_4_7_one_forward` has from A1. Albrecht's own theorem is for semihereditary rings, where
+The hypothesis is *left hereditary*, all left ideals projective, which `corollary_4_7_one_forward`
+gets from the two-sided `IsHereditary` of A1. Albrecht's own theorem is for semihereditary rings, where
 only the finitely generated ideals are assumed projective; that is a genuine strengthening, and the
 proof above would need the first ingredient restated for finitely generated submodules to reach it.
 Nothing here needs it.
@@ -204,9 +204,8 @@ Nothing here needs it.
   in `Modules/Corollary47.lean` names the hypothesis all six supply, and it is what
   `corollary_4_5_three` takes; the *hereditary* case — Albrecht's theorem, the one §§4–5 use — is
   proved, in `ForMathlib/Albrecht.lean`. There is no declaration for the corollary itself.
-* **Examples 4.8(2)–(7).** Of the seven items, only (1) is formalised, and it is formalised as
-  printed: `krsa_ascent`, `krsa_ascent_free`, `krsa_ascent_iso` are the general `λ⁻` form, from
-  which the finite-KRSA and the countable/Kaplansky readings are the cases `λ = ℵ₀` and `λ = ℵ₁`.
+* **Examples 4.8(2), (3), (5)–(7).** Items (1) and (4) are formalised. Item (1) is formalised as
+  printed: `krsa_ascent`, `krsa_ascent_free`, `krsa_ascent_iso` are the general `λ⁻` form, from which the finite-KRSA and the countable/Kaplansky readings are the cases `λ = ℵ₀` and `λ = ℵ₁`.
   Its closing caution — `⟨V(R)⟩_κ` is braided over `V(R)` but need not be divisor-closed in
   `V^κ(R)` — has its positive half available as `lemma_3_14_sub` applied to `addOf_unitClass_eq`,
   but is not stated at the module level, and the negative half is a remark with no proof in the
@@ -218,12 +217,18 @@ Nothing here needs it.
     (`Examples/ENNReal.lean`), `ℝ≥0`/`ℚ≥0` (`Examples/NNReal.lean`, `Examples/Reals.lean`), the Diophantine case
     (`Examples/Diophantine.lean`). What is missing is only the transport: reading each computation
     back as a description of `V^{ℵ₀}(R)` for a ring with `V(R)` isomorphic to that monoid.
-  * **(4)–(7)** are a survey. Each rests on a classical description of `V(R)` quoted from the
-    literature and not in Mathlib — Steinitz for Dedekind domains (4), Bass's theorem that
+  * **(4)** is formalised on the monoid side in `Examples/Dedekind.lean`: for every abelian group
+    `G`, families in `D = {(n, g) ∈ ℕ₀ × G : n ≥ 1 or g = 0}` are braided iff both have finite
+    support and equal sums or both have infinite support and equal rank sums
+    (`Dedekind.isBraided_iff`), and `E_κ = {(α, g) ∈ F_κ × G : 1 ≤ α < ℵ₀ or g = 0}` is the
+    universal `κ`-extension of `D` for every infinite `κ` (`Dedekind.isUniversalKExtension_dedExt`).
+    Only Steinitz's theorem `V(R) ≅ D` for a Dedekind domain is quoted.
+  * **(5)–(7)** are a survey. Each rests on a classical description of `V(R)` quoted from the
+    literature and not in Mathlib — Bass's theorem that
     non-finitely-generated projectives over a connected commutative noetherian ring are free (5),
     Herbera–Příhoda's description of `V^*(R)` for semilocal noetherian `R` (6), Levy–Robson's
-    theory of HNP rings (7) — and the `κ`-monoid step on top of it is in each case Theorem 4.3 or
-    Proposition 3.15, both formalised. Item (7) explicitly declines to carry out its own
+    theory of HNP rings (7). For (5) Bass's theorem gives the description directly; for (6) the
+    `κ`-monoid step is Proposition 3.15(2), formalised. Item (7) explicitly declines to carry out its own
     computation. Item (6) applies Proposition 3.15(2) to a system of equations and congruences,
     which is the case the proposition is stated for.
 
@@ -249,9 +254,10 @@ universe of `ℵ₀`, which is otherwise auto-bound afresh in each half of a sta
 
 **Left modules, right modules.** The paper works with right modules and says "right hereditary";
 Mathlib's `Module R` is a left module, so the development works throughout with left modules and
-`IsLeftHereditary`. The two readings are mirror images of one another — pass to the opposite ring
-— so every statement here is the paper's statement for `Rᵒᵖ`. This is a global convention, not a
-weakening: see "Classical results proved here" for what `IsLeftHereditary` records.
+`IsLeftHereditary` for the paper's "right hereditary". The two readings are mirror images of one
+another — pass to the opposite ring — so every statement here is the paper's statement for `Rᵒᵖ`.
+This is a global convention, not a weakening; where the paper says "hereditary" without a side,
+the development says `IsHereditary`.
 
 **`i` and `j` in §5.** The paper's §5 statements are quantified over `1 ≤ i ≠ j ≤ 2`. The library
 fixes `i = 1`, `j = 2`, and `Paper.Setting5.swap` exchanges the two generators, which is legitimate
@@ -314,7 +320,11 @@ Remark 2.19: `#ι ≤ κ ↔ #ι < κ⁺`, and `κ⁺` is regular). So `KMonoid 
 `κ`-level names (`sumOf`, `ksum`, `cmul`, …) are a thin layer on top. Notably:
 
 * the `λ⁻`-analogues of `sumOf_sigma`, `sumOf_extend`, … are not separate developments;
-* `LMonoid.ofLE` (a five-line restriction along `λ ≤ λ'`) subsumes Remark 2.19 in general;
+* `LMonoid.ofLE` (a five-line restriction along `λ ≤ λ'`) subsumes the first half of Remark 2.19
+  in general; the converse half — compatible `λ`-monoid structures for all infinite `λ < κ` define
+  a `κ⁻`-monoid — is `LMonoid.ofCompatible` (`Core/Compatible.lean`), with both round trips. It
+  assumes `κ > ℵ₀`, which the paper does not say: at `κ = ℵ₀` there is no infinite `λ < κ`, so the
+  family is empty, while an `ℵ₀⁻`-monoid is an arbitrary commutative monoid;
 * only genuinely `κ`-specific statements — Lemma 2.8, which needs a largest admissible
   cardinal — are proved at the `κ`-level.
 

@@ -220,7 +220,7 @@ for any field `k`, and the ring produced is hereditary. -/
 theorem theorem_5_3_backward (S : Setting5 H) (k : Type u) [Field k]
     (hc1 : Cond1 S.x₁ S.x₂) (hc1' : Cond1 S.x₂ S.x₁)
     (hc2 : Cond2 S.x₁ S.x₂) (hc2' : Cond2 S.x₂ S.x₁) (hmix : NoMixedForms S.x₁ S.x₂) :
-    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
+    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsHereditary R),
       ∃ e : V(R).carrier → H,
         IsKHom ℵ₀ e ∧ Function.Bijective e :=
   TwoGen.theorem_5_3_backward S.x₁ S.x₂ k S.gen hc1 hc1' hc2 hc2' hmix

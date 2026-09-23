@@ -791,7 +791,7 @@ theorem theorem_5_3_backward (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hc1 : Cond1 x₁ x₂) (hc1' : Cond1 x₂ x₁) (hc2 : Cond2 x₁ x₂) (hc2' : Cond2 x₂ x₁)
     (hmix : NoMixedForms x₁ x₂) :
-    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
+    ∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsHereditary R),
       ∃ e : V(R).carrier → H,
         KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e := by
   classical
@@ -842,8 +842,8 @@ ring exactly when conditions (i), (ii) and (iii) hold for both orderings of the 
 The paper's `1 ≤ i ≠ j ≤ 2` is rendered as a conjunction over the two orderings rather than as
 `Fin 2` bookkeeping, which would cost more than it saves.
 
-**The realizing ring is `IsLeftHereditary`, which is the paper's statement** — the paper says
-"for a hereditary ring", with right modules throughout, and this development uses left ones.  No
+**The realizing ring is hereditary on both sides (`IsHereditary`), as the paper says** ("for a
+hereditary ring").  No
 condition on the projectives of `R` is carried alongside: the forward direction gets what it needs
 from `Albrecht.exists_directSum_fg`.
 
@@ -854,7 +854,7 @@ which is where the Bergman–Dicks axiom enters. -/
 theorem theorem_5_3 (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :
-    (∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsLeftHereditary R),
+    (∃ (R : Type u) (_ : Ring R) (_ : Algebra k R) (_ : IsHereditary R),
         ∃ e : V(R).carrier → H,
           KMonoid.IsKHom ℵ₀ e ∧ Function.Bijective e) ↔
       (Cond1 x₁ x₂ ∧ Cond1 x₂ x₁ ∧ Cond2 x₁ x₂ ∧ Cond2 x₂ x₁ ∧ NoMixedForms x₁ x₂) := by

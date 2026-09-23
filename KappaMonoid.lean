@@ -39,6 +39,8 @@ import KappaMonoid.Core.Free
 import KappaMonoid.Core.OrderUnit
 import KappaMonoid.Core.Cyclic
 import KappaMonoid.Core.AddOf
+import KappaMonoid.Core.Compatible
+import KappaMonoid.Core.OrderUnitTransfer
 import KappaMonoid.Braiding
 import KappaMonoid.Braiding.Saturated
 import KappaMonoid.Axioms
@@ -49,6 +51,7 @@ import KappaMonoid.Modules.Rings.FreeUnit
 import KappaMonoid.Modules.Rings.Leavitt
 import KappaMonoid.Modules.Rings.Realisation
 import KappaMonoid.Modules.Rings.Semisimple
+import KappaMonoid.Modules.Rings.Progenerator
 import KappaMonoid.Modules.Corollary47
 import KappaMonoid.Examples
 import KappaMonoid.TwoGen

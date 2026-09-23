@@ -12,3 +12,4 @@ import KappaMonoid.Examples.NatBraiding
 import KappaMonoid.Examples.Diophantine
 import KappaMonoid.Examples.NNReal
 import KappaMonoid.Examples.Reals
+import KappaMonoid.Examples.Dedekind

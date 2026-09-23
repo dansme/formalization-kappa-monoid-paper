@@ -146,3 +146,30 @@ Audit of commit `ad14b3d`, dated 2026-09-23.
 | Lemma 3.5 | faithful | Cor 5.5 | faithful, caveats |
 | Lemma 3.6 | faithful, caveats | | |
 | Lemma 3.7 | faithful, caveats | | |
+
+## Status of the major gaps (follow-up commit)
+
+All five major gaps above are closed; the build is green, `sorry`-free, and layering passes.
+
+1. **Hereditary on both sides.** The axiom's field is now `hereditary : IsHereditary R`, which is what Bergman's Theorem 6.2 provides (extended to arbitrary monoids by Bergman–Dicks). Corollary 4.7(1)(ii) and Theorem 5.3 (`TwoGen.theorem_5_3`, `theorem_5_3_backward`, `Paper.theorem_5_3_backward`) now conclude `IsHereditary R`. Corollary 4.7(1)(iii), the paper's "right hereditary", stays `IsLeftHereditary`, its mirror image for left modules. The axiom's name is unchanged, but its statement is stronger. It still stays within the published theorem.
+2. **Example 2.13.** Two new files:
+   - `Core/OrderUnitTransfer.lean`: a faithful order-unit moves along `u ≼ n v`, `v ≼ m u`.
+   - `Modules/Rings/Progenerator.lean`:
+     - `isFaithful_of_isProgenerator` shows that `[P]` is a faithful order-unit for every progenerator.
+     - `part_unitClass_eq_of_aleph0_le` and `part_unitClass_eq_of_lt_aleph0` show H_α = V^α(R) for infinite α, and H_n = V(R) for finite n.
+     - `exists_add_eq_nsmul_of_isProgenerator` covers the V(R) remark at tex 687.
+   - All of these are axiom-free.
+3. **Remark 2.19, converse.** `Core/Compatible.lean`:
+   - `LMonoid.ofCompatible`, with both round trips (`kMonoidOfLT_ofCompatible`, `ofCompatible_kMonoidOfLT`).
+   - It needs κ > ℵ₀, which the paper does not say (at κ = ℵ₀ there is no infinite λ < κ). This is documented in the docstring and README.
+4. **Example 4.2(2).** `isLambdaSmall_of_span` and `IsLambdaGenerated.isLambdaSmall` now take `ℵ₀ ≤ λ` instead of regularity.
+5. **Examples 4.8(4).** `Examples/Dedekind.lean`, for every abelian group G and every infinite κ:
+   - E_κ is a κ-monoid (`instKMonoid`).
+   - The braiding criterion (`isBraided_iff`).
+   - E_κ is braided over D (`isBraidedOver_dedExt`) and is its universal κ-extension (`isUniversalKExtension_dedExt`).
+   - All axiom-free.
+   - Only Steinitz's theorem V(R) ≅ D is quoted. The repo's inaccurate reason for skipping this item is corrected in `Paper/Section4.lean` and `README.md`.
+
+The index files, `Paper/AxiomAudit.lean` and `README.md` were updated to match, including the "Not formalised" note in `Paper/Section2.lean`, which was false.
+
+The minor findings and documentation errors listed above are not addressed by this commit.
