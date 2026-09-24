@@ -38,7 +38,8 @@ Most of the avoidable cost in a session is the edit/build/read loop, not the mat
 `lean-lsp` MCP server (configured in `.mcp.json`, run via `uvx lean-lsp-mcp`) answers most of the
 questions a build would answer, without a build. Prefer it throughout.
 
-**Without the LSP** (it needs `uvx` on the `PATH`; the devcontainer does not always have it), the
+**Without the LSP** (it needs `uvx` on the `PATH`; the devcontainer image installs it, a container
+built from an older image may not have it), the
 cheap substitute is `lake env lean <file>`: it elaborates one file against the already-built oleans
 of its imports, with no `lake build` — about 30–90 s, mostly import time.  Use it for a file you are
 editing, and for a scratch file of `#check @foo`, `#print axioms foo` or test `example`s (put it in

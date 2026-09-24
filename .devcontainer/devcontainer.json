@@ -1,7 +1,13 @@
 {
   // Lean 4 dev container for rootless Podman.
-  // Deliberately minimal: no sudo, no postStart hooks, no firewall.
-  // The isolation comes from the workspace-only mount + non-root user.
+  // Deliberately minimal: no postStart hooks, no firewall.  The isolation comes
+  // from the workspace-only mount, the non-root user, no capabilities and
+  // no-new-privileges (which also disables the base image's sudo).
+  //
+  // What this file CANNOT stop, because the VS Code Dev Containers extension
+  // sets it up from the host side: forwarding of the host's SSH agent, GPG
+  // agent and X11 display, and copying of the host's ~/.gitconfig.  See the
+  // "Host-side settings" note at the end of this file.
 
   "name": "lean-sandbox",
   "build": { "dockerfile": "Dockerfile" },
@@ -23,14 +29,15 @@
 
   "runArgs": [
     "--userns=keep-id:uid=1000,gid=1000",
-    "--volume=${localWorkspaceFolder}:/workspaces/${localWorkspaceFolderBasename}:Z"
+    "--volume=${localWorkspaceFolder}:/workspaces/${localWorkspaceFolderBasename}:Z",
 
-    // Add these back ONE AT A TIME, rebuilding after each, once the
-    // container opens cleanly. Both break sudo and apt inside the
-    // container by design; after adding them, new packages go in the
-    // Dockerfile.
-    //"--security-opt=no-new-privileges",
-    //"--cap-drop=ALL"
+    // No capabilities, and no privilege gain through setuid binaries.  This
+    // breaks sudo and apt inside the container by design: new packages go in
+    // the Dockerfile.  If the container stops opening after a rebuild, comment
+    // out --cap-drop=ALL first (the Dev Containers extension occasionally
+    // execs setup steps as root), then no-new-privileges.
+    "--security-opt=no-new-privileges",
+    "--cap-drop=ALL"
   ],
 
   // --- Environment ------------------------------------------------------
@@ -41,10 +48,9 @@
     "ANTHROPIC_API_KEY": ""
   },
 
-  // Blanks the forwarded SSH agent path for anything VS Code launches.
-  // NOTE: this hides the socket, it does not stop the extension from
-  // mounting it. To actually prevent forwarding you must launch VS Code
-  // with SSH_AUTH_SOCK unset on the host.
+  // Blanks SSH_AUTH_SOCK for anything VS Code launches.  This only hides the
+  // variable: the forwarded agent socket still exists at
+  // /tmp/vscode-ssh-auth-*.sock and is usable by anything that finds it.
   "remoteEnv": {
     "SSH_AUTH_SOCK": ""
   },
@@ -63,14 +69,31 @@
       },
       // MCP servers declared here run INSIDE the container.
       // Servers in your user profile mcp.json keep running on the host.
+      // The lean-lsp server is declared in the repo's .mcp.json instead.
       "mcp": { "servers": {} }
     }
-  }
-  
+  },
+
   "mounts": [
-  "source=claude-config-kappa,target=/home/vscode/.claude,type=volume"
-]
+    "source=claude-config-kappa,target=/home/vscode/.claude,type=volume"
+  ]
 
   // No postCreateCommand on purpose. Prime the mathlib cache by hand in
   // the container terminal:  lake exe cache get
+  //
+  // --- Host-side settings -----------------------------------------------
+  // The extension forwards host resources into every container it opens.
+  // Turn them off on the HOST, not here (settings in this file apply inside
+  // the container, where they have no effect on forwarding):
+  //  * SSH agent: launch VS Code with SSH_AUTH_SOCK unset.
+  //  * GPG agent, X11 display, ~/.gitconfig copying: the Dev Containers
+  //    extension's user settings (search "dev.containers" in Settings).
+  // Or bypass the extension: `podman exec -it <container> bash` gets a shell
+  // with none of the forwarding.
+  //
+  // --- Network ----------------------------------------------------------
+  // Unrestricted: internet, LAN, and the host itself via
+  // host.containers.internal.  Lean needs only GitHub, the Mathlib cache and
+  // PyPI (for uvx); restricting egress needs a host-side firewall, since
+  // --cap-drop=ALL rules out one inside the container.
 }
