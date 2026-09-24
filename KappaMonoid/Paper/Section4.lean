@@ -242,7 +242,7 @@ alias example_4_8_4_isUniversalKExtension := KappaMonoid.Dedekind.isUniversalKEx
   Herbera–Příhoda's description of `V^{ℵ₀}(R)`.
 * **The remark after Corollary 4.7** (tex 1840) that without the sum-of-finitely-generated
   hypothesis `V(R)` does not in general determine `V^{ℵ₀}(R)` is stated in the paper without proof
-  or example, and is not formalised.  See `README.md` for the itemised account. -/
+  or example, and is not formalised.  See also `README.md`, "What is not formalised". -/
 
 end Paper
 

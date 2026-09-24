@@ -46,7 +46,7 @@ alias remark_2_2_1_ofBare := KappaMonoid.KMonoid.ofBare
 /-- **Remark 2.2(2)** — summing over an arbitrary index set of cardinality `κ`:
 `KappaMonoid.KMonoid.sumOf` takes a family indexed by any type of the right size, and
 `KappaMonoid.KMonoid.sumOf_equiv` is the independence of the chosen bijection.  See
-`README.md`, "Index sets: arbitrary types, not the cardinal". -/
+`README.md`, "Differences from the paper". -/
 alias remark_2_2_2_sumOf_equiv := KappaMonoid.KMonoid.sumOf_equiv
 
 /-- **Remark 2.2(2)**, the substance — `KappaMonoid.PaperKMonoid.toKMonoid_sumOf`, in

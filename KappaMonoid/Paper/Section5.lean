@@ -25,7 +25,7 @@ A warning on notation: the scoped `V(R)` of the development is `projClass R ℵ�
 `lambdaGenPart ℵ₀` inside it.
 
 What the statements owe to the current version of the paper is in the docstrings, and in
-`README.md` under "Encoding decisions".  The unnumbered claims of §5 are in
+`README.md` under "Differences from the paper".  The unnumbered claims of §5 are in
 `Paper/Section5Extra.lean`; see the foot of this file.
 -/
 import KappaMonoid.TwoGen
