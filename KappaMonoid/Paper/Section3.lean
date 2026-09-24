@@ -13,6 +13,7 @@ import KappaMonoid.Modules.Corollary47
 import KappaMonoid.Modules.Rings.Realisation
 import KappaMonoid.Modules.Rings.Semisimple
 import KappaMonoid.Examples
+import KappaMonoid.Braiding.Components
 import KappaMonoid.Core.Cyclic
 import KappaMonoid.Paper.Definition21
 
@@ -59,6 +60,10 @@ alias examples_3_3_3_isUniversalKExtension_ratSet := KappaMonoid.isUniversalKExt
 
 /-- **Examples 3.3(3)** — `KappaMonoid.kclosure_ofReal_ratSet`, in `Examples/Reals.lean`. -/
 alias examples_3_3_3_kclosure_ofReal_ratSet := KappaMonoid.kclosure_ofReal_ratSet
+
+/-- **Examples 3.3(3)**: `ℚ≥0 ∪ ℝ̃>0 ∪ {∞}` is `ℵ₀⁻`-braided over `ℚ≥0` —
+`KappaMonoid.isBraidedOver_ratReachable`, in `Examples/RealsExtra.lean`. -/
+alias examples_3_3_3_isBraidedOver_ratReachable := KappaMonoid.isBraidedOver_ratReachable
 
 /-- **Examples 3.3(2)** — `KappaMonoid.not_isBraided_geom_two_geom`, in `Examples/NNReal.lean`. -/
 alias examples_3_3_2_not_isBraided_geom_two_geom := KappaMonoid.not_isBraided_geom_two_geom
@@ -164,6 +169,19 @@ alias remark_3_9_mk_ccomp_lt := KappaMonoid.mk_ccomp_lt
 /-- **Remark 3.9**, the conclusion — `KappaMonoid.IsBraided.trans_of_ne_aleph0`. -/
 alias remark_3_9_trans_of_ne_aleph0 := KappaMonoid.IsBraided.trans_of_ne_aleph0
 
+/-- **Remark 3.9**: the sets of the common coarsening *are* the connected components —
+`KappaMonoid.remark_3_9`, in `Braiding/Components.lean`, for regular uncountable `λ` as in the paper.
+The partition is indexed by `ι × ℕ`, so its sets are the nonempty pieces. -/
+alias remark_3_9_remark_3_9 := KappaMonoid.remark_3_9
+
+/-- **Remark 3.9**: `ccomp` is the connected component of the paper's graph —
+`KappaMonoid.mem_ccomp_iff_reflTransGen`. -/
+alias remark_3_9_mem_ccomp_iff_reflTransGen := KappaMonoid.mem_ccomp_iff_reflTransGen
+
+/-- **Remark 3.9**: the components form the finest common coarsening —
+`KappaMonoid.ccomp_subset_of_coarsening`. -/
+alias remark_3_9_ccomp_subset_of_coarsening := KappaMonoid.ccomp_subset_of_coarsening
+
 /-- **Lemma 3.8** — `KappaMonoid.braidingSetoid`, in `Braiding/TransUncountable.lean`. -/
 
 alias lemma_3_8_braidingSetoid := KappaMonoid.braidingSetoid
@@ -225,10 +243,32 @@ alias proposition_3_15_2_prop_3_15_two_of_ineqs_empty := KappaMonoid.prop_3_15_t
 saturated in `ℕ₀^n`, which is what the proof actually needs. -/
 alias proposition_3_15_2_prop_3_15_two := KappaMonoid.prop_3_15_two
 
+/-- **Before Proposition 3.15** (tex 1444): inequalities become equations with slack variables —
+`KappaMonoid.LinSystem.withSlackEquiv`, in `Examples/DiophantineExtra.lean`, an isomorphism of the
+solution monoids in `ℕ₀^n` and `ℕ₀^{n+k}`; `LinSystem.exists_withSlack_iso` for finitely many
+inequalities. -/
+alias before_prop_3_15_withSlackEquiv := KappaMonoid.LinSystem.withSlackEquiv
+
+/-- **Before Proposition 3.15**: an equation is two inequalities —
+`KappaMonoid.LinSystem.solutions_eqsAsIneqs`, at every `κ`. -/
+alias before_prop_3_15_solutions_eqsAsIneqs := KappaMonoid.LinSystem.solutions_eqsAsIneqs
+
+/-- **Before Proposition 3.15** (tex 1448): a `κ`-submonoid of `F_κ^n` cut out by equations need not
+be saturated — `KappaMonoid.not_isSaturated_diagSystem`. -/
+alias before_prop_3_15_not_isSaturated_diagSystem := KappaMonoid.not_isSaturated_diagSystem
+
 /-- **Example 3.16** — `KappaMonoid.example_3_16`, in `Examples/Diophantine.lean`.  It is stated for the
 set `H + ℵ₀H` (`alephExt`); that this set is the universal `ℵ₀`-extension `Ĥ` is
 `prop_3_15_two_of_ineqs_empty` applied to `diagSystem`. -/
 alias example_3_16_example_3_16 := KappaMonoid.example_3_16
+
+/-- **Example 3.16**: `Ĥ = {(n,n)} ∪ {(ℵ₀,ℵ₀)} ≅ F_ℵ₀` — `KappaMonoid.example_3_16_iso`, with the carrier
+`KappaMonoid.mem_alephExt_diagSystem_iff`, in `Examples/DiophantineExtra.lean`. -/
+alias example_3_16_iso := KappaMonoid.example_3_16_iso
+
+/-- **Example 3.16**: the solutions of `2x = x + y` in `F_ℵ₀²` are
+`{(n,n)} ∪ {(ℵ₀,n)} ∪ {(ℵ₀,ℵ₀)}` — `KappaMonoid.mem_doubleSystem_solutions_iff`. -/
+alias example_3_16_mem_doubleSystem_solutions_iff := KappaMonoid.mem_doubleSystem_solutions_iff
 
 /-- **Example 3.17**, `H` is not saturated — `KappaMonoid.not_isSaturatedFin_ineqSystem`, in
 `Examples/Diophantine.lean`. -/
@@ -248,6 +288,33 @@ alias example_3_17_not_universal := KappaMonoid.not_prop_3_15_two_ineqSystem
 `Examples/Diophantine.lean`: `H ≅ H' = {(a,b,c) ∈ ℕ₀³ : b = a + c}`, a system of equations, to
 which Proposition 3.15(2) does apply. -/
 alias example_3_17_slack_iso := KappaMonoid.example_3_17_slack_iso
+
+/-- **Example 3.17**, the paper's own pair `(0,1),(1,1),…` and `(1,1),…`: equal sums `(ℵ₀,ℵ₀)`, not
+braided — `KappaMonoid.example_3_17_families`, in `Examples/DiophantineExtra.lean`.  The
+exceptional index is an arbitrary `idx0 : Idx ℵ₀` rather than `0 ∈ ℕ`. -/
+alias example_3_17_families := KappaMonoid.example_3_17_families
+
+/-- **Example 3.17**: `Ĥ = H' + ℵ₀H'`, pulled back along `H ≅ H'`, is the universal `ℵ₀`-extension
+of `H` — `KappaMonoid.isUniversalKExtension_slackSystem_alephExt` (and the braiding
+`isBraidedOver_slackSystem_alephExt`). -/
+alias example_3_17_isUniversalKExtension_slack :=
+  KappaMonoid.isUniversalKExtension_slackSystem_alephExt
+
+/-- **Example 3.17**, the listings: `ℵ₀H` — `KappaMonoid.example_3_17_alephPart_ineq`. -/
+alias example_3_17_alephPart_ineq := KappaMonoid.example_3_17_alephPart_ineq
+
+/-- **Example 3.17**, the listings: `H + ℵ₀H` — `KappaMonoid.example_3_17_alephExt_ineq`. -/
+alias example_3_17_alephExt_ineq := KappaMonoid.example_3_17_alephExt_ineq
+
+/-- **Example 3.17**, the listings: `ℵ₀H'` — `KappaMonoid.example_3_17_alephPart_slack`. -/
+alias example_3_17_alephPart_slack := KappaMonoid.example_3_17_alephPart_slack
+
+/-- **Example 3.17**, the listings: `Ĥ' = H' + ℵ₀H'` — `KappaMonoid.example_3_17_alephExt_slack`. -/
+alias example_3_17_alephExt_slack := KappaMonoid.example_3_17_alephExt_slack
+
+/-- **Example 3.17**, closing sentence: the slack forms of the paper's pair sum to `(ℵ₀,ℵ₀,1)` and
+`(ℵ₀,ℵ₀,0)`, so `Ĥ` tells them apart — `KappaMonoid.example_3_17_slack_sums`. -/
+alias example_3_17_slack_sums := KappaMonoid.example_3_17_slack_sums
 
 
 

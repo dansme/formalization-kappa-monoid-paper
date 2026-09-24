@@ -70,6 +70,16 @@ theorem mem_FreeL {x : B → LCard lam} : x ∈ FreeL lam B ↔ #(csupport x) < 
 theorem mk_csupport_lt [Fact lam.IsRegular] (x : ↥(FreeL lam B)) :
     #(csupport (x : B → LCard lam)) < lam := x.2
 
+/-- Every family indexed by a basis of size `< λ` lies in `F_{λ⁻}(B)`: its support is a subset of
+the basis. -/
+theorem mem_FreeL_of_mk_lt (hB : #B < lam) (x : B → LCard lam) : x ∈ FreeL lam B :=
+  lt_of_le_of_lt (Cardinal.mk_set_le _) hB
+
+/-- **After Proposition 2.9**: when `#B ≤ κ`, `F_κ(B) = F_κ^B` — every family of cardinals `≤ κ`
+indexed by `B` lies in the free `κ`-monoid on `B`. -/
+theorem FreeK_eq_univ {κ : Cardinal.{u}} (hB : #B ≤ κ) : FreeK κ B = Set.univ :=
+  Set.eq_univ_of_forall fun x => mem_FreeL_of_mk_lt (Order.lt_succ_iff.mpr hB) x
+
 /-! ## Proposition 2.9(1): `F_{λ⁻}(B)` is a `λ⁻`-submonoid of `F_{λ⁻}^B` -/
 
 /-- The support of a sum is contained in the union of the supports: a coordinate of the sum is a

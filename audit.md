@@ -206,3 +206,52 @@ Every doc-mismatch finding of the audit, 53 in all, is addressed:
 - **`Paper/AxiomAudit.lean`** now covers Lemma 3.8, Prop. 3.10, the Examples 3.3(2)/3.13 universality results and the §5 `Paper.*` restatements: 111 assertions.
 
 Suggestions to add lemmas are not doc errors and were not taken up: an ext lemma for the Def. 2.1 round trip, and a commutativity statement for Remark 2.2(1).
+
+## Status of the remaining minor findings (follow-up commit)
+
+Every actionable minor finding is now formalised.
+
+- **§2**
+  - Lemma 2.15 is a genuine isomorphism of κ-monoids (`lemma_2_15_kIso`, `Core/CyclicExtra.lean`).
+  - The generator of a cyclic κ-monoid is an order-unit (`isOrderUnit_of_kGenerates`).
+  - add_λ(x) = add(⟨x⟩_λ) (`addOfCard_eq_add_closure`).
+  - Definition 2.18 has a literal transcription with a structure-level round trip (`Paper/Definition218.lean`). Definition 2.1's round trip is now also an equality of structures (`KMonoid.toPaper_toKMonoid`).
+  - Remark 2.2(1) has its own statement (`PaperKMonoid.sigma_pair_comm`).
+  - §2.2.1: `subsingleton_of_realises_cyclicRel_zero`, `cyclicRel_realisable_iff`, and the axiom-free `rankRel_classification`.
+  - Prop 2.16's converse and the "precisely" (`prop_2_16_converse`, `prop_2_16_iff`).
+  - F_κ(B) = F_κ^B (`FreeK_eq_univ`, `Core/Free.lean`).
+- **§3**
+  - Examples 3.3(3) braided over ℚ≥0 (`isBraidedOver_ratReachable`).
+  - Remark 3.9: the coarsening *is* the connected components (`remark_3_9`, `Braiding/Components.lean`).
+  - Example 3.16: Ĥ ≅ F_ℵ₀, and the solution set of 2x = x + y computed.
+  - Example 3.17:
+    - the paper's own pair of families;
+    - the universal extension via H′ + ℵ₀H′;
+    - all the explicit listings.
+  - The general slack-variable construction and "an equation is two inequalities".
+  - The non-saturation witness.
+- **§4**
+  - Example 4.2(1)–(2) completed (`isLambdaSmall_succ_iff`, countably generated ⇒ ℵ₁⁻-small).
+  - "V^{ℵ₀}(R) determines V^κ(R)", and "V(R) determines V^κ(R)" under the sum-of-f.g. hypothesis (`Modules/Transport.lean`).
+  - Corollary 4.6(2) for hereditary rings.
+  - Examples 4.8(3) at ring level for ℕ₀, ℝ≥0, ℚ≥0 and Diophantine monoids (`Paper/Examples48.lean`).
+- **§5**
+  - The counterexample ℕ₀² ∪ {∞} satisfies the standing hypotheses (`cexSetting5`).
+  - Lemma 5.2(3)(4) for i = 2, j = 1.
+  - The remark before Cor. 5.5 as a named declaration for arbitrary H.
+  - The §5 preamble's one-generator criterion, as a full iff (`TwoGen.cyclic_realizable_iff`, `cyclic_realizable_iff_withTop`).
+    - Its C ∪ {∞} form asks C to be reduced, which the paper leaves implicit. This is recorded in the README.
+- **Moves into lower layers**
+  - The generic lemmas from `Examples/Dedekind.lean` moved to where they belong: `ForMathlib/CardinalSum.lean`, `ForMathlib/Finprod.lean`, and `Braiding/UnivAux.lean` (`isBraided_of_subtype`). The three copies of the support-bound lemma are now one, `Cardinal.mk_support_le_sum`.
+  - `mem_FreeL_of_mk_lt` moved to `Core/Free.lean`.
+  - `isFaithful_of_isProgenerator` no longer takes an unused index.
+- **Housekeeping**
+  - `CLAUDE.md` no longer points at the deleted "Tracking the paper" section, and its layer table lists the new files.
+  - `Paper/AxiomAudit.lean` has 170 assertions.
+
+**Still not formalised, deliberately**
+
+- The literature-based items: Remark 3.18, Corollary 4.6 beyond the hereditary case, and Examples 4.8(2), (5)–(7).
+- Unproved remarks in the paper: tex 1840, and the negative half of Examples 4.8(1)'s caution.
+- The motivational remark before Proposition 2.16. It follows from `prop_2_16_iff` but is not stated on its own.
+- The encoding conventions listed above: the ι × ℕ normal form, left modules, one universe, and the test-universe parameter. These are design choices proved harmless, not gaps.

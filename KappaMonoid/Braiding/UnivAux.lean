@@ -389,4 +389,147 @@ theorem sumOf_map_eq_of_isBraided (hlk : lam ≤ Order.succ κ) {f : X → H} (h
 
 end AuxHom
 
+/-! ## Padding a braiding by zeros -/
+
+section Padding
+
+variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
+
+/-- **Padding a braiding by zeros.**  If two families vanish outside a set `C` of indices and
+their restrictions to `C` are `λ⁻`-braided, then so are the families themselves: the pieces of
+the braiding on `C` are kept at the slots named by elements of `C`, and every index outside `C`
+is parked alone at its own limit slot, against itself.  (This is the converse of restricting a
+braiding to a set containing both supports, and is what lets a braiding of countable families be
+used inside an uncountable index set.) -/
+theorem isBraided_of_subtype {ι : Type u} (C : Set ι) {x y : ι → X}
+    (hx : ∀ i ∉ C, x i = 0) (hy : ∀ i ∉ C, y i = 0)
+    (h : IsBraided lam (fun c : C => x c) (fun c : C => y c)) : IsBraided lam x y := by
+  classical
+  obtain ⟨d⟩ := h
+  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
+  -- the padded pieces and the padded braiding families
+  let pad : (C × ℕ → Set C) → ι × ℕ → Set ι := fun P p =>
+    if h : p.1 ∈ C then Subtype.val '' P (⟨p.1, h⟩, p.2) else if p.2 = 0 then {p.1} else ∅
+  let padV : (C × ℕ → X) → ι × ℕ → X := fun w p =>
+    if h : p.1 ∈ C then w (⟨p.1, h⟩, p.2) else 0
+  have hpos : ∀ P (p : ι × ℕ) (h : p.1 ∈ C), pad P p = Subtype.val '' P (⟨p.1, h⟩, p.2) :=
+    fun P p h => dif_pos h
+  have hneg : ∀ P (p : ι × ℕ), p.1 ∉ C → pad P p ⊆ {p.1} := by
+    intro P p h i hi
+    simp only [pad, dif_neg h] at hi
+    split_ifs at hi
+    · exact hi
+    · exact absurd hi (Set.notMem_empty i)
+  have hneg0 : ∀ P (a : ι), a ∉ C → pad P (a, 0) = {a} := by
+    intro P a h
+    show (if h' : a ∈ C then _ else if (0 : ℕ) = 0 then ({a} : Set ι) else ∅) = {a}
+    rw [dif_neg h, if_pos rfl]
+  have hVpos : ∀ w (p : ι × ℕ) (h : p.1 ∈ C), padV w p = w (⟨p.1, h⟩, p.2) :=
+    fun w p h => dif_pos h
+  have hVneg : ∀ w (p : ι × ℕ), p.1 ∉ C → padV w p = 0 := fun w p h => dif_neg h
+  have hdisj : ∀ P : C × ℕ → Set C, (∀ p q, p ≠ q → Disjoint (P p) (P q)) →
+      ∀ p q, p ≠ q → Disjoint (pad P p) (pad P q) := by
+    intro P hP p q hpq
+    rw [Set.disjoint_left]
+    intro i hip hiq
+    by_cases hp : p.1 ∈ C <;> by_cases hq : q.1 ∈ C
+    · rw [hpos P p hp] at hip
+      rw [hpos P q hq] at hiq
+      obtain ⟨c, hc, rfl⟩ := hip
+      obtain ⟨c', hc', hcc'⟩ := hiq
+      have hc'eq : c' = c := Subtype.ext hcc'
+      subst hc'eq
+      have hne : ((⟨p.1, hp⟩ : C), p.2) ≠ (⟨q.1, hq⟩, q.2) := by
+        intro heq
+        obtain ⟨h1, h2⟩ := Prod.ext_iff.mp heq
+        exact hpq (Prod.ext (congrArg Subtype.val h1) h2)
+      exact Set.disjoint_left.mp (hP _ _ hne) hc hc'
+    · rw [hpos P p hp] at hip
+      obtain ⟨c, _, rfl⟩ := hip
+      have := hneg P q hq hiq
+      rw [Set.mem_singleton_iff] at this
+      exact hq (this ▸ c.2)
+    · rw [hpos P q hq] at hiq
+      obtain ⟨c, _, rfl⟩ := hiq
+      have := hneg P p hp hip
+      rw [Set.mem_singleton_iff] at this
+      exact hp (this ▸ c.2)
+    · have h1 := hneg P p hp hip
+      have h2 := hneg P q hq hiq
+      rw [Set.mem_singleton_iff] at h1 h2
+      have hp0 : p.2 = 0 := by
+        by_contra h0
+        simp only [pad, dif_neg hp, if_neg h0] at hip
+        exact hip
+      have hq0 : q.2 = 0 := by
+        by_contra h0
+        simp only [pad, dif_neg hq, if_neg h0] at hiq
+        exact hiq
+      exact hpq (Prod.ext (h1.symm.trans h2) (hp0.trans hq0.symm))
+  have hcov : ∀ P : C × ℕ → Set C, (⋃ p, P p) = Set.univ → (⋃ p, pad P p) = Set.univ := by
+    intro P hP
+    refine Set.eq_univ_of_forall fun i => Set.mem_iUnion.mpr ?_
+    by_cases hi : i ∈ C
+    · obtain ⟨⟨c, n⟩, hc⟩ := Set.mem_iUnion.mp (hP ▸ Set.mem_univ (⟨i, hi⟩ : C))
+      refine ⟨((c : ι), n), ?_⟩
+      rw [hpos P ((c : ι), n) c.2]
+      exact ⟨⟨i, hi⟩, hc, rfl⟩
+    · exact ⟨(i, 0), by rw [hneg0 P i hi]; rfl⟩
+  have hsmall : ∀ P : C × ℕ → Set C, (∀ p, #(P p) < lam) → ∀ p, #(pad P p) < lam := by
+    intro P hP p
+    by_cases hp : p.1 ∈ C
+    · rw [hpos P p hp]
+      exact lt_of_le_of_lt Cardinal.mk_image_le (hP _)
+    · exact lt_of_lt_of_le (Cardinal.lt_aleph0_iff_set_finite.mpr
+        ((Set.finite_singleton _).subset (hneg P p hp))) hlam0
+  -- sums over the padded pieces
+  have hsumpos : ∀ (P : C × ℕ → Set C) (hP : ∀ p, #(P p) < lam) (z : ι → X) (p : ι × ℕ)
+      (hp : p.1 ∈ C), lsumOf (lam := lam) (hsmall P hP p) (fun i : pad P p => z i)
+        = lsumOf (lam := lam) (hP (⟨p.1, hp⟩, p.2)) (fun c : P (⟨p.1, hp⟩, p.2) => z c) := by
+    intro P hP z p hp
+    have hcongr : ∀ (S T : Set ι) (hST : S = T) (hS : #S < lam) (hT : #T < lam),
+        lsumOf (lam := lam) hS (fun i : S => z i) = lsumOf (lam := lam) hT (fun i : T => z i) := by
+      rintro S T rfl hS hT
+      rfl
+    have himg : #(Subtype.val '' P (⟨p.1, hp⟩, p.2)) < lam :=
+      lt_of_le_of_lt Cardinal.mk_image_le (hP _)
+    rw [hcongr _ _ (hpos P p hp) (hsmall P hP p) himg,
+      lsumOf_equiv himg (hP _) (Equiv.Set.image Subtype.val _ Subtype.val_injective)]
+    rfl
+  have hsumneg : ∀ (P : C × ℕ → Set C) (hP : ∀ p, #(P p) < lam) (z : ι → X)
+      (hz : ∀ i ∉ C, z i = 0) (p : ι × ℕ) (hp : p.1 ∉ C),
+      lsumOf (lam := lam) (hsmall P hP p) (fun i : pad P p => z i) = 0 := by
+    intro P hP z hz p hp
+    refine LMonoid.lsumOf_eq_zero _ z fun i hi => hz i ?_
+    have := hneg P p hp hi
+    rw [Set.mem_singleton_iff] at this
+    exact this ▸ hp
+  refine ⟨{ I := pad d.I
+            J := pad d.J
+            I_disjoint := hdisj d.I d.I_disjoint
+            J_disjoint := hdisj d.J d.J_disjoint
+            I_cover := hcov d.I d.I_cover
+            J_cover := hcov d.J d.J_cover
+            I_small := hsmall d.I d.I_small
+            J_small := hsmall d.J d.J_small
+            u := padV d.u
+            v := padV d.v
+            v_limit := fun a => ?_
+            hI := fun p => ?_
+            hJ := fun p => ?_ }⟩
+  · by_cases ha : a ∈ C
+    · rw [hVpos d.v (a, 0) ha]
+      exact d.v_limit _
+    · exact hVneg d.v (a, 0) ha
+  · by_cases hp : p.1 ∈ C
+    · rw [hsumpos d.I d.I_small x p hp, hVpos d.v p hp, hVpos d.u p hp]
+      exact d.hI _
+    · rw [hsumneg d.I d.I_small x hx p hp, hVneg d.v p hp, hVneg d.u p hp, add_zero]
+  · by_cases hp : p.1 ∈ C
+    · rw [hsumpos d.J d.J_small y p hp, hVpos d.v (bsucc p) hp, hVpos d.u p hp]
+      exact d.hJ _
+    · rw [hsumneg d.J d.J_small y hy p hp, hVneg d.v (bsucc p) hp, hVneg d.u p hp, add_zero]
+
+end Padding
+
 end KappaMonoid

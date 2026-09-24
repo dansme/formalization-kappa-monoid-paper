@@ -25,8 +25,8 @@ A warning on notation: the scoped `V(R)` of the development is `projClass R ℵ�
 `lambdaGenPart ℵ₀` inside it.
 
 What the statements owe to the current version of the paper is in the docstrings, and in
-`README.md` under "Encoding decisions".  The unnumbered claims of §5 that are not formalised are
-listed at the foot of the file.
+`README.md` under "Encoding decisions".  The unnumbered claims of §5 are in
+`Paper/Section5Extra.lean`; see the foot of this file.
 -/
 import KappaMonoid.TwoGen
 
@@ -386,13 +386,12 @@ theorem corollary_5_5_three_trace (S : Setting5 H) (h₁ : S.x₁ ∈ add(S.x₂
       TwoGen.IsRealizableAsVTracePair H :=
   TwoGen.corollary_5_5_three_trace S.x₁ S.x₂ h₁ h₂ S.gen S.noncyclic
 
-/-! ## Not formalised
+/-! ## Further unnumbered claims
 
-Every numbered result of §5 is above.  One unnumbered claim is not formalised: the §5 preamble
-(tex 1989–1991) says that a cyclic `ℵ₀`-monoid `⟨x⟩` is `V^{ℵ₀}(R)` for a nonzero hereditary ring
-exactly when `ℵ₀x ≠ nx` for every `n ∈ ℕ₀`, equivalently when it is `C ∪ {∞}` for a nonzero
-cyclic monoid `C`.  It is the one-generator counterpart of Theorem 5.3, which the paper calls easy
-and does not prove, and nothing in §5 uses it: the section assumes `H` non-cyclic throughout. -/
+The §5 preamble's one-generator criterion (tex 1989–1991), the §5 standing hypotheses for the
+counterexample `ℕ₀² ∪ {∞}`, the `i = 2, j = 1` instances of Lemma 5.2(3)(4), and the remark before
+Corollary 5.5 in its general form are in `Paper/Section5Extra.lean`.  Nothing in §5 is left
+unformalised. -/
 
 end Paper
 

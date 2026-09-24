@@ -9,6 +9,8 @@ For a Dedekind domain `R` with `G = Pic R`, Steinitz's theorem identifies `V(R)`
 identification, and hence `V^κ(R) ≅ E_κ`, is module theory and is *not* formalised here.
 -/
 import KappaMonoid.Examples.NatBraiding
+import KappaMonoid.ForMathlib.CardinalSum
+import KappaMonoid.ForMathlib.Finprod
 import KappaMonoid.Braiding.WellOrder
 import KappaMonoid.Braiding.UnivAux
 import KappaMonoid.Braiding.Prop310
@@ -23,234 +25,6 @@ open KMonoid LMonoid
 
 namespace Dedekind
 
-/-! ## Cardinal sums of families of natural numbers -/
-
-section Cardinals
-
-/-- A cardinal sum may be restricted to any set outside of which the summands vanish. -/
-theorem csum_eq_csum_subtype {ι : Type u} (f : ι → Cardinal.{u}) (S : Set ι)
-    (hS : ∀ i ∉ S, f i = 0) : Cardinal.sum f = Cardinal.sum (fun i : S => f i) :=
-  Cardinal.mk_congr
-    { toFun := fun p => ⟨⟨p.1, by_contra fun h => (Cardinal.mk_eq_zero_iff.mp
-        (by rw [Cardinal.mk_out]; exact hS p.1 h)).false p.2⟩, p.2⟩
-      invFun := fun q => ⟨q.1.1, q.2⟩
-      left_inv := fun _ => rfl
-      right_inv := fun _ => rfl }
-
-/-- The support of a family of cardinals injects into its cardinal sum. -/
-theorem mk_support_le_sum {ι : Type u} (c : ι → Cardinal.{u}) :
-    #(support c) ≤ Cardinal.sum c := by
-  classical
-  have hne : ∀ i : support c, Nonempty (c (i : ι)).out := fun i =>
-    Cardinal.mk_ne_zero_iff.mp (by rw [Cardinal.mk_out]; exact i.2)
-  exact ⟨⟨fun i => ⟨(i : ι), (hne i).some⟩, fun i j hij => Subtype.ext (congrArg Sigma.fst hij)⟩⟩
-
-/-- A finite cardinal sum of natural numbers is their sum. -/
-theorem csum_natCast_fintype {ι : Type u} [Fintype ι] (n : ι → ℕ) :
-    Cardinal.sum (fun i => (n i : Cardinal.{u})) = ((∑ i, n i : ℕ) : Cardinal.{u}) := by
-  have h1 : (fun i => (n i : Cardinal.{u})) = fun i => #(ULift.{u} (Fin (n i))) := by
-    funext i; simp
-  rw [h1, ← Cardinal.mk_sigma, Cardinal.mk_fintype, Fintype.card_sigma]
-  simp
-
-/-- A finitely supported family of natural numbers sums, as cardinals, to its `finsum`. -/
-theorem csum_natCast_of_finite {ι : Type u} (n : ι → ℕ) (hn : (support n).Finite) :
-    Cardinal.sum (fun i => (n i : Cardinal.{u})) = ((∑ᶠ i, n i : ℕ) : Cardinal.{u}) := by
-  let : Fintype (support n) := hn.fintype
-  have h := csum_natCast_fintype (fun i : support n => n i)
-  rw [csum_eq_csum_subtype _ (support n) (fun i hi => by rw [not_not.mp hi, Nat.cast_zero]), h,
-    ← finsum_eq_sum_of_fintype, finsum_set_coe_eq_finsum_mem, finsum_mem_support]
-
-/-- An infinitely supported family of natural numbers sums, as cardinals, to the cardinality of
-its support. -/
-theorem csum_natCast_of_infinite {ι : Type u} (n : ι → ℕ) (hn : (support n).Infinite) :
-    Cardinal.sum (fun i => (n i : Cardinal.{u})) = #(support n) := by
-  have hinf : ℵ₀ ≤ #(support n) := Cardinal.infinite_iff.mp hn.to_subtype
-  rw [csum_eq_csum_subtype _ (support n) (fun i hi => by rw [not_not.mp hi, Nat.cast_zero])]
-  refine le_antisymm ?_ ?_
-  · calc Cardinal.sum (fun i : support n => (n i : Cardinal.{u}))
-        ≤ Cardinal.sum (fun _ : support n => ℵ₀) :=
-          Cardinal.sum_le_sum _ _ fun i => Cardinal.natCast_lt_aleph0.le
-      _ = #(support n) * ℵ₀ := Cardinal.sum_const' _ _
-      _ = #(support n) := Cardinal.mul_aleph0_eq hinf
-  · calc #(support n) = Cardinal.sum (fun _ : support n => (1 : Cardinal.{u})) := by
-          rw [Cardinal.sum_const', mul_one]
-      _ ≤ _ := Cardinal.sum_le_sum _ _ fun i =>
-          Cardinal.one_le_iff_ne_zero.mpr (by exact_mod_cast i.2)
-
-/-- `finsum` over a sigma type, for a finitely supported family. -/
-theorem finsum_sigma_eq {ι : Type u} {ρ : ι → Type u} {M : Type w} [AddCommMonoid M]
-    (f : (Σ i, ρ i) → M) (hf : (support f).Finite) :
-    ∑ᶠ i, ∑ᶠ j, f ⟨i, j⟩ = ∑ᶠ p, f p := by
-  classical
-  have hrow : ∀ i, (support fun j => f ⟨i, j⟩).Finite := fun i =>
-    hf.preimage sigma_mk_injective.injOn
-  set s : Finset ι := (hf.image Sigma.fst).toFinset with hs
-  set t : ∀ i, Finset (ρ i) := fun i => (hrow i).toFinset with ht
-  have hout : (support fun i => ∑ᶠ j, f ⟨i, j⟩) ⊆ (s : Set ι) := by
-    intro i hi
-    rw [hs, Set.Finite.coe_toFinset]
-    by_contra hni
-    apply hi
-    refine finsum_eq_zero_of_forall_eq_zero fun j => ?_
-    by_contra hj
-    exact hni ⟨⟨i, j⟩, hj, rfl⟩
-  have hsig : support f ⊆ ((s.sigma t : Finset (Σ i, ρ i)) : Set (Σ i, ρ i)) := by
-    intro p hp
-    rw [Finset.mem_coe, Finset.mem_sigma, hs, ht, Set.Finite.mem_toFinset,
-      Set.Finite.mem_toFinset]
-    exact ⟨⟨p, hp, rfl⟩, hp⟩
-  rw [finsum_eq_sum_of_support_subset _ hout, finsum_eq_sum_of_support_subset f hsig,
-    Finset.sum_sigma]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  refine finsum_eq_sum_of_support_subset _ fun j hj => ?_
-  rw [ht, Finset.mem_coe, Set.Finite.mem_toFinset]
-  exact hj
-
-end Cardinals
-
-/-! ## Padding a braiding by zeros -/
-
-section Padding
-
-variable {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
-
-/-- **Padding a braiding by zeros.**  If two families vanish outside a set `C` of indices and
-their restrictions to `C` are `λ⁻`-braided, then so are the families themselves: the pieces of
-the braiding on `C` are kept at the slots named by elements of `C`, and every index outside `C`
-is parked alone at its own limit slot, against itself.  (This is the converse of restricting a
-braiding to a set containing both supports, and is what lets a braiding of countable families be
-used inside an uncountable index set.) -/
-theorem isBraided_of_subtype {ι : Type u} (C : Set ι) {x y : ι → X}
-    (hx : ∀ i ∉ C, x i = 0) (hy : ∀ i ∉ C, y i = 0)
-    (h : IsBraided lam (fun c : C => x c) (fun c : C => y c)) : IsBraided lam x y := by
-  classical
-  obtain ⟨d⟩ := h
-  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
-  -- the padded pieces and the padded braiding families
-  let pad : (C × ℕ → Set C) → ι × ℕ → Set ι := fun P p =>
-    if h : p.1 ∈ C then Subtype.val '' P (⟨p.1, h⟩, p.2) else if p.2 = 0 then {p.1} else ∅
-  let padV : (C × ℕ → X) → ι × ℕ → X := fun w p =>
-    if h : p.1 ∈ C then w (⟨p.1, h⟩, p.2) else 0
-  have hpos : ∀ P (p : ι × ℕ) (h : p.1 ∈ C), pad P p = Subtype.val '' P (⟨p.1, h⟩, p.2) :=
-    fun P p h => dif_pos h
-  have hneg : ∀ P (p : ι × ℕ), p.1 ∉ C → pad P p ⊆ {p.1} := by
-    intro P p h i hi
-    simp only [pad, dif_neg h] at hi
-    split_ifs at hi
-    · exact hi
-    · exact absurd hi (Set.notMem_empty i)
-  have hneg0 : ∀ P (a : ι), a ∉ C → pad P (a, 0) = {a} := by
-    intro P a h
-    show (if h' : a ∈ C then _ else if (0 : ℕ) = 0 then ({a} : Set ι) else ∅) = {a}
-    rw [dif_neg h, if_pos rfl]
-  have hVpos : ∀ w (p : ι × ℕ) (h : p.1 ∈ C), padV w p = w (⟨p.1, h⟩, p.2) :=
-    fun w p h => dif_pos h
-  have hVneg : ∀ w (p : ι × ℕ), p.1 ∉ C → padV w p = 0 := fun w p h => dif_neg h
-  have hdisj : ∀ P : C × ℕ → Set C, (∀ p q, p ≠ q → Disjoint (P p) (P q)) →
-      ∀ p q, p ≠ q → Disjoint (pad P p) (pad P q) := by
-    intro P hP p q hpq
-    rw [Set.disjoint_left]
-    intro i hip hiq
-    by_cases hp : p.1 ∈ C <;> by_cases hq : q.1 ∈ C
-    · rw [hpos P p hp] at hip
-      rw [hpos P q hq] at hiq
-      obtain ⟨c, hc, rfl⟩ := hip
-      obtain ⟨c', hc', hcc'⟩ := hiq
-      have hc'eq : c' = c := Subtype.ext hcc'
-      subst hc'eq
-      have hne : ((⟨p.1, hp⟩ : C), p.2) ≠ (⟨q.1, hq⟩, q.2) := by
-        intro heq
-        obtain ⟨h1, h2⟩ := Prod.ext_iff.mp heq
-        exact hpq (Prod.ext (congrArg Subtype.val h1) h2)
-      exact Set.disjoint_left.mp (hP _ _ hne) hc hc'
-    · rw [hpos P p hp] at hip
-      obtain ⟨c, _, rfl⟩ := hip
-      have := hneg P q hq hiq
-      rw [Set.mem_singleton_iff] at this
-      exact hq (this ▸ c.2)
-    · rw [hpos P q hq] at hiq
-      obtain ⟨c, _, rfl⟩ := hiq
-      have := hneg P p hp hip
-      rw [Set.mem_singleton_iff] at this
-      exact hp (this ▸ c.2)
-    · have h1 := hneg P p hp hip
-      have h2 := hneg P q hq hiq
-      rw [Set.mem_singleton_iff] at h1 h2
-      have hp0 : p.2 = 0 := by
-        by_contra h0
-        simp only [pad, dif_neg hp, if_neg h0] at hip
-        exact hip
-      have hq0 : q.2 = 0 := by
-        by_contra h0
-        simp only [pad, dif_neg hq, if_neg h0] at hiq
-        exact hiq
-      exact hpq (Prod.ext (h1.symm.trans h2) (hp0.trans hq0.symm))
-  have hcov : ∀ P : C × ℕ → Set C, (⋃ p, P p) = Set.univ → (⋃ p, pad P p) = Set.univ := by
-    intro P hP
-    refine Set.eq_univ_of_forall fun i => Set.mem_iUnion.mpr ?_
-    by_cases hi : i ∈ C
-    · obtain ⟨⟨c, n⟩, hc⟩ := Set.mem_iUnion.mp (hP ▸ Set.mem_univ (⟨i, hi⟩ : C))
-      refine ⟨((c : ι), n), ?_⟩
-      rw [hpos P ((c : ι), n) c.2]
-      exact ⟨⟨i, hi⟩, hc, rfl⟩
-    · exact ⟨(i, 0), by rw [hneg0 P i hi]; rfl⟩
-  have hsmall : ∀ P : C × ℕ → Set C, (∀ p, #(P p) < lam) → ∀ p, #(pad P p) < lam := by
-    intro P hP p
-    by_cases hp : p.1 ∈ C
-    · rw [hpos P p hp]
-      exact lt_of_le_of_lt Cardinal.mk_image_le (hP _)
-    · exact lt_of_lt_of_le (Cardinal.lt_aleph0_iff_set_finite.mpr
-        ((Set.finite_singleton _).subset (hneg P p hp))) hlam0
-  -- sums over the padded pieces
-  have hsumpos : ∀ (P : C × ℕ → Set C) (hP : ∀ p, #(P p) < lam) (z : ι → X) (p : ι × ℕ)
-      (hp : p.1 ∈ C), lsumOf (lam := lam) (hsmall P hP p) (fun i : pad P p => z i)
-        = lsumOf (lam := lam) (hP (⟨p.1, hp⟩, p.2)) (fun c : P (⟨p.1, hp⟩, p.2) => z c) := by
-    intro P hP z p hp
-    have hcongr : ∀ (S T : Set ι) (hST : S = T) (hS : #S < lam) (hT : #T < lam),
-        lsumOf (lam := lam) hS (fun i : S => z i) = lsumOf (lam := lam) hT (fun i : T => z i) := by
-      rintro S T rfl hS hT
-      rfl
-    have himg : #(Subtype.val '' P (⟨p.1, hp⟩, p.2)) < lam :=
-      lt_of_le_of_lt Cardinal.mk_image_le (hP _)
-    rw [hcongr _ _ (hpos P p hp) (hsmall P hP p) himg,
-      lsumOf_equiv himg (hP _) (Equiv.Set.image Subtype.val _ Subtype.val_injective)]
-    rfl
-  have hsumneg : ∀ (P : C × ℕ → Set C) (hP : ∀ p, #(P p) < lam) (z : ι → X)
-      (hz : ∀ i ∉ C, z i = 0) (p : ι × ℕ) (hp : p.1 ∉ C),
-      lsumOf (lam := lam) (hsmall P hP p) (fun i : pad P p => z i) = 0 := by
-    intro P hP z hz p hp
-    refine LMonoid.lsumOf_eq_zero _ z fun i hi => hz i ?_
-    have := hneg P p hp hi
-    rw [Set.mem_singleton_iff] at this
-    exact this ▸ hp
-  refine ⟨{ I := pad d.I
-            J := pad d.J
-            I_disjoint := hdisj d.I d.I_disjoint
-            J_disjoint := hdisj d.J d.J_disjoint
-            I_cover := hcov d.I d.I_cover
-            J_cover := hcov d.J d.J_cover
-            I_small := hsmall d.I d.I_small
-            J_small := hsmall d.J d.J_small
-            u := padV d.u
-            v := padV d.v
-            v_limit := fun a => ?_
-            hI := fun p => ?_
-            hJ := fun p => ?_ }⟩
-  · by_cases ha : a ∈ C
-    · rw [hVpos d.v (a, 0) ha]
-      exact d.v_limit _
-    · exact hVneg d.v (a, 0) ha
-  · by_cases hp : p.1 ∈ C
-    · rw [hsumpos d.I d.I_small x p hp, hVpos d.v p hp, hVpos d.u p hp]
-      exact d.hI _
-    · rw [hsumneg d.I d.I_small x hx p hp, hVneg d.v p hp, hVneg d.u p hp, add_zero]
-  · by_cases hp : p.1 ∈ C
-    · rw [hsumpos d.J d.J_small y p hp, hVpos d.v (bsucc p) hp, hVpos d.u p hp]
-      exact d.hJ _
-    · rw [hsumneg d.J d.J_small y hy p hp, hVneg d.v (bsucc p) hp, hVneg d.u p hp, add_zero]
-
-end Padding
 
 /-! ## The monoid `D`
 
@@ -643,7 +417,7 @@ noncomputable def sumData (hκ : ℵ₀ ≤ κ) : SumData (Order.succ κ) (dedEx
             ⊆ support fun p : (Σ i, ρ i) => erk (z p.1 p.2) :=
           fun p hp h0 => hp (egp_eq_zero_of_erk_eq_zero h0)
         exact (Cardinal.lt_aleph0_iff_set_finite.mp
-          ((mk_support_le_sum _).trans_lt hlt)).subset hsub
+          ((Cardinal.mk_support_le_sum _).trans_lt hlt)).subset hsub
       exact finsum_sigma_eq (fun p : (Σ i, ρ i) => egp (z p.1 p.2)) hfin
     · rfl
 
@@ -726,10 +500,10 @@ theorem isLHom_incl (hκ : ℵ₀ ≤ κ) :
   refine dedExt_ext ?_ ?_
   · show ((rk (∑ i, x i) : ℕ) : Cardinal.{u}) =
       Cardinal.sum fun i => ((rk (x i) : ℕ) : Cardinal.{u})
-    rw [map_sum, csum_natCast_fintype]
+    rw [map_sum, Cardinal.sum_natCast_fintype]
   · show gp (∑ i, x i) =
       if (Cardinal.sum fun i => ((rk (x i) : ℕ) : Cardinal.{u})) < ℵ₀ then ∑ᶠ i, gp (x i) else 0
-    rw [csum_natCast_fintype, if_pos Cardinal.natCast_lt_aleph0, map_sum,
+    rw [Cardinal.sum_natCast_fintype, if_pos Cardinal.natCast_lt_aleph0, map_sum,
       finsum_eq_sum_of_fintype]
 
 theorem incl_injective (hκ : ℵ₀ ≤ κ) : Function.Injective (incl (G := G) hκ) := by
@@ -760,10 +534,10 @@ theorem cond_of_sumOf_eq (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) 
         ∑ᶠ i, gp (y i) else 0) := congrArg egp h
   have hfin : ∀ z : ι → dedMonoid G, (support z).Finite →
       Cardinal.sum (fun i => ((rk (z i) : ℕ) : Cardinal.{u})) = ((∑ᶠ i, rk (z i) : ℕ) : Cardinal) :=
-    fun z hz => csum_natCast_of_finite _ (by rwa [support_rk])
+    fun z hz => Cardinal.sum_natCast_of_finite _ (by rwa [support_rk])
   have hinf : ∀ z : ι → dedMonoid G, (support z).Infinite →
       Cardinal.sum (fun i => ((rk (z i) : ℕ) : Cardinal.{u})) = #(support z) := fun z hz => by
-    rw [csum_natCast_of_infinite _ (by rwa [support_rk]), support_rk]
+    rw [Cardinal.sum_natCast_of_infinite _ (by rwa [support_rk]), support_rk]
   have hbig : ∀ z : ι → dedMonoid G, (support z).Infinite → ℵ₀ ≤ #(support z) :=
     fun z hz => Cardinal.infinite_iff.mp hz.to_subtype
   by_cases hfx : (support x).Finite <;> by_cases hfy : (support y).Finite
@@ -793,13 +567,13 @@ theorem isBraided_of_cond {ι : Type u} (x y : ι → dedMonoid G)
     IsBraided ℵ₀ x y := by
   rcases h with ⟨hx, hy, hs⟩ | ⟨hx, hy, hs⟩
   · exact isBraided_of_finite_support x y hx hy hs
-  · rw [csum_natCast_of_infinite _ (by rwa [support_rk]),
-      csum_natCast_of_infinite _ (by rwa [support_rk]), support_rk, support_rk] at hs
+  · rw [Cardinal.sum_natCast_of_infinite _ (by rwa [support_rk]),
+      Cardinal.sum_natCast_of_infinite _ (by rwa [support_rk]), support_rk, support_rk] at hs
     exact isBraided_of_infinite_support x y hx hs
 
 /-- **Examples 4.8(4)(a)**: two families in `D` are braided iff either both have finite support
 and the same sum, or both have infinite support and their ranks add up to the same cardinal
-(which is then the common cardinality of the supports, `csum_natCast_of_infinite`).  The index type
+(which is then the common cardinality of the supports, `Cardinal.sum_natCast_of_infinite`).  The index type
 is arbitrary.
 
 Paper proof: "it is easy to check that two families with infinite support over `V(R)` are braided
@@ -873,7 +647,7 @@ theorem isBraidedOver_dedExt (hκ : ℵ₀ ≤ κ) :
       exact Set.infinite_coe_iff.mp (Cardinal.infinite_iff.mpr (hs ▸ not_lt.mp hlt))
     have hr : Cardinal.sum (fun i => ((rk (if i ∈ s then one else 0) : ℕ) : Cardinal.{u}))
         = erk h := by
-      rw [csum_natCast_of_infinite _ hsinf, hsupp, hs]
+      rw [Cardinal.sum_natCast_of_infinite _ hsinf, hsupp, hs]
     refine ⟨fun i => if i ∈ s then one else 0, dedExt_ext hr.symm ?_⟩
     show egp h = if Cardinal.sum (fun i => ((rk (if i ∈ s then one else 0) : ℕ) : Cardinal.{u}))
         < ℵ₀ then _ else 0

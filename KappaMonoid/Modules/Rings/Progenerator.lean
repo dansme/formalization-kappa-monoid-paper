@@ -170,11 +170,12 @@ Paper proof: stated without proof in the paper.  Since `P` is finitely generated
 for some `Q`, and since `P` is a generator, `P^n ≅ R ⊕ Q'` for some `Q'`; thus `[P] ≼ m [R]` and
 `[R] ≼ n [P]`, and `KMonoid.IsFaithful.of_le_nsmul` transfers faithfulness from `[R]`
 (`isFaithful_unitClass`) to `[P]`. -/
-theorem isFaithful_of_isProgenerator [Nontrivial R] (k : Idx κ) (p : (projClass R κ hκ).carrier)
+theorem isFaithful_of_isProgenerator [Nontrivial R] (p : (projClass R κ hκ).carrier)
     (hp : IsProgenerator R ((projClass R κ hκ).rep p)) :
     letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.IsFaithful (κ := κ) p := by
   let := (projClass R κ hκ).instKMonoid hκ
+  obtain ⟨k⟩ := nonempty_Idx hκ
   obtain ⟨⟨n, hn⟩, ⟨m, hm⟩⟩ := le_nsmul_of_isProgenerator R κ hκ k p hp
   exact (isFaithful_unitClass R κ hκ k).of_le_nsmul hn hm
 
@@ -188,10 +189,7 @@ theorem exists_isFaithful_of_isProgenerator [Nontrivial R] (P : Type u) [AddComm
       Nonempty ((projClass R κ hκ).rep p ≃ₗ[R] P) ∧ KMonoid.IsFaithful (κ := κ) p := by
   let := (projClass R κ hκ).instKMonoid hκ
   obtain ⟨p, hpV, ⟨e⟩⟩ := exists_class_of_fg_projective R κ hκ P hP.1 hP.2.1
-  have hk : Nonempty (Idx κ) := by
-    rw [← Cardinal.mk_ne_zero_iff, mk_Idx]
-    exact (Cardinal.aleph0_pos.trans_le hκ).ne'
-  exact ⟨p, hpV, ⟨e⟩, isFaithful_of_isProgenerator R κ hκ hk.some p (hP.of_equiv e.symm)⟩
+  exact ⟨p, hpV, ⟨e⟩, isFaithful_of_isProgenerator R κ hκ p (hP.of_equiv e.symm)⟩
 
 /-! ## Example 2.13: the size filtration is `H_α = V^α(R)` -/
 
@@ -252,13 +250,14 @@ in the sense of commutative monoids.  `V(R)` is the part `lambdaGenPart ℵ₀` 
 Paper proof: stated without proof in the paper.  `x ≼ m [R]` since `x` is finitely generated and
 `[R] ≼ n [P]` since `P` is a generator, so `x ≼ (m n) [P]`; a complement `c` of `x` in `(m n) [P]`
 is below `(m n n') [R]`, where `[P] ≼ n' [R]`, and so is again finitely generated. -/
-theorem exists_add_eq_nsmul_of_isProgenerator (k : Idx κ) (p : (projClass R κ hκ).carrier)
+theorem exists_add_eq_nsmul_of_isProgenerator (p : (projClass R κ hκ).carrier)
     (hp : IsProgenerator R ((projClass R κ hκ).rep p)) (x : (projClass R κ hκ).carrier)
     (hx : x ∈ (projClass R κ hκ).lambdaGenPart ℵ₀) :
     letI := (projClass R κ hκ).instKMonoid hκ
     ∃ (n : ℕ) (c : (projClass R κ hκ).carrier),
       c ∈ (projClass R κ hκ).lambdaGenPart ℵ₀ ∧ x + c = n • p := by
   let := (projClass R κ hκ).instKMonoid hκ
+  obtain ⟨k⟩ := nonempty_Idx hκ
   have hu := isOrderUnit_unitClass R κ hκ k
   have hV : ∀ y, y ∈ (projClass R κ hκ).lambdaGenPart ℵ₀ ↔
       ∃ n : ℕ, y ≼ n • unitClass R κ hκ k := fun y => by

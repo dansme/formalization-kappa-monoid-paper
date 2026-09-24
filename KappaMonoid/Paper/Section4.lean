@@ -10,6 +10,8 @@ what that type is — and the docstring says which paper result it stands for.  
 Results the development deliberately does not formalise are recorded at the foot of the file.
 -/
 import KappaMonoid.Modules.Corollary47
+import KappaMonoid.Modules.Transport
+import KappaMonoid.Paper.Examples48
 import KappaMonoid.Modules.Rings.Realisation
 import KappaMonoid.Modules.Rings.Semisimple
 import KappaMonoid.Examples
@@ -30,6 +32,23 @@ alias example_4_2_1_IsLambdaSmallLe := KappaMonoid.IsLambdaSmallLe
 /-- **Example 4.2(1)** — `KappaMonoid.IsLambdaSmallLe.isLambdaSmall_succ`: every `λ`-small module
 is `(λ⁺)⁻`-small. -/
 alias example_4_2_1_isLambdaSmall_succ := KappaMonoid.IsLambdaSmallLe.isLambdaSmall_succ
+
+/-- **Example 4.2(1)**, the converse — `KappaMonoid.IsLambdaSmall.isLambdaSmallLe_of_succ`, in
+`Modules/Transport.lean`: a `(λ⁺)⁻`-small module is `λ`-small. -/
+alias example_4_2_1_isLambdaSmallLe_of_succ := KappaMonoid.IsLambdaSmall.isLambdaSmallLe_of_succ
+
+/-- **Example 4.2(1)** — `KappaMonoid.isLambdaSmall_succ_iff`: `(λ⁺)⁻`-small iff `λ`-small. -/
+alias example_4_2_1_isLambdaSmall_succ_iff := KappaMonoid.isLambdaSmall_succ_iff
+
+/-- **Example 4.2(2)**, last sentence — `KappaMonoid.isLambdaSmall_succ_aleph0_of_countable`:
+countably generated modules are `ℵ₁⁻`-small. -/
+alias example_4_2_2_isLambdaSmall_succ_aleph0_of_countable :=
+  KappaMonoid.isLambdaSmall_succ_aleph0_of_countable
+
+/-- **Example 4.2(2)**, last sentence — `KappaMonoid.isLambdaSmallLe_aleph0_of_countable`:
+equivalently, `ℵ₀`-small. -/
+alias example_4_2_2_isLambdaSmallLe_aleph0_of_countable :=
+  KappaMonoid.isLambdaSmallLe_aleph0_of_countable
 
 /-- **Example 4.2(3)** — `KappaMonoid.IsLambdaGenerated.isLambdaSmall`: the members of `C_{λ⁻}`
 are `λ⁻`-small. -/
@@ -107,6 +126,19 @@ alias corollary_4_5_2_corollary_4_5_two := KappaMonoid.corollary_4_5_two
 /-- **Corollary 4.5(3)** — `KappaMonoid.corollary_4_5_three`, in `Modules/Projective.lean`. -/
 alias corollary_4_5_3_corollary_4_5_three := KappaMonoid.corollary_4_5_three
 
+/-- **After Corollary 4.5** (tex 1743–1748): `V^{ℵ₀}(R)` determines `V^κ(R)` —
+`KappaMonoid.exists_kIso_of_aleph1Iso`, in `Modules/Transport.lean`. -/
+alias after_corollary_4_5_exists_kIso_of_aleph1Iso := KappaMonoid.exists_kIso_of_aleph1Iso
+
+/-- **After Corollary 4.5**: under `EveryProjectiveIsSumOfFG`, `V(R)` determines `V^κ(R)` —
+`KappaMonoid.exists_kIso_of_fgIso`. -/
+alias after_corollary_4_5_exists_kIso_of_fgIso := KappaMonoid.exists_kIso_of_fgIso
+
+/-- **Corollary 4.6(2)**, the hereditary case — `KappaMonoid.corollary_4_6_hereditary`: over a
+left hereditary ring (the paper's right hereditary, for left modules) `V^κ(R)` is the universal
+`κ`-extension of `V(R)`, by Albrecht's theorem and Corollary 4.5(3). -/
+alias corollary_4_6_2_hereditary := KappaMonoid.corollary_4_6_hereditary
+
 /-- **Corollary 4.7(1)** — `KappaMonoid.corollary_4_7_one`, in `Modules/Corollary47.lean`: the
 three-way equivalence, stated as the two implications (i) ⇔ (ii) and (ii) ⇔ (iii). -/
 alias corollary_4_7_1_corollary_4_7_one := KappaMonoid.corollary_4_7_one
@@ -166,6 +198,20 @@ alias example_4_8_4_instKMonoid := KappaMonoid.Dedekind.instKMonoid
 /-- **Examples 4.8(4)** — `KappaMonoid.Dedekind.isBraidedOver_dedExt`: `E_κ` is braided over `D`. -/
 alias example_4_8_4_isBraidedOver := KappaMonoid.Dedekind.isBraidedOver_dedExt
 
+/-- **Examples 4.8(3)**, `ℕ₀` — `KappaMonoid.examples_4_8_3_nat`, in `Paper/Examples48.lean`: for a ring
+whose projectives are sums of finitely generated ones, `V(R) ≅ ℕ₀` gives `V^{ℵ₀}(R) ≅ ℕ₀ ∪ {∞}`. -/
+alias example_4_8_3_nat := KappaMonoid.examples_4_8_3_nat
+
+/-- **Examples 4.8(3)**, `ℝ≥0` — `KappaMonoid.examples_4_8_3_nnreal`: `V^{ℵ₀}(R) ≅ ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`. -/
+alias example_4_8_3_nnreal := KappaMonoid.examples_4_8_3_nnreal
+
+/-- **Examples 4.8(3)**, `ℚ≥0` — `KappaMonoid.examples_4_8_3_rat`: `V^{ℵ₀}(R) ≅ ℚ≥0 ∪ ℝ̃>0 ∪ {∞}`. -/
+alias example_4_8_3_rat := KappaMonoid.examples_4_8_3_rat
+
+/-- **Examples 4.8(3)**, Diophantine monoids (equations and congruences) —
+`KappaMonoid.examples_4_8_3_diophantine`: `V^{ℵ₀}(R) ≅ H + ℵ₀H`. -/
+alias example_4_8_3_diophantine := KappaMonoid.examples_4_8_3_diophantine
+
 /-- **Examples 4.8(4)** — `KappaMonoid.Dedekind.isUniversalKExtension_dedExt`: `D̂ = E_κ`.
 Steinitz's identification `V(R) ≅ D` for a Dedekind domain, which turns this into
 `V^κ(R) ≅ E_κ`, is quoted from the literature and not formalised. -/
@@ -179,20 +225,21 @@ alias example_4_8_4_isUniversalKExtension := KappaMonoid.Dedekind.isUniversalKEx
   semiperfect (Mueller), weakly noetherian commutative (Hinohara), Bézout with one-sided Krull
   dimension (McGovern–Puninski–Rothmaler) — none of them monoid-theoretic and none in Mathlib.
   `EveryProjectiveIsSumOfFG` is the hypothesis those six results supply, and it is what
-  `corollary_4_5_three` takes.  The *hereditary* case of the second — Albrecht's theorem — is proved, in
-  `ForMathlib/Albrecht.lean`, and is the one §4 and §5 actually use; the other five stay quoted.
-* **Examples 4.8**.  Item (1) is formalised as printed, `V^κ(C) ≅ F_κ(B)` included (`krsa_ascent_iso`); the general `λ⁻` form above has the
-  paper's finite-KRSA and countable/Kaplansky readings as the cases `λ = ℵ₀` and `λ = ℵ₁`.
-  Item (2) is a question (Herbera–Příhoda–Wiegand, Question 1.1) restated in `κ`-monoid language,
-  not a claim.  Item (3) is Corollary 4.7 instantiated at `ℕ₀`, `ℝ≥0`/`ℚ≥0`, and the Diophantine
-  monoids; the general statement and all three monoid computations are formalised (`Examples/`),
-  only the transport back to `V^{ℵ₀}(R)` is missing.  Item (4) is formalised on the monoid side
-  (above): the braiding criterion over `D` and the universal `κ`-extension `D̂ = E_κ`, for every
-  infinite `κ`; only Steinitz's theorem `V(R) ≅ D` is quoted.  Items (5)–(7) rest on classical
-  descriptions of `V(R)` or `V^*(R)` quoted from the literature and not in Mathlib — Bass,
-  Herbera–Příhoda, Levy–Robson; for (5) Bass's theorem gives the description directly, and for (6)
-  the `κ`-monoid step is Proposition 3.15(1), with 3.15(2) recovering Herbera–Příhoda's description
-  of `V^{ℵ₀}(R)`.
+  `corollary_4_5_three` takes.  The *hereditary* case of the second is formalised
+  (`corollary_4_6_hereditary`, through Albrecht's theorem in `ForMathlib/Albrecht.lean`); the
+  other cases stay quoted.
+* **Examples 4.8**.  Item (1) is formalised as printed, `V^κ(C) ≅ F_κ(B)` included
+  (`krsa_ascent_iso`); the general `λ⁻` form above has the paper's finite-KRSA and
+  countable/Kaplansky readings as the cases `λ = ℵ₀` and `λ = ℵ₁`.  Item (2) is a question
+  (Herbera–Příhoda–Wiegand, Question 1.1) restated in `κ`-monoid language, not a claim.  Item (3)
+  is formalised above (`examples_4_8_3_*`), for equations and congruences in the Diophantine case;
+  the inequality case goes through slack variables, as the paper says.  Item (4) is formalised on
+  the monoid side (above): the braiding criterion over `D` and the universal `κ`-extension
+  `D̂ = E_κ`, for every infinite `κ`; only Steinitz's theorem `V(R) ≅ D` is quoted.  Items (5)–(7)
+  rest on classical descriptions of `V(R)` or `V^*(R)` quoted from the literature and not in
+  Mathlib — Bass, Herbera–Příhoda, Levy–Robson; for (5) Bass's theorem gives the description
+  directly, and for (6) the `κ`-monoid step is Proposition 3.15(1), with 3.15(2) recovering
+  Herbera–Příhoda's description of `V^{ℵ₀}(R)`.
 * **The remark after Corollary 4.7** (tex 1840) that without the sum-of-finitely-generated
   hypothesis `V(R)` does not in general determine `V^{ℵ₀}(R)` is stated in the paper without proof
   or example, and is not formalised.  See `README.md` for the itemised account. -/

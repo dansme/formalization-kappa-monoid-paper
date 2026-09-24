@@ -3,6 +3,7 @@
 the counterexample showing the saturation hypothesis cannot be dropped, and **Example 3.16**.
 -/
 import KappaMonoid.Examples.NatBraiding
+import KappaMonoid.ForMathlib.CardinalSum
 
 universe u v w t
 
@@ -435,12 +436,6 @@ along `ULift (Fin n) ≃ Fin n`; that is an isomorphism on both sides, and Theor
 equivalence turns the universal property of Lemma 3.14(1) into a braiding, which then transports
 (`IsBraidedOver.of_iso`, `IsBraidedOver.of_base_iso`). -/
 
-/-- Every family indexed by a basis of size `< λ` lies in `F_{λ⁻}(B)`: its support is a subset of
-the basis. -/
-theorem mem_FreeL_of_mk_lt {lam : Cardinal.{u}} [Fact lam.IsRegular] {B : Type u}
-    (hB : #B < lam) (x : B → LCard lam) : x ∈ FreeL lam B :=
-  lt_of_le_of_lt (Cardinal.mk_set_le _) hB
-
 /-- **`F_κ^n` is `ℵ₁⁻`-braided over `F_{ℵ₀}^n`**, along the coordinatewise inclusion: the free
 `κ`-monoid on `n` generators over the free `ℵ₁⁻`-monoid on the same generators. -/
 theorem isBraidedOver_pi_fcard (hκ0 : ℵ₀ ≤ κ) :
@@ -585,15 +580,6 @@ component of a countable sum that stays *finite* receives contributions from onl
 terms); `alephPart` is additive; and a set of components is the support of a single element of `H`
 as soon as each of its components is hit by some element of `H` that vanishes outside the set. -/
 
-/-- The support of a family of cardinals injects into its cardinal sum. -/
-theorem mk_support_le_csum {ι : Type u} (c : ι → Cardinal.{u}) :
-    #{i | c i ≠ 0} ≤ Cardinal.sum c := by
-  classical
-  have hne : ∀ i : {i | c i ≠ 0}, Nonempty (c (i : ι)).out := fun i =>
-    Cardinal.mk_ne_zero_iff.mp (by rw [Cardinal.mk_out]; exact i.2)
-  exact ⟨⟨fun i => ⟨(i : ι), (hne i).some⟩,
-    fun i j hij => Subtype.ext (congrArg Sigma.fst hij)⟩⟩
-
 /-- `alephPart` is additive, being `alephOne` in each component. -/
 theorem alephPart_add {n : ℕ} (x y : Fin n → Fcard ℵ₀) :
     letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
@@ -686,7 +672,8 @@ theorem LinSystem.ksum_mem_alephExt (p : Idx (ℵ₀ : Cardinal.{u}) → (Fin n 
     ⋃ i ∈ (F : Set (Fin n)), {k | ((p k i : Fcard ℵ₀) : Cardinal.{u}) ≠ 0} with hJdef
   have hJfin : J.Finite := by
     refine Set.Finite.biUnion (F : Set (Fin n)).toFinite fun i hi => ?_
-    refine Cardinal.lt_aleph0_iff_set_finite.mp (lt_of_le_of_lt (mk_support_le_csum _) ?_)
+    refine Cardinal.lt_aleph0_iff_set_finite.mp
+      (lt_of_le_of_lt (Cardinal.mk_support_le_sum _) ?_)
     rw [← hval p i]
     exact (hmemF i).mp (Finset.mem_coe.mp hi)
   have hJout : ∀ i ∈ F, ∀ k, k ∉ J → ((p k i : Fcard ℵ₀) : Cardinal.{u}) = 0 := by

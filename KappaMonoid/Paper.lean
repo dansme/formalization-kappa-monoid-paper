@@ -10,8 +10,10 @@ it, and a closing section listing what the development deliberately does not for
 Nothing else in the development depends on this layer.
 -/
 import KappaMonoid.Paper.Definition21
+import KappaMonoid.Paper.Definition218
 import KappaMonoid.Paper.Section2
 import KappaMonoid.Paper.Section3
 import KappaMonoid.Paper.Section4
 import KappaMonoid.Paper.Section5
+import KappaMonoid.Paper.Section5Extra
 import KappaMonoid.Paper.AxiomAudit

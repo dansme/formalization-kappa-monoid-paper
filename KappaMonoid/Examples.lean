@@ -13,3 +13,5 @@ import KappaMonoid.Examples.Diophantine
 import KappaMonoid.Examples.NNReal
 import KappaMonoid.Examples.Reals
 import KappaMonoid.Examples.Dedekind
+import KappaMonoid.Examples.RealsExtra
+import KappaMonoid.Examples.DiophantineExtra

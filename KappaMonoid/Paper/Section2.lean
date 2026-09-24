@@ -12,11 +12,14 @@ Results the development deliberately does not formalise are recorded at the foot
 import KappaMonoid.Modules.Corollary47
 import KappaMonoid.Modules.Rings.Realisation
 import KappaMonoid.Modules.Rings.Progenerator
+import KappaMonoid.Modules.Rings.CyclicRealisable
 import KappaMonoid.Core.Compatible
 import KappaMonoid.Modules.Rings.Semisimple
 import KappaMonoid.Examples
 import KappaMonoid.Core.Cyclic
+import KappaMonoid.Core.CyclicExtra
 import KappaMonoid.Paper.Definition21
+import KappaMonoid.Paper.Definition218
 
 namespace KappaMonoid
 
@@ -27,10 +30,17 @@ definition transcribed literally, with `KappaMonoid.PaperKMonoid.toKMonoid` and
 `KappaMonoid.KMonoid.toPaper` the two directions of its agreement with `KMonoid`. -/
 alias definition_2_1_PaperKMonoid := KappaMonoid.PaperKMonoid
 
-/-- **Remark 2.2(1)** — commutativity is automatic.  There is no separate statement: it is (A3) of
-Lemma 2.5 (`KappaMonoid.PaperKMonoid.sigma_perm`, from (A1) and (A2) alone), and this is the
-construction that uses it — `KappaMonoid.KMonoid.ofBare` builds the `κ`-monoid, whose addition
-is commutative because of it. -/
+/-- **Definition 2.1** — `KappaMonoid.KMonoid.toPaper_toKMonoid`: the round trip
+`KMonoid → Definition 2.1 → KMonoid` is the identity, as an equality of structures. -/
+alias definition_2_1_toPaper_toKMonoid := KappaMonoid.KMonoid.toPaper_toKMonoid
+
+/-- **Remark 2.2(1)** — commutativity is automatic: `KappaMonoid.PaperKMonoid.sigma_pair_comm`, in
+`Paper/Definition21.lean`, says a two-term `Σ` does not depend on the order of its terms, for
+any structure satisfying only (A1) and (A2). -/
+alias remark_2_2_1_sigma_pair_comm := KappaMonoid.PaperKMonoid.sigma_pair_comm
+
+/-- **Remark 2.2(1)** — the construction resting on it: `KappaMonoid.KMonoid.ofBare` builds the
+`κ`-monoid, whose addition is commutative by (A3). -/
 alias remark_2_2_1_ofBare := KappaMonoid.KMonoid.ofBare
 
 /-- **Remark 2.2(2)** — summing over an arbitrary index set of cardinality `κ`:
@@ -202,8 +212,17 @@ alias lemma_2_15_lemma_2_15 := KappaMonoid.KMonoid.lemma_2_15
 alias lemma_2_15_equivFinitePartSumCard := KappaMonoid.KMonoid.equivFinitePartSumCard
 
 /-- **Lemma 2.15**, *"with the obvious operation"* — `KappaMonoid.KMonoid.lemma_2_15_add`, the
-three rules that determine the operation on `C₀ ⊎ {α : ℵ₀ ≤ α ≤ κ}`. -/
+three rules for binary `+` on `C₀ ⊎ {α : ℵ₀ ≤ α ≤ κ}`. -/
 alias lemma_2_15_lemma_2_15_add := KappaMonoid.KMonoid.lemma_2_15_add
+
+/-- **Lemma 2.15**, the obvious `κ`-sum on `C₀ ⊎ {α : ℵ₀ ≤ α ≤ κ}` — `KappaMonoid.KMonoid.splitSum`, in
+`Core/CyclicExtra.lean`: a finite sum in `C₀` when the sizes add up to a finite cardinal, and the
+cardinal sum of the sizes otherwise; `splitKMonoid` makes it a `κ`-monoid. -/
+alias lemma_2_15_splitSum := KappaMonoid.KMonoid.splitSum
+
+/-- **Lemma 2.15**, the isomorphism of `κ`-monoids `C ≅ C₀ ⊎ {α : ℵ₀ ≤ α ≤ κ}` —
+`KappaMonoid.KMonoid.lemma_2_15_kIso`. -/
+alias lemma_2_15_kIso := KappaMonoid.KMonoid.lemma_2_15_kIso
 
 /-- **Proposition 2.16** — `KappaMonoid.prop_2_16`, in `Modules/Rings/Realisation.lean`. -/
 alias proposition_2_16_prop_2_16 := KappaMonoid.prop_2_16
@@ -223,6 +242,26 @@ alias proposition_2_17_2_prop_2_17_two := KappaMonoid.prop_2_17_two
 /-- **Definition 2.18** — `KappaMonoid.LMonoid`, declared in `Core/SumData.lean` (its API is in
 `Core/LMonoid.lean`): the class of `λ⁻`-monoids. -/
 alias definition_2_18_LMonoid := KappaMonoid.LMonoid
+
+/-- **Definition 2.18**, verbatim — `KappaMonoid.PaperLMonoid`, in `Paper/Definition218.lean`: `Σ`
+partial on `H^(λ)`, (B1) at a distinguished index, (B2) for families with fewer than `λ` nonzero
+rows and columns. -/
+alias definition_2_18_PaperLMonoid := KappaMonoid.PaperLMonoid
+
+/-- **Definition 2.18** ⇒ `LMonoid` — `KappaMonoid.PaperLMonoid.toLMonoid`; its sums are zero-padded
+`Σ`'s along any embedding (`PaperLMonoid.toLMonoid_lsumOf`). -/
+alias definition_2_18_toLMonoid := KappaMonoid.PaperLMonoid.toLMonoid
+
+/-- **Definition 2.18** ⇐ `LMonoid` — `KappaMonoid.LMonoid.toPaper`. -/
+alias definition_2_18_toPaper := KappaMonoid.LMonoid.toPaper
+
+/-- **Definition 2.18**: the round trip `LMonoid → Definition 2.18 → LMonoid` is the identity —
+`KappaMonoid.LMonoid.toPaper_toLMonoid`. -/
+alias definition_2_18_toPaper_toLMonoid := KappaMonoid.LMonoid.toPaper_toLMonoid
+
+/-- **Definition 2.18**: the round trip `Definition 2.18 → LMonoid → Definition 2.18` recovers `Σ` —
+`KappaMonoid.PaperLMonoid.toLMonoid_toPaper_sigma`. -/
+alias definition_2_18_toLMonoid_toPaper_sigma := KappaMonoid.PaperLMonoid.toLMonoid_toPaper_sigma
 
 /-- **Remark 2.19** — `KappaMonoid.LMonoid.ofLE`, in `Core/LMonoid.lean`: restriction of a `λ'⁻`-monoid
 to a `λ⁻`-monoid for regular `λ ≤ λ'`.  Both halves of the remark's first paragraph are instances:
@@ -282,9 +321,41 @@ alias section_2_2_1_cyclicMonoidClassification := cyclicMonoidClassification
 axiom. -/
 alias section_2_2_1_leavittData := KappaMonoid.leavittData
 
-/-- **After Proposition 2.9**: `F_κ(B) = F_κ^B` when `#B ≤ κ` — the key step is
-`KappaMonoid.mem_FreeL_of_mk_lt`, in `Examples/Diophantine.lean`: every family indexed by a basis
-of size `< λ` lies in `F_{λ⁻}(B)`. -/
+/-- **§2.2.1**: realising `C_{0,n}` forces `R = 0` and `n = 1` —
+`KappaMonoid.subsingleton_of_realises_cyclicRel_zero`, in `Modules/Rings/CyclicRealisable.lean`. -/
+alias section_2_2_1_subsingleton_of_realises_cyclicRel_zero :=
+  KappaMonoid.subsingleton_of_realises_cyclicRel_zero
+
+/-- **§2.2.1**: the realisable cyclic monoids are exactly `ℕ₀`, `C_{m,n}` with `m, n ≥ 1`, and
+`C_{0,1}` — `KappaMonoid.cyclicRel_realisable_iff`. -/
+alias section_2_2_1_cyclicRel_realisable_iff := KappaMonoid.cyclicRel_realisable_iff
+
+/-- **§2.2.1**: the rank relation of every ring is one of these — `KappaMonoid.rankRel_classification`
+(axiom-free). -/
+alias section_2_2_1_rankRel_classification := KappaMonoid.rankRel_classification
+
+/-- **§2.2.1** (tex 769): the generator of a cyclic `κ`-monoid is an order-unit —
+`KappaMonoid.KMonoid.isOrderUnit_of_kGenerates`, in `Core/CyclicExtra.lean`. -/
+alias section_2_2_1_isOrderUnit_of_kGenerates := KappaMonoid.KMonoid.isOrderUnit_of_kGenerates
+
+/-- **Before Corollary 4.7** (tex 1783): `add_λ(x) = add(⟨x⟩_λ)` —
+`KappaMonoid.KMonoid.addOfCard_eq_add_closure`, in `Core/CyclicExtra.lean`. -/
+alias add_lambda_eq_add_closure := KappaMonoid.KMonoid.addOfCard_eq_add_closure
+
+/-- **Proposition 2.16**, converse (tex 805) — `KappaMonoid.prop_2_16_converse`: over a nonzero ring,
+`V^κ(𝓕^κ)` is cyclic, generated by the faithful order-unit `[R]`. -/
+alias proposition_2_16_converse := KappaMonoid.prop_2_16_converse
+
+/-- **Proposition 2.16** with its converse (tex 805) — `KappaMonoid.prop_2_16_iff`: the `κ`-monoids
+`V^κ(𝓕^κ)` over nonzero rings are precisely the cyclic ones generated by a faithful order-unit. -/
+alias proposition_2_16_iff := KappaMonoid.prop_2_16_iff
+
+/-- **After Proposition 2.9**: `F_κ(B) = F_κ^B` when `#B ≤ κ` — `KappaMonoid.FreeK_eq_univ`, in
+`Core/Free.lean`. -/
+alias after_prop_2_9_FreeK_eq_univ := KappaMonoid.FreeK_eq_univ
+
+/-- **After Proposition 2.9**, for `λ⁻` — `KappaMonoid.mem_FreeL_of_mk_lt`: every family indexed by a
+basis of size `< λ` lies in `F_{λ⁻}(B)`. -/
 alias after_prop_2_9_mem_FreeL_of_mk_lt := KappaMonoid.mem_FreeL_of_mk_lt
 
 
@@ -293,19 +364,14 @@ alias after_prop_2_9_mem_FreeL_of_mk_lt := KappaMonoid.mem_FreeL_of_mk_lt
 Every numbered item of §2 is above, including both halves of Remark 2.19 and all of Example 2.13.
 Definition 2.1, Definition 2.18 (`λ⁻`-monoids) and the first half of Remark 2.19 are the classes
 `KMonoid`/`LMonoid` and `LMonoid.ofLE` themselves, so they appear as definitions rather than as
-results; `Paper/Definition21.lean` transcribes Definition 2.1 literally and proves it agrees with
-`KMonoid`.  Remark 2.2(3) is a pointer to the literature.
+results; `Paper/Definition21.lean` and `Paper/Definition218.lean` transcribe Definitions 2.1 and
+2.18 literally and prove they agree with `KMonoid` and `LMonoid`.  Remark 2.2(3) is a pointer to the literature.
 
 Some unnumbered prose has no statement of its own:
 
-* §2.2.1: the only-if half of the list of realisable cyclic monoids (`C_{0,n}` forces `R = 0` and
-  `n = 1`), and "the generator of a cyclic `κ`-monoid is an order-unit" (tex 769).
-* Around Proposition 2.16 (tex 778–781, 805): that not every cyclic `κ`-monoid is a
-  `V^κ(𝓕^κ)`, and that the realisable ones are *precisely* those generated by a faithful
-  order-unit.  The ingredients are `FreeMod.isFaithful_unit`, `FreeMod.exists_cmul_unit` and
-  invariance of infinite rank; no single theorem packages them.
-* The identity `add_λ(x) = add(⟨x⟩_λ)` in the definition of `add_λ` (tex 1783): `addOfCard` is
-  defined directly and never compared with the `κ`-closure of `x`. -/
+* Before Proposition 2.16 (tex 778–781): the remark that not every cyclic `κ`-monoid is a
+  `V^κ(𝓕^κ)`.  It is a consequence of `prop_2_16_iff` (a faithful order-unit is needed) but is not
+  stated on its own. -/
 
 end Paper
 

@@ -6,6 +6,7 @@ uses.  Nothing else depends on this file; it exists so that the working definiti
 checked against the paper's.
 -/
 import KappaMonoid.Core.Bare
+import KappaMonoid.Core.Compatible
 
 universe u v w
 
@@ -125,6 +126,18 @@ theorem toKMonoid_add (a b : H) {i₀ i₁ : Idx κ} (hne : i₀ ≠ i₁) :
   let := P.toKMonoid
   rw [← P.toKMonoid_ksum, KMonoid.ksum_two a b i₀ i₁ hne]
 
+/-- **Remark 2.2(1)**: commutativity is automatic.  In terms of the paper's own data, a two-term
+`Σ` does not depend on the order of its terms, although neither (A1) nor (A2) says so.
+
+Paper proof: (A3) of Lemma 2.5 (`sigma_perm`), applied to the transposition of the two indices;
+here it is read off from the reconstructed `κ`-monoid, whose addition is the two-term `Σ`
+(`toKMonoid_add`) and is commutative. -/
+theorem sigma_pair_comm (a b : H) {i₀ i₁ : Idx κ} (hne : i₀ ≠ i₁) :
+    P.sigma (fun i => if i = i₀ then a else if i = i₁ then b else 0)
+      = P.sigma (fun i => if i = i₀ then b else if i = i₁ then a else 0) := by
+  let := P.toKMonoid
+  rw [← P.toKMonoid_add a b hne, ← P.toKMonoid_add b a hne, add_comm]
+
 end PaperKMonoid
 
 /-- **Conversely, every `KMonoid` is a `κ`-monoid in the sense of the paper.**  Any index may be
@@ -142,12 +155,23 @@ noncomputable def KMonoid.toPaper (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H
 
 /-- The round trip `toPaper` then `toKMonoid` gives back the same `κ`-indexed `Σ`: `toPaper` changes
 neither `0` nor `Σ`, and `PaperKMonoid.toKMonoid` recovers them (`PaperKMonoid.toKMonoid_ksum`).
-What is proved is this equality of `Σ`, not an equality of `KMonoid` structures; the latter follows
-in substance, because `sumOf` and `+` are expressed in terms of `0` and `Σ` by
-`KMonoid.sumOf_eq_extend` and `KMonoid.ksum_two`, but it is not stated. -/
+The equality of the whole structures is `KMonoid.toPaper_toKMonoid`, below. -/
 theorem KMonoid.toPaper_toKMonoid_ksum (κ : Cardinal.{u}) (H : Type v) [inst : KMonoid κ H]
     (x : Idx κ → H) :
     @KMonoid.ksum κ H (KMonoid.toPaper κ H).toKMonoid x = @KMonoid.ksum κ H inst x :=
   (KMonoid.toPaper κ H).toKMonoid_ksum x
+
+/-- **The round trip `KMonoid → Definition 2.1 → KMonoid` is the identity**, as an equality of
+structures: sums over every index type and the addition come back unchanged, so a `κ`-monoid is
+exactly the data of Definition 2.1. -/
+theorem KMonoid.toPaper_toKMonoid (κ : Cardinal.{u}) (H : Type v) [inst : KMonoid κ H] :
+    (KMonoid.toPaper κ H).toKMonoid = inst := by
+  obtain ⟨i₀, i₁, hne⟩ := (nontrivial_Idx (KMonoid.aleph0_le (κ := κ) (H := H))).exists_pair_ne
+  refine KMonoid.ext_of_sumOf ?_ ?_
+  · funext a b
+    exact ((KMonoid.toPaper κ H).toKMonoid_add a b hne).trans (KMonoid.ksum_two a b i₀ i₁ hne)
+  · intro ι h x
+    exact ((KMonoid.toPaper κ H).toKMonoid_sumOf h x).trans
+      (KMonoid.sumOf_eq_extend h (emb h) x).symm
 
 end KappaMonoid

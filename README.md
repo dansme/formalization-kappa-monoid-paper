@@ -24,12 +24,12 @@ assumed result, or — since the core does not say `import Mathlib` — most of 
 
 | Layer | Depends on | Contents |
 |---|---|---|
-| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean`, `FreeRank.lean`, `HomDirectSum.lean` + `SimpleMultiplicity.lean`, `CyclicMonoid.lean` (also `C_{m,n}` as a monoid), `Kaplansky.lean` and `Albrecht.lean` — see "Classical results proved here" |
-| `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`), `OrderUnitTransfer` (faithful order-units move along `u ≼ n v ≼ m u`), `Compatible` (**Remark 2.19**, compatible families) |
-| `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (**Lemma 3.7** and Lemma 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable` (**Lemma 3.7** and Lemma 3.8 for `λ > ℵ₀`, and the two combined), `Over` (Definition 3.1(2)), `WellOrder` (**Lemma 3.4(2)(3)**, **Lemma 3.5**, and Definition 3.1(1) over an arbitrary limit well-order), `UnivAux`, `Prop310` (**Proposition 3.10**, Definition 3.11), `UnivExt` (**Theorem 3.12** and its converse), `Saturated` (**Lemma 3.14**) |
-| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, the general form of Cor. 4.4), `SmallPart` (**Corollary 4.4**(1)(2)), `Projective` (**Corollary 4.5**(1)(2)(3), Kaplansky in `κ`-monoid form), `Corollary47` (`V(R) = add [R]`, `add_{ℵ₀} [R] = V^{ℵ₀}(R)`, **Corollary 4.7**(1)(2), **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` and `Progenerator.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**) |
-| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.15**, **Examples 3.16** and **3.17**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**), `Dedekind` (**Examples 4.8(4)**, the monoid side) |
-| `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`) |
+| `KappaMonoid/ForMathlib/` | Mathlib | No `κ`-monoid content and no dependence on the rest, so it compiles once: `TraceIdeal.lean`, `NatBlocks.lean` (`Nat.blockIdx`, cutting `ℕ` into consecutive blocks), `Finprod.lean`, `Hereditary.lean`, `FreeRank.lean`, `HomDirectSum.lean` + `SimpleMultiplicity.lean`, `CyclicMonoid.lean` (also `C_{m,n}` as a monoid), `Kaplansky.lean`, `Albrecht.lean`, and `CardinalSum.lean` (cardinal sums over a support) — see "Classical results proved here" |
+| `KappaMonoid/Core/` | ForMathlib | §2: `Index`, `SumData`, `LMonoid` (= `λ⁻`-monoid) and `KMonoid` with the whole sum API, cardinal scalar multiplication and reducedness (Lemmas 2.7, 2.8), `Subobject` (homomorphisms, `⟨S⟩_κ`, induced structures), `Bare` (`KMonoid.ofBare`, Lemma 2.5), `LHom`, `Cardinal` (`F_{λ⁻}`, `F_κ`), `Free` (**Proposition 2.9**), `OrderUnit` (Defs. 2.11–2.12, **Lemma 2.14**), `Cyclic` (**Lemma 2.15**), `AddOf` (`add x`, `add_λ x`), `OrderUnitTransfer` (faithful order-units move along `u ≼ n v ≼ m u`), `OrderUnitIso` (and along `κ`-isomorphisms), `CyclicExtra` (**Lemma 2.15** as a `κ`-isomorphism; the generator of a cyclic `κ`-monoid is an order-unit), `Compatible` (**Remark 2.19**, compatible families) |
+| `KappaMonoid/Braiding/` | Core | §3: `Defs` (Definition 3.1(1), Lemma 3.6), `TransAleph0` (**Lemma 3.7** and Lemma 3.8 for `λ = ℵ₀`), `Sums` (**Lemma 3.2**, Lemma 3.4), `TransUncountable` (**Lemma 3.7** and Lemma 3.8 for `λ > ℵ₀`, and the two combined), `Over` (Definition 3.1(2)), `WellOrder` (**Lemma 3.4(2)(3)**, **Lemma 3.5**, and Definition 3.1(1) over an arbitrary limit well-order), `UnivAux`, `Prop310` (**Proposition 3.10**, Definition 3.11), `UnivExt` (**Theorem 3.12** and its converse), `Saturated` (**Lemma 3.14**), `Components` (**Remark 3.9**: the coarsening is the connected components), `BaseIso` (universal extensions of isomorphic bases are isomorphic) |
+| `KappaMonoid/Modules/` | Braiding, Axioms | Definition 2.4 and §4: `Small` (Definition 4.1), `DirectSum`, `Class` (`ModuleClass`, `V^κ(C)`), `Theorem43` (**Theorem 4.3**, the general form of Cor. 4.4), `SmallPart` (**Corollary 4.4**(1)(2)), `Projective` (**Corollary 4.5**(1)(2)(3), Kaplansky in `κ`-monoid form), `Corollary47` (`V(R) = add [R]`, `add_{ℵ₀} [R] = V^{ℵ₀}(R)`, **Corollary 4.7**(1)(2), **Examples 4.8(1)**), and `Rings/` — the §2.2–2.3 ring examples: `ProjOrderUnit.lean` and `Progenerator.lean` (**Example 2.13**), `FreeModules.lean` (`V^κ(𝓕^κ)`), `FreeUnit.lean` (ranks), `Leavitt.lean` (Leavitt's realisation theorem), `Realisation.lean` (**Proposition 2.16**), `Semisimple.lean` (**Proposition 2.17**), `CyclicRealisable.lean` (§2.2.1, and the converse of Proposition 2.16); `Transport.lean` (Example 4.2(1)–(2) completed, "`V^{ℵ₀}(R)` determines `V^κ(R)`", **Corollary 4.6(2)** for hereditary rings) |
+| `KappaMonoid/Examples/` | Braiding | `TrivExt` (**Examples 2.3(1)**), `ENNReal` (2.3(2)), `NatBraiding` (**Examples 3.3(1)**, `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2: **Proposition 3.15**, **Examples 3.16** and **3.17**), `NNReal` (braiding in `ℝ≥0`), `Reals` (**Examples 3.3(2)(3)**), `Dedekind` (**Examples 4.8(4)**, the monoid side), `RealsExtra` (Examples 3.3(3)), `DiophantineExtra` (**Examples 3.16**, **3.17** in full, slack variables) |
+| `KappaMonoid/TwoGen/` | Modules | §5: `Forms` (the encoding `α X₁ + β X₂` over `ℕ∞`), `Prelim`, `Lemma52` (**Lemma 5.2**(1)–(5)), `Lemma51` (**Lemma 5.1**), `Realization` (**Theorem 5.3**), `Trace` (**Proposition 5.4**), `Corollary55` (**Corollary 5.5**(1)(2)(3)), `Counterexample` (`ℕ₀² ∪ {∞}`), `Extra` and `ExtraRealization` (the §5 preamble's one-generator criterion, the counterexample's standing hypotheses, the remark before Corollary 5.5) |
 | `KappaMonoid/Axioms/` | Mathlib | The one classical result assumed rather than proved — see below |
 | `KappaMonoid/Paper/` | everything | The paper's numbered results, and nothing else — see "Reading the formalisation against the paper" |
 
@@ -46,12 +46,15 @@ mentions no module and uses no axiom. The module theory enters at `Lemma51`.
   elements `x₁` and `x₂`"* — which in the library travels as two loose arguments. And
   `IsRealizableAsV` names the nine-line "`H ≅ V^{ℵ₀}(R)` for a ring whose projectives are sums of
   finitely generated modules" that Theorem 5.3 and all three parts of Corollary 5.5 repeat.
-* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 168 entries between them,
+* `Paper/Section2.lean`, `Section3.lean` and `Section4.lean` are indices — 212 entries between them,
   one per numbered result, each an `alias` naming the declaration that formalises it and the file
   it lives in. The alias fails to compile if the declaration goes, so the index cannot rot. Each
   closes with what the development deliberately does *not* formalise, and why.
-* `Paper/Definition21.lean` transcribes **Definition 2.1** literally and proves it agrees with the
-  `KMonoid` the development works with.
+* `Paper/Definition21.lean` and `Paper/Definition218.lean` transcribe **Definitions 2.1** and
+  **2.18** literally and prove they agree with the `KMonoid` and `LMonoid` the development works
+  with, as equalities of structures.
+* `Paper/Section5Extra.lean` collects the unnumbered claims of §5, and `Paper/Examples48.lean` the
+  ring-level Examples 4.8(3), which need both `Modules/` and `Examples/`.
 
 `CLAUDE.md` collects what a contributor (human or model) needs before touching the files: the build
 commands, the Lean house style, the axiom and deviation discipline, the recurring elaboration traps
@@ -70,7 +73,7 @@ be checked against the literature before it is relied on.
 
 The list is enforced twice over. `.github/workflows/lean_action_ci.yml` fails if the set of `axiom`
 declarations under `KappaMonoid/` differs from the one above, so adding one means editing the
-workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 111
+workflow and this table in the same commit. And `KappaMonoid/Paper/AxiomAudit.lean` asserts, for 170
 headline results, whether each one uses it — with `#assert_axioms`, a command over `collectAxioms`
 that fails both when a result gains an axiom and when it loses one. The claims below are therefore
 checked, not merely written.
@@ -204,21 +207,22 @@ Nothing here needs it.
   Bergman; exchange, Warfield; semiperfect, Mueller; weakly noetherian commutative, Hinohara;
   Bézout with one-sided Krull dimension, McGovern–Puninski–Rothmaler). `EveryProjectiveIsSumOfFG`
   in `Modules/Corollary47.lean` names the hypothesis all six supply, and it is what
-  `corollary_4_5_three` takes; the *hereditary* case — Albrecht's theorem, the one §§4–5 use — is
-  proved, in `ForMathlib/Albrecht.lean`. There is no declaration for the corollary itself.
-* **Examples 4.8(2), (3), (5)–(7).** Items (1) and (4) are formalised. Item (1) is formalised as
-  printed: `krsa_ascent`, `krsa_ascent_free`, `krsa_ascent_iso` are the general `λ⁻` form, from which the finite-KRSA and the countable/Kaplansky readings are the cases `λ = ℵ₀` and `λ = ℵ₁`.
+  `corollary_4_5_three` takes. The *hereditary* case of (2) — Albrecht's theorem, the one §§4–5
+  use — is formalised as `corollary_4_6_hereditary`; the other cases stay quoted.
+* **Examples 4.8(2), (5)–(7).** Items (1), (3) and (4) are formalised. Item (1) is formalised as
+  printed: `krsa_ascent`, `krsa_ascent_free`, `krsa_ascent_iso` are the general `λ⁻` form, from
+  which the finite-KRSA and the countable/Kaplansky readings are the cases `λ = ℵ₀` and `λ = ℵ₁`.
   Its closing caution — `⟨V(R)⟩_κ` is braided over `V(R)` but need not be divisor-closed in
   `V^κ(R)` — has its positive half available as `lemma_3_14_sub` applied to `addOf_unitClass_eq`,
   but is not stated at the module level, and the negative half is a remark with no proof in the
   paper. The rest:
   * **(2)** is a question (Herbera–Příhoda–Wiegand, Question 1.1) translated into `κ`-monoid
     language — when is `⟨V(C_fg)⟩_κ` divisor-closed in `V^κ(C)`? — not a claim.
-  * **(3)** is Corollary 4.7 instantiated at three monoids. The general statement and all three
-    monoid-side computations are formalised — `corollary_4_7_two_iff`, and `ℕ₀ ∪ {∞}`
-    (`Examples/ENNReal.lean`), `ℝ≥0`/`ℚ≥0` (`Examples/NNReal.lean`, `Examples/Reals.lean`), the Diophantine case
-    (`Examples/Diophantine.lean`). What is missing is only the transport: reading each computation
-    back as a description of `V^{ℵ₀}(R)` for a ring with `V(R)` isomorphic to that monoid.
+  * **(3)** is formalised at ring level in `Paper/Examples48.lean` (`examples_4_8_3_nat`, `_nnreal`,
+    `_rat`, `_diophantine`): for a ring whose projectives are sums of finitely generated ones,
+    `V(R) ≅ ℕ₀`, `ℝ≥0`, `ℚ≥0` or a Diophantine monoid (equations and congruences) determines
+    `V^{ℵ₀}(R)` as printed.  The inequality case goes through slack variables
+    (`LinSystem.exists_withSlack_iso`), as the paper says.
   * **(4)** is formalised on the monoid side in `Examples/Dedekind.lean`: for every abelian group
     `G`, families in `D = {(n, g) ∈ ℕ₀ × G : n ≥ 1 or g = 0}` are braided iff both have finite
     support and equal sums or both have infinite support and equal rank sums
@@ -235,12 +239,9 @@ Nothing here needs it.
     explicitly declines to carry out its own computation.
 * **The remark after Corollary 4.7** (tex 1840) that without the sum-of-finitely-generated
   hypothesis `V(R)` does not in general determine `V^{ℵ₀}(R)` — stated without proof or example.
-* **The §5 preamble** (tex 1989–1991): a cyclic `ℵ₀`-monoid `⟨x⟩` is `V^{ℵ₀}(R)` for a nonzero
-  hereditary ring iff `ℵ₀x ≠ nx` for all `n` — the one-generator counterpart of Theorem 5.3, which
-  the paper calls easy and does not prove; §5 assumes `H` non-cyclic throughout.
-* **Unnumbered prose of §2**: the only-if half of the list of realisable cyclic monoids, "the
-  generator of a cyclic `κ`-monoid is an order-unit", the "precisely" around Proposition 2.16, and
-  `add_λ(x) = add(⟨x⟩_λ)`.  See the foot of `Paper/Section2.lean`.
+* **Unnumbered prose of §2**: the remark before Proposition 2.16 that not every cyclic `κ`-monoid
+  is a `V^κ(𝓕^κ)` (a consequence of `prop_2_16_iff`, not stated on its own).  See the foot of
+  `Paper/Section2.lean`.
 
 ## Encoding decisions
 
@@ -272,7 +273,14 @@ the development says `IsHereditary`.
 **`i` and `j` in §5.** The paper's §5 statements are quantified over `1 ≤ i ≠ j ≤ 2`. The library
 fixes `i = 1`, `j = 2`, and `Paper.Setting5.swap` exchanges the two generators, which is legitimate
 because the standing hypothesis is symmetric in them; `Paper.Setting5.addBase_swap` says the base
-`add(x₁ + x₂)` does not move, and `Paper.lemma_5_2_five'` is a worked instance of the pattern.
+`add(x₁ + x₂)` does not move, and `Paper.lemma_5_2_five'`, `lemma_5_2_three'` and `lemma_5_2_four'`
+(`Paper/Section5Extra.lean`) are the `i = 2`, `j = 1` instances.
+
+**The §5 preamble's `C ∪ {∞}`.** The preamble says a realisable cyclic `ℵ₀`-monoid has the form
+`C ∪ {∞}` for a nonzero cyclic monoid `C`; `TwoGen.ne_nsmul_iff_exists_withTop` asks `C` to be
+reduced as well, which the paper leaves implicit: `C ∪ {∞}` is the trivial `ℵ₀`-extension of
+Examples 2.3(1), defined only for reduced `C`, and a `κ`-monoid is always reduced (Lemma 2.8).
+Among nonzero cyclic monoids this excludes only the groups `C_{0,n}`, `n ≥ 2`.
 
 **Lemma 3.4(3) is stated in the normal form.** The paper concludes *"there exists a limit
 well-order on `κ` such that the families are `λ⁻`-braided"*; `isBraided_of_blocks` concludes plain
