@@ -6,7 +6,7 @@ statements) and `kappa_monoids.pdf`.
 
 `README.md` is the short, human-readable overview: status, the one assumed result, the differences
 from the paper, what is deliberately not formalised, and the layer map.  Keep it short; detailed
-rationale belongs in docstrings.  `audit.md` records the audit against the paper and its follow-ups.
+rationale belongs in docstrings.
 
 ## Build
 
@@ -264,8 +264,7 @@ section with a reason.  Index conventions:
 
 **Keep the documents in step.**  When a result is added or a gap closed, update the `Paper/` entry,
 the "Not formalised" section, the "What is not formalised" list in `README.md` (and its count of
-`AxiomAudit` assertions), and — if the change answers an audit finding — the
-status section of `audit.md`.  `README.md` stays short and for humans; detail goes in docstrings.
+`AxiomAudit` assertions).  `README.md` stays short and for humans; detail goes in docstrings.
 
 Before writing a new construction, check whether the analogous one exists, and prefer the builder
 to a hand-rolled `BraidingData`: `IsBraided.of_partition`, `of_levels`, `of_nat_blocks` (a bijection

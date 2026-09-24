@@ -22,9 +22,6 @@ It covers Sections 2–5 of the paper:
   depend only on Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`).
 - **Pinned toolchain:** Lean and Mathlib `v4.33.0`.
 
-An independent audit of the formalisation against the paper, and the fixes that followed it, is in
-`audit.md`.
-
 ## Reading it against the paper
 
 `KappaMonoid/Paper/` is written to be read with the PDF open. Nothing else depends on it.
