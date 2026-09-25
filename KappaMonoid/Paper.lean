@@ -16,4 +16,3 @@ import KappaMonoid.Paper.Section3
 import KappaMonoid.Paper.Section4
 import KappaMonoid.Paper.Section5
 import KappaMonoid.Paper.Section5Extra
-import KappaMonoid.Paper.AxiomAudit

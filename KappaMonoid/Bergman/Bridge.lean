@@ -57,8 +57,8 @@ theorem nonempty_bergmanDicksData_of_V (k : Type u) [Field k] (M : Type u) [AddC
 /-- Over a zero ring every module is projective (it is zero, hence free). -/
 theorem projective_of_subsingleton_ring {S : Type*} [Ring S] [Subsingleton S] (N : Type*)
     [AddCommGroup N] [Module S N] : Module.Projective S N := by
-  haveI := Module.subsingleton S N
-  haveI := Module.Free.of_subsingleton S N
+  have := Module.subsingleton S N
+  have := Module.Free.of_subsingleton S N
   exact Module.Projective.of_free
 
 /-- The trivial monoid is realised by the zero ring. -/
@@ -75,7 +75,7 @@ theorem nonempty_bergmanDicksData_of_subsingleton (k : Type u) [Field k] (M : Ty
     iso_add := fun _ _ => ⟨LinearEquiv.ofSubsingleton _ _⟩
     inj := fun _ _ _ => Subsingleton.elim _ _
     surj := fun Q _ _ _ _ => by
-      haveI := Module.subsingleton PUnit.{u + 1} Q
+      have := Module.subsingleton PUnit.{u + 1} Q
       exact ⟨u, ⟨LinearEquiv.ofSubsingleton _ _⟩⟩
     iso_unit := ⟨LinearEquiv.refl _ _⟩ }⟩
 

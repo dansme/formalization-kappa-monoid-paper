@@ -85,7 +85,7 @@ theorem Std.supp_neg (y : Std σC inc B) : (-y).supp = y.supp := by
 
 theorem Std.supp_sum {α : Type*} (s : Finset α) (y : α → Std σC inc B) :
     (∑ a ∈ s, y a).supp ⊆ s.biUnion fun a => (y a).supp := by
-  simpa [Std.supp] using Finsupp.support_finset_sum
+  simpa [Std.supp] using Finsupp.support_finsetSum
 
 /-- Every element is the combination of its monomials. -/
 theorem Std.eq_sum_mono (y : Std σC inc B) :

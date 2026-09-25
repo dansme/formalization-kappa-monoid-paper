@@ -266,7 +266,7 @@ theorem IsTopF.isLead {l : Λ} {y : Std σC inc B} {v : Mono σ B.S}
   have hvd := h.deg_eq
   obtain ⟨w₀, hw₀, hw₀d, hw₀s⟩ : ∃ w ∈ y.supp, w.deg = y.deg ∧ w.side ≠ some l := by
     by_contra hc
-    push_neg at hc
+    push Not at hc
     exact hp ⟨hy, hc⟩
   have hvs : v.side ≠ some l := by
     intro hvs

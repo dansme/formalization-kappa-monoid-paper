@@ -183,8 +183,8 @@ theorem cmul_top_add_ecmul_of_mem_addOf {x₁ x₂ : H} (h : x₁ ∈ add(x₂))
   obtain ⟨z, n, hzn⟩ := h
   -- `n x₂` is a summand of `ℵ₀ x₂`, because `n + ℵ₀ = ℵ₀`
   have hn : KMonoid.cmul (κ := ℵ₀) ((n : ℕ) : Cardinal.{u})
-        (le_of_lt (Cardinal.nat_lt_aleph0 n)) x₂ + ℵ₀∙x₂ = ℵ₀∙x₂ := by
-    rw [← KMonoid.cmul_add (κ := ℵ₀) (le_of_lt (Cardinal.nat_lt_aleph0 n)) le_rfl
+        (le_of_lt (Cardinal.natCast_lt_aleph0 (n := n))) x₂ + ℵ₀∙x₂ = ℵ₀∙x₂ := by
+    rw [← KMonoid.cmul_add (κ := ℵ₀) (le_of_lt (Cardinal.natCast_lt_aleph0 (n := n))) le_rfl
       (le_of_eq (Cardinal.nat_add_aleph0 n)) x₂]
     exact KMonoid.cmul_congr (Cardinal.nat_add_aleph0 n) _ le_rfl x₂
   -- hence so is `x₁`

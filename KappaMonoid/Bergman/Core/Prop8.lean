@@ -114,7 +114,7 @@ noncomputable def SubFam.pres (F : SubFam σC inc B)
   coprod := Fact.out
   A μ := F.L μ
   j := F.incl
-  j_smul μ r a := rfl
+  j_smul _ _ _ := rfl
   lift P _ _ _ _ g hg := F.lift_of_wp hF P g hg
 
 /-- **Proposition 8.4**: a well-positioned family generating `Std` is the family of components. -/

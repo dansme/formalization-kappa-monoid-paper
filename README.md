@@ -35,8 +35,6 @@ It covers Sections 2–5 of the paper:
 - `Definition21.lean` and `Definition218.lean` transcribe the definitions of κ-monoids and
   λ⁻-monoids word for word. Each proves that its transcription is the same structure the
   development works with.
-- `AxiomAudit.lean` checks, for 171 headline results, which axioms each one uses. The build fails if
-  that changes in either direction.
 
 Throughout the library, docstrings open with the paper reference (**Lemma 3.14(2)**, …), and most
 carry a short `Paper proof:` paragraph.

@@ -4,9 +4,9 @@ A Lean 4 formalisation of Nazemian–Smertnig, *A monoid-theoretical approach to
 decompositions of modules*. The paper is in the repo: `kappa_monoids.tex` (source of truth for
 statements) and `kappa_monoids.pdf`.
 
-`README.md` is the short, human-readable overview: status, the one assumed result, the differences
-from the paper, what is deliberately not formalised, and the layer map.  Keep it short; detailed
-rationale belongs in docstrings.
+`README.md` is the short, human-readable overview: status, the Bergman–Dicks theorem, the
+differences from the paper, what is deliberately not formalised, and the layer map.  Keep it short;
+detailed rationale belongs in docstrings.
 
 ## Build
 
@@ -89,7 +89,7 @@ unbuilt edits to the file's imports; and a new file importing another new file n
 10. **Parallel work in one tree.** Several agents can work at once if each writes *new files only*
     and checks them with `lake env lean`; nobody runs `lake build` on an existing target, and nobody
     edits an existing file.  One person then integrates — imports in `KappaMonoid.lean` or the layer
-    aggregator, the `Paper/` entries, `AxiomAudit.lean` — moves general lemmas to their proper layer,
+    aggregator, the `Paper/` entries — moves general lemmas to their proper layer,
     and builds once.  Never edit sources while a `lake build` is running: a module compiled late in
     the run picks up the half-finished edit.
 11. **Inserting into the `Paper/` indices: never between a docstring and its `alias`.**  A
@@ -124,13 +124,11 @@ unbuilt edits to the file's imports; and a new file importing another new file n
 - **No axioms without asking.** The development declares none.  The Bergman–Dicks realisation
   theorem (`bergmanDicksData`), which the paper quotes and which used to be the one axiom, is proved
   in `KappaMonoid/Bergman/`; `BergmanDicksData` (`Bergman/Data.lean`) is its conclusion, and its
-  `hereditary` field is the two-sided `IsHereditary`.  A new headline result gets a line in
-  `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo []` — which is checked by the build and
-  fails in both directions (update the count in `README.md` if you add lines).  CI enforces the
-  list: `.github/workflows/lean_action_ci.yml` runs `scripts/list_axioms.lean`, which asks Lean for
-  every `axiom` constant in a `KappaMonoid` module, and diffs it against the empty list; a
-  deliberate addition means asking first, then editing that expected list *and* `README.md` in the
-  same commit.
+  `hereditary` field is the two-sided `IsHereditary`.  CI enforces this:
+  `.github/workflows/lean_action_ci.yml` runs `scripts/list_axioms.lean`, which asks Lean for every
+  `axiom` constant in a `KappaMonoid` module, and diffs it against the empty list; a deliberate
+  addition means asking first, then editing that expected list *and* `README.md` in the same
+  commit.
 - **Left modules.** Mathlib's `Module R` is a left module and the paper's modules are right modules,
   so the paper's "right hereditary" is `IsLeftHereditary` here, and an unqualified "hereditary" is
   `IsHereditary`.  Every statement is the paper's statement for `Rᵐᵒᵖ`.
@@ -263,8 +261,7 @@ section with a reason.  Index conventions:
   states.
 
 **Keep the documents in step.**  When a result is added or a gap closed, update the `Paper/` entry,
-the "Not formalised" section, the "What is not formalised" list in `README.md` (and its count of
-`AxiomAudit` assertions).  `README.md` stays short and for humans; detail goes in docstrings.
+the "Not formalised" section, and the "What is not formalised" list in `README.md`.  `README.md` stays short and for humans; detail goes in docstrings.
 
 Before writing a new construction, check whether the analogous one exists, and prefer the builder
 to a hand-rolled `BraidingData`: `IsBraided.of_partition`, `of_levels`, `of_nat_blocks` (a bijection

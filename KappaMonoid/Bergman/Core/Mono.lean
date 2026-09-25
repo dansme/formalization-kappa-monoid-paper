@@ -166,7 +166,7 @@ theorem key_injective : Function.Injective (key (σ := σ) (S := S)) := by
 /-- The position of a monomial in the order: degree, then key. -/
 noncomputable def ord (w : Mono σ S) : ℕ ×ₗ List Cardinal.{u} := toLex (w.deg, key w)
 
-theorem ord_injective : Function.Injective (ord (σ := σ) (S := S)) := fun w w' h =>
+theorem ord_injective : Function.Injective (ord (σ := σ) (S := S)) := fun _ _ h =>
   key_injective (congrArg (fun p => (ofLex p).2) h)
 
 /-- The well-order on monomials: by degree, then lexicographically from the base element. -/

@@ -225,7 +225,7 @@ theorem lead_letter {y : Std σC inc B} {u : Mono σ B.S} (t : Letter σ)
     · exact h.2
   -- the coefficient of `v`
   have hcoeff : Std.coeff σC inc B ty v = Std.coeff σC inc B y u := by
-    rw [hty, map_sum, Finsupp.finset_sum_apply]
+    rw [hty, map_sum, Finsupp.finsetSum_apply]
     rw [Finset.sum_eq_single u]
     · rw [map_smul, Finsupp.smul_apply, show inc t.side t.val • Std.mono σC inc B u =
         Std.mono σC inc B v from (Std.mono_cons σC inc B t u h₁ h₂).symm, Std.coeff_mono,

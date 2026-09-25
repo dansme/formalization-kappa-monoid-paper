@@ -31,7 +31,6 @@ def MvN {m n : Type*} [Fintype m] [Fintype n] (e : Matrix m m R) (f : Matrix n n
   ∃ (a : Matrix m n R) (b : Matrix n m R), a * b = e ∧ b * a = f
 
 variable {l m n o : Type*} [Fintype l] [Fintype m] [Fintype n] [Fintype o]
-  [DecidableEq l] [DecidableEq m] [DecidableEq n] [DecidableEq o]
 
 theorem MvN.refl {e : Matrix m m R} (he : e * e = e) : MvN e e := ⟨e, e, he, he⟩
 
@@ -82,14 +81,15 @@ theorem fromBlocks_idem {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m] [D
   rw [Matrix.fromBlocks_multiply]; simp [he, hf]
 
 /-- Block sums commute up to equivalence. -/
-theorem MvN.fromBlocks_comm {e : Matrix m m R} {f : Matrix n n R} (he : e * e = e)
+theorem MvN.fromBlocks_comm [DecidableEq m] [DecidableEq n] {e : Matrix m m R} {f : Matrix n n R} (he : e * e = e)
     (hf : f * f = f) : MvN (Matrix.fromBlocks e 0 0 f) (Matrix.fromBlocks f 0 0 e) := by
   have := MvN.reindex (fromBlocks_idem he hf) (Equiv.sumComm m n)
   convert this using 1
   ext (i | i) (j | j) <;> simp [Matrix.reindex_apply]
 
 /-- Block sums are associative up to equivalence. -/
-theorem MvN.fromBlocks_assoc {e : Matrix m m R} {f : Matrix n n R} {g : Matrix o o R}
+theorem MvN.fromBlocks_assoc [DecidableEq m] [DecidableEq n] [DecidableEq o]
+    {e : Matrix m m R} {f : Matrix n n R} {g : Matrix o o R}
     (he : e * e = e) (hf : f * f = f) (hg : g * g = g) :
     MvN (Matrix.fromBlocks (Matrix.fromBlocks e 0 0 f) 0 0 g)
       (Matrix.fromBlocks e 0 0 (Matrix.fromBlocks f 0 0 g)) := by
@@ -212,13 +212,14 @@ variable {m n : Type*} [Fintype m] [DecidableEq m] [Fintype n] [DecidableEq n]
 /-- The class in `V(R)` of an idempotent matrix indexed by any finite type. -/
 noncomputable def cls (e : Matrix m m R) (he : e * e = e) : V R :=
   Quotient.mk _ ⟨Fintype.card m, Matrix.reindex (Fintype.equivFin m) (Fintype.equivFin m) e,
-    by rw [← Matrix.reindexLinearEquiv_apply ℕ R, Matrix.reindexLinearEquiv_mul, he]⟩
+    by rw [← Matrix.coe_reindexLinearEquiv ℕ R, Matrix.reindexLinearEquiv_mul, he]⟩
 
 omit [DecidableEq m] in
 theorem cls_congr {e e' : Matrix m m R} (h : e = e') (he : e * e = e) (he' : e' * e' = e') :
     cls e he = cls e' he' := by
   subst h; rfl
 
+omit [DecidableEq m] [DecidableEq n] in
 theorem cls_eq_cls {e : Matrix m m R} (he : e * e = e) {f : Matrix n n R} (hf : f * f = f) :
     cls e he = cls f hf ↔ MvN e f := by
   have he' := reindex_idem he (Fintype.equivFin m)
@@ -239,14 +240,17 @@ theorem cls_surjective (x : V R) : ∃ (n : ℕ) (e : Matrix (Fin n) (Fin n) R) 
   obtain ⟨e⟩ := x
   exact ⟨e.n, e.e, e.idem, cls_mk e⟩
 
+omit [DecidableEq m] [DecidableEq n] in
 theorem cls_reindex {e : Matrix m m R} (he : e * e = e) (σ : m ≃ n) :
     cls (Matrix.reindex σ σ e) (reindex_idem he σ) = cls e he :=
   (cls_eq_cls _ _).2 (MvN.reindex he σ).symm
 
+omit [DecidableEq m] [DecidableEq n] in
 theorem submatrix_idem {e : Matrix m m R} (he : e * e = e) (σ : n ≃ m) :
     e.submatrix σ σ * e.submatrix σ σ = e.submatrix σ σ :=
   reindex_idem he σ.symm
 
+omit [DecidableEq m] [DecidableEq n] in
 theorem cls_submatrix {e : Matrix m m R} (he : e * e = e) (σ : n ≃ m) :
     cls (e.submatrix σ σ) (submatrix_idem he σ) = cls e he :=
   cls_reindex he σ.symm

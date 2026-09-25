@@ -23,8 +23,7 @@ allowed() {                      # $1 = layer of the importing file
     Bergman)    echo "ForMathlib Bergman" ;;
     Modules)    echo "ForMathlib Core Braiding Bergman Modules" ;;
     TwoGen)     echo "ForMathlib Core Braiding Examples Bergman Modules TwoGen" ;;
-    Paper)      echo "ForMathlib Core Braiding Examples Bergman Modules TwoGen Paper Meta" ;;
-    Meta)       echo "" ;;
+    Paper)      echo "ForMathlib Core Braiding Examples Bergman Modules TwoGen Paper" ;;
     *)          echo "*" ;;
   esac
 }

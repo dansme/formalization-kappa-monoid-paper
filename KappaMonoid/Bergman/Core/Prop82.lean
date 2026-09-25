@@ -122,7 +122,7 @@ noncomputable def φe (μ : Option Λ) (j : ι) : eSub σ N' μ j →ₗ[k] Mono
 
 include hφ in
 theorem φe_injective (μ : Option Λ) (j : ι) : Function.Injective (φe φ μ j) :=
-  fun a b h => Subtype.ext (hφ μ ((Std.coeff σC inc B).injective h))
+  fun _ _ h => Subtype.ext (hφ μ ((Std.coeff σC inc B).injective h))
 
 /-- The chosen bases: a basis of `e_j N'_μ` with distinct greatest terms for `gord o`. -/
 noncomputable def eb (μ : Option Λ) (j : ι) (o : Option Λ) : EchBasis (gord o) (φe φ μ j) :=
@@ -247,7 +247,6 @@ theorem top_wordAct {y : Std σC inc B} {v : Mono σ B.S}
     obtain ⟨-, h2, h3, -⟩ := lead_word (inc := inc) t ts h hl (hcons l hl)
     refine ⟨?_, h2⟩
     rw [Finsupp.mem_support_iff]
-    change Std.coeff σC inc B _ _ ≠ 0
     rw [h3]; exact Std.mem_supp.1 hv
 
 namespace Idx
@@ -546,7 +545,7 @@ theorem mem_range_incl (μ : Option Λ) (a : N' μ) :
   by_contra hne
   obtain ⟨w, hw, hs⟩ : ∃ w ∈ (φ μ a).supp, strip B μ w ≠ none := by
     by_contra hc
-    push_neg at hc
+    push Not at hc
     apply hne
     rw [← LinearMap.coe_range, SetLike.mem_coe, Std.eq_sum_mono (φ μ a)]
     refine Submodule.sum_mem _ fun w hw => Submodule.smul_mem _ _ ?_

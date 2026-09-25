@@ -81,10 +81,10 @@ theorem eμ_ne_zero (hσ : ∀ l, Function.Injective (σ l)) (μ : Option Λ) (i
 /-- The Peirce component `e_i R_μ e_j`, a `k`-subspace. -/
 def peirce (μ : Option Λ) (i j : ι) : Submodule k (Rμ k ι R μ) where
   carrier := {r | eμ σ μ i * r * eμ σ μ j = r}
-  add_mem' := by intro a b ha hb; simp only [Set.mem_setOf_eq] at *; rw [mul_add, add_mul, ha, hb]
+  add_mem' := by intro a b ha hb; simp only [Set.mem_ofPred_eq] at *; rw [mul_add, add_mul, ha, hb]
   zero_mem' := by simp
   smul_mem' := by
-    intro c a ha; simp only [Set.mem_setOf_eq] at *
+    intro c a ha; simp only [Set.mem_ofPred_eq] at *
     rw [mul_smul_comm, smul_mul_assoc, ha]
 
 theorem eμ_mem_peirce (μ : Option Λ) (i : ι) : eμ σ μ i ∈ peirce σ μ i i := by
@@ -178,7 +178,7 @@ theorem isEmpty_Tl_none (i j : ι) : IsEmpty (Tl σ none i j) := by
       rw [hrx x]
       by_cases hx : x = i
       · subst hx; simp [ee]
-      · simp [ee, Pi.single_apply, hx]
+      · simp [ee, hx]
     have := congrArg (fun v => b.repr v (Sum.inl t)) hc
     simp at this
   · have h0 : b (Sum.inl t) = 0 := by
@@ -255,7 +255,7 @@ theorem leftIdealBasis_none (μ : Option Λ) (j : ι) :
   rw [peirceEquiv_symm_apply, Pi.basis_apply]
   rw [Finset.sum_eq_single j]
   · simp [(lb σ μ j j).b_inr]
-  · intro i _ hi; simp [Pi.single_apply, hi]
+  · intro i _ hi; simp [hi]
   · simp
 
 theorem leftIdealBasis_some (μ : Option Λ) (j : ι) (t : Σ i, Tl σ μ i j) :
@@ -267,7 +267,7 @@ theorem leftIdealBasis_some (μ : Option Λ) (j : ι) (t : Σ i, Tl σ μ i j) :
   rw [peirceEquiv_symm_apply, Pi.basis_apply]
   rw [Finset.sum_eq_single t.1]
   · simp [tval]
-  · intro i _ hi; simp [Pi.single_apply, hi]
+  · intro i _ hi; simp [hi]
   · simp
 
 end Bergman.Core

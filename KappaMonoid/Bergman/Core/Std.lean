@@ -44,10 +44,10 @@ variable (N : Option Λ → Type u) [∀ μ, AddCommGroup (N μ)] [∀ μ, Modul
 /-- `e_j N_μ`, a `k`-subspace. -/
 def eSub (μ : Option Λ) (j : ι) : Submodule k (N μ) where
   carrier := {x | eμ σ μ j • x = x}
-  add_mem' := by intro a b ha hb; simp only [Set.mem_setOf_eq] at *; rw [smul_add, ha, hb]
+  add_mem' := by intro a b ha hb; simp only [Set.mem_ofPred_eq] at *; rw [smul_add, ha, hb]
   zero_mem' := by simp
   smul_mem' := by
-    intro c a ha; simp only [Set.mem_setOf_eq] at *
+    intro c a ha; simp only [Set.mem_ofPred_eq] at *
     rw [smul_comm, ha]
 
 /-- Homogeneous `k`-bases of the modules `N_μ`: a basis of each `e_j N_μ`. -/
@@ -100,7 +100,7 @@ theorem HomBases.basis_apply (μ : Option Λ) (j : ι) (s : B.S μ j) :
   change ∑ j', ((Pi.single j (B.b μ j s) : ∀ j, eSub σ N μ j) j' : N μ) = _
   rw [Finset.sum_eq_single j]
   · simp
-  · intro j' _ hj'; simp [Pi.single_apply, hj']
+  · intro j' _ hj'; simp [hj']
   · simp
 
 theorem HomBases.basis_mem (μ : Option Λ) (j : ι) (s : B.S μ j) :
@@ -577,7 +577,7 @@ theorem liftLin_smul_mono
       conv_lhs => rw [hsum]
       simp
     rw [hx, map_sum]
-    simp only [map_smul, liftLin_mono, liftMono_join_inr σC inc B hg, smul_assoc]
+    simp only [map_smul, liftLin_mono, liftMono_join_inr σC inc B hg]
     calc ∑ o ∈ (b.repr v).support, b.repr v o • incμ σC inc μ (b o) • liftMono inc B P g u.1
         = incμ σC inc μ (v : Rμ k ι R μ) • liftMono inc B P g u.1 := by
           rw [hr, map_sum, Finset.sum_smul]

@@ -638,7 +638,7 @@ theorem exists_aligned_cumulative {x y z : ι → X}
   refine ⟨e₁, e₂, fun μ => ⟨?_, ?_⟩⟩
   · -- `J_ν ⊆ J'_ν` at a limit `ν`, and `J_{ρ+1} ⊆ J'_ρ ∪ J'_{ρ+1}` at a successor
     intro i hi
-    simp only [Set.mem_iUnion, Set.mem_setOf_eq, exists_prop] at hi ⊢
+    simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop] at hi ⊢
     obtain ⟨ν, hνμ, hi⟩ := hi
     obtain ⟨a, (_ | n)⟩ := ν
     · exact ⟨(a, 0), hνμ, h3 a hi⟩
@@ -650,7 +650,7 @@ theorem exists_aligned_cumulative {x y z : ι → X}
       · exact ⟨(a, n + 1), hνμ, h⟩
   · -- `J'_ν ⊆ J_ν ∪ J_{ν+1}`, and both indices are `≤ μ+1`
     intro i hi
-    simp only [Set.mem_iUnion, Set.mem_setOf_eq, exists_prop] at hi ⊢
+    simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop] at hi ⊢
     obtain ⟨ν, hνμ, hi⟩ := hi
     have hνs : kOrd ι ν (bsucc μ) := by
       rcases hνμ with hν | hν

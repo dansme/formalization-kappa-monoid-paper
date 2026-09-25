@@ -150,7 +150,7 @@ section Idem
 variable (k) in
 /-- `k → k × k`, the diagonal, as an algebra map from `k^Unit`. -/
 noncomputable def diagTwo : (Unit → k) →ₐ[k] (Fin 2 → k) :=
-  Pi.algHom k _ fun _ => Pi.evalAlgHom k (fun _ => k) ()
+  AlgHom.pi fun _ => Pi.evalAlgHom k (fun _ => k) ()
 
 variable (n : ℕ)
 
