@@ -19,7 +19,7 @@ homomorphism by transfers and transvections), Proposition 8.2 and Proposition 8.
 import KappaMonoid.Bergman.Idem
 import KappaMonoid.Bergman.Presentation
 import KappaMonoid.Bergman.IsCoprod
-import KappaMonoid.Bergman.Core.VBridge
+import KappaMonoid.Bergman.Core.Main
 
 universe u
 

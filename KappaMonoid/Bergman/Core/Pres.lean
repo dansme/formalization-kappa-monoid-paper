@@ -10,15 +10,8 @@ transvections act (the remark after Theorem 2.3).
 
 `StdPres.Step` records how the isomorphism types of the components change under one basic
 transfer (a summand `R_λ e_j` of `A λ` becomes a summand `k^ι e_j` of `A none`, or conversely) or
-under a transvection (no change).  The two statements at the end are what Bergman's coproduct
-theorem (`Bergman/Coprod.lean`) is derived from:
-
-* `exists_pres_of_projective` — **Corollary 2.6**: every finitely generated projective
-  `C`-module has a standard presentation with finitely generated projective components;
-* `exists_reach_of_equiv` — **Theorem 2.3** for isomorphisms (the form used in Corollary 2.8):
-  if `M ≅ M'` with standard presentations with finitely generated components, then a sequence
-  of transfers and transvections turns the presentation of `M` into one whose components are
-  isomorphic to those of `M'`.
+under a transvection (no change).  Corollary 2.6 and Theorem 2.3, in terms of these, are in
+`Core/Main.lean`.
 -/
 import KappaMonoid.Bergman.Core.Std
 
@@ -103,18 +96,5 @@ noncomputable def Std.pres {N : Option Λ → Type u} [∀ μ, AddCommGroup (N �
   j := Std.incl σC inc B
   j_smul := Std.incl_smul σC inc B
   lift P _ _ _ _ g hg := Std.exists_unique_lift σC inc B P g hg
-
-/-- **Corollary 2.6**: a finitely generated projective module over the coproduct has a standard
-presentation with finitely generated projective components. -/
-theorem exists_pres_of_projective (P : Type u) [AddCommGroup P] [Module C P] [Module k P]
-    [IsScalarTower k C P] [Module.Projective C P] [Module.Finite C P] :
-    ∃ p : StdPres σ σC inc P, p.FGP := sorry
-
-/-- **Theorem 2.3**, for isomorphisms: if `M ≅ M'`, with standard presentations with finitely
-generated components, then transfers and transvections turn the presentation of `M` into one
-whose components are those of `M'`. -/
-theorem exists_reach_of_equiv {M' : Type u} [AddCommGroup M'] [Module C M'] [Module k M']
-    [IsScalarTower k C M'] (p : StdPres σ σC inc M) (q : StdPres σ σC inc M') (hp : p.FG)
-    (hq : q.FG) (e : M ≃ₗ[C] M') : ∃ p', p.Reach p' ∧ p'.IsoExcept q ∅ := sorry
 
 end Bergman.Core

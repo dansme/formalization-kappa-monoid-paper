@@ -12,8 +12,9 @@ presentation `p` with f.g. projective components has the tuple of component clas
 * `StdPres.nonempty_equiv`: presentations with isomorphic components present isomorphic modules.
 * `StdPres.Reach.rel`: along transfers and transvections the tuple changes by basic transfers.
 
-Together with `exists_pres_of_projective` and `exists_reach_of_equiv` (`Core/Pres.lean`) these
-give `IsCoprod.coprodV_surjective` and `IsCoprod.coprodV_eq_iff` (`Bergman/Coprod.lean`).
+With Corollary 2.6 and Theorem 2.3 these give `exists_pair_of_cls` and `rel_of_eq`
+(`Core/Main.lean`), hence `IsCoprod.coprodV_surjective` and `IsCoprod.coprodV_eq_iff`
+(`Bergman/Coprod.lean`).
 -/
 import KappaMonoid.Bergman.Core.Pres
 import KappaMonoid.Bergman.IdemModule
@@ -445,75 +446,6 @@ theorem StdPres.Reach.rel {p p' : StdPres σ σC inc M} (h : p.Reach p') (hp : p
 
 end pres
 
-/-! ## Bergman's theorem on `V` of a coproduct -/
-
-section final
-
-variable [Fact (∀ l, Function.Injective (σ l))] [Fact (IsCoprod k σ C σC inc)]
-
-/-- The components of a pair, indexed by `Option Λ`. -/
-def pairComp (x : V (ι → k) × ∀ l, V (R l)) : ∀ μ : Option Λ, V (Rμ k ι R μ)
-  | none => x.1
-  | some l => x.2 l
-
-omit [Fact (∀ l, Function.Injective (σ l))] [Fact (IsCoprod k σ C σC inc)] in
-theorem sum_pairComp (x : V (ι → k) × ∀ l, V (R l)) :
-    ∑ μ, V.map (incμ σC inc μ).toRingHom (pairComp x μ) =
-      V.map σC.toRingHom x.1 + ∑ l, V.map (inc l).toRingHom (x.2 l) :=
-  Fintype.sum_option _
-
-omit [Fact (∀ l, Function.Injective (σ l))] [Fact (IsCoprod k σ C σC inc)] in
-theorem realPres_vpair (hC : IsCoprod k σ C σC inc) {m : Option Λ → Type}
-    [∀ μ, Fintype (m μ)] [∀ μ, DecidableEq (m μ)] (e : ∀ μ, Matrix (m μ) (m μ) (Rμ k ι R μ))
-    (he : ∀ μ, e μ * e μ = e μ) (x : V (ι → k) × ∀ l, V (R l))
-    (hx : ∀ μ, cls (e μ) (he μ) = pairComp x μ) : (realPres σC inc e hC he).vpair = x :=
-  Prod.ext ((vcls_eq (he none) (LinearEquiv.refl _ (rowMod (e none)))).trans (hx none))
-    (funext fun l => (vcls_eq (he (some l)) (LinearEquiv.refl _ (rowMod (e (some l))))).trans
-      (hx (some l)))
-
-variable (σ) in
-include σ in
-/-- **Corollary 2.6** on `V`: every class in `V(C)` is induced from the factors. -/
-theorem exists_pair_of_cls (y : V C) : ∃ x : V (ι → k) × ∀ l, V (R l),
-    V.map σC.toRingHom x.1 + ∑ l, V.map (inc l).toRingHom (x.2 l) = y := by
-  obtain ⟨n, F, hF, rfl⟩ := cls_surjective y
-  have := rowMod.projective hF
-  obtain ⟨p, hp⟩ := exists_pres_of_projective (σ := σ) (σC := σC) (inc := inc) (rowMod F)
-  choose m e he hφ using fun μ => have := (hp μ).1; have := (hp μ).2
-    exists_rowModEquiv (R := Rμ k ι R μ) (p.A μ)
-  refine ⟨(cls (e none) (he none), fun l => cls (e (some l)) (he (some l))), ?_⟩
-  rw [← sum_pairComp]
-  have hc : ∀ μ, pairComp (R := R) (cls (e none) (he none), fun l => cls (e (some l)) (he (some l)))
-      μ = cls (e μ) (he μ) := by rintro (_ | l) <;> rfl
-  simp only [hc]
-  rw [← cls_realE (σC := σC) (inc := inc) (m := fun μ => Fin (m μ)) e he]
-  apply (rowModEquiv_iff_cls_eq _ _).1
-  exact (realPres σC inc e Fact.out he).nonempty_equiv p (fun μ _ => ⟨(hφ μ).some.symm⟩)
-
-variable (σ) in
-/-- **Corollary 2.8** on `V`: pairs inducing the same class are related by basic transfers. -/
-theorem rel_of_eq (r : (V (ι → k) × ∀ l, V (R l)) → (V (ι → k) × ∀ l, V (R l)) → Prop)
-    (hr : ∀ (a : V (ι → k)) (l : Λ), r (a, 0) (0, Pi.single l (V.map (σ l).toRingHom a)))
-    (x y : V (ι → k) × ∀ l, V (R l))
-    (h : V.map σC.toRingHom x.1 + ∑ l, V.map (inc l).toRingHom (x.2 l) =
-      V.map σC.toRingHom y.1 + ∑ l, V.map (inc l).toRingHom (y.2 l)) :
-    addConGen r x y := by
-  have hC : IsCoprod k σ C σC inc := Fact.out
-  choose m e he hx using fun μ => cls_surjective (pairComp x μ)
-  choose m' f hf hy using fun μ => cls_surjective (pairComp y μ)
-  rw [← sum_pairComp, ← sum_pairComp] at h
-  simp only [← hx, ← hy] at h
-  rw [← cls_realE (σC := σC) (inc := inc) (m := fun μ => Fin (m μ)) e he,
-    ← cls_realE (σC := σC) (inc := inc) (m := fun μ => Fin (m' μ)) f hf] at h
-  obtain ⟨Φ⟩ := (rowModEquiv_iff_cls_eq _ _).2 h
-  obtain ⟨p', hreach, hiso⟩ := exists_reach_of_equiv (realPres σC inc e hC he)
-    (realPres σC inc f hC hf) (fun μ => (realPres_FGP e hC he μ).1)
-    (fun μ => (realPres_FGP f hC hf μ).1) Φ
-  obtain ⟨hp', hrel⟩ := StdPres.Reach.rel r hr hreach (realPres_FGP e hC he)
-  rwa [realPres_vpair hC e he x hx, StdPres.vpair_eq hp' hiso,
-    realPres_vpair hC f hf y hy] at hrel
-
-end final
 
 end Core
 
