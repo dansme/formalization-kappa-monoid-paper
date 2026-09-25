@@ -38,7 +38,7 @@ theorem Std.ne_zero_of_mem_supp {y : Std σC inc B} {w : Mono σ B.S} (hw : w �
   rintro rfl; rw [Std.supp_eq_empty.2 rfl] at hw; exact absurd hw (by simp)
 
 theorem Std.deg_eq_zero {y : Std σC inc B} (h : ∀ w ∈ y.supp, w.deg = 0) : y.deg = 0 :=
-  le_antisymm (Finset.sup_le fun w hw => (h w hw).le) (zero_le _)
+  le_antisymm (Finset.sup_le fun w hw => (h w hw).le) (Nat.zero_le _)
 
 /-- An element of `L μ` is not `l`-pure for `some l ≠ μ`. -/
 theorem WP.not_pureS {L : Option Λ → Set (Std σC inc B)} (hW : WP L) {μ : Option Λ}
@@ -346,8 +346,10 @@ theorem no_proper (i i' : Idx φ hφ) (m : List (Letter σ)) (hm : m ≠ [])
 /-- **Lemma 8.1**: the leading terms are pairwise distinct. -/
 theorem K_injective : Function.Injective (Idx.K (φ := φ) (hφ := hφ) hφs hW) := by
   intro i i' h
-  have hb : i.kap.base = i'.kap.base := congrArg Mono.base h
-  have hw : i.ts ++ i.kap.word = i'.ts ++ i'.kap.word := congrArg Mono.word h
+  have hb : i.kap.base = i'.kap.base := by
+    have := congrArg Mono.base h; exact this
+  have hw : i.ts ++ i.kap.word = i'.ts ++ i'.kap.word := by
+    have := congrArg Mono.word h; exact this
   rcases List.append_eq_append_iff.1 hw with ⟨a', h1, h2⟩ | ⟨c', h1, h2⟩
   · by_cases ha : a' = []
     · subst ha
@@ -360,8 +362,8 @@ theorem K_injective : Function.Injective (Idx.K (φ := φ) (hφ := hφ) hφs hW)
       exact eq_of hφs hW i i' h1 (Mono.ext hb h2.symm)
     · exact (no_proper hφs hW i i' c' hc h1 h2 hb.symm).elim
 
-/-- **Lemma 8.1**: the family `t_n ⋯ t_1 q` is linearly independent. -/
 include hφs hW in
+/-- **Lemma 8.1**: the family `t_n ⋯ t_1 q` is linearly independent. -/
 theorem linearIndependent_V : LinearIndependent k (Idx.V (φ := φ) (hφ := hφ) (inc := inc)) :=
   LinearIndependent.of_comp (Std.coeff σC inc B).toLinearMap
     (linearIndependent_of_top id Function.injective_id _ (Idx.K hφs hW) (K_injective hφs hW)
@@ -381,8 +383,8 @@ theorem liftΦ_incl (μ : Option Λ) (a : N' μ) :
     liftΦ φ hφs B' (Std.incl σC inc B' μ a) = φ μ a :=
   (Std.exists_unique_lift σC inc B' (Std σC inc B) φ hφs).exists.choose_spec μ a
 
-/-- The family `t_n ⋯ t_1 q`, in `Std(N')`. -/
 variable {φ hφ} in
+/-- The family `t_n ⋯ t_1 q`, in `Std(N')`. -/
 noncomputable def Idx.V' (i : Idx φ hφ) : Std σC inc B' :=
   wordAct inc i.ts • Std.incl σC inc B' i.μ i.elt
 
@@ -438,9 +440,9 @@ theorem range_liftΦ :
   funext a
   exact liftΦ_incl φ hφs B' μ a
 
+include hφ hφs hW in
 /-- **Proposition 8.2**: the lift of the `φ μ` is injective, with image the submodule they
 generate. -/
-include hφ hW in
 theorem exists_liftΦ : ∃ Φ : Std σC inc B' →ₗ[C] Std σC inc B, Function.Injective Φ ∧
     LinearMap.range Φ = Submodule.span C (⋃ μ, Set.range (φ μ)) ∧
     ∀ μ a, Φ (Std.incl σC inc B' μ a) = φ μ a :=
@@ -509,7 +511,7 @@ theorem mem_range_of_mem_span {μ₁ : Option Λ} {x : Std σC inc B}
     exact (Finset.sum_fiberwise c.support (fun i => i.μ) _).symm
   have hL : WP fun μ => ((LinearMap.range (φ μ) : Submodule k (Std σC inc B)) :
       Set (Std σC inc B)) := by
-    simpa only [LinearMap.range_coe] using hW
+    simpa only [LinearMap.coe_range] using hW
   have hmem := WP.mem_of_sum hL xs (fun μ => Submodule.sum_mem _ fun i hi =>
       Submodule.smul_mem _ _ (LinearMap.mem_range.2 (i.qv_mem (Finset.mem_filter.1 hi).2)))
     (fun μ w hw => by
@@ -546,7 +548,7 @@ theorem mem_range_incl (μ : Option Λ) (a : N' μ) :
     by_contra hc
     push_neg at hc
     apply hne
-    rw [← LinearMap.range_coe, SetLike.mem_coe, Std.eq_sum_mono (φ μ a)]
+    rw [← LinearMap.coe_range, SetLike.mem_coe, Std.eq_sum_mono (φ μ a)]
     refine Submodule.sum_mem _ fun w hw => Submodule.smul_mem _ _ ?_
     obtain ⟨j, s, rfl⟩ := eq_ofBase_of_strip (hc w hw)
     exact ⟨_, Std.incl_basis σC inc B μ j s⟩
@@ -557,9 +559,9 @@ theorem mem_range_incl (μ : Option Λ) (a : N' μ) :
   have hx := incl_mem_range φ hφ hφs hW htop ν (B.basis ν ⟨j, s⟩)
   have hmono : Std.mono σC inc B ⟨⟨ν, j, s⟩, ts, ch⟩ =
       wordAct inc ts • Std.incl σC inc B ν (B.basis ν ⟨j, s⟩) := by
-    rw [Std.incl_basis, show (⟨⟨ν, j, s⟩, ts, ch⟩ : Mono σ B.S) =
-      Mono.pre ts (Mono.ofBase ⟨ν, j, s⟩) ((chain_iff _ _).1 ch) from
-      Mono.ext rfl (List.append_nil ts).symm, Std.mono_pre]
+    rw [Std.incl_basis]
+    have h := Std.mono_pre (σC := σC) (inc := inc) ts (Mono.ofBase ⟨ν, j, s⟩) ((chain_iff _ _).1 ch)
+    rwa [← Mono.eq_pre_ofBase ⟨⟨ν, j, s⟩, ts, ch⟩] at h
   obtain ⟨hμν, hdeg⟩ := hW.nolead μ ν (φ μ a) ⟨a, rfl⟩ _ hx (wordAct inc ts) _ hmem
     (by rw [← hmono]; exact isLead_mono hus)
   rw [← hmono, Std.deg_mono, Std.incl_basis, Std.deg_mono] at hdeg

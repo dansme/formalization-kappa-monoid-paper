@@ -272,7 +272,9 @@ theorem IsTopF.isLead {l : Λ} {y : Std σC inc B} {v : Mono σ B.S}
     intro hvs
     rcases gord_le_iff.1 (h.2 w₀ hw₀) with hd | ⟨-, hb | ⟨hb, -⟩⟩
     · omega
-    · simp [sideBit, hvs] at hb
+    · have hv' : sideBit (some l) v = false := by simp [sideBit, hvs]
+      rw [hv'] at hb
+      exact absurd hb (by cases sideBit (some l) w₀ <;> decide)
     · simp [sideBit, hvs, hw₀s] at hb
   refine ⟨h.1, hvd, hvs, fun w hw hwd hws => ?_⟩
   rcases gord_le_iff.1 (h.2 w hw) with hd | ⟨-, hb | ⟨-, hle⟩⟩
@@ -301,7 +303,7 @@ theorem isLead_mono {μ : Option Λ} {u : Mono σ B.S} (hu : u.side ≠ μ) :
   | some l => exact isLead_of_max hmem hmax hu
   | none =>
     obtain ⟨l, hl⟩ := Option.ne_none_iff_exists'.1 hu
-    refine isLead_none_of_max ⟨fun h0 => ?_, fun w hw _ => ?_⟩ hmem hmax
+    refine isLead_none_of_max (l := l) ⟨fun h0 => ?_, fun w hw _ => ?_⟩ hmem hmax
     · rw [h0, Std.supp_eq_empty.2 rfl] at hmem; exact absurd hmem (by simp)
     · rw [Std.supp_mono, Finset.mem_singleton] at hw; rw [hw, hl]
 

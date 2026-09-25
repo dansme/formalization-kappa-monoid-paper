@@ -83,7 +83,7 @@ theorem SubFam.lift_of_wp (F : SubFam σC inc B) (hF : WP fun μ => (F.L μ : Se
     (hg : ∀ μ (r : Rμ k ι R μ) a, g μ (r • a) = incμ σC inc μ r • g μ a) :
     ∃! f : F.span →ₗ[C] P, ∀ μ a, f (F.incl μ a) = g μ a := by
   have hr : ∀ μ, Set.range ((F.L μ).subtype) = (F.L μ : Set (Std σC inc B)) := fun μ => by
-    rw [← LinearMap.range_coe, Submodule.range_subtype]
+    rw [← LinearMap.coe_range, Submodule.range_subtype]
   have hW : WP fun μ => Set.range ((F.L μ).subtype) := by simpa only [hr] using hF
   let B' : HomBases σ (fun μ => F.L μ) := (nonempty_homBases σ (fun μ => F.L μ)).some
   obtain ⟨Φ, hinj, hrange, hΦ⟩ := exists_liftΦ (fun μ => (F.L μ).subtype)
@@ -122,7 +122,7 @@ theorem SubFam.eq_incl_of_wp (F : SubFam σC inc B)
     (hF : WP fun μ => (F.L μ : Set (Std σC inc B))) (htop : F.span = ⊤) (μ : Option Λ) :
     F.L μ = LinearMap.range (Std.incl σC inc B μ) := by
   have hr : ∀ μ, Set.range ((F.L μ).subtype) = (F.L μ : Set (Std σC inc B)) := fun μ => by
-    rw [← LinearMap.range_coe, Submodule.range_subtype]
+    rw [← LinearMap.coe_range, Submodule.range_subtype]
   have hW : WP fun μ => Set.range ((F.L μ).subtype) := by simpa only [hr] using hF
   have htop' : Submodule.span C (⋃ μ, Set.range ((F.L μ).subtype)) = ⊤ := by
     rw [← htop]; exact congrArg (Submodule.span C) (Set.iUnion_congr hr)
@@ -130,6 +130,6 @@ theorem SubFam.eq_incl_of_wp (F : SubFam σC inc B)
     range_eq_incl (fun μ => (F.L μ).subtype) (fun μ => Submodule.injective_subtype _)
       (fun μ r a => rfl) hW htop' μ
   apply SetLike.coe_injective
-  rw [LinearMap.range_coe, ← h, hr]
+  rw [LinearMap.coe_range, ← h, hr]
 
 end Bergman.Core
