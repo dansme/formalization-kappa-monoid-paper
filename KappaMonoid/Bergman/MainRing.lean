@@ -22,6 +22,7 @@ This is the ring of **Bergman 1974, Theorem 6.2** (and of **Bergman–Dicks 1978
 -/
 import KappaMonoid.Bergman.Steps
 import KappaMonoid.Bergman.QuasiFree
+import KappaMonoid.Bergman.SqZero
 
 universe u
 
@@ -94,6 +95,52 @@ structure Holds : Prop where
   mulAB : ∀ j, P.amat x j * P.bmat x j = P.dmat x (P.lhs j)
   mulBA : ∀ j, P.bmat x j * P.amat x j = P.dmat x (P.rhs j)
 
+section Map
+
+variable {T' : Type u} [Ring T'] (f : T →+* T')
+
+theorem emat_map (g : G) : P.emat (f ∘ x) g = (P.emat x g).map f := rfl
+
+theorem atomMat_map (α : Atom G) : P.atomMat (f ∘ x) α = (P.atomMat x α).map f := by
+  cases α with
+  | free => simp [atomMat]
+  | img g => rfl
+  | coimg g =>
+    show (1 : Matrix (Fin (P.size g)) (Fin (P.size g)) T') - (P.emat x g).map f =
+      ((1 : Matrix (Fin (P.size g)) (Fin (P.size g)) T) - P.emat x g).map f
+    rw [Matrix.map_sub _ (map_sub f), Matrix.map_one _ (map_zero f) (map_one f)]
+
+theorem dmat_map (l : List (Atom G)) : P.dmat (f ∘ x) l = (P.dmat x l).map f := by
+  simp only [dmat, atomMat_map, Matrix.blockDiagonal'_map _ _ (map_zero f)]
+
+theorem amat_map (j : J) : P.amat (f ∘ x) j = (P.amat x j).map f := rfl
+
+theorem bmat_map (j : J) : P.bmat (f ∘ x) j = (P.bmat x j).map f := rfl
+
+/-- The relations are preserved by ring maps. -/
+theorem Holds.map (hx : P.Holds x) : P.Holds (f ∘ x) := by
+  refine ⟨fun g => ?_, fun j => ?_, fun j => ?_, fun j => ?_, fun j => ?_⟩
+  · rw [emat_map, ← Matrix.map_mul, hx.idem]
+  · rw [dmat_map, dmat_map, amat_map, ← Matrix.map_mul, ← Matrix.map_mul, hx.cornerA]
+  · rw [dmat_map, dmat_map, bmat_map, ← Matrix.map_mul, ← Matrix.map_mul, hx.cornerB]
+  · rw [dmat_map, amat_map, bmat_map, ← Matrix.map_mul, hx.mulAB]
+  · rw [dmat_map, amat_map, bmat_map, ← Matrix.map_mul, hx.mulBA]
+
+end Map
+
+/-- The idempotents depend only on the values of `x` on the generators `e`. -/
+theorem dmat_congr {x' : P.Gen → T} (h : ∀ g a b, x (.e g a b) = x' (.e g a b))
+    (l : List (Atom G)) : P.dmat x l = P.dmat x' l := by
+  have he : ∀ g, P.emat x g = P.emat x' g := fun g => by ext a b; exact h g a b
+  have ha : ∀ α, P.atomMat x α = P.atomMat x' α := fun α => by
+    cases α with
+    | free => rfl
+    | img g => exact he g
+    | coimg g =>
+      show (1 : Matrix (Fin (P.size g)) (Fin (P.size g)) T) - P.emat x g = 1 - P.emat x' g
+      rw [he]
+  simp only [dmat, ha]
+
 end Matrices
 
 variable (k : Type u) [Field k]
@@ -121,17 +168,71 @@ instance : Algebra k (P.ring k) := inferInstanceAs (Algebra k (RingQuot (P.Rel k
 /-- The generators, in the realising algebra. -/
 def gen : P.Gen → P.ring k := fun g => RingQuot.mkAlgHom k (P.Rel k) (FreeAlgebra.ι k g)
 
-theorem holds_gen : P.Holds (P.gen k) := sorry
+/-- The relations hold for `f ∘ ι` iff `f` kills `Rel`. -/
+theorem holds_comp_iff {T : Type u} [Ring T] (f : FreeAlgebra k P.Gen →+* T) :
+    P.Holds (f ∘ FreeAlgebra.ι k) ↔ ∀ a b, P.Rel k a b → f a = f b := by
+  have entry : ∀ {m n : Type} (M N : Matrix m n (FreeAlgebra k P.Gen)),
+      M.map f = N.map f ↔ ∀ a b, f (M a b) = f (N a b) := fun M N =>
+    ⟨fun h a b => congrFun (congrFun h a) b, fun h => by ext a b; exact h a b⟩
+  constructor
+  · intro hx a b h
+    cases h with
+    | idem g a b =>
+      have := hx.idem g
+      rw [emat_map, ← Matrix.map_mul, entry] at this
+      exact this a b
+    | cornerA j a b =>
+      have := hx.cornerA j
+      rw [dmat_map, dmat_map, amat_map, ← Matrix.map_mul, ← Matrix.map_mul, entry] at this
+      exact this a b
+    | cornerB j a b =>
+      have := hx.cornerB j
+      rw [dmat_map, dmat_map, bmat_map, ← Matrix.map_mul, ← Matrix.map_mul, entry] at this
+      exact this a b
+    | mulAB j a b =>
+      have := hx.mulAB j
+      rw [dmat_map, amat_map, bmat_map, ← Matrix.map_mul, entry] at this
+      exact this a b
+    | mulBA j a b =>
+      have := hx.mulBA j
+      rw [dmat_map, amat_map, bmat_map, ← Matrix.map_mul, entry] at this
+      exact this a b
+  · intro hf
+    refine ⟨fun g => ?_, fun j => ?_, fun j => ?_, fun j => ?_, fun j => ?_⟩
+    · rw [emat_map, ← Matrix.map_mul, entry]; exact fun a b => hf _ _ (.idem g a b)
+    · rw [dmat_map, dmat_map, amat_map, ← Matrix.map_mul, ← Matrix.map_mul, entry]
+      exact fun a b => hf _ _ (.cornerA j a b)
+    · rw [dmat_map, dmat_map, bmat_map, ← Matrix.map_mul, ← Matrix.map_mul, entry]
+      exact fun a b => hf _ _ (.cornerB j a b)
+    · rw [dmat_map, amat_map, bmat_map, ← Matrix.map_mul, entry]
+      exact fun a b => hf _ _ (.mulAB j a b)
+    · rw [dmat_map, amat_map, bmat_map, ← Matrix.map_mul, entry]
+      exact fun a b => hf _ _ (.mulBA j a b)
+
+theorem holds_gen : P.Holds (P.gen k) :=
+  (P.holds_comp_iff k (RingQuot.mkAlgHom k (P.Rel k)).toRingHom).2
+    fun _ _ h => RingQuot.mkAlgHom_rel k h
 
 /-- The universal property: assignments satisfying the relations extend uniquely. -/
 theorem lift {T : Type u} [Ring T] [Algebra k T] (x : P.Gen → T) (hx : P.Holds x) :
-    ∃ ψ : P.ring k →ₐ[k] T, ∀ g, ψ (P.gen k g) = x g := sorry
+    ∃ ψ : P.ring k →ₐ[k] T, ∀ g, ψ (P.gen k g) = x g := by
+  let f := FreeAlgebra.lift k x
+  have hfx : (f.toRingHom : FreeAlgebra k P.Gen → T) ∘ FreeAlgebra.ι k = x :=
+    funext fun g => FreeAlgebra.lift_ι_apply x g
+  have key : ∀ a b, P.Rel k a b → f a = f b :=
+    (P.holds_comp_iff k f.toRingHom).1 (hfx ▸ hx)
+  refine ⟨RingQuot.liftAlgHom k ⟨f, key⟩, fun g => ?_⟩
+  change RingQuot.liftAlgHom k ⟨f, key⟩ (RingQuot.mkAlgHom k (P.Rel k) (FreeAlgebra.ι k g)) = x g
+  rw [RingQuot.liftAlgHom_mkAlgHom_apply]
+  exact FreeAlgebra.lift_ι_apply x g
 
 theorem hom_ext {T : Type u} [Ring T] [Algebra k T] (ψ ψ' : P.ring k →ₐ[k] T)
-    (h : ∀ g, ψ (P.gen k g) = ψ' (P.gen k g)) : ψ = ψ' := sorry
+    (h : ∀ g, ψ (P.gen k g) = ψ' (P.gen k g)) : ψ = ψ' := by
+  apply RingQuot.ringQuot_ext'
+  apply FreeAlgebra.hom_ext
+  funext g
+  exact h g
 
-/-- **The realising algebra is quasi-free**, hence hereditary. -/
-theorem quasiFree : QuasiFree k (P.ring k) := sorry
 
 /-- The class in `V` of an atom. -/
 theorem atomMat_idem {T : Type u} [Ring T] (x : P.Gen → T) (hx : P.Holds x) (α : Atom G) :
@@ -140,6 +241,69 @@ theorem atomMat_idem {T : Type u} [Ring T] (x : P.Gen → T) (hx : P.Holds x) (�
   | free => simp [atomMat]
   | img g => exact hx.idem g
   | coimg g => exact one_sub_idem (hx.idem g)
+
+theorem dmat_idem {T : Type u} [Ring T] (x : P.Gen → T)
+    (hx : ∀ g, P.emat x g * P.emat x g = P.emat x g) (l : List (Atom G)) :
+    P.dmat x l * P.dmat x l = P.dmat x l := by
+  refine blockDiagonal'_idem _ fun t => ?_
+  cases h : l[t] with
+  | free => simp [atomMat]
+  | img g => exact hx g
+  | coimg g => exact one_sub_idem (hx g)
+
+/-- **The realising algebra is quasi-free**, hence hereditary: the universal idempotents lift
+along square-zero extensions (`SqZero.exists_idem_lift`), and then so do the universal
+isomorphisms between their images (`SqZero.exists_iso_lift`). -/
+theorem quasiFree : QuasiFree k (P.ring k) := by
+  classical
+  intro T T' _ _ _ _ π hπs hsq φ
+  have hZ : SqZero π.toRingHom := ⟨hπs, hsq⟩
+  set x' : P.Gen → T' := φ.toRingHom ∘ P.gen k with hx'def
+  have hx' : P.Holds x' := Holds.map P (P.gen k) φ.toRingHom (P.holds_gen k)
+  -- lift the idempotents
+  have hE : ∀ g, ∃ E : Matrix (Fin (P.size g)) (Fin (P.size g)) T, E * E = E ∧
+      E.map π.toRingHom = P.emat x' g := fun g => hZ.exists_idem_lift (hx'.idem g)
+  choose E hEi hEπ using hE
+  let x₀ : P.Gen → T
+    | .e g a b => E g a b
+    | _ => 0
+  have hx₀e : ∀ g, P.emat x₀ g = E g := fun g => rfl
+  have hx₀i : ∀ g, P.emat x₀ g * P.emat x₀ g = P.emat x₀ g := fun g => hEi g
+  have hdπ : ∀ l, (P.dmat x₀ l).map π.toRingHom = P.dmat x' l := fun l => by
+    rw [← dmat_map]
+    refine P.dmat_congr _ (fun g a b => ?_) l
+    exact congrFun (congrFun (hEπ g) a) b
+  -- lift the isomorphisms
+  have hAB : ∀ j, ∃ (A : Matrix (P.Idx (P.lhs j)) (P.Idx (P.rhs j)) T)
+      (B : Matrix (P.Idx (P.rhs j)) (P.Idx (P.lhs j)) T),
+      P.dmat x₀ (P.lhs j) * A * P.dmat x₀ (P.rhs j) = A ∧
+      P.dmat x₀ (P.rhs j) * B * P.dmat x₀ (P.lhs j) = B ∧
+      A * B = P.dmat x₀ (P.lhs j) ∧ B * A = P.dmat x₀ (P.rhs j) ∧
+      A.map π.toRingHom = P.amat x' j ∧ B.map π.toRingHom = P.bmat x' j := fun j =>
+    hZ.exists_iso_lift (P.dmat_idem x₀ hx₀i _) (P.dmat_idem x₀ hx₀i _)
+      (by rw [hdπ, hdπ]; exact hx'.cornerA j) (by rw [hdπ, hdπ]; exact hx'.cornerB j)
+      (by rw [hdπ]; exact hx'.mulAB j) (by rw [hdπ]; exact hx'.mulBA j)
+  choose A B hA hB hAB' hBA hAπ hBπ using hAB
+  let x : P.Gen → T
+    | .e g a b => E g a b
+    | .fwd j a b => A j a b
+    | .bwd j a b => B j a b
+  have hd : ∀ l, P.dmat x l = P.dmat x₀ l := fun l => P.dmat_congr _ (fun _ _ _ => rfl) l
+  have hx : P.Holds x := by
+    refine ⟨fun g => hEi g, fun j => ?_, fun j => ?_, fun j => ?_, fun j => ?_⟩ <;>
+      simp only [hd]
+    · exact hA j
+    · exact hB j
+    · exact hAB' j
+    · exact hBA j
+  obtain ⟨ψ, hψ⟩ := P.lift k x hx
+  refine ⟨ψ, P.hom_ext k _ _ fun g => ?_⟩
+  rw [AlgHom.comp_apply, hψ]
+  change π (x g) = x' g
+  cases g with
+  | e g a b => exact congrFun (congrFun (hEπ g) a) b
+  | fwd j a b => exact congrFun (congrFun (hAπ j) a) b
+  | bwd j a b => exact congrFun (congrFun (hBπ j) a) b
 
 noncomputable def γ (α : Atom G) : V (P.ring k) :=
   cls (m := Fin (P.atomSize α)) (P.atomMat (P.gen k) α) (P.atomMat_idem (P.gen k) (P.holds_gen k) α)
