@@ -19,6 +19,7 @@ homomorphism by transfers and transvections), Proposition 8.2 and Proposition 8.
 import KappaMonoid.Bergman.Idem
 import KappaMonoid.Bergman.Presentation
 import KappaMonoid.Bergman.IsCoprod
+import KappaMonoid.Bergman.Core.VBridge
 
 universe u
 
@@ -52,13 +53,32 @@ def transferRel (p q : V (ι → k) × (∀ l, V (R l))) : Prop :=
 /-- **Bergman's theorem (Cor. 2.6, 2.8)**: every finitely generated projective module over a
 coproduct of faithful `k^ι`-rings is induced from the factors. -/
 theorem IsCoprod.coprodV_surjective (hC : IsCoprod k σ C σC inc)
-    (hσ : ∀ l, Function.Injective (σ l)) : Function.Surjective (coprodV σC inc) := sorry
+    (hσ : ∀ l, Function.Injective (σ l)) : Function.Surjective (coprodV σC inc) := by
+  have : Fact (∀ l, Function.Injective (σ l)) := ⟨hσ⟩
+  have : Fact (IsCoprod k σ C σC inc) := ⟨hC⟩
+  exact Core.exists_pair_of_cls σ
 
 /-- **Bergman's theorem (Cor. 2.8)**: induced modules are isomorphic iff their components are
 related by basic transfers. -/
 theorem IsCoprod.coprodV_eq_iff (hC : IsCoprod k σ C σC inc)
     (hσ : ∀ l, Function.Injective (σ l)) (p q : V (ι → k) × (∀ l, V (R l))) :
-    coprodV σC inc p = coprodV σC inc q ↔ addConGen (transferRel σ) p q := sorry
+    coprodV σC inc p = coprodV σC inc q ↔ addConGen (transferRel σ) p q := by
+  have : Fact (∀ l, Function.Injective (σ l)) := ⟨hσ⟩
+  have : Fact (IsCoprod k σ C σC inc) := ⟨hC⟩
+  refine ⟨fun h => Core.rel_of_eq σ (transferRel σ) (fun a l => ⟨a, l, rfl, rfl⟩) p q h,
+    fun h => ?_⟩
+  have hle : addConGen (transferRel σ) ≤ AddCon.ker (coprodV σC inc) :=
+    AddCon.addConGen_le.2 fun x y hxy => by
+      obtain ⟨a, l, rfl, rfl⟩ := hxy
+      rw [AddCon.ker_rel]
+      change V.map σC.toRingHom a + ∑ l', V.map (inc l').toRingHom ((0 : ∀ l, V (R l)) l') =
+        V.map σC.toRingHom 0 + ∑ l', V.map (inc l').toRingHom
+          (Pi.single (M := fun l => V (R l)) l (V.map (σ l).toRingHom a) l')
+      simp only [Pi.zero_apply, map_zero, Finset.sum_const_zero, add_zero, zero_add]
+      rw [Finset.sum_eq_single l (fun l' _ h => by rw [Pi.single_eq_of_ne h, map_zero])
+        (by simp), Pi.single_eq_same, ← V.map_comp, ← hC.comm l]
+      rfl
+  exact hle h
 
 end
 
