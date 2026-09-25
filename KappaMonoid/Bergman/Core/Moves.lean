@@ -344,7 +344,11 @@ theorem StdPres.transfer_some (p : StdPres σ σC inc M) (l : Λ) (j : ι)
       (∀ μ, μ ≠ none → μ ≠ some l → Set.range (p'.j μ) = Set.range (p.j μ)) ∧
       Set.range (p'.j (some l)) = p.j (some l) '' {x | φ x = 0} ∧
       Set.range (p'.j none) =
-        {m | ∃ (x : p.A none) (c : ι → k), m = p.j none x + σC c • p.j (some l) a} := sorry
+        {m | ∃ (x : p.A none) (c : ι → k), m = p.j none x + σC c • p.j (some l) a} := by
+  obtain ⟨p', h0, h1, hiso, hfg, hoth, hr0, hr1⟩ :=
+    p.exists_transfer (some l) none (Option.some_ne_none l) j φ a ha hja
+  refine ⟨p', Or.inr (Or.inl ⟨l, j, ?_, h0, h1⟩), hfg, fun μ hn hs => hoth μ hs hn, hr0, hr1⟩
+  rwa [Set.pair_comm] at hiso
 
 /-- **Basic transfer from `A none` to `A l`.** -/
 theorem StdPres.transfer_none (p : StdPres σ σC inc M) (l : Λ) (j : ι)
@@ -354,7 +358,10 @@ theorem StdPres.transfer_none (p : StdPres σ σC inc M) (l : Λ) (j : ι)
       (∀ μ, μ ≠ none → μ ≠ some l → Set.range (p'.j μ) = Set.range (p.j μ)) ∧
       Set.range (p'.j none) = p.j none '' {x | ψ x = 0} ∧
       Set.range (p'.j (some l)) =
-        {m | ∃ (x : p.A (some l)) (r : R l), m = p.j (some l) x + inc l r • p.j none a} := sorry
+        {m | ∃ (x : p.A (some l)) (r : R l), m = p.j (some l) x + inc l r • p.j none a} := by
+  obtain ⟨p', h0, h1, hiso, hfg, hoth, hr0, hr1⟩ :=
+    p.exists_transfer none (some l) (Option.some_ne_none l).symm j ψ a ha hja
+  exact ⟨p', Or.inr (Or.inr ⟨l, j, hiso, h0, h1⟩), hfg, hoth, hr0, hr1⟩
 
 /-- A standard presentation transported along a `C`-linear isomorphism: same components, maps
 composed with the isomorphism. -/

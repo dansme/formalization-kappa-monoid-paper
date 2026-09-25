@@ -11,7 +11,7 @@ at `u_Λ` the number of `l` with `u` in the `l`-support of `f(A l)`.  The copies
 degree (`(deg, copy, u)`, lexicographically) and functions are compared lexicographically *from
 the top*: this is `Lex (Keyᵒᵈ →₀ ℕ)`, which is well-founded.  Each move lowers the index.
 -/
-import KappaMonoid.Bergman.Core.Pres
+import KappaMonoid.Bergman.Core.Moves
 import KappaMonoid.Bergman.Core.Pure
 
 universe u
@@ -257,5 +257,244 @@ noncomputable def coordOn (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC in
 theorem coordOn_apply (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (μ : Option Λ)
     (u : NotSide B μ) (c : k) (a : p.A μ) :
     coordOn f p μ u c a = c • coord σC inc B μ u (f (p.j μ a)) := rfl
+
+/-! ## Comparing the supports before and after a move -/
+
+theorem sfin_sub {f : M →ₗ[C] Std σC inc B} {p p' : StdPres σ σC inc M} {hp : p.FG}
+    {hp' : p'.FG} {μ : Option Λ} {T : Finset (Mono σ B.S)}
+    (h : ∀ a v, v ∈ msupp σC inc B μ (f (p'.j μ a)) → v ∈ ssupp f p μ ∨ v ∈ T) :
+    sfin f p' hp' μ ⊆ sfin f p hp μ ∪ T := by
+  intro v hv
+  obtain ⟨a, ha⟩ := mem_sfin.1 hv
+  rcases h a v ha with h | h
+  · exact Finset.mem_union_left _ (mem_sfin.2 h)
+  · exact Finset.mem_union_right _ h
+
+theorem sfin_sub_of_range {f : M →ₗ[C] Std σC inc B} {p p' : StdPres σ σC inc M} {hp : p.FG}
+    {hp' : p'.FG} {μ : Option Λ} (T : Finset (Mono σ B.S))
+    (h : Set.range (p'.j μ) ⊆ Set.range (p.j μ)) : sfin f p' hp' μ ⊆ sfin f p hp μ ∪ T :=
+  sfin_sub fun a _ hv => Or.inl (ssupp_mono h ⟨a, hv⟩)
+
+theorem key_lt_of_deg_lt {μ ν : Option Λ} {v u : Mono σ B.S} (h : v.deg < u.deg) :
+    key μ v < key ν u := key_lt_key_iff.2 (Or.inl h)
+
+theorem key_none_lt_some {l : Λ} {v u : Mono σ B.S} (h : v.deg ≤ u.deg) :
+    key none v < key (some l) u := by
+  rcases h.lt_or_eq with h | h
+  · exact key_lt_of_deg_lt h
+  · exact key_lt_key_iff.2 (Or.inr ⟨h, Or.inl (by simp)⟩)
+
+theorem key_lt_of_lt {μ : Option Λ} {v u : Mono σ B.S} (h : v < u) : key μ v < key μ u := by
+  rcases (Mono.deg_le_of_le h.le).lt_or_eq with hd | hd
+  · exact key_lt_of_deg_lt hd
+  · exact key_lt_key_iff.2 (Or.inr ⟨hd, Or.inr ⟨rfl, h⟩⟩)
+
+/-- The `l`-support of an element whose terms are terms of an `l`-pure `y` lies below `deg y`. -/
+theorem deg_lt_of_mem_msupp_of_supp_subset {l : Λ} {y z : Std σC inc B} (hy : IsPureS l y)
+    (hz : z.supp ⊆ y.supp) {v : Mono σ B.S} (hv : v ∈ msupp σC inc B (some l) z) :
+    v.deg < y.deg := by
+  obtain ⟨hvs, w, hw, hs⟩ := mem_msupp_some.1 hv
+  have hd := deg_of_strip hs
+  have hwy := Std.deg_le (hz hw)
+  have h1 := hd.1
+  simp only at h1
+  by_cases hwd : w.deg = y.deg
+  · have hne : w ≠ v := fun he => hvs (he ▸ hy.2 w (hz hw) hwd)
+    have : v.deg < w.deg := lt_of_le_of_ne h1 fun he => hne (hd.2 he.symm)
+    omega
+  · omega
+
+/-! ## Proposition 6.2 -/
+
+/-- **One step of Proposition 6.2**: if the images are not well-positioned, a transfer or a
+transvection lowers the index. -/
+theorem exists_step_idx_lt (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG)
+    (hW : ¬ WP (img f p)) :
+    ∃ p' : StdPres σ σC inc M, p.Step p' ∧ ∃ hp' : p'.FG,
+      idx (sfin f p' hp') < idx (sfin f p hp) := by
+  classical
+  rcases not_wp hW with ⟨l, y, ⟨b, rfl⟩, hy0, hy⟩ | ⟨y, ⟨b, rfl⟩, hy⟩ |
+    ⟨μ₁, μ₂, y, ⟨b₁, rfl⟩, x, ⟨b₂, rfl⟩, a, u, hu, hl, hne⟩
+  · -- `(a_λ)` fails: transfer from `A l` to `A none`
+    obtain ⟨u, hu⟩ := exists_lead (μ := some l) hy0 hy
+    let U : NotSide B (some l) := ⟨u, hu.side_ne⟩
+    set c := Std.coeff σC inc B (f (p.j (some l) b)) u
+    have hc : c ≠ 0 := Std.mem_supp.1 hu.mem_supp
+    let φ := coordOn f p (some l) U c⁻¹
+    have hφb : (φ b : Rμ k ι R (some l)) = eμ σ (some l) u.left := by
+      show ((c⁻¹ • coord σC inc B (some l) U (f (p.j (some l) b)) : lid σ (some l) u.left) :
+        Rμ k ι R (some l)) = _
+      rw [Submodule.coe_smul_of_tower, hu.coord, smul_smul, inv_mul_cancel₀ hc, one_smul]
+    let a := eμ σ (some l) u.left • b
+    have ha : (φ a : Rμ k ι R (some l)) = eμ σ (some l) u.left := by
+      simp only [a, map_smul, Submodule.coe_smul, smul_eq_mul, hφb, eμ_mul_eμ, ↓reduceIte]
+    have hja : eμ σ (some l) u.left • a = a := by
+      simp only [a, smul_smul, eμ_mul_eμ, ↓reduceIte]
+    obtain ⟨p', hstep, hfg, hoth, hr1, hr0⟩ := p.transfer_some l u.left φ a ha hja
+    have hcl : ∀ x', φ x' = 0 → u ∉ msupp σC inc B (some l) (f (p.j (some l) x')) := by
+      intro x' hx' hux
+      have h0 : c⁻¹ • coord σC inc B (some l) U (f (p.j (some l) x')) = 0 := hx'
+      rcases smul_eq_zero.1 h0 with h | h
+      · exact inv_ne_zero hc h
+      · exact (mem_msupp_iff_coord U).1 hux h
+    refine ⟨p', hstep, hfg hp, idx_lt (some l) u
+      (T := fun μ => if μ = none then (f (p.j (some l) a)).supp else ∅) (fun μ => ?_)
+      (fun μ v hv => ?_) (mem_sfin.2 ⟨b, hu.mem_msupp⟩) fun h => ?_⟩
+    · rcases μ with _ | l'
+      · refine sfin_sub fun a' v hv => ?_
+        obtain ⟨x', c', hx'⟩ : p'.j none a' ∈ {m | ∃ (x : p.A none) (c : ι → k),
+            m = p.j none x + σC c • p.j (some l) a} := hr0 ▸ ⟨a', rfl⟩
+        rw [hx', map_add, map_smul] at hv
+        rcases Finset.mem_union.1 (msupp_add none _ _ hv) with h | h
+        · exact Or.inl ⟨x', h⟩
+        · exact Or.inr (by rw [if_pos rfl]; exact Std.supp_σC_smul _ _ h)
+      · by_cases hl' : l' = l
+        · subst hl'
+          refine sfin_sub_of_range _ ?_
+          rw [hr1]; rintro _ ⟨x', -, rfl⟩; exact ⟨x', rfl⟩
+        · exact sfin_sub_of_range _ (hoth _ (by simp) (by simpa using hl')).le
+    · split_ifs at hv with h
+      · subst h
+        have hsub : (f (p.j (some l) a)).supp ⊆ (f (p.j (some l) b)).supp := by
+          rw [f_j_smul, incμ_eμ (σ := σ) σC inc]; exact Std.supp_σC_smul _ _
+        exact key_none_lt_some ((Std.deg_le (hsub hv)).trans hu.deg.symm.le)
+      · exact absurd hv (Finset.notMem_empty _)
+    · obtain ⟨a', ha'⟩ := mem_sfin.1 h
+      obtain ⟨x', hx'0, hx'⟩ : p'.j (some l) a' ∈ p.j (some l) '' {x | φ x = 0} :=
+        hr1 ▸ ⟨a', rfl⟩
+      rw [← hx'] at ha'
+      exact hcl x' hx'0 ha'
+  · -- `(a_0)` fails: transfer from `A none` to `A l`
+    simp only [IsPure, not_forall, not_not] at hy
+    obtain ⟨l, hpl⟩ := hy
+    obtain ⟨u, huy, hud⟩ := Std.exists_mem_supp hpl.1
+    have hus : u.side = some l := hpl.2 u huy hud
+    let U : NotSide B none := ⟨u, by rw [hus]; exact Option.some_ne_none l⟩
+    set c := Std.coeff σC inc B (f (p.j none b)) u
+    have hc : c ≠ 0 := Std.mem_supp.1 huy
+    let φ := coordOn f p none U c⁻¹
+    have hφb : (φ b : Rμ k ι R none) = eμ σ none u.left := by
+      show ((c⁻¹ • coord σC inc B none U (f (p.j none b)) : lid σ none u.left) :
+        Rμ k ι R none) = _
+      rw [Submodule.coe_smul_of_tower, coord_of_deg (u := U) hud.symm.le, smul_smul,
+        inv_mul_cancel₀ hc, one_smul]
+    let a := eμ σ none u.left • b
+    have ha : (φ a : Rμ k ι R none) = eμ σ none u.left := by
+      simp only [a, map_smul, Submodule.coe_smul, smul_eq_mul, hφb, eμ_mul_eμ, ↓reduceIte]
+    have hja : eμ σ none u.left • a = a := by
+      simp only [a, smul_smul, eμ_mul_eμ, ↓reduceIte]
+    obtain ⟨p', hstep, hfg, hoth, hr0, hrl⟩ := p.transfer_none l u.left φ a ha hja
+    have hcl : ∀ x', φ x' = 0 → u ∉ msupp σC inc B none (f (p.j none x')) := by
+      intro x' hx' hux
+      have h0 : c⁻¹ • coord σC inc B none U (f (p.j none x')) = 0 := hx'
+      rcases smul_eq_zero.1 h0 with h | h
+      · exact inv_ne_zero hc h
+      · exact (mem_msupp_iff_coord U).1 hux h
+    refine ⟨p', hstep, hfg hp, idx_lt none u
+      (T := fun μ => if μ = some l then msupp σC inc B (some l) (f (p.j none a)) else ∅)
+      (fun μ => ?_) (fun μ v hv => ?_) (mem_sfin.2 ⟨b, huy⟩) fun h => ?_⟩
+    · rcases μ with _ | l'
+      · refine sfin_sub_of_range _ ?_
+        rw [hr0]; rintro _ ⟨x', -, rfl⟩; exact ⟨x', rfl⟩
+      · by_cases hl' : l' = l
+        · subst hl'
+          refine sfin_sub fun a' v hv => ?_
+          obtain ⟨x', r, hx'⟩ : p'.j (some l') a' ∈ {m | ∃ (x : p.A (some l')) (r : R l'),
+              m = p.j (some l') x + inc l' r • p.j none a} := hrl ▸ ⟨a', rfl⟩
+          rw [hx', map_add, map_smul] at hv
+          rcases Finset.mem_union.1 (msupp_add (some l') _ _ hv) with h | h
+          · exact Or.inl ⟨x', h⟩
+          · exact Or.inr (by rw [if_pos rfl]; exact msupp_incμ_smul (some l') r _ h)
+        · exact sfin_sub_of_range _ (hoth _ (by simp) (by simpa using hl')).le
+    · split_ifs at hv with h
+      · subst h
+        have hsub : (f (p.j none a)).supp ⊆ (f (p.j none b)).supp := by
+          rw [f_j_smul, incμ_eμ (σ := σ) σC inc]; exact Std.supp_σC_smul _ _
+        exact key_lt_of_deg_lt ((deg_lt_of_mem_msupp_of_supp_subset hpl hsub hv).trans_eq hud.symm)
+      · exact absurd hv (Finset.notMem_empty _)
+    · obtain ⟨a', ha'⟩ := mem_sfin.1 h
+      obtain ⟨x', hx'0, hx'⟩ : p'.j none a' ∈ p.j none '' {x | φ x = 0} := hr0 ▸ ⟨a', rfl⟩
+      rw [← hx'] at ha'
+      exact hcl x' hx'0 ha'
+  · -- `(b)` fails: a transvection
+    set X := p.j μ₂ b₂
+    have hU : u.side ≠ μ₁ := hl.side_ne
+    let U : NotSide B μ₁ := ⟨u, hU⟩
+    set c := Std.coeff σC inc B (a • f X) u
+    have hc : c ≠ 0 := Std.mem_supp.1 hl.mem_supp
+    let e : p.A μ₁ →ₗ[Rμ k ι R μ₁] Rμ k ι R μ₁ :=
+      (Submodule.subtype _).comp (coordOn f p μ₁ U c⁻¹)
+    have he : ∀ b', e b' = c⁻¹ • (coord σC inc B μ₁ U (f (p.j μ₁ b')) : Rμ k ι R μ₁) :=
+      fun b' => Submodule.coe_smul_of_tower _ _
+    obtain ⟨ε, hε1, hε2⟩ := p.exists_functional μ₁ e
+    have hεX : ε (a • X) = 0 := by
+      rw [map_smul, smul_eq_mul]
+      by_cases h12 : μ₂ = μ₁
+      · subst h12
+        have hdeg : (f X).deg < (a • f X).deg := by
+          by_contra h; exact hne ⟨rfl, not_lt.1 h⟩
+        have h0 : coord σC inc B μ₂ U (f X) = 0 := by
+          by_contra h
+          have h1 : u.deg ≤ (f X).deg := deg_le_of_mem_msupp ((mem_msupp_iff_coord U).2 h)
+          have h2 : u.deg = (a • f X).deg := hl.deg
+          omega
+        rw [hε1, he, h0, ZeroMemClass.coe_zero, smul_zero, map_zero, mul_zero]
+      · rw [hε2 μ₂ h12, mul_zero]
+    obtain ⟨p', hstep, hfg, hoth, hr⟩ := p.transvection μ₁ ε hε2 (a • X) hεX
+    have hval : ∀ b', f (p.j μ₁ b' - ε (p.j μ₁ b') • (a • X)) =
+        f (p.j μ₁ b') - incμ σC inc μ₁ (e b') • (a • f X) := fun b' => by
+      rw [map_sub, map_smul, map_smul, hε1]
+    have hcl : ∀ b', u ∉ msupp σC inc B μ₁ (f (p.j μ₁ b' - ε (p.j μ₁ b') • (a • X))) := by
+      intro b' hux
+      rw [hval] at hux
+      apply (mem_msupp_iff_coord U).1 hux
+      rw [map_sub, coord_smul]
+      apply Subtype.ext
+      rw [Submodule.coe_sub, Submodule.coe_smul, smul_eq_mul, hl.coord, he, smul_mul_smul_comm,
+        inv_mul_cancel₀ hc, one_smul, mul_eμ_of_mem (coord σC inc B μ₁ U _).2, sub_self,
+        ZeroMemClass.coe_zero]
+    refine ⟨p', hstep, hfg hp, idx_lt μ₁ u
+      (T := fun μ => if μ = μ₁ then (msupp σC inc B μ₁ (a • f X)).erase u else ∅)
+      (fun μ => ?_) (fun μ v hv => ?_) (mem_sfin.2 ⟨b₁, hu⟩) fun h => ?_⟩
+    · by_cases hμ : μ = μ₁
+      · subst hμ
+        refine sfin_sub fun a' v hv => ?_
+        obtain ⟨b', hb'⟩ : p'.j μ a' ∈ {m | ∃ b, m = p.j μ b - ε (p.j μ b) • (a • X)} :=
+          hr ▸ ⟨a', rfl⟩
+        rw [hb'] at hv
+        by_cases hvu : v = u
+        · exact absurd (hvu ▸ hv) (hcl b')
+        rw [hval, sub_eq_add_neg] at hv
+        rcases Finset.mem_union.1 (msupp_add μ _ _ hv) with h | h
+        · exact Or.inl ⟨b', h⟩
+        · rw [msupp_neg] at h
+          exact Or.inr (by rw [if_pos rfl]; exact Finset.mem_erase.2 ⟨hvu, msupp_incμ_smul μ _ _ h⟩)
+      · exact sfin_sub_of_range _ (hoth μ hμ).le
+    · split_ifs at hv with h
+      · subst h
+        obtain ⟨hvu, hv⟩ := Finset.mem_erase.1 hv
+        exact key_lt_of_lt (lt_of_le_of_ne (hl.le_of_mem_msupp hv) hvu)
+      · exact absurd hv (Finset.notMem_empty _)
+    · obtain ⟨a', ha'⟩ := mem_sfin.1 h
+      obtain ⟨b', hb'⟩ : p'.j μ₁ a' ∈ {m | ∃ b, m = p.j μ₁ b - ε (p.j μ₁ b) • (a • X)} :=
+        hr ▸ ⟨a', rfl⟩
+      rw [hb'] at ha'
+      exact hcl b' ha'
+
+/-- **Proposition 6.2**: finitely many transfers and transvections make the images
+well-positioned. -/
+theorem exists_reach_wp (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG) :
+    ∃ p' : StdPres σ σC inc M, p.Reach p' ∧ p'.FG ∧ WP (img f p') := by
+  suffices h : ∀ x, ∀ (p : StdPres σ σC inc M) (hp : p.FG), idx (sfin f p hp) = x →
+      ∃ p' : StdPres σ σC inc M, p.Reach p' ∧ p'.FG ∧ WP (img f p') from h _ p hp rfl
+  intro x
+  induction x using WellFoundedLT.induction with
+  | _ x ih =>
+    intro p hp hx
+    by_cases hW : WP (img f p)
+    · exact ⟨p, Relation.ReflTransGen.refl, hp, hW⟩
+    obtain ⟨p', hstep, hp', hlt⟩ := exists_step_idx_lt f p hp hW
+    obtain ⟨p'', hr, hp'', hW''⟩ := ih _ (hx ▸ hlt) p' hp' rfl
+    exact ⟨p'', Relation.ReflTransGen.head hstep hr, hp'', hW''⟩
 
 end Bergman.Core
