@@ -3,7 +3,7 @@
 `κ`-monoid form (the classical statement is `ForMathlib/Kaplansky.lean`).
 -/
 import KappaMonoid.Modules.SmallPart
-import KappaMonoid.Axioms.Modules
+import KappaMonoid.Bergman.Realization
 import KappaMonoid.ForMathlib.Kaplansky
 import KappaMonoid.ForMathlib.ProjectiveSplit
 

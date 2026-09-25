@@ -18,7 +18,7 @@ lake env lean scripts/list_axioms.lean   # every `axiom` in the development; CI 
 lake build --no-build               # is the build up to date? (exit 0 = yes), no rebuild
 ```
 
-A change low in the import graph is expensive: touching `Axioms/Modules.lean` rebuilds all of
+A change low in the import graph is expensive: touching a file of `Bergman/` rebuilds all of
 `Modules/`, `TwoGen/` and `Paper/` (~10 min), and touching `Core/` rebuilds nearly everything.
 Batch such edits and build once.
 
@@ -121,18 +121,16 @@ unbuilt edits to the file's imports; and a new file importing another new file n
   there as `let`, not `letI`, which Mathlib's `haveILetI` linter insists on inside a proof of a
   proposition. An anonymous `let := f x` sometimes leaves a universe metavariable where `letI :=`
   did not, because nothing inlines it into the goal; ascribe the type when that happens.
-- **No new axioms without asking — and no change to the existing one.** The one assumed classical
-  result, Bergman–Dicks realisation (A1, `bergmanDicksData`), lives in `KappaMonoid/Axioms/` and is
-  documented in `README.md`.  Its `hereditary` field is the two-sided `IsHereditary` (Bergman's
-  Theorem 6.2 gives both sides); strengthening or weakening a field changes the assumed result even
-  though CI, which checks names only, will not notice.  A new headline result gets a line in
-  `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo [bergmanDicksData]`, or `[]` for the
-  usual case — which is checked by the build and fails in both directions, so it also tells you when
-  a refactor has *removed* a dependency (update the count in `README.md` if you add lines). §3 needs
-  no axiom at all. CI enforces the list: `.github/workflows/lean_action_ci.yml` runs
-  `scripts/list_axioms.lean`, which asks Lean for every `axiom` constant in a `KappaMonoid` module,
-  and diffs it against `KappaMonoid.bergmanDicksData`; a deliberate addition means editing that
-  expected list *and* the `README.md` table in the same commit.
+- **No axioms without asking.** The development declares none.  The Bergman–Dicks realisation
+  theorem (`bergmanDicksData`), which the paper quotes and which used to be the one axiom, is proved
+  in `KappaMonoid/Bergman/`; `BergmanDicksData` (`Bergman/Data.lean`) is its conclusion, and its
+  `hereditary` field is the two-sided `IsHereditary`.  A new headline result gets a line in
+  `KappaMonoid/Paper/AxiomAudit.lean` — `#assert_axioms foo []` — which is checked by the build and
+  fails in both directions (update the count in `README.md` if you add lines).  CI enforces the
+  list: `.github/workflows/lean_action_ci.yml` runs `scripts/list_axioms.lean`, which asks Lean for
+  every `axiom` constant in a `KappaMonoid` module, and diffs it against the empty list; a
+  deliberate addition means asking first, then editing that expected list *and* `README.md` in the
+  same commit.
 - **Left modules.** Mathlib's `Module R` is a left module and the paper's modules are right modules,
   so the paper's "right hereditary" is `IsLeftHereditary` here, and an unqualified "hereditary" is
   `IsHereditary`.  Every statement is the paper's statement for `Rᵐᵒᵖ`.
@@ -232,22 +230,23 @@ re-deriving them.
 
 The tree is layered by subject, not by paper section, and the layering is enforced by
 `scripts/check_layering.sh` in CI: each layer may import only the layers below it, nothing below
-`Modules/` may mention a module, and only `Axioms/*` and `Modules/Small.lean` may `import Mathlib`.
+`Modules/` other than `Bergman/` may mention a module, and only `Modules/Small.lean` (and, until
+their imports are trimmed, the files of `Bergman/`) may `import Mathlib`.
 
 | Layer | Contents |
 |---|---|
 | `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, `Hereditary.lean` (`IsLeftHereditary`/`IsRightHereditary`/`IsHereditary`), `FreeRank.lean` (invariance of infinite rank), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (multiplicities of simple modules), `CyclicMonoid.lean` (the classification, and `C_{m,n}` as a monoid), `Kaplansky.lean`, `Albrecht.lean`, `ProjectiveSplit.lean` (a surjection onto a projective splits; a one-sided inverse gives an idempotent), `CardinalSum.lean` (cardinal sums over a support, sums of naturals).  Mathlib has none of them |
+| `Bergman/` | the Bergman–Dicks realisation theorem, ring theory with no `κ`-monoids; imports only Mathlib and `ForMathlib/`.  `Realization.lean` (the statement, `bergmanDicksData`, and the route), `MainRing` (the presented ring), `QuasiFree` (heredity), `Steps`/`Stages` (`V` one relation at a time), `Morita`, `Coprod`, and `Core/` for Bergman's coproduct theorem (§§4–9 of *Modules over coproducts of rings*: `Std`, `Support`, `Pure`, `Moves`, `Prop62`, `Prop82`, `Prop8`, `Main`) |
 | `Core/` | the monoid theory: `Index`, `SumData`, `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf`, `OrderUnitTransfer`, `OrderUnitIso`, `CyclicExtra` (Lemma 2.15 as a `κ`-iso), `Compatible` (Remark 2.19) |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8 at `λ = ℵ₀`), `Sums` (3.2, 3.4, `mk_support_lt`), `TransUncountable` (3.7, 3.8 at `λ > ℵ₀`, and the uniform statements), `Over`, `WellOrder` (Lemmas 3.4(2)(3) and 3.5: the `ι × ℕ` normal form *is* Definition 3.1(1) over any limit well-order), `UnivAux`, `Prop310`, `UnivExt` (Thm 3.12), `Saturated` (Lemma 3.14), `Components` (Remark 3.9), `BaseIso` (isomorphic bases, isomorphic extensions) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, `Transport` (Example 4.2, "`V^{ℵ₀}(R)` determines `V^κ(R)`", Cor. 4.6 hereditary), and `Rings/` for §2.2–2.3 (incl. `Progenerator`, `CyclicRealisable`) |
 | `Examples/` | `TrivExt`, `ENNReal`, `NatBraiding` (Examples 3.3(1), `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2, Examples 3.16 and 3.17), `NNReal` (braiding in `ℝ≥0`), `Reals` (`ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, and `ℚ≥0`), `RealsExtra`, `DiophantineExtra` (Examples 3.16, 3.17 in full, slack variables), `Dedekind` (Examples 4.8(4)) |
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`, `Extra` (the §5 preamble, monoid side), `ExtraRealization`.  `Forms`, `Prelim`, `Lemma52`, `Counterexample` and `Extra` are pure monoid theory |
-| `Axioms/` | `Modules`: Bergman–Dicks realisation, the one assumed result, and nothing else |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it.  Besides the four `Section` indices: `Definition21`/`Definition218` (literal transcriptions), `Section5Extra`, `Examples48` |
 
 **When adding a result, put it in the lowest layer that can state it.**  A monoid-theoretic lemma
-in a `Modules/` or `TwoGen/` file puts it needlessly behind the axiom, and the layering check will
-not catch that — it only catches imports.
+in a `Modules/` or `TwoGen/` file puts it needlessly behind the module theory, and the layering
+check will not catch that — it only catches imports.
 
 **`Paper/` is the deliverable for a reader.**  `Paper/Section5.lean` restates §5 over `Setting5`,
 which bundles the section's standing assumptions, and `Section5Extra.lean` adds the unnumbered

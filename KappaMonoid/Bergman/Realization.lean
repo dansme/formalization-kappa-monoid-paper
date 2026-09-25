@@ -206,3 +206,34 @@ theorem nonempty_bergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMo
     exact nonempty_bergmanDicksData_of_V k M u R hR Φ hΦ
 
 end Bergman
+
+namespace KappaMonoid
+
+/-- **The Bergman–Dicks realisation theorem** (Bergman, *Coproducts and some universal ring
+constructions*, Trans. AMS 200 (1974), Theorem 6.2; Bergman–Dicks, *Universal derivations and
+universal ring constructions*, Pacific J. Math. 79 (1978), Theorem 3.4).  For every field `k`,
+every reduced commutative monoid with an order-unit `u` is `V(R)` for a hereditary `k`-algebra
+`R`, with `[R] ↦ u`.
+
+*Reduced* is the paper's term for conical: `a + b = 0` forces `a = 0`.  An *order-unit* is a `u`
+such that every element divides some multiple of `u`.
+
+This was the one assumed result of the development; it is now `Bergman.nonempty_bergmanDicksData`,
+proved in this directory.  Compared with the sources:
+
+* Bergman's Theorem 6.2 is for a *finitely generated* monoid; the arbitrary case is Bergman–Dicks's
+  remark after their Theorem 3.4, by direct limits.  Here no direct limit is needed: the ring is
+  presented by all generators and relations at once, `V` is computed by compactness, and heredity
+  comes from quasi-freeness (`QuasiFree.lean`) rather than from universal derivations.
+* The papers are about right modules, this statement about left ones; `hereditary` is the
+  two-sided `IsHereditary`, which Bergman's construction gives and the proof here produces.
+* There is no `u ≠ 0`: with `_hred` and `_hunit`, `u = 0` forces `M` to be trivial, and the zero
+  ring realises the trivial monoid (`nonempty_bergmanDicksData_of_subsingleton`).  Nothing here
+  claims `Nontrivial R`; compare `leavittData`, which assumes `m ≥ 1`. -/
+noncomputable def bergmanDicksData (k : Type u) [Field k] (M : Type u) [AddCommMonoid M] (u : M)
+    (_hred : ∀ a b : M, a + b = 0 → a = 0)
+    (_hunit : ∀ y : M, ∃ (z : M) (n : ℕ), y + z = n • u) :
+    BergmanDicksData.{u} k M u :=
+  (Bergman.nonempty_bergmanDicksData k M u _hred _hunit).some
+
+end KappaMonoid

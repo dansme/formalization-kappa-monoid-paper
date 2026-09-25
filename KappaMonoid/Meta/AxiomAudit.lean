@@ -2,11 +2,12 @@
 `#assert_axioms`: the axiom provenance of a result, as a checked claim rather than a comment.
 
 CI already refuses a change to the *set* of `axiom` declarations under `KappaMonoid/`.  It says
-nothing about who depends on them, so a proof that quietly starts using Bergman–Dicks passes.
-`README.md` carries that information as prose, which is exactly the kind of claim that goes stale.
+nothing about who depends on axioms declared elsewhere, or on `sorryAx`, so a proof that quietly
+starts using one passes.  `README.md` carries that information as prose, which is exactly the kind
+of claim that goes stale.
 
     #assert_axioms KappaMonoid.theorem_3_12 []
-    #assert_axioms KappaMonoid.prop_2_16 [bergmanDicksData]
+    #assert_axioms Foo.bar [Foo.someAxiom]
 
 `propext`, `Classical.choice` and `Quot.sound` are always permitted and never listed; everything
 else must be declared, and a mismatch in either direction is an error.  The point of failing on a

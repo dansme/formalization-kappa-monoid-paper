@@ -18,8 +18,9 @@ It covers Sections 2–5 of the paper:
   not formalised" below.
 - **Also covered:** the unnumbered claims that later results rely on.
 - **Sorry-free:** `lake build` checks everything.
-- **One assumed theorem:** the Bergman–Dicks realisation theorem, see below. All other results
-  depend only on Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`).
+- **No assumed theorems:** the Bergman–Dicks realisation theorem, which the paper quotes, is
+  proved here, see below. Every result depends only on Lean's standard axioms (`propext`,
+  `Classical.choice`, `Quot.sound`).
 - **Pinned toolchain:** Lean and Mathlib `v4.33.0`.
 
 ## Reading it against the paper
@@ -34,31 +35,36 @@ It covers Sections 2–5 of the paper:
 - `Definition21.lean` and `Definition218.lean` transcribe the definitions of κ-monoids and
   λ⁻-monoids word for word. Each proves that its transcription is the same structure the
   development works with.
-- `AxiomAudit.lean` checks, for 170 headline results, which axioms each one uses. The build fails if
+- `AxiomAudit.lean` checks, for 171 headline results, which axioms each one uses. The build fails if
   that changes in either direction.
 
 Throughout the library, docstrings open with the paper reference (**Lemma 3.14(2)**, …), and most
 carry a short `Paper proof:` paragraph.
 
-## The assumed result
+## The Bergman–Dicks realisation theorem
 
-| Axiom | Statement | Source |
+| Theorem | Statement | Source |
 |---|---|---|
 | `bergmanDicksData` | For every field `k`, every reduced commutative monoid `M` with order-unit `u` is `V(R)` for a hereditary `k`-algebra `R`, with `[R] ↦ u` | Bergman 1974, Thm 6.2; Bergman–Dicks 1978, §3 |
 
-The axiom is stated in `KappaMonoid/Axioms/Modules.lean`, with a field-by-field comparison with the
-sources.
+The paper quotes this result. It is proved in `KappaMonoid/Bergman/` (`Bergman/Realization.lean`),
+and was the development's one axiom until then.
+
+- **`V`** follows Bergman. The ring is presented by universal idempotents and isomorphisms, and `V`
+  is computed one generator or relation at a time. After a matrix reduction, each step is a
+  coproduct over `k^ι`. For such coproducts, the normal form, well-positioned families and
+  Propositions 6.2, 8.2 and 8.4 of *Modules over coproducts of rings* (1974) give Corollaries 2.6
+  and 2.8.
+- **Heredity** departs from both papers. The ring is quasi-free: idempotents and isomorphisms
+  lift along square-zero extensions. Quasi-free algebras over a field are hereditary. No direct
+  limits are needed, so the monoid need not be finitely generated.
 
 It is used where the paper uses it:
 
 - Corollary 4.7(1), direction (i) ⇒ (ii), and hence Theorem 5.3's backward direction and Corollary
   5.5;
 - the §5 preamble's one-generator criterion;
-- Proposition 2.16, through Leavitt's theorem.
-
-Leavitt's theorem is derived from the axiom rather than assumed separately.
-
-Everything else is axiom-free. That includes all of §3 and the monoid theory of §§4–5.
+- Proposition 2.16, through Leavitt's theorem, which is derived from it.
 
 ## Differences from the paper
 
@@ -125,16 +131,16 @@ The code is organised by subject. Each layer imports only the layers above it in
 | Directory | Contents |
 |---|---|
 | `ForMathlib/` | general results, no κ-monoids |
+| `Bergman/` | the Bergman–Dicks realisation theorem, no κ-monoids |
 | `Core/` | §2: κ- and λ⁻-monoids, homomorphisms, free and cyclic κ-monoids, order-units |
 | `Braiding/` | §3: braidings, universal κ-extensions (Theorem 3.12), Lemma 3.14 |
 | `Examples/` | the concrete monoids: `ℕ₀ ∪ {∞}`, `ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, Diophantine monoids, the Dedekind case |
 | `Modules/` | Definition 2.4 and §4: classes of modules, Theorem 4.3, projective modules, the ring examples |
 | `TwoGen/` | §5 |
-| `Axioms/` | the one assumed result |
 | `Paper/` | the paper's results, as above |
 
 `Core/` and `Braiding/`, and the monoid-theoretic parts of `Examples/` and `TwoGen/`, mention no
-modules and use no axiom.
+modules.
 
 ## Building
 
@@ -146,6 +152,6 @@ lake build
 Do not run `lake update`. Mathlib bumps go through `.github/workflows/update.yml`.
 
 CI builds the project on every push and rejects any `sorry`. It checks the layering, and checks
-that the set of axioms is exactly the one in the table above.
+that the development declares no axioms.
 
 `CLAUDE.md` has the conventions for contributors.

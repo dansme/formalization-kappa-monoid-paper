@@ -39,13 +39,12 @@ jobs:
       - name: The layering holds
         run: ./scripts/check_layering.sh
 
-      # No new axioms without asking.  A deliberate addition means editing this list and the
-      # table in `README.md` in the same commit.
+      # No axioms.  The development declares none (the Bergman–Dicks realisation theorem, once
+      # assumed, is proved in `KappaMonoid/Bergman/`); a deliberate addition means asking first,
+      # then editing this list and `README.md` in the same commit.
       - name: The axiom list has not changed
         run: |
-          cat > axioms.expected <<'EOF'
-          KappaMonoid.bergmanDicksData
-          EOF
+          : > axioms.expected
           # ask Lean, not grep: every `axiom` constant declared in a KappaMonoid module, however
           # it is written (namespaced, private, indented, or produced by a macro)
           set -o pipefail

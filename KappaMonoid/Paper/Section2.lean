@@ -318,7 +318,7 @@ alias section_2_2_1_cyclicMonoidClassification := cyclicMonoidClassification
 
 /-- **§2.2.1**: Leavitt's theorem, a ring with `V(F) ≅ C_{m,n}` for `m, n ≥ 1` —
 `KappaMonoid.leavittData`, in `Modules/Rings/Leavitt.lean`, derived from the Bergman–Dicks
-axiom. -/
+realisation theorem. -/
 alias section_2_2_1_leavittData := KappaMonoid.leavittData
 
 /-- **§2.2.1**: realising `C_{0,n}` forces `R = 0` and `n = 1` —

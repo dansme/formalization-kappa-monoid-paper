@@ -1,20 +1,16 @@
 /-
 **The axiom provenance of the headline results, as checked claims.**
 
-CI refuses a change to the *set* of `axiom` declarations under `KappaMonoid/`, but says nothing
-about who depends on them: a proof that quietly started using Bergman–Dicks would pass.  The
-provenance paragraphs of `README.md` say it in prose, and prose drifts.  Every line below is
-checked by the build.
+The development has no axioms of its own: the one classical result it used to assume, the
+Bergman–Dicks realisation theorem, is proved in `KappaMonoid/Bergman/` (`bergmanDicksData`).  CI
+refuses any `axiom` declaration under `KappaMonoid/`, but that says nothing about `sorryAx` or about
+an axiom imported from elsewhere; every line below is checked by the build, and an empty list means
+*"this result rests on nothing but Lean's own foundation"* — `propext`, `Classical.choice` and
+`Quot.sound`, which are permitted everywhere and never listed.
 
-`propext`, `Classical.choice` and `Quot.sound` are permitted everywhere and never listed, so an
-empty list means *"this result rests on nothing but Lean's own foundation"*.
-
-The lists were computed with `#print axioms`, not guessed.  Two of them are worth reading twice:
-
-* `corollary_4_5_three` is axiom-free — it takes "every projective is a sum of finitely generated
-  ones" as a hypothesis, rather than quoting Albrecht's theorem for it.
-* `kaplansky` is axiom-free too, since Kaplansky's theorem is proved in
-  `ForMathlib/Kaplansky.lean`.
+The lists were computed with `#print axioms`, not guessed.  Until the realisation theorem was
+proved, Proposition 2.16 (through Leavitt's theorem), direction (i) ⇒ (ii) of Corollary 4.7(1),
+and the results of §5 resting on it, listed `bergmanDicksData`.
 -/
 import KappaMonoid.Meta.AxiomAudit
 import KappaMonoid.Paper.Section2
@@ -25,9 +21,13 @@ import KappaMonoid.Paper.Section5Extra
 
 namespace KappaMonoid
 
-/-! ## §2 — Proposition 2.16 reaches Bergman–Dicks through Leavitt's theorem -/
+/-! ## The realisation theorem -/
 
-#assert_axioms prop_2_16 [bergmanDicksData]
+#assert_axioms bergmanDicksData []
+
+/-! ## §2 -/
+
+#assert_axioms prop_2_16 []
 #assert_axioms prop_2_17_one []
 #assert_axioms Projective.isFaithful_unitClass []
 #assert_axioms Projective.isOrderUnit_unitClass []
@@ -49,16 +49,16 @@ namespace KappaMonoid
 #assert_axioms KMonoid.toPaper_toKMonoid []
 #assert_axioms PaperKMonoid.sigma_pair_comm []
 #assert_axioms subsingleton_of_realises_cyclicRel_zero []
-#assert_axioms cyclicRel_realisable_iff [bergmanDicksData]
+#assert_axioms cyclicRel_realisable_iff []
 #assert_axioms rankRel_classification []
 #assert_axioms FreeMod.kGenerates_unit []
 #assert_axioms prop_2_16_converse []
-#assert_axioms prop_2_16_iff [bergmanDicksData]
+#assert_axioms prop_2_16_iff []
 #assert_axioms prop_2_17_two []
 #assert_axioms exists_unique_lift []
 #assert_axioms FreeK_eq_univ []
 
-/-! ## §3 — no axiom at all -/
+/-! ## §3 -/
 
 #assert_axioms exists_common_coarsening []
 #assert_axioms mk_ccomp_lt []
@@ -115,7 +115,7 @@ namespace KappaMonoid
 #assert_axioms not_isSaturatedFin_ineqSystem []
 #assert_axioms example_3_17_slack_iso []
 
-/-! ## §4 — Bergman–Dicks in one direction of Corollary 4.7(1), nothing else -/
+/-! ## §4 -/
 
 #assert_axioms IsLambdaSmallLe.isLambdaSmall_succ []
 #assert_axioms theorem_4_3 []
@@ -142,8 +142,8 @@ namespace KappaMonoid
 #assert_axioms addOfCard_unitClass_eq []
 #assert_axioms corollary_4_7_one_backward []
 #assert_axioms corollary_4_7_one_backward_iso []
-#assert_axioms corollary_4_7_one_forward [bergmanDicksData]
-#assert_axioms corollary_4_7_one [bergmanDicksData]
+#assert_axioms corollary_4_7_one_forward []
+#assert_axioms corollary_4_7_one []
 #assert_axioms corollary_4_7_two []
 #assert_axioms corollary_4_7_two_iff []
 #assert_axioms krsa_ascent []
@@ -152,7 +152,7 @@ namespace KappaMonoid
 #assert_axioms krsa_ascent_iso []
 #assert_axioms isUniversalKExtension_unique' []
 
-/-! ## §5 — Bergman–Dicks only, and only where Corollary 4.7(1) is invoked -/
+/-! ## §5 -/
 
 #assert_axioms TwoGen.lemma_5_1 []
 #assert_axioms TwoGen.lemma_5_1_core []
@@ -165,17 +165,17 @@ namespace KappaMonoid
 #assert_axioms TwoGen.lemma_5_2_four []
 #assert_axioms TwoGen.lemma_5_2_five []
 #assert_axioms TwoGen.theorem_5_3_forward []
-#assert_axioms TwoGen.theorem_5_3_backward [bergmanDicksData]
-#assert_axioms TwoGen.theorem_5_3 [bergmanDicksData]
-#assert_axioms TwoGen.theorem_5_3_sumFG [bergmanDicksData]
+#assert_axioms TwoGen.theorem_5_3_backward []
+#assert_axioms TwoGen.theorem_5_3 []
+#assert_axioms TwoGen.theorem_5_3_sumFG []
 #assert_axioms TwoGen.prop_5_4 []
 #assert_axioms TwoGen.prop_5_4_free []
 #assert_axioms TwoGen.prop_5_4_hereditary []
-#assert_axioms TwoGen.corollary_5_5_one [bergmanDicksData]
-#assert_axioms TwoGen.corollary_5_5_two [bergmanDicksData]
-#assert_axioms TwoGen.corollary_5_5_three [bergmanDicksData]
-#assert_axioms TwoGen.corollary_5_5_three_nonfree [bergmanDicksData]
-#assert_axioms TwoGen.corollary_5_5_three_trace [bergmanDicksData]
+#assert_axioms TwoGen.corollary_5_5_one []
+#assert_axioms TwoGen.corollary_5_5_two []
+#assert_axioms TwoGen.corollary_5_5_three []
+#assert_axioms TwoGen.corollary_5_5_three_nonfree []
+#assert_axioms TwoGen.corollary_5_5_three_trace []
 #assert_axioms TwoGen.cmul_top_add_ecmul_of_mem_addOf []
 #assert_axioms TwoGen.unique_infinite_form_of_addOf_eq []
 #assert_axioms TwoGen.cex_incomparable []
@@ -186,11 +186,11 @@ namespace KappaMonoid
 #assert_axioms TwoGen.isBraidedOver_addOf_of_ne []
 #assert_axioms TwoGen.ne_nsmul_iff_exists_withTop []
 #assert_axioms TwoGen.ne_nsmul_of_realization []
-#assert_axioms TwoGen.remark_before_5_5 [bergmanDicksData]
-#assert_axioms TwoGen.remark_before_5_5_realizable [bergmanDicksData]
-#assert_axioms TwoGen.realization_of_ne [bergmanDicksData]
-#assert_axioms TwoGen.cyclic_realizable_iff [bergmanDicksData]
-#assert_axioms TwoGen.cyclic_realizable_iff_withTop [bergmanDicksData]
+#assert_axioms TwoGen.remark_before_5_5 []
+#assert_axioms TwoGen.remark_before_5_5_realizable []
+#assert_axioms TwoGen.realization_of_ne []
+#assert_axioms TwoGen.cyclic_realizable_iff []
+#assert_axioms TwoGen.cyclic_realizable_iff_withTop []
 #assert_axioms Paper.lemma_5_2_three' []
 #assert_axioms Paper.lemma_5_2_four' []
 #assert_axioms Paper.corollary_5_5_two_converse_false_setting []
@@ -199,15 +199,15 @@ namespace KappaMonoid
 /-! ## The paper layer restates §5, so it must report the same axioms -/
 
 #assert_axioms Paper.lemma_5_2_three []
-#assert_axioms Paper.theorem_5_3_backward [bergmanDicksData]
+#assert_axioms Paper.theorem_5_3_backward []
 #assert_axioms Paper.exists_form []
 #assert_axioms Paper.lemma_5_1 []
 #assert_axioms Paper.theorem_5_3_forward []
-#assert_axioms Paper.theorem_5_3_realizable [bergmanDicksData]
+#assert_axioms Paper.theorem_5_3_realizable []
 #assert_axioms Paper.prop_5_4 []
-#assert_axioms Paper.corollary_5_5_one [bergmanDicksData]
-#assert_axioms Paper.corollary_5_5_two [bergmanDicksData]
-#assert_axioms Paper.corollary_5_5_three [bergmanDicksData]
-#assert_axioms Paper.corollary_5_5_three_trace [bergmanDicksData]
+#assert_axioms Paper.corollary_5_5_one []
+#assert_axioms Paper.corollary_5_5_two []
+#assert_axioms Paper.corollary_5_5_three []
+#assert_axioms Paper.corollary_5_5_three_trace []
 
 end KappaMonoid

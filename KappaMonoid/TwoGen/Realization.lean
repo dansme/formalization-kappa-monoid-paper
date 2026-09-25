@@ -9,7 +9,7 @@ Forward (`theorem_5_3_forward`): Lemma 5.1 gives the braiding, (iii) is Lemma 5.
 Backward (`theorem_5_3_backward`): `braidedForms_of_conditions` runs the paper's four-case split on
 forms, and `exists_braided_form` reduces an *arbitrary* family over `add (x₁ + x₂)` to a form family
 — the step the paper compresses into "hence `add (x₁ + x₂) = ⟨x₁, x₂⟩`".  Corollary 4.7(1) then
-realises `H`, which is where the Bergman–Dicks axiom enters.
+realises `H`, which is where the Bergman–Dicks theorem enters.
 -/
 import KappaMonoid.TwoGen.Lemma51
 import KappaMonoid.TwoGen.Lemma52
@@ -849,7 +849,7 @@ from `Albrecht.exists_directSum_fg`.
 Forward: Lemma 5.1 gives braidedness, then (iii) is 5.2(1), (ii) is 5.2(4), and (i) is the counting
 argument.  Backward: `exists_braided_form` reduces arbitrary families to forms and
 `braidedForms_of_conditions` runs the paper's four-case split; Corollary 4.7(1) then realises `H`,
-which is where the Bergman–Dicks axiom enters. -/
+which is where the Bergman–Dicks theorem enters. -/
 theorem theorem_5_3 (k : Type u) [Field k]
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H)) :

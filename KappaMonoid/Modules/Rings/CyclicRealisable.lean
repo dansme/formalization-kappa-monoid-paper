@@ -19,7 +19,7 @@ the two characterisations of the section.
 
 In the `CyclicRel` encoding `C_{m,0}` is `ℕ₀` for every `m` (`cyclicRel_zero_right`), so the list
 of realisable presentations reads `n = 0 ∨ (1 ≤ m ∧ 1 ≤ n) ∨ (m = 0 ∧ n = 1)`.  The realisation of
-`C_{m,n}` with `m ≥ 1` is Leavitt's theorem, which here rests on the Bergman–Dicks axiom.
+`C_{m,n}` with `m ≥ 1` is Leavitt's theorem, which here rests on the Bergman–Dicks theorem.
 -/
 import KappaMonoid.Modules.Rings.Realisation
 import KappaMonoid.Core.OrderUnitIso
@@ -99,7 +99,7 @@ Stated for the presentation `∼_{m,n}` of `C_{m,n}`; since `C_{m,0} = ℕ₀` i
 `ℚ` (invariant basis number), by Leavitt's theorem, and by the zero ring; conversely `C_{0,n}`
 needs `R = 0`, which forces `n = 1` (`subsingleton_of_realises_cyclicRel_zero`).
 
-The case `m, n ≥ 1` is Leavitt's theorem, here deduced from the Bergman–Dicks axiom. -/
+The case `m, n ≥ 1` is Leavitt's theorem, here deduced from the Bergman–Dicks theorem. -/
 theorem cyclicRel_realisable_iff (m n : ℕ) :
     (∃ (R : Type u) (_ : Ring R), ∀ k l : ℕ,
         Nonempty ((⨁ _ : Fin k, R) ≃ₗ[R] (⨁ _ : Fin l, R)) ↔ CyclicRel m n k l) ↔
@@ -209,7 +209,7 @@ order-unit."*
 
 Forward: `[R]` is a faithful generator of `V^κ(𝓕^κ)` (`prop_2_16_converse`), and both properties
 transport along a `κ`-isomorphism.  Backward: `prop_2_16`, whose realising ring is nonzero.  The
-backward direction uses Leavitt's theorem, hence the Bergman–Dicks axiom, when the size-zero
+backward direction uses Leavitt's theorem, hence the Bergman–Dicks theorem, when the size-zero
 submonoid is finite. -/
 theorem prop_2_16_iff {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) (H : Type u) [KMonoid κ H] :
     (∃ (R : Type u) (_ : Ring R) (_ : Nontrivial R)

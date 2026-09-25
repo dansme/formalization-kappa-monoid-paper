@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # The development is layered by subject, and the layering is a claim about imports:
 #
-#   ForMathlib/ ──> Core/ ──> Braiding/ ──> Modules/ ──> TwoGen/
-#                                    └────> Examples/    Axioms/   Paper/
+#   ForMathlib/ ──> Core/ ──> Braiding/ ──> Modules/ ──> TwoGen/ ──> Paper/
+#       │                         └──> Examples/  ^
+#       └──> Bergman/ ────────────────────────────┘
 #
 # Lake resolves modules package-wide, so nothing stops `Core/` importing `Modules/` except
 # this check.  It also guards the property that makes the lower layers reusable: no module
-# theory below `Modules/`, and no assumed classical result below it either.
+# theory below `Modules/`.  `Bergman/` (the Bergman–Dicks realisation theorem) is ring theory
+# with no κ-monoids, and sits beside `Core/` and `Braiding/` rather than above them.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 fail=0
@@ -18,10 +20,10 @@ allowed() {                      # $1 = layer of the importing file
     Core)       echo "ForMathlib Core" ;;
     Braiding)   echo "ForMathlib Core Braiding" ;;
     Examples)   echo "ForMathlib Core Braiding Examples" ;;
-    Axioms)     echo "ForMathlib Axioms" ;;
-    Modules)    echo "ForMathlib Core Braiding Axioms Modules" ;;
-    TwoGen)     echo "ForMathlib Core Braiding Examples Axioms Modules TwoGen" ;;
-    Paper)      echo "ForMathlib Core Braiding Examples Axioms Modules TwoGen Paper Meta" ;;
+    Bergman)    echo "ForMathlib Bergman" ;;
+    Modules)    echo "ForMathlib Core Braiding Bergman Modules" ;;
+    TwoGen)     echo "ForMathlib Core Braiding Examples Bergman Modules TwoGen" ;;
+    Paper)      echo "ForMathlib Core Braiding Examples Bergman Modules TwoGen Paper Meta" ;;
     Meta)       echo "" ;;
     *)          echo "*" ;;
   esac
@@ -51,12 +53,13 @@ if hits=$(grep -rlE '\bModuleClass\b|\[Ring |\[CommRing |\bIdeal \b|\bSubmodule\
   [ -n "$hits" ] && { echo "::error::module theory under Core/ or Braiding/: $hits"; fail=1; }
 fi
 
-# 3. No file may import all of Mathlib except the two that deliberately do.
+# 3. No file may import all of Mathlib except those that deliberately do.
 while IFS= read -r file; do
   case "$file" in
-    KappaMonoid/Axioms/*|KappaMonoid/Modules/Small.lean) ;;
-    # TEMPORARY: work in progress on proving the Bergman–Dicks axiom; not imported by the root.
-    # Imports get trimmed when the layer is integrated.
+    KappaMonoid/Modules/Small.lean) ;;
+    # TEMPORARY: the files of the Bergman–Dicks proof still import all of Mathlib; their imports
+    # are yet to be trimmed.  Nothing else in the development imports them except through the
+    # aggregator, `KappaMonoid/Bergman.lean`.
     KappaMonoid/Bergman/*) ;;
     *) echo "::error::$file imports all of Mathlib; import what it uses instead"; fail=1 ;;
   esac

@@ -1,6 +1,6 @@
 /-
-`V(R) = add [R]`, **Corollary 4.7** (both directions; the forward one is the only use of the
-Bergman–Dicks axiom) and **Examples 4.8(1)**, the ascent of KRSA.
+`V(R) = add [R]`, **Corollary 4.7** (both directions; the forward one uses the Bergman–Dicks
+realisation theorem) and **Examples 4.8(1)**, the ascent of KRSA.
 -/
 import KappaMonoid.Modules
 import KappaMonoid.Core.AddOf
@@ -365,7 +365,7 @@ theorem everyProjectiveIsSumOfFG_of_kGenerates_finite (R : Type u) [Ring R]
 /-! ## Corollary 4.7
 
 Part (2) is provable with what is already here.  Part (1) needs the Bergman–Dicks realisation
-theorem, `bergmanDicksData` in `KappaMonoid/Axioms/Modules.lean`. -/
+theorem, `bergmanDicksData` in `KappaMonoid/Bergman/Realization.lean`. -/
 
 section Cor47
 
@@ -501,7 +501,7 @@ theorem BergmanDicksData.exists_isLMonoidHom_bijective {k : Type u} [Field k] {M
 /-- **Corollary 4.7(1)**, (i) ⇒ (ii), the direction that needs Bergman–Dicks.
 
 Given `x ∈ H` with `H` braided over `add x`, and a field `k`, the monoid `add x` is reduced with
-order-unit `x`, so the axiom supplies a hereditary `k`-algebra `R` with `V(R) ≅ add x`.
+order-unit `x`, so Bergman–Dicks supplies a hereditary `k`-algebra `R` with `V(R) ≅ add x`.
 Albrecht's theorem feeds `corollary_4_5_three`, making `V^κ(R)` braided over `V(R)`;
 `isKIso_of_braidedOver_same` then identifies `V^κ(R)` with `H`.
 
