@@ -20,26 +20,27 @@ import KappaMonoid.Bergman.Corner
 
 universe u
 
-set_option linter.unusedSectionVars false
-
 namespace Bergman.Core
 
 open Module
 
-variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+variable {k : Type u} [Field k] {ι : Type} [DecidableEq ι]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   (σ : ∀ l, (ι → k) →ₐ[k] R l) [Fact (∀ l, Function.Injective (σ l))]
   {C : Type u} [Ring C] [Algebra k C] (σC : (ι → k) →ₐ[k] C) (inc : ∀ l, R l →ₐ[k] C)
-  [Fact (IsCoprod k σ C σC inc)]
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
 
 /-- The structure maps `R_μ → C`. -/
-def incμ : ∀ μ : Option Λ, Rμ k ι R μ →ₐ[k] C
+def incμ : ∀ μ : Option Λ, R_[μ] →ₐ[k] C
   | none => σC
   | some l => inc l
+set_option hygiene false in
+local notation "inc_[" μ "]" => incμ σC inc μ
 
-variable (N : Option Λ → Type u) [∀ μ, AddCommGroup (N μ)] [∀ μ, Module (Rμ k ι R μ) (N μ)]
-  [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (Rμ k ι R μ) (N μ)]
+variable (N : Option Λ → Type u) [∀ μ, AddCommGroup (N μ)] [∀ μ, Module (R_[μ]) (N μ)]
+  [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (R_[μ]) (N μ)]
 
 /-- `e_j N_μ`, a `k`-subspace. -/
 def eSub (μ : Option Λ) (j : ι) : Submodule k (N μ) where
@@ -57,10 +58,12 @@ structure HomBases where
   /-- The bases. -/
   b : ∀ μ j, Basis (S μ j) k (eSub σ N μ j)
 
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 theorem nonempty_homBases : Nonempty (HomBases σ N) :=
   ⟨⟨fun μ j => Basis.ofVectorSpaceIndex k (eSub σ N μ j),
     fun μ j => Basis.ofVectorSpace k (eSub σ N μ j)⟩⟩
 
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 theorem eμ_smul_eSub {μ : Option Λ} {j : ι} (i : ι) {x : N μ} (hx : x ∈ eSub σ N μ j) :
     eμ σ μ i • x = if i = j then x else 0 := by
   have hx' : eμ σ μ j • x = x := hx
@@ -70,7 +73,7 @@ theorem eμ_smul_eSub {μ : Option Λ} {j : ι} (i : ι) {x : N μ} (hx : x ∈ 
   · simp
 
 /-- `N_μ = ⊕_j e_j N_μ`, as `k`-spaces. -/
-noncomputable def homEquiv (μ : Option Λ) : N μ ≃ₗ[k] ∀ j, eSub σ N μ j where
+noncomputable def homEquiv [Fintype ι] (μ : Option Λ) : N μ ≃ₗ[k] ∀ j, eSub σ N μ j where
   toFun x j := ⟨eμ σ μ j • x, by
     show eμ σ μ j • eμ σ μ j • x = eμ σ μ j • x
     rw [smul_smul, eμ_mul_eμ, if_pos rfl]⟩
@@ -90,10 +93,11 @@ noncomputable def homEquiv (μ : Option Λ) : N μ ≃ₗ[k] ∀ j, eSub σ N μ
 variable {σ N} (B : HomBases σ N)
 
 /-- The homogeneous basis of `N_μ`, `N_μ = ⊕_j e_j N_μ`. -/
-noncomputable def HomBases.basis (μ : Option Λ) : Basis (Σ j, B.S μ j) k (N μ) :=
+noncomputable def HomBases.basis [Fintype ι] (μ : Option Λ) : Basis (Σ j, B.S μ j) k (N μ) :=
   (Pi.basis fun j => B.b μ j).map (homEquiv σ N μ).symm
 
-theorem HomBases.basis_apply (μ : Option Λ) (j : ι) (s : B.S μ j) :
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
+theorem HomBases.basis_apply [Fintype ι] (μ : Option Λ) (j : ι) (s : B.S μ j) :
     B.basis μ ⟨j, s⟩ = (B.b μ j s : N μ) := by
   classical
   rw [HomBases.basis, Basis.map_apply, Pi.basis_apply]
@@ -103,7 +107,8 @@ theorem HomBases.basis_apply (μ : Option Λ) (j : ι) (s : B.S μ j) :
   · intro j' _ hj'; simp [hj']
   · simp
 
-theorem HomBases.basis_mem (μ : Option Λ) (j : ι) (s : B.S μ j) :
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
+theorem HomBases.basis_mem [Fintype ι] (μ : Option Λ) (j : ι) (s : B.S μ j) :
     B.basis μ ⟨j, s⟩ ∈ eSub σ N μ j := by
   rw [B.basis_apply]; exact (B.b μ j s).2
 
@@ -122,6 +127,11 @@ noncomputable def Std.mono (w : Mono σ B.S) : Std σC inc B := Finsupp.single w
 /-- The monomials form a `k`-basis. -/
 noncomputable def Std.monoBasis : Basis (Mono σ B.S) k (Std σC inc B) := Finsupp.basisSingleOne
 
+theorem Std.monoBasis_apply (w : Mono σ B.S) :
+    Std.monoBasis σC inc B w = Std.mono σC inc B w := by
+  change (Finsupp.basisSingleOne : Basis (Mono σ B.S) k (Mono σ B.S →₀ k)) w = Finsupp.single w 1
+  simp
+
 /-! ## The action of `R_μ` -/
 
 /-- The monomials not on side `μ`: Bergman's `U_{~μ}`. -/
@@ -129,7 +139,7 @@ abbrev NotSide (μ : Option Λ) : Type u := {w : Mono σ B.S // w.side ≠ μ}
 
 /-- `⊕_{u ∈ U_{~μ}} R_μ e_{left u}`, the free part of `Std` over `R_μ`. -/
 abbrev FreePart (μ : Option Λ) : Type u :=
-  Π₀ u : NotSide B μ, ↥(Submodule.span (Rμ k ι R μ) {eμ σ μ u.1.left})
+  Π₀ u : NotSide B μ, ↥(Submodule.span (R_[μ]) {eμ σ μ u.1.left})
 
 /-- The monomials, from the three kinds relative to `μ`: a base element of `N_μ`, a monomial
 not on side `μ`, or a letter of `R_μ` times one. -/
@@ -212,6 +222,8 @@ theorem monoSplit_symm_apply (μ : Option Λ) (x) : (monoSplit B μ).symm x = mo
 theorem monoSplit_monoJoin (μ : Option Λ) (x) : monoSplit B μ (monoJoin B μ x) = x :=
   (monoSplit B μ).apply_symm_apply x
 
+variable [Fintype ι]
+
 /-- The basis of `N_μ × FreePart μ` matching the monomials. -/
 noncomputable def targetBasis (μ : Option Λ) :
     Basis ((Σ j, B.S μ j) ⊕ Σ u : NotSide B μ, Option (Σ i, Tl σ μ i u.1.left)) k
@@ -222,7 +234,8 @@ theorem targetBasis_inl (μ : Option Λ) (j : ι) (s : B.S μ j) :
     targetBasis B μ (.inl ⟨j, s⟩) = (B.basis μ ⟨j, s⟩, 0) := by
   simp [targetBasis, Basis.prod_apply]
 
-theorem targetBasis_inr (μ : Option Λ) (u : NotSide B μ) (o : Option (Σ i, Tl σ μ i u.1.left)) :
+theorem targetBasis_inr (μ : Option Λ) (u : NotSide B μ)
+    (o : Option (Σ i, Tl σ μ i u.1.left)) :
     targetBasis B μ (.inr ⟨u, o⟩) = (0, DFinsupp.single u (leftIdealBasis σ μ u.1.left o)) := by
   simp [targetBasis, Basis.prod_apply, DFinsupp.basis]
 
@@ -235,11 +248,6 @@ theorem dfinsupp_basis_apply {ι' : Type*} {M : ι' → Type*} [∀ i, AddCommGr
 /-- **`Std = N_μ ⊕ (free R_μ-module)`**, as `k`-spaces. -/
 noncomputable def Std.Φ (μ : Option Λ) : Std σC inc B ≃ₗ[k] N μ × FreePart B μ :=
   (Std.monoBasis σC inc B).equiv (targetBasis B μ) (monoSplit B μ)
-
-theorem Std.monoBasis_apply (w : Mono σ B.S) :
-    Std.monoBasis σC inc B w = Std.mono σC inc B w := by
-  change (Finsupp.basisSingleOne : Basis (Mono σ B.S) k (Mono σ B.S →₀ k)) w = Finsupp.single w 1
-  simp
 
 theorem Std.Φ_mono (μ : Option Λ) (w : Mono σ B.S) :
     Std.Φ σC inc B μ (Std.mono σC inc B w) = targetBasis B μ (monoSplit B μ w) := by
@@ -265,20 +273,20 @@ def smulLin {M : Type*} [AddCommGroup M] [Module k M] {A : Type*} [Ring A] [Alge
     smulLin (k := k) r y = r • y := rfl
 
 /-- The action of `R_μ` on `Std`, transported along `Φ μ`. -/
-noncomputable def Std.act (μ : Option Λ) : Rμ k ι R μ →ₐ[k] Module.End k (Std σC inc B) where
+noncomputable def Std.act (μ : Option Λ) : R_[μ] →ₐ[k] Module.End k (Std σC inc B) where
   toFun r := (Std.Φ σC inc B μ).symm.toLinearMap ∘ₗ smulLin r ∘ₗ (Std.Φ σC inc B μ).toLinearMap
   map_one' := by ext x; simp
   map_mul' r s := by ext x; simp [mul_smul]
   map_zero' := by
     ext x
     simp only [LinearMap.comp_apply, smulLin_apply, LinearEquiv.coe_coe]
-    have h0 : (0 : Rμ k ι R μ) • Std.Φ σC inc B μ x = 0 :=
+    have h0 : (0 : R_[μ]) • Std.Φ σC inc B μ x = 0 :=
       Prod.ext (zero_smul _ _) (DFinsupp.ext fun u => Subtype.ext (by simp))
     rw [h0, map_zero]; rfl
   map_add' r s := by ext x; simp [add_smul]
   commutes' c := by ext x; simp [algebraMap_smul]
 
-theorem Std.act_apply (μ : Option Λ) (r : Rμ k ι R μ) (x : Std σC inc B) :
+theorem Std.act_apply (μ : Option Λ) (r : R_[μ]) (x : Std σC inc B) :
     Std.act σC inc B μ r x = (Std.Φ σC inc B μ).symm (r • Std.Φ σC inc B μ x) := rfl
 
 theorem eμ_smul_targetBasis (μ : Option Λ) (i : ι) (x) :
@@ -332,6 +340,10 @@ theorem Std.act_compat (l : Λ) :
   rw [Std.monoBasis_apply]
   exact (Std.act_eμ_mono σC inc B (some l) i w).trans (Std.act_eμ_mono σC inc B none i w).symm
 
+/-! ## The action of `C`, from the universal property of the coproduct -/
+
+variable [Fact (IsCoprod k σ C σC inc)]
+
 theorem Std.exists_toEnd : ∃ g : C →ₐ[k] Module.End k (Std σC inc B),
     g.comp σC = Std.act σC inc B none ∧ ∀ l, g.comp (inc l) = Std.act σC inc B (some l) :=
   (Fact.out : IsCoprod k σ C σC inc).lift _ _ _ (Std.act_compat σC inc B)
@@ -355,14 +367,14 @@ theorem Std.smul_def (c : C) (x : Std σC inc B) : c • x = Std.toEnd σC inc B
 instance : IsScalarTower k C (Std σC inc B) :=
   ⟨fun a c x => by rw [Std.smul_def, Std.smul_def, map_smul]; rfl⟩
 
-theorem Std.incμ_smul (μ : Option Λ) (r : Rμ k ι R μ) (x : Std σC inc B) :
-    incμ σC inc μ r • x = Std.act σC inc B μ r x := by
+theorem Std.incμ_smul (μ : Option Λ) (r : R_[μ]) (x : Std σC inc B) :
+    inc_[μ] r • x = Std.act σC inc B μ r x := by
   cases μ with
   | none => rw [Std.smul_def, ← Std.toEnd_comp_σC]; rfl
   | some l => rw [Std.smul_def, ← Std.toEnd_comp_inc]; rfl
 
-theorem Std.Φ_incμ_smul (μ : Option Λ) (r : Rμ k ι R μ) (x : Std σC inc B) :
-    Std.Φ σC inc B μ (incμ σC inc μ r • x) = r • Std.Φ σC inc B μ x := by
+theorem Std.Φ_incμ_smul (μ : Option Λ) (r : R_[μ]) (x : Std σC inc B) :
+    Std.Φ σC inc B μ (inc_[μ] r • x) = r • Std.Φ σC inc B μ x := by
   rw [Std.incμ_smul, Std.act_apply, LinearEquiv.apply_symm_apply]
 
 /-! ## The components and the universal property -/
@@ -371,21 +383,24 @@ theorem Std.Φ_incμ_smul (μ : Option Λ) (r : Rμ k ι R μ) (x : Std σC inc 
 noncomputable def Std.incl (μ : Option Λ) : N μ →ₗ[k] Std σC inc B :=
   (Std.Φ σC inc B μ).symm.toLinearMap ∘ₗ LinearMap.inl k (N μ) (FreePart B μ)
 
+omit [Fact (IsCoprod k σ C σC inc)] in
 theorem Std.Φ_incl (μ : Option Λ) (n : N μ) :
     Std.Φ σC inc B μ (Std.incl σC inc B μ n) = (n, 0) := by
   simp [Std.incl]
 
+omit [Fact (IsCoprod k σ C σC inc)] in
 theorem Std.incl_basis (μ : Option Λ) (j : ι) (s : B.S μ j) :
     Std.incl σC inc B μ (B.basis μ ⟨j, s⟩) = Std.mono σC inc B
       (Mono.ofBase ⟨μ, j, s⟩) := by
   rw [Std.incl, LinearMap.comp_apply, LinearMap.inl_apply, ← targetBasis_inl]
   exact Std.Φ_symm_target σC inc B μ _
 
-theorem Std.incl_smul (μ : Option Λ) (r : Rμ k ι R μ) (n : N μ) :
-    Std.incl σC inc B μ (r • n) = incμ σC inc μ r • Std.incl σC inc B μ n := by
+theorem Std.incl_smul (μ : Option Λ) (r : R_[μ]) (n : N μ) :
+    Std.incl σC inc B μ (r • n) = inc_[μ] r • Std.incl σC inc B μ n := by
   apply (Std.Φ σC inc B μ).injective
   rw [Std.Φ_incμ_smul, Std.Φ_incl, Std.Φ_incl, Prod.smul_mk, smul_zero]
 
+omit [Fact (IsCoprod k σ C σC inc)] in
 /-- **Proposition 2.1(1)**: `N_μ` embeds in `Std`. -/
 theorem Std.incl_injective (μ : Option Λ) : Function.Injective (Std.incl σC inc B μ) :=
   fun a b h => by simpa [Std.Φ_incl] using congrArg (Std.Φ σC inc B μ) h
@@ -404,7 +419,7 @@ theorem Std.mono_cons (t : Letter σ) (w : Mono σ B.S) (h₁ h₂) :
   have h2 : Std.Φ σC inc B (some l) (Std.mono σC inc B w) = targetBasis B (some l) (.inr ⟨u, none⟩) :=
     Std.Φ_mono_join σC inc B (some l) (.inr ⟨u, none⟩)
   rw [h1, Std.Φ_mono_join, targetBasis_inr]
-  change _ = Std.Φ σC inc B (some l) (incμ σC inc (some l) (tval σ t') • Std.mono σC inc B w)
+  change _ = Std.Φ σC inc B (some l) (inc_[some l] (tval σ t') • Std.mono σC inc B w)
   rw [Std.Φ_incμ_smul, h2, targetBasis_inr, Prod.smul_mk, smul_zero,
     ← DFinsupp.single_smul]
   congr 2
@@ -452,6 +467,8 @@ theorem Std.span_incl :
   rintro _ ⟨w, rfl⟩
   exact Std.mono_mem_span σC inc B w
 
+omit [DecidableEq ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [Fact (IsCoprod k σ C σC inc)]
+    [Fintype ι] in
 /-- A property of elements of the coproduct, closed under the algebra operations and true on
 the images of the factors, holds everywhere. -/
 theorem IsCoprod.mem_of_subalgebra (hC : IsCoprod k σ C σC inc) (A : Subalgebra k C)
@@ -475,14 +492,17 @@ noncomputable def liftMono (w : Mono σ B.S) : P :=
   w.word.foldr (fun t acc => inc t.side t.val • acc)
     (g w.base.1 (B.basis w.base.1 ⟨w.base.2.1, w.base.2.2⟩))
 
+omit [IsScalarTower k C P] in
 theorem liftMono_ofBase (μ : Option Λ) (j : ι) (s : B.S μ j) :
     liftMono inc B P g (Mono.ofBase ⟨μ, j, s⟩) = g μ (B.basis μ ⟨j, s⟩) := rfl
 
+omit [IsScalarTower k C P] in
 theorem liftMono_cons (t : Letter σ) (w : Mono σ B.S) (h₁ h₂) :
     liftMono inc B P g (Mono.cons t w h₁ h₂) = inc t.side t.val • liftMono inc B P g w :=
   rfl
 
-theorem incμ_eμ (μ : Option Λ) (i : ι) : incμ σC inc μ (eμ σ μ i) = σC (ee i) := by
+omit [Fintype ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
+theorem incμ_eμ (μ : Option Λ) (i : ι) : inc_[μ] (eμ σ μ i) = σC (ee i) := by
   cases μ with
   | none => rfl
   | some l =>
@@ -490,8 +510,9 @@ theorem incμ_eμ (μ : Option Λ) (i : ι) : incμ σC inc μ (eμ σ μ i) = �
     rw [← AlgHom.comp_apply, (Fact.out : IsCoprod k σ C σC inc).comm l]
 
 variable {P g} in
+omit [IsScalarTower k C P] in
 theorem liftMono_homog
-    (hg : ∀ μ (r : Rμ k ι R μ) (n : N μ), g μ (r • n) = incμ σC inc μ r • g μ n)
+    (hg : ∀ μ (r : R_[μ]) (n : N μ), g μ (r • n) = inc_[μ] r • g μ n)
     (w : Mono σ B.S) : σC (ee w.left) • liftMono inc B P g w = liftMono inc B P g w := by
   obtain ⟨⟨ν, j, s⟩, word, hc⟩ := w
   cases word with
@@ -509,11 +530,12 @@ theorem liftMono_homog
     rw [smul_smul, e]
 
 variable {P g} in
+omit [IsScalarTower k C P] in
 theorem liftMono_join_inr
-    (hg : ∀ μ (r : Rμ k ι R μ) (n : N μ), g μ (r • n) = incμ σC inc μ r • g μ n)
+    (hg : ∀ μ (r : R_[μ]) (n : N μ), g μ (r • n) = inc_[μ] r • g μ n)
     (μ : Option Λ) (u : NotSide B μ) (o : Option (Σ i, Tl σ μ i u.1.left)) :
     liftMono inc B P g (monoJoin B μ (.inr ⟨u, o⟩)) =
-      incμ σC inc μ (leftIdealBasis σ μ u.1.left o) • liftMono inc B P g u.1 := by
+      inc_[μ] (leftIdealBasis σ μ u.1.left o) • liftMono inc B P g u.1 := by
   rcases o with _ | ⟨i, t⟩
   · rw [leftIdealBasis_none, incμ_eμ σC inc]
     exact (liftMono_homog σC inc B hg u.1).symm
@@ -527,11 +549,13 @@ theorem liftMono_join_inr
 noncomputable def liftLin : Std σC inc B →ₗ[k] P :=
   Finsupp.linearCombination k (liftMono inc B P g)
 
+omit [Fact (IsCoprod k σ C σC inc)] [IsScalarTower k C P] in
 theorem liftLin_mono (w : Mono σ B.S) :
     liftLin σC inc B P g (Std.mono σC inc B w) = liftMono inc B P g w :=
   (Finsupp.linearCombination_single k (v := liftMono inc B P g) (c := 1) (a := w)).trans
     (one_smul k _)
 
+omit [Fact (IsCoprod k σ C σC inc)] [IsScalarTower k C P] in
 theorem liftLin_incl (μ : Option Λ) (n : N μ) :
     liftLin σC inc B P g (Std.incl σC inc B μ n) = g μ n := by
   have : (liftLin σC inc B P g).comp (Std.incl σC inc B μ) = g μ :=
@@ -541,17 +565,17 @@ theorem liftLin_incl (μ : Option Λ) (n : N μ) :
 
 variable {P g} in
 theorem liftLin_smul_mono
-    (hg : ∀ μ (r : Rμ k ι R μ) (n : N μ), g μ (r • n) = incμ σC inc μ r • g μ n)
-    (μ : Option Λ) (r : Rμ k ι R μ) (w : Mono σ B.S) :
-    liftLin σC inc B P g (incμ σC inc μ r • Std.mono σC inc B w) =
-      incμ σC inc μ r • liftLin σC inc B P g (Std.mono σC inc B w) := by
+    (hg : ∀ μ (r : R_[μ]) (n : N μ), g μ (r • n) = inc_[μ] r • g μ n)
+    (μ : Option Λ) (r : R_[μ]) (w : Mono σ B.S) :
+    liftLin σC inc B P g (inc_[μ] r • Std.mono σC inc B w) =
+      inc_[μ] r • liftLin σC inc B P g (Std.mono σC inc B w) := by
   -- the case of a monomial not on side `μ`
-  have key : ∀ (r : Rμ k ι R μ) (u : NotSide B μ),
-      liftLin σC inc B P g (incμ σC inc μ r • Std.mono σC inc B u.1) =
-        incμ σC inc μ r • liftMono inc B P g u.1 := by
+  have key : ∀ (r : R_[μ]) (u : NotSide B μ),
+      liftLin σC inc B P g (inc_[μ] r • Std.mono σC inc B u.1) =
+        inc_[μ] r • liftMono inc B P g u.1 := by
     intro r u
     set b := leftIdealBasis σ μ u.1.left
-    set v : Submodule.span (Rμ k ι R μ) {eμ σ μ u.1.left} :=
+    set v : Submodule.span (R_[μ]) {eμ σ μ u.1.left} :=
       ⟨r * eμ σ μ u.1.left, Submodule.mem_span_singleton.2 ⟨r, rfl⟩⟩
     have hv : r • b none = v := by
       apply Subtype.ext
@@ -559,7 +583,7 @@ theorem liftLin_smul_mono
     have hsum : v = ∑ o ∈ (b.repr v).support, b.repr v o • b o := by
       conv_lhs => rw [← b.linearCombination_repr v]
       rfl
-    have hx : incμ σC inc μ r • Std.mono σC inc B u.1 =
+    have hx : inc_[μ] r • Std.mono σC inc B u.1 =
         ∑ o ∈ (b.repr v).support, b.repr v o • Std.mono σC inc B (monoJoin B μ (.inr ⟨u, o⟩)) := by
       apply (Std.Φ σC inc B μ).injective
       rw [map_sum, Std.Φ_incμ_smul]
@@ -572,36 +596,36 @@ theorem liftLin_smul_mono
       simp only [← DFinsupp.single_smul]
       rw [congrArg (DFinsupp.single u) hsum]
       exact map_sum (DFinsupp.singleAddHom (fun u : NotSide B μ =>
-        ↥(Submodule.span (Rμ k ι R μ) {eμ σ μ u.1.left})) u) _ _
-    have hr : (v : Rμ k ι R μ) = ∑ o ∈ (b.repr v).support, b.repr v o • (b o : Rμ k ι R μ) := by
+        ↥(Submodule.span (R_[μ]) {eμ σ μ u.1.left})) u) _ _
+    have hr : (v : R_[μ]) = ∑ o ∈ (b.repr v).support, b.repr v o • (b o : R_[μ]) := by
       conv_lhs => rw [hsum]
       simp
     rw [hx, map_sum]
     simp only [map_smul, liftLin_mono, liftMono_join_inr σC inc B hg]
-    calc ∑ o ∈ (b.repr v).support, b.repr v o • incμ σC inc μ (b o) • liftMono inc B P g u.1
-        = incμ σC inc μ (v : Rμ k ι R μ) • liftMono inc B P g u.1 := by
+    calc ∑ o ∈ (b.repr v).support, b.repr v o • inc_[μ] (b o) • liftMono inc B P g u.1
+        = inc_[μ] (v : R_[μ]) • liftMono inc B P g u.1 := by
           rw [hr, map_sum, Finset.sum_smul]
           simp [smul_assoc]
-      _ = incμ σC inc μ r • liftMono inc B P g u.1 := by
-          change incμ σC inc μ (r * eμ σ μ u.1.left) • _ = _
+      _ = inc_[μ] r • liftMono inc B P g u.1 := by
+          change inc_[μ] (r * eμ σ μ u.1.left) • _ = _
           rw [map_mul, mul_smul, incμ_eμ σC inc, liftMono_homog σC inc B hg]
   obtain ⟨x, rfl⟩ := monoJoin_surjective B μ w
   rcases x with ⟨j, s⟩ | ⟨u, _ | ⟨i, t⟩⟩
-  · change liftLin σC inc B P g (incμ σC inc μ r • Std.mono σC inc B (Mono.ofBase ⟨μ, j, s⟩)) =
-      incμ σC inc μ r • liftLin σC inc B P g (Std.mono σC inc B (Mono.ofBase ⟨μ, j, s⟩))
+  · change liftLin σC inc B P g (inc_[μ] r • Std.mono σC inc B (Mono.ofBase ⟨μ, j, s⟩)) =
+      inc_[μ] r • liftLin σC inc B P g (Std.mono σC inc B (Mono.ofBase ⟨μ, j, s⟩))
     rw [← Std.incl_basis, ← Std.incl_smul, liftLin_incl, liftLin_incl, hg]
   · exact (key r u).trans (by rw [liftLin_mono]; rfl)
   · cases μ with
     | none => exact (isEmpty_Tl_none σ i _).elim t
     | some l =>
       have hw : Std.mono σC inc B (monoJoin B (some l) (.inr ⟨u, some ⟨i, t⟩⟩)) =
-          incμ σC inc (some l) (tval σ t) • Std.mono σC inc B u.1 :=
+          inc_[some l] (tval σ t) • Std.mono σC inc B u.1 :=
         Std.mono_cons σC inc B _ _ rfl (fun h => u.2 h.symm)
       rw [hw, smul_smul, ← map_mul, key, key, map_mul, mul_smul]
 
 /-- **The universal property of standard modules.** -/
 theorem Std.exists_unique_lift
-    (hg : ∀ μ (r : Rμ k ι R μ) (n : N μ), g μ (r • n) = incμ σC inc μ r • g μ n) :
+    (hg : ∀ μ (r : R_[μ]) (n : N μ), g μ (r • n) = inc_[μ] r • g μ n) :
     ∃! f : Std σC inc B →ₗ[C] P, ∀ μ n, f (Std.incl σC inc B μ n) = g μ n := by
   -- `C`-linearity of the candidate
   have hC : ∀ c : C, ∀ x, liftLin σC inc B P g (c • x) = c • liftLin σC inc B P g x := by
@@ -612,9 +636,9 @@ theorem Std.exists_unique_lift
         add_mem' := fun ha hb x => by rw [add_smul, map_add, ha, hb, add_smul]
         algebraMap_mem' := fun a x => by
           simp only [algebraMap_smul, map_smul] }
-    have hμ : ∀ μ r, incμ σC inc μ r ∈ A := fun μ r x => by
-      have : (liftLin σC inc B P g).comp (smulLin (incμ σC inc μ r)) =
-          (smulLin (incμ σC inc μ r)).comp (liftLin σC inc B P g) :=
+    have hμ : ∀ μ r, inc_[μ] r ∈ A := fun μ r x => by
+      have : (liftLin σC inc B P g).comp (smulLin (inc_[μ] r)) =
+          (smulLin (inc_[μ] r)).comp (liftLin σC inc B P g) :=
         (Std.monoBasis σC inc B).ext fun w => by
           simp only [LinearMap.comp_apply, smulLin_apply, Std.monoBasis_apply]
           exact liftLin_smul_mono σC inc B hg μ r w

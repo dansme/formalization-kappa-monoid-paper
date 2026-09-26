@@ -24,8 +24,6 @@ import KappaMonoid.Bergman.Core.VBridge
 
 universe u
 
-set_option linter.unusedSectionVars false
-
 namespace Bergman
 
 open Matrix
@@ -37,7 +35,7 @@ open Module
 section main
 
 variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l} [Fact (∀ l, Function.Injective (σ l))]
   {C : Type u} [Ring C] [Algebra k C] {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C}
@@ -46,9 +44,15 @@ variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
   [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (Rμ k ι R μ) (N μ)]
   {M : Type u} [AddCommGroup M] [Module C M] [Module k M] [IsScalarTower k C M]
   {M' : Type u} [AddCommGroup M'] [Module C M'] [Module k M'] [IsScalarTower k C M']
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
+set_option hygiene false in
+local notation "inc_[" μ "]" => incμ σC inc μ
 
 /-! ## A standard presentation is the standard module -/
 
+omit [Fintype ι] [DecidableEq ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))]
+    [Fact (IsCoprod k σ C σC inc)] in
 /-- The images of the components generate. -/
 theorem StdPres.span_eq_top (p : StdPres σ σC inc M) :
     Submodule.span C (⋃ μ, Set.range (p.j μ)) = ⊤ := by
@@ -115,9 +119,9 @@ theorem imageFamily_span (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc
   rfl
 
 theorem imageFamily_fg (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG)
-    (μ : Option Λ) : Module.Finite (Rμ k ι R μ) ((imageFamily g p).L μ) := by
+    (μ : Option Λ) : Module.Finite (R_[μ]) ((imageFamily g p).L μ) := by
   have := hp μ
-  let s : p.A μ →ₗ[Rμ k ι R μ] (imageFamily g p).L μ :=
+  let s : p.A μ →ₗ[R_[μ]] (imageFamily g p).L μ :=
     { toFun := fun a => ⟨g (p.j μ a), a, rfl⟩
       map_add' := fun a b => Subtype.ext (by simp)
       map_smul' := fun r a => Subtype.ext (by
@@ -130,7 +134,8 @@ theorem imageFamily_fg (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M
 /-- **Theorem 2.3**, for isomorphisms: if `M ≅ M'`, with standard presentations with finitely
 generated components, then transfers and transvections turn the presentation of `M` into one
 whose components are those of `M'`. -/
-theorem exists_reach_of_equiv (p : StdPres σ σC inc M) (q : StdPres σ σC inc M') (hp : p.FG)
+theorem exists_reach_of_equiv [Fintype Λ] (p : StdPres σ σC inc M) (q : StdPres σ σC inc M')
+    (hp : p.FG)
     (e : M ≃ₗ[C] M') : ∃ p', p.Reach p' ∧ p'.IsoExcept q ∅ := by
   set Bq := (nonempty_homBases σ q.A).some
   obtain ⟨Ψ, hΨ⟩ := q.exists_equivStd Bq
@@ -167,7 +172,8 @@ theorem exists_reach_of_equiv (p : StdPres σ σC inc M) (q : StdPres σ σC inc
 
 /-- The image of a map out of a finitely generated standard module is standard, with finitely
 generated components (Propositions 6.2 and 8.2). -/
-theorem exists_pres_range (p : StdPres σ σC inc M) (hp : p.FG) (q : StdPres σ σC inc M')
+theorem exists_pres_range [Fintype Λ] [DecidableEq Λ] (p : StdPres σ σC inc M) (hp : p.FG)
+    (q : StdPres σ σC inc M')
     (f : M →ₗ[C] M') : ∃ r : StdPres σ σC inc (LinearMap.range f), r.FG := by
   obtain ⟨Ψ, -⟩ := q.exists_equivStd (nonempty_homBases σ q.A).some
   let g := Ψ.toLinearMap ∘ₗ f
@@ -212,18 +218,19 @@ theorem range_one_sub {E : Type u} [AddCommGroup E] [Module C E] {f : E →ₗ[C
 
 /-- **Corollary 2.6**: a finitely generated projective module over the coproduct has a standard
 presentation with finitely generated projective components. -/
-theorem exists_pres_of_projective (P : Type u) [AddCommGroup P] [Module C P] [Module k P]
+theorem exists_pres_of_projective [Fintype Λ] [DecidableEq Λ] (P : Type u) [AddCommGroup P]
+    [Module C P] [Module k P]
     [IsScalarTower k C P] [Module.Projective C P] [Module.Finite C P] :
     ∃ p : StdPres σ σC inc P, p.FGP := by
   have hC : IsCoprod k σ C σC inc := Fact.out
   obtain ⟨n, F, hF, ⟨ψ⟩⟩ := exists_rowModEquiv (R := C) P
   -- the free module `C^n`, as the realisation of `(1_n, 0, …, 0)`
   let d : Option Λ → ℕ := fun μ => μ.elim n fun _ => 0
-  let e : ∀ μ, Matrix (Fin (d μ)) (Fin (d μ)) (Rμ k ι R μ) := fun _ => 1
+  let e : ∀ μ, Matrix (Fin (d μ)) (Fin (d μ)) (R_[μ]) := fun _ => 1
   have he : ∀ μ, e μ * e μ = e μ := fun _ => mul_one _
   have hE : realE σC inc e = 1 := by
     simp only [realE, e]
-    rw [show (fun μ => (1 : Matrix (Fin (d μ)) (Fin (d μ)) (Rμ k ι R μ)).map (incμ σC inc μ)) =
+    rw [show (fun μ => (1 : Matrix (Fin (d μ)) (Fin (d μ)) (R_[μ])).map (inc_[μ])) =
       1 from funext fun μ => Matrix.map_one _ (map_zero _) (map_one _)]
     exact Matrix.blockDiagonal'_one
   have htop : rowMod (realE σC inc e) = ⊤ := by
@@ -248,9 +255,9 @@ theorem exists_pres_of_projective (P : Type u) [AddCommGroup P] [Module C P] [Mo
   have hp' := (StdPres.Reach.rel (fun _ _ => True) (fun _ _ => trivial) hreach hp₀).1
   have hpq : pq.FGP := hp'.of_iso hiso
   refine ⟨rP.transport ψ.symm, fun μ => ?_⟩
-  have h1 : Module.Finite (Rμ k ι R μ) (rP.A μ × rQ'.A μ) := (hpq μ).1
-  have h2 : Module.Projective (Rμ k ι R μ) (rP.A μ × rQ'.A μ) := (hpq μ).2
-  exact fgp_of_equiv_prod (LinearEquiv.refl (Rμ k ι R μ) (rP.A μ × rQ'.A μ))
+  have h1 : Module.Finite (R_[μ]) (rP.A μ × rQ'.A μ) := (hpq μ).1
+  have h2 : Module.Projective (R_[μ]) (rP.A μ × rQ'.A μ) := (hpq μ).2
+  exact fgp_of_equiv_prod (LinearEquiv.refl (R_[μ]) (rP.A μ × rQ'.A μ))
 
 end main
 
@@ -259,27 +266,34 @@ end main
 section final
 
 variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l}
   {C : Type u} [Ring C] [Algebra k C] {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C}
 
 variable [Fact (∀ l, Function.Injective (σ l))] [Fact (IsCoprod k σ C σC inc)]
 
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
+set_option hygiene false in
+local notation "inc_[" μ "]" => incμ σC inc μ
+
 /-- The components of a pair, indexed by `Option Λ`. -/
-def pairComp (x : V (ι → k) × ∀ l, V (R l)) : ∀ μ : Option Λ, V (Rμ k ι R μ)
+def pairComp (x : V (ι → k) × ∀ l, V (R l)) : ∀ μ : Option Λ, V (R_[μ])
   | none => x.1
   | some l => x.2 l
 
-omit [Fact (∀ l, Function.Injective (σ l))] [Fact (IsCoprod k σ C σC inc)] in
-theorem sum_pairComp (x : V (ι → k) × ∀ l, V (R l)) :
-    ∑ μ, V.map (incμ σC inc μ).toRingHom (pairComp x μ) =
+omit [Fintype ι] [DecidableEq ι] in
+theorem sum_pairComp [Fintype Λ] (x : V (ι → k) × ∀ l, V (R l)) :
+    ∑ μ, V.map (inc_[μ]).toRingHom (pairComp x μ) =
       V.map σC.toRingHom x.1 + ∑ l, V.map (inc l).toRingHom (x.2 l) :=
   Fintype.sum_option _
 
-omit [Fact (∀ l, Function.Injective (σ l))] [Fact (IsCoprod k σ C σC inc)] in
-theorem realPres_vpair (hC : IsCoprod k σ C σC inc) {m : Option Λ → Type}
-    [∀ μ, Fintype (m μ)] [∀ μ, DecidableEq (m μ)] (e : ∀ μ, Matrix (m μ) (m μ) (Rμ k ι R μ))
+omit [Fintype ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [Fact (IsCoprod k σ C σC inc)]
+    [DecidableEq ι] in
+theorem realPres_vpair [Fintype Λ] [DecidableEq Λ] (hC : IsCoprod k σ C σC inc)
+    {m : Option Λ → Type}
+    [∀ μ, Fintype (m μ)] [∀ μ, DecidableEq (m μ)] (e : ∀ μ, Matrix (m μ) (m μ) (R_[μ]))
     (he : ∀ μ, e μ * e μ = e μ) (x : V (ι → k) × ∀ l, V (R l))
     (hx : ∀ μ, cls (e μ) (he μ) = pairComp x μ) : (realPres σC inc e hC he).vpair = x :=
   Prod.ext ((vcls_eq (he none) (LinearEquiv.refl _ (rowMod (e none)))).trans (hx none))
@@ -289,13 +303,13 @@ theorem realPres_vpair (hC : IsCoprod k σ C σC inc) {m : Option Λ → Type}
 variable (σ) in
 include σ in
 /-- **Corollary 2.6** on `V`: every class in `V(C)` is induced from the factors. -/
-theorem exists_pair_of_cls (y : V C) : ∃ x : V (ι → k) × ∀ l, V (R l),
+theorem exists_pair_of_cls [Fintype Λ] [DecidableEq Λ] (y : V C) : ∃ x : V (ι → k) × ∀ l, V (R l),
     V.map σC.toRingHom x.1 + ∑ l, V.map (inc l).toRingHom (x.2 l) = y := by
   obtain ⟨n, F, hF, rfl⟩ := cls_surjective y
   have := rowMod.projective hF
   obtain ⟨p, hp⟩ := exists_pres_of_projective (σ := σ) (σC := σC) (inc := inc) (rowMod F)
   choose m e he hφ using fun μ => have := (hp μ).1; have := (hp μ).2
-    exists_rowModEquiv (R := Rμ k ι R μ) (p.A μ)
+    exists_rowModEquiv (R := R_[μ]) (p.A μ)
   refine ⟨(cls (e none) (he none), fun l => cls (e (some l)) (he (some l))), ?_⟩
   rw [← sum_pairComp]
   have hc : ∀ μ, pairComp (R := R) (cls (e none) (he none), fun l => cls (e (some l)) (he (some l)))
@@ -307,7 +321,8 @@ theorem exists_pair_of_cls (y : V C) : ∃ x : V (ι → k) × ∀ l, V (R l),
 
 variable (σ) in
 /-- **Corollary 2.8** on `V`: pairs inducing the same class are related by basic transfers. -/
-theorem rel_of_eq (r : (V (ι → k) × ∀ l, V (R l)) → (V (ι → k) × ∀ l, V (R l)) → Prop)
+theorem rel_of_eq [Fintype Λ] [DecidableEq Λ]
+    (r : (V (ι → k) × ∀ l, V (R l)) → (V (ι → k) × ∀ l, V (R l)) → Prop)
     (hr : ∀ (a : V (ι → k)) (l : Λ), r (a, 0) (0, Pi.single l (V.map (σ l).toRingHom a)))
     (x y : V (ι → k) × ∀ l, V (R l))
     (h : V.map σC.toRingHom x.1 + ∑ l, V.map (inc l).toRingHom (x.2 l) =

@@ -13,20 +13,19 @@ import KappaMonoid.Bergman.Core.Support
 
 universe u
 
-set_option linter.unusedSectionVars false
-
 namespace Bergman.Core
 
 open Module
 
-variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+variable {k : Type u} [Field k] {ι : Type} [DecidableEq ι]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l} [Fact (∀ l, Function.Injective (σ l))]
   {C : Type u} [Ring C] [Algebra k C] {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C}
-  [Fact (IsCoprod k σ C σC inc)]
   {N : Option Λ → Type u} [∀ μ, AddCommGroup (N μ)] [∀ μ, Module (Rμ k ι R μ) (N μ)]
   [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (Rμ k ι R μ) (N μ)] {B : HomBases σ N}
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
 
 /-- `y` is `l`-pure: nonzero, with all terms of top degree on side `l`. -/
 def IsPureS (l : Λ) (y : Std σC inc B) : Prop :=
@@ -44,7 +43,8 @@ def IsLead : Option Λ → Std σC inc B → Mono σ B.S → Prop
   | none, y, u => (∃ l, IsPureS l y) ∧ u ∈ y.supp ∧ ∀ w ∈ y.supp, w ≤ u
 
 /-- **Definition 5.2** (well-positioned families). -/
-structure WP (L : Option Λ → Set (Std σC inc B)) : Prop where
+structure WP [Fintype ι] [Fact (IsCoprod k σ C σC inc)] (L : Option Λ → Set (Std σC inc B)) :
+    Prop where
   pure_some : ∀ l, ∀ y ∈ L (some l), y ≠ 0 → IsPureS l y
   pure_none : ∀ y ∈ L none, IsPure none y
   nolead : ∀ μ₁ μ₂, ∀ y ∈ L μ₁, ∀ x ∈ L μ₂, ∀ (a : C) (u : Mono σ B.S),
@@ -161,8 +161,9 @@ theorem IsPureS.deg_lt_of_mem_msupp {l : Λ} {y : Std σC inc B} (h : IsPureS l 
   · omega
 
 /-- The coordinate at the `μ`-leading term. -/
-theorem IsLead.coord {μ : Option Λ} {y : Std σC inc B} {u : Mono σ B.S} (h : IsLead μ y u) :
-    (coord σC inc B μ ⟨u, h.side_ne⟩ y : Rμ k ι R μ) = Std.coeff σC inc B y u • eμ σ μ u.left :=
+theorem IsLead.coord [Fintype ι] {μ : Option Λ} {y : Std σC inc B} {u : Mono σ B.S}
+    (h : IsLead μ y u) :
+    (coord σC inc B μ ⟨u, h.side_ne⟩ y : R_[μ]) = Std.coeff σC inc B y u • eμ σ μ u.left :=
   coord_of_deg (le_of_eq h.deg.symm)
 
 end Lead
@@ -178,7 +179,8 @@ theorem Std.mem_supp_sum_smul {s : Finset (Mono σ B.S)} {c : Mono σ B.S → k}
 /-- **Lemma 5.1**: if `y` is not `l`-pure with `l`-leading term `u`, and `t` is a letter of
 `R_l` which can be put in front of `u`, then `t y` is `l`-pure of degree `deg y + 1`, with leading
 term `t u`, having the coefficient that `u` has in `y`. -/
-theorem lead_letter {y : Std σC inc B} {u : Mono σ B.S} (t : Letter σ)
+theorem lead_letter [Fintype ι] [Fact (IsCoprod k σ C σC inc)] {y : Std σC inc B} {u : Mono σ B.S}
+    (t : Letter σ)
     (hu : IsLead (some t.side) y u) (h₁ : t.right = u.left) (h₂ : some t.side ≠ u.side) :
     IsPureS t.side (inc t.side t.val • y) ∧
       (∀ w ∈ (inc t.side t.val • y).supp, w ≤ Mono.cons t u h₁ h₂) ∧

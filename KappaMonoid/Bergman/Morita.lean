@@ -18,6 +18,8 @@ matrix units of `M_N(k)` and the corner ring at `e₁₁`.
 -/
 import KappaMonoid.Bergman.IsCoprod
 import KappaMonoid.Bergman.Corner
+import Mathlib.Data.Matrix.ColumnRowPartitioned
+import Mathlib.LinearAlgebra.Matrix.Notation
 
 universe u
 

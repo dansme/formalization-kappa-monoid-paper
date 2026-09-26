@@ -17,26 +17,30 @@ import KappaMonoid.Bergman.Core.Lemma81
 
 universe u
 
-set_option linter.unusedSectionVars false
-
 namespace Bergman.Core
 
 open Module
 
 variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l} [Fact (∀ l, Function.Injective (σ l))]
   {C : Type u} [Ring C] [Algebra k C] {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C}
   [Fact (IsCoprod k σ C σC inc)]
   {N : Option Λ → Type u} [∀ μ, AddCommGroup (N μ)] [∀ μ, Module (Rμ k ι R μ) (N μ)]
   [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (Rμ k ι R μ) (N μ)] {B : HomBases σ N}
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
+set_option hygiene false in
+local notation "inc_[" μ "]" => incμ σC inc μ
 
 /-! ## Consequences of well-positionedness -/
 
+omit [Fintype ι] [Fact (IsCoprod k σ C σC inc)] in
 theorem Std.ne_zero_of_mem_supp {y : Std σC inc B} {w : Mono σ B.S} (hw : w ∈ y.supp) : y ≠ 0 := by
   rintro rfl; rw [Std.supp_eq_empty.2 rfl] at hw; exact absurd hw (by simp)
 
+omit [Fintype ι] [Fact (IsCoprod k σ C σC inc)] in
 theorem Std.deg_eq_zero {y : Std σC inc B} (h : ∀ w ∈ y.supp, w.deg = 0) : y.deg = 0 :=
   le_antisymm (Finset.sup_le fun w hw => (h w hw).le) (Nat.zero_le _)
 
@@ -54,7 +58,7 @@ theorem WP.not_pureS {L : Option Λ → Set (Std σC inc B)} (hW : WP L) {μ : O
 
 /-- **Lemma 8.3, the combinatorial part**: a sum of elements `xs μ ∈ L μ` of degree `0` whose terms
 are all on side `μ₁` lies in `L μ₁`. -/
-theorem WP.mem_of_sum {L : Option Λ → Submodule k (Std σC inc B)}
+theorem WP.mem_of_sum [Fintype Λ] {L : Option Λ → Submodule k (Std σC inc B)}
     (hWP : WP fun μ => (L μ : Set (Std σC inc B))) (xs : Option Λ → Std σC inc B)
     (hxs : ∀ μ, xs μ ∈ L μ) (hdeg : ∀ μ, ∀ w ∈ (xs μ).supp, w.deg = 0) {μ₁ : Option Λ}
     (hsupp : ∀ w ∈ (∑ μ, xs μ).supp, w.side = μ₁) : ∑ μ, xs μ ∈ L μ₁ := by
@@ -112,8 +116,8 @@ theorem WP.mem_of_sum {L : Option Λ → Submodule k (Std σC inc B)}
 
 /-! ## The family of Lemma 8.1 -/
 
-variable {N' : Option Λ → Type u} [∀ μ, AddCommGroup (N' μ)] [∀ μ, Module (Rμ k ι R μ) (N' μ)]
-  [∀ μ, Module k (N' μ)] [∀ μ, IsScalarTower k (Rμ k ι R μ) (N' μ)]
+variable {N' : Option Λ → Type u} [∀ μ, AddCommGroup (N' μ)] [∀ μ, Module (R_[μ]) (N' μ)]
+  [∀ μ, Module k (N' μ)] [∀ μ, IsScalarTower k (R_[μ]) (N' μ)]
   (φ : ∀ μ, N' μ →ₗ[k] Std σC inc B) (hφ : ∀ μ, Function.Injective (φ μ))
 
 /-- `e_j N'_μ`, embedded in the coefficient space of `Std`. -/
@@ -121,16 +125,18 @@ noncomputable def φe (μ : Option Λ) (j : ι) : eSub σ N' μ j →ₗ[k] Mono
   (Std.coeff σC inc B).toLinearMap ∘ₗ φ μ ∘ₗ (eSub σ N' μ j).subtype
 
 include hφ in
+omit [Fintype ι] [Fact (IsCoprod k σ C σC inc)] in
 theorem φe_injective (μ : Option Λ) (j : ι) : Function.Injective (φe φ μ j) :=
   fun _ _ h => Subtype.ext (hφ μ ((Std.coeff σC inc B).injective h))
 
 /-- The chosen bases: a basis of `e_j N'_μ` with distinct greatest terms for `basisOrder o`. -/
-noncomputable def eb (μ : Option Λ) (j : ι) (o : Option Λ) : EchBasis (basisOrder o) (φe φ μ j) :=
+noncomputable def eb [DecidableEq Λ] (μ : Option Λ) (j : ι) (o : Option Λ) : EchBasis
+    (basisOrder o) (φe φ μ j) :=
   (nonempty_echBasis (basisOrder o) (basisOrder_injective o) (φe φ μ j)
     (φe_injective φ hφ μ j)).some
 
 /-- The index set of Bergman's family `t_n ⋯ t_1 q`. -/
-structure Idx where
+structure Idx [DecidableEq Λ] where
   /-- The component of `q`. -/
   μ : Option Λ
   /-- The idempotent `e_j` with `e_j q = q`. -/
@@ -146,28 +152,35 @@ namespace Idx
 variable {φ hφ}
 
 /-- The basis element `q ∈ N'_μ`. -/
-noncomputable def elt (i : Idx φ hφ) : N' i.μ := ((eb φ hφ i.μ i.j (firstSide i.ts)).b i.q : N' i.μ)
+noncomputable def elt [DecidableEq Λ] (i : Idx φ hφ) : N' i.μ :=
+    ((eb φ hφ i.μ i.j (firstSide i.ts)).b i.q : N' i.μ)
 
 /-- The basis element `q`, in `Std`. -/
-noncomputable def qv (i : Idx φ hφ) : Std σC inc B := φ i.μ i.elt
+noncomputable def qv [DecidableEq Λ] (i : Idx φ hφ) : Std σC inc B := φ i.μ i.elt
 
 /-- The greatest term of `q` for `basisOrder (side t_1)`. -/
-def kap (i : Idx φ hφ) : Mono σ B.S := i.q.1
+def kap [DecidableEq Λ] (i : Idx φ hφ) : Mono σ B.S := i.q.1
 
 /-- The member `t_n ⋯ t_1 q` of the family. -/
-noncomputable def V (i : Idx φ hφ) : Std σC inc B := wordAct inc i.ts • i.qv
+noncomputable def V [DecidableEq Λ] (i : Idx φ hφ) : Std σC inc B := wordAct inc i.ts • i.qv
 
-theorem top (i : Idx φ hφ) : IsTopF (basisOrder (firstSide i.ts)) (Std.coeff σC inc B i.qv) i.kap :=
+omit [Fintype ι] [Fact (IsCoprod k σ C σC inc)] in
+theorem top [DecidableEq Λ] (i : Idx φ hφ) : IsTopF (basisOrder (firstSide i.ts))
+    (Std.coeff σC inc B i.qv) i.kap :=
   (eb φ hφ i.μ i.j (firstSide i.ts)).top i.q
 
-theorem qv_ne_zero (i : Idx φ hφ) : i.qv ≠ 0 := fun h =>
+omit [Fintype ι] [Fact (IsCoprod k σ C σC inc)] in
+theorem qv_ne_zero [DecidableEq Λ] (i : Idx φ hφ) : i.qv ≠ 0 := fun h =>
   (eb φ hφ i.μ i.j (firstSide i.ts)).b.ne_zero i.q
     (Subtype.ext (hφ i.μ (h.trans (map_zero (φ i.μ)).symm)))
 
-theorem qv_mem (i : Idx φ hφ) {μ : Option Λ} (h : i.μ = μ) : i.qv ∈ Set.range (φ μ) := by
+omit [Fintype ι] [Fact (IsCoprod k σ C σC inc)] in
+theorem qv_mem [DecidableEq Λ] (i : Idx φ hφ) {μ : Option Λ} (h : i.μ = μ) :
+    i.qv ∈ Set.range (φ μ) := by
   subst h; exact ⟨_, rfl⟩
 
-theorem le_kap_nil (i : Idx φ hφ) (h : i.ts = []) : ∀ w ∈ i.qv.supp, w ≤ i.kap := by
+omit [Fintype ι] [Fact (IsCoprod k σ C σC inc)] in
+theorem le_kap_nil [DecidableEq Λ] (i : Idx φ hφ) (h : i.ts = []) : ∀ w ∈ i.qv.supp, w ≤ i.kap := by
   have ht := i.top
   rw [h] at ht
   exact ht.le_none
@@ -176,7 +189,7 @@ end Idx
 
 section WP
 
-variable (hφs : ∀ μ (r : Rμ k ι R μ) a, φ μ (r • a) = incμ σC inc μ r • φ μ a)
+variable (hφs : ∀ μ (r : R_[μ]) a, φ μ (r • a) = inc_[μ] r • φ μ a)
   (hW : WP fun μ => Set.range (φ μ))
 
 namespace Idx
@@ -184,16 +197,16 @@ namespace Idx
 variable {φ hφ}
 
 include hφs in
-theorem kap_left (i : Idx φ hφ) : i.kap.left = i.j := by
+theorem kap_left [DecidableEq Λ] (i : Idx φ hφ) : i.kap.left = i.j := by
   have he : eμ σ i.μ i.j • i.elt = i.elt := ((eb φ hφ i.μ i.j (firstSide i.ts)).b i.q).2
   have hy : σC (ee i.j) • i.qv = i.qv := by
     rw [← incμ_eμ (σ := σ) σC inc i.μ i.j]
-    show incμ σC inc i.μ (eμ σ i.μ i.j) • φ i.μ i.elt = φ i.μ i.elt
+    show inc_[i.μ] (eμ σ i.μ i.j) • φ i.μ i.elt = φ i.μ i.elt
     rw [← hφs, he]
   exact left_of_mem_supp_homog hy i.top.1
 
 include hW in
-theorem lead (i : Idx φ hφ) {l : Λ} (hl : firstSide i.ts = some l) :
+theorem lead [DecidableEq Λ] (i : Idx φ hφ) {l : Λ} (hl : firstSide i.ts = some l) :
     IsLead (some l) i.qv i.kap := by
   have h := i.top
   rw [hl] at h
@@ -201,11 +214,12 @@ theorem lead (i : Idx φ hφ) {l : Λ} (hl : firstSide i.ts = some l) :
   exact h.isLead (hW.not_pureS (i.qv_mem rfl) i.qv_ne_zero (i.chain.last_ne t ht))
 
 include hW in
-theorem side_kap_some (i : Idx φ hφ) {l : Λ} (h : i.μ = some l) : i.kap.side = some l :=
+theorem side_kap_some [DecidableEq Λ] (i : Idx φ hφ) {l : Λ} (h : i.μ = some l) :
+    i.kap.side = some l :=
   (hW.pure_some l _ (i.qv_mem h) i.qv_ne_zero).2 _ i.top.1 i.top.deg_eq
 
 include hW in
-theorem le_kap_some (i : Idx φ hφ) {l : Λ} (h : i.μ = some l) :
+theorem le_kap_some [DecidableEq Λ] (i : Idx φ hφ) {l : Λ} (h : i.μ = some l) :
     ∀ w ∈ i.qv.supp, w ≤ i.kap := by
   apply i.top.le_of_bit
   intro w hw hwd
@@ -220,7 +234,7 @@ theorem le_kap_some (i : Idx φ hφ) {l : Λ} (h : i.μ = some l) :
     exact fun e => this e.symm
 
 include hφs hW in
-theorem chainK (i : Idx φ hφ) : ChainAt i.kap.left i.kap.side i.ts := by
+theorem chainK [DecidableEq Λ] (i : Idx φ hφ) : ChainAt i.kap.left i.kap.side i.ts := by
   rw [i.kap_left hφs]
   refine i.chain.mono_side fun t ht e => ?_
   have hl : firstSide i.ts = some t.side := by
@@ -228,7 +242,7 @@ theorem chainK (i : Idx φ hφ) : ChainAt i.kap.left i.kap.side i.ts := by
   exact (i.lead hW hl).side_ne e.symm
 
 /-- The leading term `t_n ⋯ t_1 κ(q)` of `t_n ⋯ t_1 q`. -/
-def K (i : Idx φ hφ) : Mono σ B.S := Mono.pre i.ts i.kap (i.chainK hφs hW)
+def K [DecidableEq Λ] (i : Idx φ hφ) : Mono σ B.S := Mono.pre i.ts i.kap (i.chainK hφs hW)
 
 end Idx
 
@@ -254,11 +268,12 @@ namespace Idx
 
 variable {φ hφ}
 
-theorem top_V (i : Idx φ hφ) : IsTopF id (Std.coeff σC inc B i.V) (i.K hφs hW) :=
+theorem top_V [DecidableEq Λ] (i : Idx φ hφ) : IsTopF id (Std.coeff σC inc B i.V) (i.K hφs hW) :=
   top_wordAct i.ts _ i.top.1 (fun h => i.le_kap_nil h) (fun _ hl => i.lead hW hl)
 
 include hφs hW in
-theorem eq_of (i i' : Idx φ hφ) (hts : i.ts = i'.ts) (hk : i.kap = i'.kap) : i = i' := by
+theorem eq_of [DecidableEq Λ] (i i' : Idx φ hφ) (hts : i.ts = i'.ts) (hk : i.kap = i'.kap) :
+    i = i' := by
   have hj : i.j = i'.j := by rw [← i.kap_left hφs, ← i'.kap_left hφs, hk]
   have hμ : i.μ = i'.μ := by
     by_contra hne
@@ -288,8 +303,8 @@ theorem eq_of (i i' : Idx φ hφ) (hts : i.ts = i'.ts) (hk : i.kap = i'.kap) : i
   obtain rfl : q = q' := Subtype.ext hk
   rfl
 
-include hφs hW in
-theorem no_proper (i i' : Idx φ hφ) (m : List (Letter σ)) (hm : m ≠ [])
+include hW in
+theorem no_proper [DecidableEq Λ] (i i' : Idx φ hφ) (m : List (Letter σ)) (hm : m ≠ [])
     (hts : i.ts = i'.ts ++ m) (hw : i'.kap.word = m ++ i.kap.word)
     (hb : i'.kap.base = i.kap.base) : False := by
   set v := i.kap with hvdef
@@ -344,7 +359,7 @@ theorem no_proper (i i' : Idx φ hφ) (m : List (Letter σ)) (hm : m ≠ [])
       rw [r4] at h2; omega
 
 /-- **Lemma 8.1**: the leading terms are pairwise distinct. -/
-theorem K_injective : Function.Injective (Idx.K (φ := φ) (hφ := hφ) hφs hW) := by
+theorem K_injective [DecidableEq Λ] : Function.Injective (Idx.K (φ := φ) (hφ := hφ) hφs hW) := by
   intro i i' h
   have hb : i.kap.base = i'.kap.base := by
     have := congrArg Mono.base h; exact this
@@ -355,16 +370,17 @@ theorem K_injective : Function.Injective (Idx.K (φ := φ) (hφ := hφ) hφs hW)
     · subst ha
       rw [List.append_nil] at h1
       exact eq_of hφs hW i i' h1.symm (Mono.ext hb h2)
-    · exact (no_proper hφs hW i' i a' ha h1 h2 hb).elim
+    · exact (no_proper hW i' i a' ha h1 h2 hb).elim
   · by_cases hc : c' = []
     · subst hc
       rw [List.append_nil] at h1
       exact eq_of hφs hW i i' h1 (Mono.ext hb h2.symm)
-    · exact (no_proper hφs hW i i' c' hc h1 h2 hb.symm).elim
+    · exact (no_proper hW i i' c' hc h1 h2 hb.symm).elim
 
 include hφs hW in
 /-- **Lemma 8.1**: the family `t_n ⋯ t_1 q` is linearly independent. -/
-theorem linearIndependent_V : LinearIndependent k (Idx.V (φ := φ) (hφ := hφ) (inc := inc)) :=
+theorem linearIndependent_V [DecidableEq Λ] : LinearIndependent k
+    (Idx.V (φ := φ) (hφ := hφ) (inc := inc)) :=
   LinearIndependent.of_comp (Std.coeff σC inc B).toLinearMap
     (linearIndependent_of_top id Function.injective_id _ (Idx.K hφs hW) (K_injective hφs hW)
       (top_V hφs hW))
@@ -385,15 +401,16 @@ theorem liftΦ_incl (μ : Option Λ) (a : N' μ) :
 
 variable {φ hφ} in
 /-- The family `t_n ⋯ t_1 q`, in `Std(N')`. -/
-noncomputable def Idx.V' (i : Idx φ hφ) : Std σC inc B' :=
+noncomputable def Idx.V' [DecidableEq Λ] (i : Idx φ hφ) : Std σC inc B' :=
   wordAct inc i.ts • Std.incl σC inc B' i.μ i.elt
 
 variable {hφ} in
-theorem Idx.liftΦ_V' (i : Idx φ hφ) : liftΦ φ hφs B' (i.V' B') = i.V := by
+theorem Idx.liftΦ_V' [DecidableEq Λ] (i : Idx φ hφ) : liftΦ φ hφs B' (i.V' B') = i.V := by
   rw [Idx.V', map_smul, liftΦ_incl]; rfl
 
 /-- The family `t_n ⋯ t_1 q` spans `Std(N')`. -/
-theorem Idx.span_V' : Submodule.span k (Set.range (Idx.V' (φ := φ) (hφ := hφ) (inc := inc) B')) = ⊤ := by
+theorem Idx.span_V' [DecidableEq Λ] : Submodule.span k
+    (Set.range (Idx.V' (φ := φ) (hφ := hφ) (inc := inc) B')) = ⊤ := by
   rw [eq_top_iff, ← (Std.monoBasis σC inc B').span_eq, Submodule.span_le]
   rintro _ ⟨w, rfl⟩
   rw [Std.monoBasis_apply]
@@ -412,7 +429,7 @@ theorem Idx.span_V' : Submodule.span k (Set.range (Idx.V' (φ := φ) (hφ := hφ
   exact ⟨⟨μ, j, ts, h', q⟩, rfl⟩
 
 include hφ hW in
-theorem liftΦ_injective : Function.Injective (liftΦ φ hφs B') := by
+theorem liftΦ_injective [DecidableEq Λ] : Function.Injective (liftΦ φ hφs B') := by
   rw [injective_iff_map_eq_zero]
   intro z hz
   have hz' : z ∈ LinearMap.range (Finsupp.linearCombination k
@@ -443,14 +460,15 @@ theorem range_liftΦ :
 include hφ hφs hW in
 /-- **Proposition 8.2**: the lift of the `φ μ` is injective, with image the submodule they
 generate. -/
-theorem exists_liftΦ : ∃ Φ : Std σC inc B' →ₗ[C] Std σC inc B, Function.Injective Φ ∧
+theorem exists_liftΦ [DecidableEq Λ] : ∃ Φ :
+    Std σC inc B' →ₗ[C] Std σC inc B, Function.Injective Φ ∧
     LinearMap.range Φ = Submodule.span C (⋃ μ, Set.range (φ μ)) ∧
     ∀ μ a, Φ (Std.incl σC inc B' μ a) = φ μ a :=
   ⟨liftΦ φ hφs B', liftΦ_injective φ hφ hφs hW B', range_liftΦ φ hφs B', liftΦ_incl φ hφs B'⟩
 
 include hφs in
 /-- The submodule generated is spanned over `k` by the family `t_n ⋯ t_1 q`. -/
-theorem exists_linearCombination {x : Std σC inc B}
+theorem exists_linearCombination [DecidableEq Λ] {x : Std σC inc B}
     (hx : x ∈ Submodule.span C (⋃ μ, Set.range (φ μ))) :
     ∃ c : Idx φ hφ →₀ k, Finsupp.linearCombination k (Idx.V (inc := inc)) c = x := by
   let B' : HomBases σ N' := (nonempty_homBases σ N').some
@@ -474,7 +492,7 @@ theorem exists_linearCombination {x : Std σC inc B}
 include hφ hφs hW in
 /-- **Lemma 8.3**: an element of the submodule generated by the family, all of whose terms are
 base elements of `N_{μ₁}`, lies in the image of `φ μ₁`. -/
-theorem mem_range_of_mem_span {μ₁ : Option Λ} {x : Std σC inc B}
+theorem mem_range_of_mem_span [Fintype Λ] {μ₁ : Option Λ} {x : Std σC inc B}
     (hx : x ∈ Submodule.span C (⋃ μ, Set.range (φ μ)))
     (hsupp : ∀ w ∈ x.supp, w.deg = 0 ∧ w.side = μ₁) : x ∈ Set.range (φ μ₁) := by
   classical
@@ -521,6 +539,7 @@ theorem mem_range_of_mem_span {μ₁ : Option Λ} {x : Std σC inc B}
   rw [hsum]
   exact LinearMap.mem_range.1 hmem
 
+omit [Fintype ι] in
 theorem eq_ofBase_of_strip {μ : Option Λ} {w : Mono σ B.S} (h : strip B μ w = none) :
     ∃ j s, w = Mono.ofBase ⟨μ, j, s⟩ := by
   obtain ⟨x, rfl⟩ := monoJoin_surjective B μ w
@@ -532,7 +551,7 @@ variable (htop : Submodule.span C (⋃ μ, Set.range (φ μ)) = ⊤)
 
 include hφ hφs hW htop in
 /-- `N_μ ⊆ L_μ` (Lemma 8.3). -/
-theorem incl_mem_range (μ₁ : Option Λ) (n : N μ₁) :
+theorem incl_mem_range [Fintype Λ] (μ₁ : Option Λ) (n : N μ₁) :
     Std.incl σC inc B μ₁ n ∈ Set.range (φ μ₁) :=
   mem_range_of_mem_span φ hφ hφs hW (by rw [htop]; trivial) fun w hw => by
     obtain ⟨j, s, rfl⟩ := eq_ofBase_of_strip (strip_of_mem_supp_incl hw)
@@ -541,7 +560,7 @@ theorem incl_mem_range (μ₁ : Option Λ) (n : N μ₁) :
 include hφ hφs hW htop in
 /-- `L_μ ⊆ N_μ`: a monomial of `y ∈ L_μ` that is not a base element of `N_μ` would give a
 `μ`-leading term `u = t_n ⋯ t_1 s` in the `μ`-support of `y`, with `s ∈ N_ν ⊆ L_ν`. -/
-theorem mem_range_incl (μ : Option Λ) (a : N' μ) :
+theorem mem_range_incl [Fintype Λ] (μ : Option Λ) (a : N' μ) :
     φ μ a ∈ Set.range (Std.incl σC inc B μ) := by
   by_contra hne
   obtain ⟨w, hw, hs⟩ : ∃ w ∈ (φ μ a).supp, strip B μ w ≠ none := by
@@ -571,7 +590,7 @@ theorem mem_range_incl (μ : Option Λ) (a : N' μ) :
 
 include hφ hφs hW htop in
 /-- **Proposition 8.4**: a well-positioned family generating `Std` is the family of components. -/
-theorem range_eq_incl (μ : Option Λ) :
+theorem range_eq_incl [Fintype Λ] (μ : Option Λ) :
     Set.range (φ μ) = Set.range (Std.incl σC inc B μ) :=
   Set.Subset.antisymm (by rintro _ ⟨a, rfl⟩; exact mem_range_incl φ hφ hφs hW htop μ a)
     (by rintro _ ⟨n, rfl⟩; exact incl_mem_range φ hφ hφs hW htop μ n)

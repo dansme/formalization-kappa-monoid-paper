@@ -21,7 +21,10 @@ This replaces the universal-derivation computations of Bergman–Dicks (1978): t
 is presented by idempotents and isomorphisms between their images, both of which lift along
 square-zero extensions (`Bergman/MainRing.lean`).
 -/
-import Mathlib
+import Mathlib.Algebra.Module.StablyFree.Basic
+import Mathlib.Algebra.TrivSqZeroExt.Basic
+import Mathlib.GroupTheory.GroupAction.Ring
+import Mathlib.LinearAlgebra.Dual.Lemmas
 import KappaMonoid.ForMathlib.Hereditary
 
 universe u
@@ -51,8 +54,6 @@ def BiHom (S : Type u) [Ring S] [Algebra k S]
 
 section BiHom
 
-set_option linter.unusedSectionVars false
-
 variable {k} {S : Type u} [Ring S] [Algebra k S]
 variable {M : Type u} [AddCommGroup M] [Module S M] [Module k M] [IsScalarTower k S M]
 variable {F : Type u} [AddCommGroup F] [Module S F] [Module k F] [IsScalarTower k S F]
@@ -69,18 +70,25 @@ instance : LinearMapClass (BiHom k S M F) k M F :=
 /-- View a `k`-linear map as an element of `BiHom`. -/
 def mk (f : M →ₗ[k] F) : BiHom k S M F := f
 
+omit [Module S M] [IsScalarTower k S M] [Module S F] [IsScalarTower k S F] in
 @[simp] theorem mk_apply (f : M →ₗ[k] F) (m : M) : mk (S := S) f m = f m := rfl
 
+omit [Module S M] [IsScalarTower k S M] [Module S F] [IsScalarTower k S F] in
 @[ext] theorem ext {f g : BiHom k S M F} (h : ∀ m, f m = g m) : f = g := LinearMap.ext h
 
+omit [Module S M] [IsScalarTower k S M] [Module S F] [IsScalarTower k S F] in
 @[simp] theorem add_apply (f g : BiHom k S M F) (m : M) : (f + g) m = f m + g m := rfl
+omit [Module S M] [IsScalarTower k S M] [Module S F] [IsScalarTower k S F] in
 @[simp] theorem zero_apply (m : M) : (0 : BiHom k S M F) m = 0 := rfl
+omit [Module S M] [IsScalarTower k S M] in
 @[simp] theorem smul_apply (s : S) (f : BiHom k S M F) (m : M) : (s • f) m = s • f m := rfl
+omit [Module S M] [IsScalarTower k S M] [Module S F] [IsScalarTower k S F] in
 @[simp] theorem ksmul_apply (c : k) (f : BiHom k S M F) (m : M) : (c • f) m = c • f m := rfl
 
 instance : SMul Sᵐᵒᵖ (BiHom k S M F) :=
   ⟨fun t f => mk ((f : M →ₗ[k] F) ∘ₗ DistribSMul.toLinearMap k M t.unop)⟩
 
+omit [Module S F] [IsScalarTower k S F] in
 @[simp] theorem op_smul_apply (t : Sᵐᵒᵖ) (f : BiHom k S M F) (m : M) :
     (t • f) m = f (t.unop • m) := rfl
 
@@ -104,9 +112,11 @@ def postcomp (g : F →ₗ[S] G) : BiHom k S M F →ₗ[k] BiHom k S M G where
   map_add' f f' := by ext m; exact map_add g (f m) (f' m)
   map_smul' c f := by ext m; exact g.map_smul_of_tower c (f m)
 
+omit [Module S M] [IsScalarTower k S M] in
 @[simp] theorem postcomp_apply (g : F →ₗ[S] G) (f : BiHom k S M F) (m : M) :
     postcomp g f m = g (f m) := rfl
 
+omit [Module S M] [IsScalarTower k S M] in
 theorem postcomp_smul (g : F →ₗ[S] G) (s : S) (f : BiHom k S M F) :
     postcomp g (s • f) = s • postcomp g f := by ext m; simp
 

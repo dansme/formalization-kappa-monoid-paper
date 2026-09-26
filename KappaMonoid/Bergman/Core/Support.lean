@@ -16,20 +16,21 @@ import KappaMonoid.Bergman.Core.Std
 
 universe u
 
-set_option linter.unusedSectionVars false
-
 namespace Bergman.Core
 
 open Module
 
-variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+variable {k : Type u} [Field k] {ι : Type} [DecidableEq ι]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l} [Fact (∀ l, Function.Injective (σ l))]
   {C : Type u} [Ring C] [Algebra k C] (σC : (ι → k) →ₐ[k] C) (inc : ∀ l, R l →ₐ[k] C)
-  [Fact (IsCoprod k σ C σC inc)]
   {N : Option Λ → Type u} [∀ μ, AddCommGroup (N μ)] [∀ μ, Module (Rμ k ι R μ) (N μ)]
   [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (Rμ k ι R μ) (N μ)] (B : HomBases σ N)
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
+set_option hygiene false in
+local notation "inc_[" μ "]" => incμ σC inc μ
 
 /-! ## Coefficients, support, degree -/
 
@@ -152,7 +153,7 @@ theorem deg_of_strip {μ : Option Λ} {w : Mono σ B.S} {u : NotSide B μ} (h : 
 
 /-! ## The action of `k^ι` -/
 
-theorem σC_smul_mono (c : ι → k) (w : Mono σ B.S) :
+theorem σC_smul_mono [Fact (IsCoprod k σ C σC inc)] [Fintype ι] (c : ι → k) (w : Mono σ B.S) :
     σC c • Std.mono σC inc B w = c w.left • Std.mono σC inc B w := by
   have hc : c = ∑ i, c i • (ee i : ι → k) := by
     funext x; simp [ee, Pi.single_apply]
@@ -165,7 +166,8 @@ theorem σC_smul_mono (c : ι → k) (w : Mono σ B.S) :
   rw [Finset.sum_ite_eq]
   simp
 
-theorem Std.supp_σC_smul (c : ι → k) (y : Std σC inc B) : (σC c • y).supp ⊆ y.supp := by
+theorem Std.supp_σC_smul [Fact (IsCoprod k σ C σC inc)] [Fintype ι] (c : ι → k) (y : Std σC inc B) :
+    (σC c • y).supp ⊆ y.supp := by
   conv_lhs => rw [Std.eq_sum_mono y]
   rw [Finset.smul_sum]
   refine (Std.supp_sum _ _).trans fun w hw => ?_
@@ -251,15 +253,16 @@ theorem msupp_zero (μ : Option Λ) : msupp σC inc B μ (0 : Std σC inc B) = �
 
 variable (σC inc B) in
 /-- Bergman's coordinate `c_{μu} : Std → R_μ e_{left u}`. -/
-noncomputable def coord (μ : Option Λ) (u : NotSide B μ) :
-    Std σC inc B →ₗ[k] Submodule.span (Rμ k ι R μ) {eμ σ μ u.1.left} :=
+noncomputable def coord [Fintype ι] (μ : Option Λ) (u : NotSide B μ) :
+    Std σC inc B →ₗ[k] Submodule.span (R_[μ]) {eμ σ μ u.1.left} :=
   DFinsupp.lapply u ∘ₗ LinearMap.snd k _ _ ∘ₗ (Std.Φ σC inc B μ).toLinearMap
 
-theorem coord_smul (μ : Option Λ) (u : NotSide B μ) (r : Rμ k ι R μ) (y : Std σC inc B) :
-    coord σC inc B μ u (incμ σC inc μ r • y) = r • coord σC inc B μ u y := by
+theorem coord_smul [Fact (IsCoprod k σ C σC inc)] [Fintype ι] (μ : Option Λ) (u : NotSide B μ)
+    (r : R_[μ]) (y : Std σC inc B) :
+    coord σC inc B μ u (inc_[μ] r • y) = r • coord σC inc B μ u y := by
   simp [coord, Std.Φ_incμ_smul]
 
-theorem repr_coord (μ : Option Λ) (u : NotSide B μ) (y : Std σC inc B) (o) :
+theorem repr_coord [Fintype ι] (μ : Option Λ) (u : NotSide B μ) (y : Std σC inc B) (o) :
     (leftIdealBasis σ μ u.1.left).repr (coord σC inc B μ u y) o =
       Std.coeff σC inc B y (monoJoin B μ (.inr ⟨u, o⟩)) := by
   classical
@@ -298,7 +301,7 @@ theorem repr_coord (μ : Option Λ) (u : NotSide B μ) (y : Std σC inc B) (o) :
           exact hu this.1
   exact LinearMap.congr_fun this y
 
-theorem coord_ne_zero_iff {μ : Option Λ} {u : NotSide B μ} {y : Std σC inc B} :
+theorem coord_ne_zero_iff [Fintype ι] {μ : Option Λ} {u : NotSide B μ} {y : Std σC inc B} :
     coord σC inc B μ u y ≠ 0 ↔ ∃ w ∈ y.supp, strip B μ w = some u := by
   rw [Ne, ← (leftIdealBasis σ μ u.1.left).repr.map_eq_zero_iff, ← Ne, Finsupp.ne_iff]
   simp only [repr_coord, Finsupp.zero_apply, strip_eq_some_iff, Std.mem_supp]
@@ -308,7 +311,7 @@ theorem coord_ne_zero_iff {μ : Option Λ} {u : NotSide B μ} {y : Std σC inc B
   · rintro ⟨w, hw, o, rfl⟩
     exact ⟨o, hw⟩
 
-theorem mem_msupp_iff_coord {μ : Option Λ} {y : Std σC inc B} (u : NotSide B μ) :
+theorem mem_msupp_iff_coord [Fintype ι] {μ : Option Λ} {y : Std σC inc B} (u : NotSide B μ) :
     u.1 ∈ msupp σC inc B μ y ↔ coord σC inc B μ u y ≠ 0 := by
   rw [coord_ne_zero_iff]
   cases μ with
@@ -325,8 +328,9 @@ theorem mem_msupp_iff_coord {μ : Option Λ} {y : Std σC inc B} (u : NotSide B 
     exact ⟨fun ⟨_, w, hw, hs⟩ => ⟨w, hw, hs⟩, fun ⟨w, hw, hs⟩ => ⟨u.2, w, hw, hs⟩⟩
 
 /-- **The `μ`-support shrinks under `R_μ`.** -/
-theorem msupp_incμ_smul (μ : Option Λ) (r : Rμ k ι R μ) (y : Std σC inc B) :
-    msupp σC inc B μ (incμ σC inc μ r • y) ⊆ msupp σC inc B μ y := by
+theorem msupp_incμ_smul [Fact (IsCoprod k σ C σC inc)] [Fintype ι] (μ : Option Λ) (r : R_[μ])
+    (y : Std σC inc B) :
+    msupp σC inc B μ (inc_[μ] r • y) ⊆ msupp σC inc B μ y := by
   intro u hu
   by_cases hs : u.side = μ
   · -- only possible for `μ = none`: base elements of `N_0`
@@ -335,14 +339,15 @@ theorem msupp_incμ_smul (μ : Option Λ) (r : Rμ k ι R μ) (y : Std σC inc B
       obtain ⟨h, -⟩ := mem_msupp_some.1 hu
       exact absurd hs h
     | none => exact Std.supp_σC_smul r y hu
-  · have e := mem_msupp_iff_coord (y := incμ σC inc μ r • y) (⟨u, hs⟩ : NotSide B μ)
+  · have e := mem_msupp_iff_coord (y := inc_[μ] r • y) (⟨u, hs⟩ : NotSide B μ)
     have e' := mem_msupp_iff_coord (y := y) (⟨u, hs⟩ : NotSide B μ)
     refine e'.2 fun h => e.1 hu ?_
     rw [coord_smul, h, smul_zero]
 
 /-- A coordinate at a monomial of maximal degree is the coefficient times `e`. -/
-theorem coord_of_deg {μ : Option Λ} {u : NotSide B μ} {y : Std σC inc B} (hd : y.deg ≤ u.1.deg) :
-    (coord σC inc B μ u y : Rμ k ι R μ) = Std.coeff σC inc B y u.1 • eμ σ μ u.1.left := by
+theorem coord_of_deg [Fintype ι] {μ : Option Λ} {u : NotSide B μ} {y : Std σC inc B}
+    (hd : y.deg ≤ u.1.deg) :
+    (coord σC inc B μ u y : R_[μ]) = Std.coeff σC inc B y u.1 • eμ σ μ u.1.left := by
   have h := (leftIdealBasis σ μ u.1.left).linearCombination_repr (coord σC inc B μ u y)
   have hz : ∀ o, o ≠ none → (leftIdealBasis σ μ u.1.left).repr (coord σC inc B μ u y) o = 0 := by
     intro o ho
@@ -361,7 +366,8 @@ theorem coord_of_deg {μ : Option Λ} {u : NotSide B μ} {y : Std σC inc B} (hd
 /-! ## How `R_μ` acts on monomials -/
 
 /-- The monomials of an element of `N_μ ⊂ Std` are base elements of `N_μ`. -/
-theorem strip_of_mem_supp_incl {μ : Option Λ} {n : N μ} {w : Mono σ B.S}
+theorem strip_of_mem_supp_incl [Fact (IsCoprod k σ C σC inc)] [Fintype ι] {μ : Option Λ} {n : N μ}
+    {w : Mono σ B.S}
     (hw : w ∈ (Std.incl σC inc B μ n).supp) : strip B μ w = none := by
   have hn : Std.incl σC inc B μ n = ∑ x ∈ ((B.basis μ).repr n).support,
       (B.basis μ).repr n x • Std.mono σC inc B (monoJoin B μ (.inl x)) := by
@@ -376,8 +382,8 @@ theorem strip_of_mem_supp_incl {μ : Option Λ} {n : N μ} {w : Mono σ B.S}
   rw [this, strip_join_inl]
 
 /-- The monomials of `Φ⁻¹ (0, (u ↦ v))` all strip to `u`. -/
-theorem strip_of_mem_supp_single {μ : Option Λ} (u : NotSide B μ)
-    (v : Submodule.span (Rμ k ι R μ) {eμ σ μ u.1.left}) {w : Mono σ B.S}
+theorem strip_of_mem_supp_single [Fintype ι] {μ : Option Λ} (u : NotSide B μ)
+    (v : Submodule.span (R_[μ]) {eμ σ μ u.1.left}) {w : Mono σ B.S}
     (hw : w ∈ ((Std.Φ σC inc B μ).symm (0, DFinsupp.single u v)).supp) : strip B μ w = some u := by
   set b := leftIdealBasis σ μ u.1.left
   have hx : (Std.Φ σC inc B μ).symm (0, DFinsupp.single u v) = ∑ o ∈ (b.repr v).support,
@@ -393,7 +399,7 @@ theorem strip_of_mem_supp_single {μ : Option Λ} (u : NotSide B μ)
       rfl
     conv_lhs => rw [hsum]
     exact map_sum (DFinsupp.singleAddHom (fun u : NotSide B μ =>
-      ↥(Submodule.span (Rμ k ι R μ) {eμ σ μ u.1.left})) u) _ _
+      ↥(Submodule.span (R_[μ]) {eμ σ μ u.1.left})) u) _ _
   rw [hx] at hw
   obtain ⟨o, -, ho⟩ := Finset.mem_biUnion.1 (Std.supp_sum _ _ hw)
   have := Std.supp_smul _ _ ho
@@ -402,8 +408,9 @@ theorem strip_of_mem_supp_single {μ : Option Λ} (u : NotSide B μ)
 
 /-- **`R_μ` preserves the stripped monomial**: every monomial of `r w` strips (for `μ`) to the
 same monomial as `w`. -/
-theorem strip_of_mem_supp_smul {μ : Option Λ} (r : Rμ k ι R μ) {w w' : Mono σ B.S}
-    (hw' : w' ∈ (incμ σC inc μ r • Std.mono σC inc B w).supp) : strip B μ w' = strip B μ w := by
+theorem strip_of_mem_supp_smul [Fact (IsCoprod k σ C σC inc)] [Fintype ι] {μ : Option Λ}
+    (r : R_[μ]) {w w' : Mono σ B.S}
+    (hw' : w' ∈ (inc_[μ] r • Std.mono σC inc B w).supp) : strip B μ w' = strip B μ w := by
   obtain ⟨x, rfl⟩ := monoJoin_surjective B μ w
   rcases x with x | ⟨u, o⟩
   · rw [strip_join_inl]
@@ -412,7 +419,7 @@ theorem strip_of_mem_supp_smul {μ : Option Λ} (r : Rμ k ι R μ) {w w' : Mono
     rw [this, ← Std.incl_smul] at hw'
     exact strip_of_mem_supp_incl hw'
   · rw [strip_join_inr]
-    have : incμ σC inc μ r • Std.mono σC inc B (monoJoin B μ (.inr ⟨u, o⟩)) =
+    have : inc_[μ] r • Std.mono σC inc B (monoJoin B μ (.inr ⟨u, o⟩)) =
         (Std.Φ σC inc B μ).symm (0, DFinsupp.single u (r • leftIdealBasis σ μ u.1.left o)) := by
       rw [LinearEquiv.eq_symm_apply, Std.Φ_incμ_smul, Std.Φ_mono_join, targetBasis_inr,
         Prod.smul_mk, smul_zero, DFinsupp.single_smul]
@@ -421,8 +428,9 @@ theorem strip_of_mem_supp_smul {μ : Option Λ} (r : Rμ k ι R μ) {w w' : Mono
 
 /-- `r w` has degree `≤ deg w + 1`, and its terms of degree `deg w + 1` are on side `μ`; if `w` is
 itself on side `μ`, all terms have degree `≤ deg w` and those of degree `deg w` are on side `μ`. -/
-theorem deg_of_mem_supp_smul {μ : Option Λ} (r : Rμ k ι R μ) {w w' : Mono σ B.S}
-    (hw' : w' ∈ (incμ σC inc μ r • Std.mono σC inc B w).supp) :
+theorem deg_of_mem_supp_smul [Fact (IsCoprod k σ C σC inc)] [Fintype ι] {μ : Option Λ} (r : R_[μ])
+    {w w' : Mono σ B.S}
+    (hw' : w' ∈ (inc_[μ] r • Std.mono σC inc B w).supp) :
     (w.side ≠ μ → (w'.deg ≤ w.deg + 1 ∧ (w'.deg = w.deg + 1 → w'.side = μ) ∧
       (w'.deg ≤ w.deg → w' = w))) ∧
     (w.side = μ → w'.deg ≤ w.deg ∧ (w'.deg = w.deg → w'.side = μ)) := by
@@ -460,10 +468,11 @@ theorem deg_of_mem_supp_smul {μ : Option Λ} (r : Rμ k ι R μ) {w w' : Mono �
           | some l => obtain ⟨i, t⟩ := o'; rfl
 
 /-- Left multiplication by a letter on a monomial it cannot be applied to (wrong index). -/
-theorem letter_smul_mono_of_ne (t : Letter σ) (w : Mono σ B.S) (h : t.right ≠ w.left) :
+theorem letter_smul_mono_of_ne [Fact (IsCoprod k σ C σC inc)] [Fintype ι] (t : Letter σ)
+    (w : Mono σ B.S) (h : t.right ≠ w.left) :
     inc t.side t.val • Std.mono σC inc B w = 0 := by
   have ht : tval σ t.2.2.2 = tval σ t.2.2.2 * eμ σ (some t.1) t.2.2.1 := (tval_mul_eμ σ t.2.2.2).symm
-  change incμ σC inc (some t.1) (tval σ t.2.2.2) • _ = _
+  change inc_[some t.1] (tval σ t.2.2.2) • _ = _
   rw [ht, map_mul, mul_smul, Std.incμ_smul σC inc B (some t.1) (eμ σ (some t.1) t.2.2.1),
     Std.act_eμ_mono, if_neg (show ¬ (w.left = t.2.2.1) from fun h' => h h'.symm), smul_zero]
 end Bergman.Core

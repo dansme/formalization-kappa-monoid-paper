@@ -15,17 +15,19 @@ This file fixes the **letter bases**: for each `l, i, j` a `k`-basis of the Peir
 `e_i (R l) e_j`, containing `e_i` when `i = j` (Bergman §9: bases `ⁱTₗʲ ∪ {e_i}`).
 -/
 import KappaMonoid.Bergman.IsCoprod
+import Mathlib.RingTheory.Flat.TorsionFree
+import Mathlib.RingTheory.Henselian
+import Mathlib.RingTheory.RegularLocalRing.Defs
+import Mathlib.RingTheory.SimpleRing.Principal
 
 universe u
-
-set_option linter.unusedSectionVars false
 
 namespace Bergman.Core
 
 open Module
 
-variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+variable {k : Type u} [Field k] {ι : Type} [DecidableEq ι]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
 
 /-- The idempotent `e_i ∈ k^ι`. -/
@@ -34,7 +36,7 @@ def ee (i : ι) : ι → k := Pi.single i 1
 theorem ee_mul_ee (i j : ι) : (ee i : ι → k) * ee j = if i = j then ee i else 0 := by
   ext x; by_cases h : i = j <;> by_cases hx : x = i <;> simp_all [ee, Pi.single_apply]
 
-theorem sum_ee : ∑ i : ι, (ee i : ι → k) = 1 := by
+theorem sum_ee [Fintype ι] : ∑ i : ι, (ee i : ι → k) = 1 := by
   ext x; simp [ee, Pi.single_apply]
 
 /-! ## The family indexed by `Option Λ` -/
@@ -44,30 +46,32 @@ variable (k ι R) in
 def Rμ : Option Λ → Type u
   | none => ι → k
   | some l => R l
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
 
-instance Rμ.instRing : ∀ μ : Option Λ, Ring (Rμ k ι R μ)
+instance Rμ.instRing : ∀ μ : Option Λ, Ring (R_[μ])
   | none => inferInstanceAs (Ring (ι → k))
   | some l => inferInstanceAs (Ring (R l))
 
-instance Rμ.instAlgebra : ∀ μ : Option Λ, Algebra k (Rμ k ι R μ)
+instance Rμ.instAlgebra : ∀ μ : Option Λ, Algebra k (R_[μ])
   | none => inferInstanceAs (Algebra k (ι → k))
   | some l => inferInstanceAs (Algebra k (R l))
 
 variable (σ : ∀ l, (ι → k) →ₐ[k] R l)
 
 /-- The structure maps `k^ι → R_μ`. -/
-def σμ : ∀ μ : Option Λ, (ι → k) →ₐ[k] Rμ k ι R μ
+def σμ : ∀ μ : Option Λ, (ι → k) →ₐ[k] R_[μ]
   | none => AlgHom.id k (ι → k)
   | some l => σ l
 
 /-- `e_i` in `R_μ`. -/
-def eμ (μ : Option Λ) (i : ι) : Rμ k ι R μ := σμ σ μ (ee i)
+def eμ (μ : Option Λ) (i : ι) : R_[μ] := σμ σ μ (ee i)
 
 theorem eμ_mul_eμ (μ : Option Λ) (i j : ι) :
     eμ σ μ i * eμ σ μ j = if i = j then eμ σ μ i else 0 := by
   simp only [eμ, ← map_mul, ee_mul_ee]; split_ifs <;> simp
 
-theorem sum_eμ (μ : Option Λ) : ∑ i, eμ σ μ i = 1 := by
+theorem sum_eμ [Fintype ι] (μ : Option Λ) : ∑ i, eμ σ μ i = 1 := by
   simp only [eμ, ← map_sum, sum_ee, map_one]
 
 theorem eμ_ne_zero (hσ : ∀ l, Function.Injective (σ l)) (μ : Option Λ) (i : ι) :
@@ -79,7 +83,7 @@ theorem eμ_ne_zero (hσ : ∀ l, Function.Injective (σ l)) (μ : Option Λ) (i
   | some l => exact (map_ne_zero_iff _ (hσ l)).2 h0
 
 /-- The Peirce component `e_i R_μ e_j`, a `k`-subspace. -/
-def peirce (μ : Option Λ) (i j : ι) : Submodule k (Rμ k ι R μ) where
+def peirce (μ : Option Λ) (i j : ι) : Submodule k (R_[μ]) where
   carrier := {r | eμ σ μ i * r * eμ σ μ j = r}
   add_mem' := by intro a b ha hb; simp only [Set.mem_ofPred_eq] at *; rw [mul_add, add_mul, ha, hb]
   zero_mem' := by simp
@@ -99,7 +103,7 @@ structure LetterBasis (μ : Option Λ) (i j : ι) where
   T : Type u
   /-- The basis. -/
   b : Basis (T ⊕ PLift (i = j)) k (peirce σ μ i j)
-  b_inr : ∀ h, (b (Sum.inr h) : Rμ k ι R μ) = eμ σ μ i
+  b_inr : ∀ h, (b (Sum.inr h) : R_[μ]) = eμ σ μ i
 
 theorem nonempty_letterBasis [hσ : Fact (∀ l, Function.Injective (σ l))] (μ : Option Λ) (i j : ι) :
     Nonempty (LetterBasis σ μ i j) := by
@@ -141,7 +145,7 @@ noncomputable def lb (μ : Option Λ) (i j : ι) : LetterBasis σ μ i j :=
 abbrev Tl (μ : Option Λ) (i j : ι) : Type u := (lb σ μ i j).T
 
 /-- The value of a letter. -/
-noncomputable def tval {μ : Option Λ} {i j : ι} (t : Tl σ μ i j) : Rμ k ι R μ :=
+noncomputable def tval {μ : Option Λ} {i j : ι} (t : Tl σ μ i j) : R_[μ] :=
   (lb σ μ i j).b (Sum.inl t)
 
 theorem tval_mem {μ : Option Λ} {i j : ι} (t : Tl σ μ i j) : tval σ t ∈ peirce σ μ i j :=
@@ -192,9 +196,9 @@ theorem isEmpty_Tl_none (i j : ι) : IsEmpty (Tl σ none i j) := by
     exact b.ne_zero _ h0
 
 /-- `R_μ e_j = ⊕_i e_i R_μ e_j`, as `k`-spaces. -/
-noncomputable def peirceEquiv (μ : Option Λ) (j : ι) :
-    Submodule.span (Rμ k ι R μ) {eμ σ μ j} ≃ₗ[k] ∀ i, peirce σ μ i j := by
-  have hr : ∀ x ∈ Submodule.span (Rμ k ι R μ) {eμ σ μ j}, x * eμ σ μ j = x := by
+noncomputable def peirceEquiv [Fintype ι] (μ : Option Λ) (j : ι) :
+    Submodule.span (R_[μ]) {eμ σ μ j} ≃ₗ[k] ∀ i, peirce σ μ i j := by
+  have hr : ∀ x ∈ Submodule.span (R_[μ]) {eμ σ μ j}, x * eμ σ μ j = x := by
     intro x hx
     obtain ⟨r, rfl⟩ := Submodule.mem_span_singleton.1 hx
     rw [smul_eq_mul, mul_assoc, eμ_mul_eμ, if_pos rfl]
@@ -202,7 +206,7 @@ noncomputable def peirceEquiv (μ : Option Λ) (j : ι) :
   { toFun := fun x i => ⟨eμ σ μ i * x, by
       change eμ σ μ i * (eμ σ μ i * x) * eμ σ μ j = eμ σ μ i * x
       rw [← mul_assoc, eμ_mul_eμ, if_pos rfl, mul_assoc, hr x x.2]⟩
-    invFun := fun p => ⟨∑ i, (p i : Rμ k ι R μ), Submodule.sum_mem _ fun i _ => by
+    invFun := fun p => ⟨∑ i, (p i : R_[μ]), Submodule.sum_mem _ fun i _ => by
       rw [← (p i).2]
       exact Submodule.mem_span_singleton.2 ⟨eμ σ μ i * p i, rfl⟩⟩
     map_add' := fun x y => by ext i; simp [mul_add]
@@ -222,8 +226,9 @@ noncomputable def peirceEquiv (μ : Option Λ) (j : ι) :
         rw [← h, ← mul_assoc, ← mul_assoc, eμ_mul_eμ, if_neg (Ne.symm hi'), zero_mul, zero_mul]
       · simp }
 
-theorem peirceEquiv_symm_apply (μ : Option Λ) (j : ι) (p : ∀ i, peirce σ μ i j) :
-    ((peirceEquiv σ μ j).symm p : Rμ k ι R μ) = ∑ i, (p i : Rμ k ι R μ) := rfl
+omit hσ in
+theorem peirceEquiv_symm_apply [Fintype ι] (μ : Option Λ) (j : ι) (p : ∀ i, peirce σ μ i j) :
+    ((peirceEquiv σ μ j).symm p : R_[μ]) = ∑ i, (p i : R_[μ]) := rfl
 
 /-- Reindexing the Peirce basis. -/
 def peirceIdx (μ : Option Λ) (j : ι) :
@@ -242,28 +247,28 @@ def peirceIdx (μ : Option Λ) (j : ι) :
 
 /-- **Peirce decomposition.** `R_μ e_j` (the left ideal) has the `k`-basis
 `{tval t : t ∈ T_μ(i, j), i ∈ ι} ∪ {e_j}`. -/
-noncomputable def leftIdealBasis (μ : Option Λ) (j : ι) :
-    Basis (Option (Σ i, Tl σ μ i j)) k (Submodule.span (Rμ k ι R μ) {eμ σ μ j}) :=
+noncomputable def leftIdealBasis [Fintype ι] (μ : Option Λ) (j : ι) :
+    Basis (Option (Σ i, Tl σ μ i j)) k (Submodule.span (R_[μ]) {eμ σ μ j}) :=
   ((Pi.basis fun i => (lb σ μ i j).b).map (peirceEquiv σ μ j).symm).reindex (peirceIdx σ μ j)
 
-theorem leftIdealBasis_none (μ : Option Λ) (j : ι) :
-    (leftIdealBasis σ μ j none : Rμ k ι R μ) = eμ σ μ j := by
+theorem leftIdealBasis_none [Fintype ι] (μ : Option Λ) (j : ι) :
+    (leftIdealBasis σ μ j none : R_[μ]) = eμ σ μ j := by
   classical
   rw [leftIdealBasis, Basis.reindex_apply, Basis.map_apply]
   change ((peirceEquiv σ μ j).symm (Pi.basis (fun i => (lb σ μ i j).b) ⟨j, Sum.inr ⟨rfl⟩⟩) :
-    Rμ k ι R μ) = _
+    R_[μ]) = _
   rw [peirceEquiv_symm_apply, Pi.basis_apply]
   rw [Finset.sum_eq_single j]
   · simp [(lb σ μ j j).b_inr]
   · intro i _ hi; simp [hi]
   · simp
 
-theorem leftIdealBasis_some (μ : Option Λ) (j : ι) (t : Σ i, Tl σ μ i j) :
-    (leftIdealBasis σ μ j (some t) : Rμ k ι R μ) = tval σ t.2 := by
+theorem leftIdealBasis_some [Fintype ι] (μ : Option Λ) (j : ι) (t : Σ i, Tl σ μ i j) :
+    (leftIdealBasis σ μ j (some t) : R_[μ]) = tval σ t.2 := by
   classical
   rw [leftIdealBasis, Basis.reindex_apply, Basis.map_apply]
   change ((peirceEquiv σ μ j).symm (Pi.basis (fun i => (lb σ μ i j).b) ⟨t.1, Sum.inl t.2⟩) :
-    Rμ k ι R μ) = _
+    R_[μ]) = _
   rw [peirceEquiv_symm_apply, Pi.basis_apply]
   rw [Finset.sum_eq_single t.1]
   · simp [tval]

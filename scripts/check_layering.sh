@@ -56,10 +56,6 @@ fi
 while IFS= read -r file; do
   case "$file" in
     KappaMonoid/Modules/Small.lean) ;;
-    # TEMPORARY: the files of the Bergman–Dicks proof still import all of Mathlib; their imports
-    # are yet to be trimmed.  Nothing else in the development imports them except through the
-    # aggregator, `KappaMonoid/Bergman.lean`.
-    KappaMonoid/Bergman/*) ;;
     *) echo "::error::$file imports all of Mathlib; import what it uses instead"; fail=1 ;;
   esac
 done < <(grep -rl '^import Mathlib$' KappaMonoid/ | sort)

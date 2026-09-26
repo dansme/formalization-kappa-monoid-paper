@@ -12,7 +12,8 @@ advantages over the module-theoretic definition for the realisation proof:
 
 The translation to modules (`R^{1×n} e`) is in `Bergman/IdemModule.lean`.
 -/
-import Mathlib
+import Mathlib.Data.Matrix.ColumnRowPartitioned
+import Mathlib.RingTheory.HopkinsLevitzki
 
 universe u v w
 

@@ -11,7 +11,9 @@
   algebra map out of `M_N(S)` is determined by its values on the matrix units and on `S e_{cc}`
   (`ext_of_single`).
 -/
-import Mathlib
+import Mathlib.Data.Matrix.Basis
+import Mathlib.GroupTheory.GroupAction.Ring
+import Mathlib.RingTheory.Idempotents
 
 namespace Bergman
 

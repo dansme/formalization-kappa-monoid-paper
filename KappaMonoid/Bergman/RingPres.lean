@@ -6,6 +6,7 @@ algebra `P.ring k` with its universal property, the atoms' classes `P.γ k` in `
 relations `P.mrel` among them.  The two theorems about it are in `Bergman/MainRing.lean`.
 -/
 import KappaMonoid.Bergman.Idem
+import Mathlib.Algebra.RingQuot
 
 
 universe u

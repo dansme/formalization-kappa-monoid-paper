@@ -16,16 +16,16 @@ import KappaMonoid.Bergman.Core.Echelon
 
 universe u
 
-set_option linter.unusedSectionVars false
-
 namespace Bergman.Core
 
 open Module
 
-variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+variable {k : Type u} [Field k] {ι : Type} [DecidableEq ι]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l} [Fact (∀ l, Function.Injective (σ l))]
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
 
 /-! ## Chains of letters -/
 
@@ -159,16 +159,17 @@ variable {C : Type u} [Ring C] [Algebra k C]
 noncomputable def wordAct (inc : ∀ l, R l →ₐ[k] C) (ts : List (Letter σ)) : C :=
   (ts.map fun t => inc t.side t.val).prod
 
-variable {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C} [Fact (IsCoprod k σ C σC inc)]
-  {N : Option Λ → Type u} [∀ μ, AddCommGroup (N μ)] [∀ μ, Module (Rμ k ι R μ) (N μ)]
-  [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (Rμ k ι R μ) (N μ)] {B : HomBases σ N}
+variable {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C}
+  {N : Option Λ → Type u} [∀ μ, AddCommGroup (N μ)] [∀ μ, Module (R_[μ]) (N μ)]
+  [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (R_[μ]) (N μ)] {B : HomBases σ N}
 
 @[simp] theorem wordAct_nil : wordAct inc ([] : List (Letter σ)) = 1 := by simp [wordAct]
 
 theorem wordAct_cons (t : Letter σ) (ts : List (Letter σ)) :
     wordAct inc (t :: ts) = inc t.side t.val * wordAct inc ts := by simp [wordAct]
 
-theorem Std.mono_pre (ts : List (Letter σ)) (w : Mono σ B.S) (h) :
+theorem Std.mono_pre [Fintype ι] [Fact (IsCoprod k σ C σC inc)] (ts : List (Letter σ))
+    (w : Mono σ B.S) (h) :
     Std.mono σC inc B (Mono.pre ts w h) = wordAct inc ts • Std.mono σC inc B w := by
   induction ts with
   | nil => rw [Mono.pre_nil, wordAct_nil, one_smul]
@@ -184,7 +185,8 @@ theorem strip_cons (t : Letter σ) (w : Mono σ B.S) (h₁ h₂) :
 
 /-! ## Homogeneity -/
 
-theorem Std.coeff_σC_smul (c : ι → k) (y : Std σC inc B) (w : Mono σ B.S) :
+theorem Std.coeff_σC_smul [Fintype ι] [Fact (IsCoprod k σ C σC inc)] (c : ι → k) (y : Std σC inc B)
+    (w : Mono σ B.S) :
     Std.coeff σC inc B (σC c • y) w = c w.left * Std.coeff σC inc B y w := by
   have : (Finsupp.lapply w ∘ₗ (Std.coeff σC inc B).toLinearMap ∘ₗ smulLin (k := k) (σC c)) =
       c w.left • (Finsupp.lapply w ∘ₗ (Std.coeff σC inc B).toLinearMap) := by
@@ -197,7 +199,8 @@ theorem Std.coeff_σC_smul (c : ι → k) (y : Std σC inc B) (w : Mono σ B.S) 
     · simp
   exact LinearMap.congr_fun this y
 
-theorem left_of_mem_supp_homog {j : ι} {y : Std σC inc B} (hy : σC (ee j) • y = y)
+theorem left_of_mem_supp_homog [Fintype ι] [Fact (IsCoprod k σ C σC inc)] {j : ι}
+    {y : Std σC inc B} (hy : σC (ee j) • y = y)
     {w : Mono σ B.S} (hw : w ∈ y.supp) : w.left = j := by
   rw [Std.mem_supp] at hw
   by_contra hne
@@ -208,23 +211,25 @@ theorem left_of_mem_supp_homog {j : ι} {y : Std σC inc B} (hy : σC (ee j) •
 /-! ## The orders `basisOrder` -/
 
 /-- `true` unless the monomial is on side `l` (always `true` for `o = none`). -/
-def sideBit : Option Λ → Mono σ S → Bool
+def sideBit [DecidableEq Λ] : Option Λ → Mono σ S → Bool
   | none, _ => true
   | some l, w => decide (w.side ≠ some l)
 
 /-- The order used to choose the bases of Bergman §8. -/
-noncomputable def basisOrder (o : Option Λ) (w : Mono σ S) : ℕ ×ₗ (Bool ×ₗ Mono σ S) :=
+noncomputable def basisOrder [DecidableEq Λ] (o : Option Λ) (w : Mono σ S) : ℕ ×ₗ
+    (Bool ×ₗ Mono σ S) :=
   toLex (w.deg, toLex (sideBit o w, w))
 
-theorem basisOrder_injective (o : Option Λ) : Function.Injective (basisOrder (σ := σ) (S := S) o) :=
+theorem basisOrder_injective [DecidableEq Λ] (o : Option Λ) : Function.Injective
+    (basisOrder (σ := σ) (S := S) o) :=
   fun _ _ h => congrArg (fun p => (ofLex (ofLex p).2).2) h
 
-theorem basisOrder_le_iff {o : Option Λ} {w w' : Mono σ S} :
+theorem basisOrder_le_iff [DecidableEq Λ] {o : Option Λ} {w w' : Mono σ S} :
     basisOrder o w ≤ basisOrder o w' ↔ w.deg < w'.deg ∨ w.deg = w'.deg ∧
       (sideBit o w < sideBit o w' ∨ sideBit o w = sideBit o w' ∧ w ≤ w') := by
   rw [basisOrder, basisOrder, Prod.Lex.toLex_le_toLex, Prod.Lex.toLex_le_toLex]
 
-theorem deg_le_of_basisOrder_le {o : Option Λ} {w w' : Mono σ S}
+theorem deg_le_of_basisOrder_le [DecidableEq Λ] {o : Option Λ} {w w' : Mono σ S}
     (h : basisOrder o w ≤ basisOrder o w') : w.deg ≤ w'.deg := by
   rcases basisOrder_le_iff.1 h with h | h
   · exact h.le
@@ -234,7 +239,7 @@ theorem isTopF_iff {f : Mono σ B.S → ℕ ×ₗ (Bool ×ₗ Mono σ B.S)} {y :
     {v : Mono σ B.S} :
     IsTopF f (Std.coeff σC inc B y) v ↔ v ∈ y.supp ∧ ∀ w ∈ y.supp, f w ≤ f v := Iff.rfl
 
-theorem IsTopF.deg_eq {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
+theorem IsTopF.deg_eq [DecidableEq Λ] {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
     (h : IsTopF (basisOrder o) (Std.coeff σC inc B y) v) : v.deg = y.deg := by
   have hy : y ≠ 0 := by rintro rfl; exact absurd h.1 (by simp)
   obtain ⟨w, hw, hwd⟩ := Std.exists_mem_supp hy
@@ -242,7 +247,7 @@ theorem IsTopF.deg_eq {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
 
 /-- The greatest term for `basisOrder o` is greatest for the order of monomials, when the terms of
 top degree are not on side `o`. -/
-theorem IsTopF.le_of_bit {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
+theorem IsTopF.le_of_bit [DecidableEq Λ] {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
     (h : IsTopF (basisOrder o) (Std.coeff σC inc B y) v)
     (hb : ∀ w ∈ y.supp, w.deg = y.deg → sideBit o w = true) : ∀ w ∈ y.supp, w ≤ v := by
   intro w hw
@@ -253,13 +258,13 @@ theorem IsTopF.le_of_bit {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
     exact absurd hb' (lt_irrefl _)
   · exact hle
 
-theorem IsTopF.le_none {y : Std σC inc B} {v : Mono σ B.S}
+theorem IsTopF.le_none [DecidableEq Λ] {y : Std σC inc B} {v : Mono σ B.S}
     (h : IsTopF (basisOrder none) (Std.coeff σC inc B y) v) : ∀ w ∈ y.supp, w ≤ v :=
   h.le_of_bit fun _ _ _ => rfl
 
 /-- For an element that is not `l`-pure, the greatest term for `basisOrder (some l)` is its
 `l`-leading term. -/
-theorem IsTopF.isLead {l : Λ} {y : Std σC inc B} {v : Mono σ B.S}
+theorem IsTopF.isLead [DecidableEq Λ] {l : Λ} {y : Std σC inc B} {v : Mono σ B.S}
     (h : IsTopF (basisOrder (some l)) (Std.coeff σC inc B y) v) (hp : ¬ IsPureS l y) :
     IsLead (some l) y v := by
   have hy : y ≠ 0 := by rintro rfl; exact absurd h.1 (by simp)
@@ -310,7 +315,8 @@ theorem isLead_mono {μ : Option Λ} {u : Mono σ B.S} (hu : u.side ≠ μ) :
 /-! ## Lemma 5.1, iterated -/
 
 /-- **Lemma 5.1, iterated.** -/
-theorem lead_word {y : Std σC inc B} {v : Mono σ B.S} (t : Letter σ) (ts : List (Letter σ))
+theorem lead_word [Fintype ι] [Fact (IsCoprod k σ C σC inc)] {y : Std σC inc B} {v : Mono σ B.S}
+    (t : Letter σ) (ts : List (Letter σ))
     (h : ChainAt v.left v.side (t :: ts)) {l : Λ} (hl : firstSide (t :: ts) = some l)
     (hv : IsLead (some l) y v) :
     IsPureS t.side (wordAct inc (t :: ts) • y) ∧

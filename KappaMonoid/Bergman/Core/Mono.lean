@@ -14,6 +14,7 @@ refines the degree and is compatible with left multiplication by letters (`lt_co
 is all the leading-term arguments use.
 -/
 import KappaMonoid.Bergman.Core.Basic
+import Mathlib.Data.List.Shortlex
 
 universe u
 
@@ -21,8 +22,8 @@ namespace Bergman.Core
 
 open Module
 
-variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+variable {k : Type u} [Field k] {ι : Type} [DecidableEq ι]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   (σ : ∀ l, (ι → k) →ₐ[k] R l) [Fact (∀ l, Function.Injective (σ l))]
 

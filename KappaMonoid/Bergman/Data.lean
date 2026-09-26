@@ -5,7 +5,7 @@
 projective (left) modules is `M`, with `[R] ↦ u`.  It used to be the conclusion of the one axiom
 of the development; it is now produced by `Bergman.realization` (`Bergman/Realization.lean`).
 -/
-import Mathlib
+import Mathlib.RingTheory.Finiteness.Defs
 import KappaMonoid.ForMathlib.Hereditary
 
 universe u

@@ -6,14 +6,14 @@
 the applications `C` is a matrix ring over a presented algebra, shown to have the universal
 property directly (`Bergman/Morita.lean`).
 -/
-import Mathlib
+import Mathlib.Algebra.Algebra.Pi
 
 universe u
 
 namespace Bergman
 
 variable (k : Type u) [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
 
 /-- `C`, with `inc l : R l → C` and `σC : k^ι → C`, is the coproduct of the `k^ι`-rings

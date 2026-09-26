@@ -13,23 +13,27 @@ the top*: this is `Lex (Keyᵒᵈ →₀ ℕ)`, which is well-founded.  Each mov
 -/
 import KappaMonoid.Bergman.Core.Moves
 import KappaMonoid.Bergman.Core.Pure
+import Mathlib.Data.Finsupp.WellFounded
+import Mathlib.Order.CompletePartialOrder
 
 universe u
-
-set_option linter.unusedSectionVars false
 
 namespace Bergman.Core
 
 open Module
 
 variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l} [Fact (∀ l, Function.Injective (σ l))]
   {C : Type u} [Ring C] [Algebra k C] {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C}
   [Fact (IsCoprod k σ C σC inc)]
   {N : Option Λ → Type u} [∀ μ, AddCommGroup (N μ)] [∀ μ, Module (Rμ k ι R μ) (N μ)]
   [∀ μ, Module k (N μ)] [∀ μ, IsScalarTower k (Rμ k ι R μ) (N μ)] {B : HomBases σ N}
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
+set_option hygiene false in
+local notation "inc_[" μ "]" => incμ σC inc μ
 
 /-! ## The index -/
 
@@ -41,7 +45,8 @@ abbrev IndexKey := ℕ ×ₗ (Bool ×ₗ Mono σ B.S)
 def indexKey (μ : Option Λ) (u : Mono σ B.S) : IndexKey B := toLex (u.deg, toLex (μ.isSome, u))
 
 /-- The count of an index at a key. -/
-noncomputable def indexCount (S : Option Λ → Finset (Mono σ B.S)) (x : IndexKey B) : ℕ :=
+noncomputable def indexCount [Fintype Λ] (S : Option Λ → Finset (Mono σ B.S)) (x : IndexKey B) : ℕ
+    :=
   if (ofLex x).1 = (ofLex (ofLex x).2).2.deg then
     (if (ofLex (ofLex x).2).1 then
       (Finset.univ.filter fun l : Λ => (ofLex (ofLex x).2).2 ∈ S (some l)).card
@@ -49,7 +54,8 @@ noncomputable def indexCount (S : Option Λ → Finset (Mono σ B.S)) (x : Index
   else 0
 
 /-- The index of a family of finite sets of monomials. -/
-noncomputable def presIndex (S : Option Λ → Finset (Mono σ B.S)) : Lex ((IndexKey B)ᵒᵈ →₀ ℕ) :=
+noncomputable def presIndex [Fintype Λ] (S : Option Λ → Finset (Mono σ B.S)) : Lex
+    ((IndexKey B)ᵒᵈ →₀ ℕ) :=
   toLex (Finsupp.onFinset
     ((Finset.univ.biUnion fun μ => (S μ).image (indexKey μ)).image OrderDual.toDual)
     (fun x => indexCount S (OrderDual.ofDual x)) (by
@@ -69,17 +75,22 @@ noncomputable def presIndex (S : Option Λ → Finset (Mono σ B.S)) : Lex ((Ind
       · exact absurd rfl hx
       · exact absurd rfl hx))
 
-theorem presIndex_apply (S : Option Λ → Finset (Mono σ B.S)) (x : IndexKey B) :
+omit [Fintype ι] in
+theorem presIndex_apply [Fintype Λ] (S : Option Λ → Finset (Mono σ B.S)) (x : IndexKey B) :
     ofLex (presIndex S) (OrderDual.toDual x) = indexCount S x := rfl
 
-theorem indexCount_indexKey (S : Option Λ → Finset (Mono σ B.S)) (μ : Option Λ) (u : Mono σ B.S) :
+omit [Fintype ι] in
+theorem indexCount_indexKey [Fintype Λ] (S : Option Λ → Finset (Mono σ B.S)) (μ : Option Λ)
+    (u : Mono σ B.S) :
     indexCount S (indexKey μ u) = match μ with
       | none => if u ∈ S none then 1 else 0
       | some _ => (Finset.univ.filter fun l : Λ => u ∈ S (some l)).card := by
   cases μ <;> simp only [indexCount, indexKey, ofLex_toLex, Option.isSome_none, Option.isSome_some,
     if_true, Bool.false_eq_true, if_false] <;> congr
 
-theorem eq_indexKey_of_indexCount_ne_zero {S : Option Λ → Finset (Mono σ B.S)} {x : IndexKey B}
+omit [Fintype ι] in
+theorem eq_indexKey_of_indexCount_ne_zero [Fintype Λ] {S : Option Λ → Finset (Mono σ B.S)}
+    {x : IndexKey B}
     (h : indexCount S x ≠ 0) : ∃ μ : Option Λ, ∃ v, x = indexKey μ v := by
   unfold indexCount at h
   split_ifs at h with h1 h2
@@ -94,14 +105,17 @@ theorem eq_indexKey_of_indexCount_ne_zero {S : Option Λ → Finset (Mono σ B.S
   · exact absurd rfl h
   · exact absurd rfl h
 
+omit [Fintype ι] in
 theorem indexKey_lt_indexKey_iff {μ ν : Option Λ} {u v : Mono σ B.S} :
     indexKey μ u < indexKey ν v ↔ u.deg < v.deg ∨ u.deg = v.deg ∧
       (μ.isSome < ν.isSome ∨ μ.isSome = ν.isSome ∧ u < v) := by
   simp only [indexKey, Prod.Lex.toLex_lt_toLex]
 
+omit [Fintype ι] in
 /-- **The decrease criterion.** If every `S' μ` lies in `S μ ∪ T μ`, where all monomials of the
 `T μ` have keys below the key of `u` in the copy of `μ₀`, and `u` leaves `S μ₀`, the index drops. -/
-theorem presIndex_lt {S S' T : Option Λ → Finset (Mono σ B.S)} (μ₀ : Option Λ) (u : Mono σ B.S)
+theorem presIndex_lt [Fintype Λ] {S S' T : Option Λ → Finset (Mono σ B.S)} (μ₀ : Option Λ)
+    (u : Mono σ B.S)
     (hS : ∀ μ, S' μ ⊆ S μ ∪ T μ) (hT : ∀ μ, ∀ v ∈ T μ, indexKey μ v < indexKey μ₀ u) (hu : u ∈ S μ₀)
     (hu' : u ∉ S' μ₀) : presIndex S' < presIndex S := by
   classical
@@ -183,10 +197,12 @@ def img (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (μ : Option 
 def imgSupp (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (μ : Option Λ) :
     Set (Mono σ B.S) := {u | ∃ a, u ∈ msupp σC inc B μ (f (p.j μ a))}
 
+omit [IsScalarTower k C M] in
 theorem f_j_smul (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (μ : Option Λ)
-    (r : Rμ k ι R μ) (a : p.A μ) : f (p.j μ (r • a)) = incμ σC inc μ r • f (p.j μ a) := by
+    (r : R_[μ]) (a : p.A μ) : f (p.j μ (r • a)) = inc_[μ] r • f (p.j μ a) := by
   rw [p.j_smul, map_smul]
 
+omit [IsScalarTower k C M] in
 theorem imgSupp_finite (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG)
     (μ : Option Λ) : (imgSupp f p μ).Finite := by
   classical
@@ -194,7 +210,7 @@ theorem imgSupp_finite (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M
   refine ((s.finite_toSet.biUnion fun g _ =>
     (msupp σC inc B μ (f (p.j μ g))).finite_toSet)).subset ?_
   rintro u ⟨a, ha⟩
-  have hspan : ∀ a ∈ Submodule.span (Rμ k ι R μ) (s : Set (p.A μ)),
+  have hspan : ∀ a ∈ Submodule.span (R_[μ]) (s : Set (p.A μ)),
       (msupp σC inc B μ (f (p.j μ a)) : Set (Mono σ B.S)) ⊆
         ⋃ g ∈ (s : Set (p.A μ)), (msupp σC inc B μ (f (p.j μ g)) : Set (Mono σ B.S)) := by
     intro a ha
@@ -218,10 +234,12 @@ theorem imgSupp_finite (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M
 noncomputable def imgSuppFin (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG)
     (μ : Option Λ) : Finset (Mono σ B.S) := (imgSupp_finite f p hp μ).toFinset
 
+omit [IsScalarTower k C M] in
 theorem mem_imgSuppFin {f : M →ₗ[C] Std σC inc B} {p : StdPres σ σC inc M} {hp : p.FG}
     {μ : Option Λ}
     {u : Mono σ B.S} : u ∈ imgSuppFin f p hp μ ↔ u ∈ imgSupp f p μ := Set.Finite.mem_toFinset _
 
+omit [IsScalarTower k C M] in
 /-- The support can only shrink when the image does. -/
 theorem imgSupp_mono {f : M →ₗ[C] Std σC inc B} {p p' : StdPres σ σC inc M} {μ : Option Λ}
     (h : Set.range (p'.j μ) ⊆ Set.range (p.j μ)) : imgSupp f p' μ ⊆ imgSupp f p μ := by
@@ -241,27 +259,30 @@ theorem not_wp {L : Option Λ → Set (Std σC inc B)} (h : ¬ WP L) :
       have := hc.2.2 μ₁ μ₂ y hy x hx a u hu hl
       tauto⟩
 
+omit [Fintype ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 /-- An element of the left ideal `R e_j` is fixed by `e_j` on the right. -/
-theorem mul_eμ_of_mem {μ : Option Λ} {j : ι} {v : Rμ k ι R μ}
-    (hv : v ∈ Submodule.span (Rμ k ι R μ) {eμ σ μ j}) : v * eμ σ μ j = v := by
+theorem mul_eμ_of_mem {μ : Option Λ} {j : ι} {v : R_[μ]}
+    (hv : v ∈ Submodule.span (R_[μ]) {eμ σ μ j}) : v * eμ σ μ j = v := by
   obtain ⟨r, rfl⟩ := Submodule.mem_span_singleton.1 hv
   rw [smul_eq_mul, mul_assoc, eμ_mul_eμ, if_pos rfl]
 
 /-- The coordinate at `u`, divided by a scalar, as an `R_μ`-linear map on a component. -/
 noncomputable def coordOn (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (μ : Option Λ)
     (u : NotSide B μ) (c : k) :
-    p.A μ →ₗ[Rμ k ι R μ] Submodule.span (Rμ k ι R μ) {eμ σ μ u.1.left} where
+    p.A μ →ₗ[R_[μ]] Submodule.span (R_[μ]) {eμ σ μ u.1.left} where
   toFun a := c • coord σC inc B μ u (f (p.j μ a))
   map_add' a b := by rw [map_add, map_add, map_add, smul_add]
   map_smul' r a := by
     rw [f_j_smul, coord_smul, RingHom.id_apply, smul_comm]
 
+omit [IsScalarTower k C M] in
 theorem coordOn_apply (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (μ : Option Λ)
     (u : NotSide B μ) (c : k) (a : p.A μ) :
     coordOn f p μ u c a = c • coord σC inc B μ u (f (p.j μ a)) := rfl
 
 /-! ## Comparing the supports before and after a move -/
 
+omit [IsScalarTower k C M] in
 theorem imgSuppFin_sub {f : M →ₗ[C] Std σC inc B} {p p' : StdPres σ σC inc M} {hp : p.FG}
     {hp' : p'.FG} {μ : Option Λ} {T : Finset (Mono σ B.S)}
     (h : ∀ a v, v ∈ msupp σC inc B μ (f (p'.j μ a)) → v ∈ imgSupp f p μ ∨ v ∈ T) :
@@ -272,27 +293,32 @@ theorem imgSuppFin_sub {f : M →ₗ[C] Std σC inc B} {p p' : StdPres σ σC in
   · exact Finset.mem_union_left _ (mem_imgSuppFin.2 h)
   · exact Finset.mem_union_right _ h
 
+omit [IsScalarTower k C M] in
 theorem imgSuppFin_sub_of_range {f : M →ₗ[C] Std σC inc B} {p p' : StdPres σ σC inc M} {hp : p.FG}
     {hp' : p'.FG} {μ : Option Λ} (T : Finset (Mono σ B.S))
     (h : Set.range (p'.j μ) ⊆ Set.range (p.j μ)) :
     imgSuppFin f p' hp' μ ⊆ imgSuppFin f p hp μ ∪ T :=
   imgSuppFin_sub fun a _ hv => Or.inl (imgSupp_mono h ⟨a, hv⟩)
 
+omit [Fintype ι] in
 theorem indexKey_lt_of_deg_lt {μ ν : Option Λ} {v u : Mono σ B.S} (h : v.deg < u.deg) :
     indexKey μ v < indexKey ν u := indexKey_lt_indexKey_iff.2 (Or.inl h)
 
+omit [Fintype ι] in
 theorem indexKey_none_lt_some {l : Λ} {v u : Mono σ B.S} (h : v.deg ≤ u.deg) :
     indexKey none v < indexKey (some l) u := by
   rcases h.lt_or_eq with h | h
   · exact indexKey_lt_of_deg_lt h
   · exact indexKey_lt_indexKey_iff.2 (Or.inr ⟨h, Or.inl (by simp)⟩)
 
+omit [Fintype ι] in
 theorem indexKey_lt_of_lt {μ : Option Λ} {v u : Mono σ B.S} (h : v < u) :
     indexKey μ v < indexKey μ u := by
   rcases (Mono.deg_le_of_le h.le).lt_or_eq with hd | hd
   · exact indexKey_lt_of_deg_lt hd
   · exact indexKey_lt_indexKey_iff.2 (Or.inr ⟨hd, Or.inr ⟨rfl, h⟩⟩)
 
+omit [Fintype ι] [Fact (IsCoprod k σ C σC inc)] in
 /-- The `l`-support of an element whose terms are terms of an `l`-pure `y` lies below `deg y`. -/
 theorem deg_lt_of_mem_msupp_of_supp_subset {l : Λ} {y z : Std σC inc B} (hy : IsPureS l y)
     (hz : z.supp ⊆ y.supp) {v : Mono σ B.S} (hv : v ∈ msupp σC inc B (some l) z) :
@@ -317,7 +343,7 @@ Paper proof: the `l`-leading term `u` of `y` has an invertible coefficient, so t
 `u` splits off a free summand `R_l a` of `A l`; moving it to `A none` removes `u` from the
 `l`-support, and the new `0`-support lies in degrees at most `deg u`, below `u` in the copy
 `U_Λ`. -/
-theorem presIndex_lt_of_not_pureS (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M)
+theorem presIndex_lt_of_not_pureS [Fintype Λ] (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M)
     (hp : p.FG) (l : Λ) (b : p.A (some l))
     (hy0 : f (p.j (some l) b) ≠ 0) (hy : ¬ IsPureS l (f (p.j (some l) b))) :
     ∃ p' : StdPres σ σC inc M, p.Step p' ∧ ∃ hp' : p'.FG,
@@ -328,12 +354,12 @@ theorem presIndex_lt_of_not_pureS (f : M →ₗ[C] Std σC inc B) (p : StdPres �
   set c := Std.coeff σC inc B (f (p.j (some l) b)) u
   have hc : c ≠ 0 := Std.mem_supp.1 hu.mem_supp
   let φ := coordOn f p (some l) U c⁻¹
-  have hφb : (φ b : Rμ k ι R (some l)) = eμ σ (some l) u.left := by
+  have hφb : (φ b : R_[some l]) = eμ σ (some l) u.left := by
     show ((c⁻¹ • coord σC inc B (some l) U (f (p.j (some l) b)) : lid σ (some l) u.left) :
-      Rμ k ι R (some l)) = _
+      R_[some l]) = _
     rw [Submodule.coe_smul_of_tower, hu.coord, smul_smul, inv_mul_cancel₀ hc, one_smul]
   let a := eμ σ (some l) u.left • b
-  have ha : (φ a : Rμ k ι R (some l)) = eμ σ (some l) u.left := by
+  have ha : (φ a : R_[some l]) = eμ σ (some l) u.left := by
     simp only [a, map_smul, Submodule.coe_smul, smul_eq_mul, hφb, eμ_mul_eμ, ↓reduceIte]
   have hja : eμ σ (some l) u.left • a = a := by
     simp only [a, smul_smul, eμ_mul_eμ, ↓reduceIte]
@@ -378,7 +404,8 @@ lowers the index.
 Paper proof: a term `u` of top degree lies on side `l`; its coordinate splits off a summand `k^ι a`
 of `A none`, which moves to `A l`.  This removes `u` from the `0`-support, and the new `l`-support
 comes from an `l`-pure element, so lies in degrees below `deg u`. -/
-theorem presIndex_lt_of_not_pure_none (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M)
+theorem presIndex_lt_of_not_pure_none [Fintype Λ] (f : M →ₗ[C] Std σC inc B)
+    (p : StdPres σ σC inc M)
     (hp : p.FG) (b : p.A none)
     (hy : ¬ IsPure none (f (p.j none b))) :
     ∃ p' : StdPres σ σC inc M, p.Step p' ∧ ∃ hp' : p'.FG,
@@ -392,13 +419,13 @@ theorem presIndex_lt_of_not_pure_none (f : M →ₗ[C] Std σC inc B) (p : StdPr
   set c := Std.coeff σC inc B (f (p.j none b)) u
   have hc : c ≠ 0 := Std.mem_supp.1 huy
   let φ := coordOn f p none U c⁻¹
-  have hφb : (φ b : Rμ k ι R none) = eμ σ none u.left := by
+  have hφb : (φ b : R_[none]) = eμ σ none u.left := by
     show ((c⁻¹ • coord σC inc B none U (f (p.j none b)) : lid σ none u.left) :
-      Rμ k ι R none) = _
+      R_[none]) = _
     rw [Submodule.coe_smul_of_tower, coord_of_deg (u := U) hud.symm.le, smul_smul,
       inv_mul_cancel₀ hc, one_smul]
   let a := eμ σ none u.left • b
-  have ha : (φ a : Rμ k ι R none) = eμ σ none u.left := by
+  have ha : (φ a : R_[none]) = eμ σ none u.left := by
     simp only [a, map_smul, Submodule.coe_smul, smul_eq_mul, hφb, eμ_mul_eμ, ↓reduceIte]
   have hja : eμ σ none u.left • a = a := by
     simp only [a, smul_smul, eμ_mul_eμ, ↓reduceIte]
@@ -444,7 +471,7 @@ the `μ₁`-leading term of `a • x` for some `x ∈ f (A μ₂)`, with `deg (a
 Paper proof: subtract from each element of `A μ₁` the multiple of `a • x` that kills its coordinate
 at `u`.  This removes `u` from the `μ₁`-support; the new terms are terms of `a • x`, all below its
 leading term `u`. -/
-theorem presIndex_lt_of_lead (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M)
+theorem presIndex_lt_of_lead [Fintype Λ] (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M)
     (hp : p.FG) (μ₁ μ₂ : Option Λ) (b₁ : p.A μ₁) (b₂ : p.A μ₂) (a : C)
     (u : Mono σ B.S) (hu : u ∈ msupp σC inc B μ₁ (f (p.j μ₁ b₁)))
     (hl : IsLead μ₁ (a • f (p.j μ₂ b₂)) u)
@@ -457,9 +484,9 @@ theorem presIndex_lt_of_lead (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC
   let U : NotSide B μ₁ := ⟨u, hU⟩
   set c := Std.coeff σC inc B (a • f X) u
   have hc : c ≠ 0 := Std.mem_supp.1 hl.mem_supp
-  let e : p.A μ₁ →ₗ[Rμ k ι R μ₁] Rμ k ι R μ₁ :=
+  let e : p.A μ₁ →ₗ[R_[μ₁]] R_[μ₁] :=
     (Submodule.subtype _).comp (coordOn f p μ₁ U c⁻¹)
-  have he : ∀ b', e b' = c⁻¹ • (coord σC inc B μ₁ U (f (p.j μ₁ b')) : Rμ k ι R μ₁) :=
+  have he : ∀ b', e b' = c⁻¹ • (coord σC inc B μ₁ U (f (p.j μ₁ b')) : R_[μ₁]) :=
     fun b' => Submodule.coe_smul_of_tower _ _
   obtain ⟨ε, hε1, hε2⟩ := p.exists_functional μ₁ e
   have hεX : ε (a • X) = 0 := by
@@ -477,7 +504,7 @@ theorem presIndex_lt_of_lead (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC
     · rw [hε2 μ₂ h12, mul_zero]
   obtain ⟨p', hstep, hfg, hoth, hr⟩ := p.transvection μ₁ ε hε2 (a • X) hεX
   have hval : ∀ b', f (p.j μ₁ b' - ε (p.j μ₁ b') • (a • X)) =
-      f (p.j μ₁ b') - incμ σC inc μ₁ (e b') • (a • f X) := fun b' => by
+      f (p.j μ₁ b') - inc_[μ₁] (e b') • (a • f X) := fun b' => by
     rw [map_sub, map_smul, map_smul, hε1]
   have hcl : ∀ b', u ∉ msupp σC inc B μ₁ (f (p.j μ₁ b' - ε (p.j μ₁ b') • (a • X))) := by
     intro b' hux
@@ -518,7 +545,7 @@ theorem presIndex_lt_of_lead (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC
 
 /-- **One step of Proposition 6.2**: if the images are not well-positioned, a transfer or a
 transvection lowers the index — one case for each way Definition 5.2 can fail. -/
-theorem exists_step_presIndex_lt (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M)
+theorem exists_step_presIndex_lt [Fintype Λ] (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M)
     (hp : p.FG) (hW : ¬ WP (img f p)) :
     ∃ p' : StdPres σ σC inc M, p.Step p' ∧ ∃ hp' : p'.FG,
       presIndex (imgSuppFin f p' hp') < presIndex (imgSuppFin f p hp) := by
@@ -530,7 +557,8 @@ theorem exists_step_presIndex_lt (f : M →ₗ[C] Std σC inc B) (p : StdPres σ
 
 /-- **Proposition 6.2**: finitely many transfers and transvections make the images
 well-positioned. -/
-theorem exists_reach_wp (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG) :
+theorem exists_reach_wp [Fintype Λ] (f : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG)
+    :
     ∃ p' : StdPres σ σC inc M, p.Reach p' ∧ p'.FG ∧ WP (img f p') := by
   suffices h : ∀ x, ∀ (p : StdPres σ σC inc M) (hp : p.FG), presIndex (imgSuppFin f p hp) = x →
       ∃ p' : StdPres σ σC inc M, p.Reach p' ∧ p'.FG ∧ WP (img f p') from h _ p hp rfl

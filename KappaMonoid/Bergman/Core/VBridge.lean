@@ -18,10 +18,9 @@ With Corollary 2.6 and Theorem 2.3 these give `exists_pair_of_cls` and `rel_of_e
 -/
 import KappaMonoid.Bergman.Core.Pres
 import KappaMonoid.Bergman.IdemModule
+import Mathlib.RingTheory.Finiteness.Prod
 
 universe u v
-
-set_option linter.unusedSectionVars false
 
 namespace Bergman
 
@@ -135,11 +134,15 @@ namespace Core
 
 open Module
 
-variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+variable {k : Type u} [Field k] {ι : Type} [DecidableEq ι]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l}
   {C : Type u} [Ring C] [Algebra k C] {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C}
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
+set_option hygiene false in
+local notation "inc_[" μ "]" => incμ σC inc μ
 
 /-! ## The left ideals `R_μ e_j` -/
 
@@ -153,25 +156,24 @@ theorem ee_idem (j : ι) : (ee j : ι → k) * ee j = ee j := by
 noncomputable def eecls (j : ι) : V (ι → k) := cls (mat1 (ee j : ι → k)) (mat1_idem (ee_idem j))
 
 theorem fgp_lid (μ : Option Λ) (j : ι) :
-    Module.Finite (Rμ k ι R μ) (lid σ μ j) ∧ Module.Projective (Rμ k ι R μ) (lid σ μ j) :=
+    Module.Finite (R_[μ]) (lid σ μ j) ∧ Module.Projective (R_[μ]) (lid σ μ j) :=
   fgp_span_idem (eμ_idem μ j)
 
 theorem vcls_lid (μ : Option Λ) (j : ι) :
-    vcls (Rμ k ι R μ) (lid σ μ j) = V.map (σμ σ μ).toRingHom (eecls j) := by
+    vcls (R_[μ]) (lid σ μ j) = V.map (σμ σ μ).toRingHom (eecls j) := by
   rw [vcls_span_idem (eμ_idem μ j), eecls, V.map_cls]
   exact cls_congr (by ext; rfl) _ _
 
-theorem vcls_lid_none (j : ι) : (vcls (Rμ k ι R none) (lid σ none j) : V (ι → k)) = eecls j := by
+theorem vcls_lid_none (j : ι) : (vcls (R_[none]) (lid σ none j) : V (ι → k)) = eecls j := by
   rw [vcls_lid]
   exact V.map_id _
 
 theorem vcls_lid_some (l : Λ) (j : ι) :
-    (vcls (Rμ k ι R (some l)) (lid σ (some l) j) : V (R l)) = V.map (σ l).toRingHom (eecls j) :=
+    (vcls (R_[some l]) (lid σ (some l) j) : V (R l)) = V.map (σ l).toRingHom (eecls j) :=
   vcls_lid _ j
 
 /-! ## Additive maps out of row modules -/
 
-omit [Fintype ι] [DecidableEq ι] [Fintype Λ] [DecidableEq Λ] in
 /-- An additive map out of `rowMod e`, semilinear along `φ`, is determined by the rows of `e`. -/
 theorem rowMod_map_eq_sum {S : Type u} [Ring S] {m : Type} [Fintype m] [DecidableEq m]
     {e : Matrix m m S}
@@ -193,27 +195,29 @@ theorem rowMod_map_eq_sum {S : Type u} [Ring S] {m : Type} [Fintype m] [Decidabl
 section real
 
 variable {m : Option Λ → Type} [∀ μ, Fintype (m μ)] [∀ μ, DecidableEq (m μ)]
-  (e : ∀ μ, Matrix (m μ) (m μ) (Rμ k ι R μ))
+  (e : ∀ μ, Matrix (m μ) (m μ) (R_[μ]))
 
 variable (σC inc) in
 /-- The block-diagonal matrix `diag(e μ)` over `C`. -/
-noncomputable def realE : Matrix (Σ μ, m μ) (Σ μ, m μ) C :=
-  Matrix.blockDiagonal' fun μ => (e μ).map (incμ σC inc μ)
+noncomputable def realE [DecidableEq Λ] : Matrix (Σ μ, m μ) (Σ μ, m μ) C :=
+  Matrix.blockDiagonal' fun μ => (e μ).map (inc_[μ])
 
-theorem realE_idem (he : ∀ μ, e μ * e μ = e μ) :
+omit [DecidableEq ι] [(μ : Option Λ) → DecidableEq (m μ)] in
+theorem realE_idem [Fintype Λ] [DecidableEq Λ] (he : ∀ μ, e μ * e μ = e μ) :
     realE σC inc e * realE σC inc e = realE σC inc e :=
   blockDiagonal'_idem _ fun μ => by rw [← Matrix.map_mul, he]
 
-theorem cls_realE (he : ∀ μ, e μ * e μ = e μ) :
+omit [DecidableEq ι] in
+theorem cls_realE [Fintype Λ] [DecidableEq Λ] (he : ∀ μ, e μ * e μ = e μ) :
     cls (realE σC inc e) (realE_idem e he) =
-      ∑ μ, V.map (incμ σC inc μ).toRingHom (cls (e μ) (he μ)) := by
+      ∑ μ, V.map (inc_[μ]).toRingHom (cls (e μ) (he μ)) := by
   simp only [V.map_cls]
   exact cls_blockDiagonal' _ _
 
 variable (σC inc) in
 /-- Put a vector over `R_μ` into block `μ`, mapped to `C`. -/
-noncomputable def jvec (μ : Option Λ) : (m μ → Rμ k ι R μ) →ₗ[k] ((Σ μ, m μ) → C) where
-  toFun v x := (Pi.single (M := fun ν => m ν → C) μ (fun a => incμ σC inc μ (v a))) x.1 x.2
+noncomputable def jvec [DecidableEq Λ] (μ : Option Λ) : (m μ → R_[μ]) →ₗ[k] ((Σ μ, m μ) → C) where
+  toFun v x := (Pi.single (M := fun ν => m ν → C) μ (fun a => inc_[μ] (v a))) x.1 x.2
   map_add' v w := by
     ext ⟨ν, b⟩
     by_cases h : ν = μ
@@ -225,29 +229,35 @@ noncomputable def jvec (μ : Option Λ) : (m μ → Rμ k ι R μ) →ₗ[k] ((�
     · subst h; simp
     · simp [Pi.single_eq_of_ne h]
 
-theorem jvec_same (μ : Option Λ) (v : m μ → Rμ k ι R μ) (a : m μ) :
-    jvec σC inc μ v ⟨μ, a⟩ = incμ σC inc μ (v a) := by
+omit [DecidableEq ι] [(μ : Option Λ) → Fintype (m μ)] [(μ : Option Λ) → DecidableEq (m μ)] in
+theorem jvec_same [DecidableEq Λ] (μ : Option Λ) (v : m μ → R_[μ]) (a : m μ) :
+    jvec σC inc μ v ⟨μ, a⟩ = inc_[μ] (v a) := by
   simp [jvec]
 
-theorem jvec_ne {μ ν : Option Λ} (h : ν ≠ μ) (v : m μ → Rμ k ι R μ) (b : m ν) :
+omit [DecidableEq ι] [(μ : Option Λ) → Fintype (m μ)] [(μ : Option Λ) → DecidableEq (m μ)] in
+theorem jvec_ne [DecidableEq Λ] {μ ν : Option Λ} (h : ν ≠ μ) (v : m μ → R_[μ]) (b : m ν) :
     jvec σC inc μ v ⟨ν, b⟩ = 0 := by
   simp [jvec, Pi.single_eq_of_ne h]
 
-theorem jvec_smul (μ : Option Λ) (r : Rμ k ι R μ) (v : m μ → Rμ k ι R μ) :
-    jvec σC inc μ (r • v) = incμ σC inc μ r • jvec σC inc μ v := by
+omit [DecidableEq ι] [(μ : Option Λ) → Fintype (m μ)] [(μ : Option Λ) → DecidableEq (m μ)] in
+theorem jvec_smul [DecidableEq Λ] (μ : Option Λ) (r : R_[μ]) (v : m μ → R_[μ]) :
+    jvec σC inc μ (r • v) = inc_[μ] r • jvec σC inc μ v := by
   ext ⟨ν, b⟩
   by_cases h : ν = μ
   · subst h; simp [jvec_same]
   · simp [jvec_ne h]
 
-theorem jvec_row (μ : Option Λ) (i : m μ) :
+omit [DecidableEq ι] [(μ : Option Λ) → Fintype (m μ)] [(μ : Option Λ) → DecidableEq (m μ)] in
+theorem jvec_row [DecidableEq Λ] (μ : Option Λ) (i : m μ) :
     jvec σC inc μ (e μ i) = realE σC inc e ⟨μ, i⟩ := by
   ext ⟨ν, b⟩
   by_cases h : ν = μ
   · subst h; simp [jvec_same, realE, Matrix.blockDiagonal'_apply_eq]
   · rw [jvec_ne h, realE, Matrix.blockDiagonal'_apply_ne _ _ _ (Ne.symm h)]
 
-theorem jvec_mem (he : ∀ μ, e μ * e μ = e μ) (μ : Option Λ) {v : m μ → Rμ k ι R μ}
+omit [DecidableEq ι] in
+theorem jvec_mem [Fintype Λ] [DecidableEq Λ] (he : ∀ μ, e μ * e μ = e μ) (μ : Option Λ)
+    {v : m μ → R_[μ]}
     (hv : v ∈ rowMod (e μ)) : jvec σC inc μ v ∈ rowMod (realE σC inc e) := by
   rw [← (mem_rowMod (he μ) v).1 hv, vecMul_eq_sum_smul, map_sum]
   refine Submodule.sum_mem _ fun i _ => ?_
@@ -256,16 +266,17 @@ theorem jvec_mem (he : ∀ μ, e μ * e μ = e μ) (μ : Option Λ) {v : m μ �
 
 variable (σC inc) in
 /-- The inclusion of `rowMod (e μ)` into `rowMod (diag e)`. -/
-noncomputable def jmap (he : ∀ μ, e μ * e μ = e μ) (μ : Option Λ) :
+noncomputable def jmap [Fintype Λ] [DecidableEq Λ] (he : ∀ μ, e μ * e μ = e μ) (μ : Option Λ) :
     rowMod (e μ) →ₗ[k] rowMod (realE σC inc e) where
   toFun v := ⟨jvec σC inc μ v, jvec_mem e he μ v.2⟩
-  map_add' v w := Subtype.ext ((jvec σC inc μ).map_add (v : m μ → Rμ k ι R μ) w)
-  map_smul' c v := Subtype.ext ((jvec σC inc μ).map_smul c (v : m μ → Rμ k ι R μ))
+  map_add' v w := Subtype.ext ((jvec σC inc μ).map_add (v : m μ → R_[μ]) w)
+  map_smul' c v := Subtype.ext ((jvec σC inc μ).map_smul c (v : m μ → R_[μ]))
 
-theorem jmap_coe (he : ∀ μ, e μ * e μ = e μ) (μ : Option Λ) (a : rowMod (e μ)) :
-    (jmap σC inc e he μ a : (Σ μ, m μ) → C) = jvec σC inc μ (a : m μ → Rμ k ι R μ) := rfl
+omit [DecidableEq ι] in
+theorem jmap_coe [Fintype Λ] [DecidableEq Λ] (he : ∀ μ, e μ * e μ = e μ) (μ : Option Λ)
+    (a : rowMod (e μ)) :
+    (jmap σC inc e he μ a : (Σ μ, m μ) → C) = jvec σC inc μ (a : m μ → R_[μ]) := rfl
 
-omit [Fintype ι] [DecidableEq ι] [Fintype Λ] [DecidableEq Λ] in
 variable (C) in
 /-- `w ↦ ∑ w_x y_x`. -/
 noncomputable def sumMap {α : Type} [Fintype α] {P : Type u} [AddCommGroup P] [Module C P]
@@ -274,19 +285,19 @@ noncomputable def sumMap {α : Type} [Fintype α] {P : Type u} [AddCommGroup P] 
   map_add' v w := by simp [add_smul, Finset.sum_add_distrib]
   map_smul' c w := by simp [Finset.smul_sum, mul_smul]
 
-omit [Fintype ι] [DecidableEq ι] [Fintype Λ] [DecidableEq Λ] in
 theorem sumMap_apply {α : Type} [Fintype α] {P : Type u} [AddCommGroup P] [Module C P]
     (y : α → P) (w : α → C) : sumMap C y w = ∑ x, w x • y x := rfl
 
 variable (σC inc) in
 /-- **The realisation**: `rowMod (diag e)` has the standard presentation with components
 `rowMod (e μ)`. -/
-noncomputable def realPres (hC : IsCoprod k σ C σC inc) (he : ∀ μ, e μ * e μ = e μ) :
+noncomputable def realPres [Fintype Λ] [DecidableEq Λ] (hC : IsCoprod k σ C σC inc)
+    (he : ∀ μ, e μ * e μ = e μ) :
     StdPres σ σC inc (rowMod (realE σC inc e)) where
   coprod := hC
   A μ := rowMod (e μ)
   j := jmap σC inc e he
-  j_smul μ r a := Subtype.ext (jvec_smul μ r (a : m μ → Rμ k ι R μ))
+  j_smul μ r a := Subtype.ext (jvec_smul μ r (a : m μ → R_[μ]))
   lift P _ _ _ _ g hg := by
     refine ⟨sumMap C (fun x => g x.1 ⟨e x.1 x.2, row_mem_range_vecMulLinear _ _⟩) ∘ₗ
       (rowMod (realE σC inc e)).subtype, fun μ a => ?_, fun f hf => ?_⟩
@@ -294,7 +305,7 @@ noncomputable def realPres (hC : IsCoprod k σ C σC inc) (he : ∀ μ, e μ * e
         Fintype.sum_sigma, Finset.sum_eq_single μ (fun ν _ h => by simp [jvec_ne h])
         (by simp)]
       simp only [jvec_same]
-      exact (rowMod_map_eq_sum (he μ) (incμ σC inc μ).toRingHom (g μ)
+      exact (rowMod_map_eq_sum (he μ) (inc_[μ]).toRingHom (g μ)
         (hg μ) a).symm
     · refine LinearMap.ext fun w => ?_
       rw [rowMod_map_eq_sum (realE_idem e he) (RingHom.id C) f
@@ -307,7 +318,9 @@ noncomputable def realPres (hC : IsCoprod k σ C σC inc) (he : ∀ μ, e μ * e
         Subtype.ext (jvec_row e x.1 x.2).symm
       exact (congrArg f this).trans (hf x.1 _)
 
-theorem realPres_FGP (hC : IsCoprod k σ C σC inc) (he : ∀ μ, e μ * e μ = e μ) :
+omit [DecidableEq ι] in
+theorem realPres_FGP [Fintype Λ] [DecidableEq Λ] (hC : IsCoprod k σ C σC inc)
+    (he : ∀ μ, e μ * e μ = e μ) :
     (realPres σC inc e hC he).FGP := fun μ => show Module.Finite _ (rowMod (e μ)) ∧ _ from
   ⟨rowMod.finite (e μ), rowMod.projective (he μ)⟩
 
@@ -320,10 +333,11 @@ section pres
 variable {M M' : Type u} [AddCommGroup M] [Module C M] [Module k M] [IsScalarTower k C M]
   [AddCommGroup M'] [Module C M'] [Module k M'] [IsScalarTower k C M']
 
+omit [DecidableEq ι] in
 /-- Standard presentations with isomorphic components present isomorphic modules. -/
 theorem StdPres.nonempty_equiv (p : StdPres σ σC inc M) (q : StdPres σ σC inc M')
     (h : p.IsoExcept q ∅) : Nonempty (M ≃ₗ[C] M') := by
-  have φ : ∀ μ, p.A μ ≃ₗ[Rμ k ι R μ] q.A μ := fun μ => (h μ (Set.notMem_empty μ)).some
+  have φ : ∀ μ, p.A μ ≃ₗ[R_[μ]] q.A μ := fun μ => (h μ (Set.notMem_empty μ)).some
   obtain ⟨F, hF, -⟩ := p.lift M' (fun μ => q.j μ ∘ₗ ((φ μ).toLinearMap.restrictScalars k))
     (fun μ r a => by simp [q.j_smul])
   obtain ⟨G, hG, -⟩ := q.lift M (fun μ => p.j μ ∘ₗ ((φ μ).symm.toLinearMap.restrictScalars k))
@@ -338,29 +352,32 @@ theorem StdPres.nonempty_equiv (p : StdPres σ σC inc M) (q : StdPres σ σC in
 
 /-- The classes of the components, as an element of `V(k^ι) × ∏ V(R l)`. -/
 noncomputable def StdPres.vpair (p : StdPres σ σC inc M) : V (ι → k) × ∀ l, V (R l) :=
-  (vcls (Rμ k ι R none) (p.A none), fun l => vcls (Rμ k ι R (some l)) (p.A (some l)))
+  (vcls (R_[none]) (p.A none), fun l => vcls (R_[some l]) (p.A (some l)))
 
+omit [DecidableEq ι] [IsScalarTower k C M] in
 theorem StdPres.FGP.of_iso {p : StdPres σ σC inc M} {q : StdPres σ σC inc M'} (hp : p.FGP)
     (h : p.IsoExcept q ∅) : q.FGP := fun μ => by
   have := (hp μ).1; have := (hp μ).2
   exact fgp_of_equiv (h μ (Set.notMem_empty μ)).some
 
-theorem StdPres.vpair_eq {p : StdPres σ σC inc M} {q : StdPres σ σC inc M'} (hp : p.FGP)
+omit [DecidableEq ι] [IsScalarTower k C M] in
+theorem StdPres.vpair_eq [DecidableEq Λ] {p : StdPres σ σC inc M} {q : StdPres σ σC inc M'}
+    (hp : p.FGP)
     (h : p.IsoExcept q ∅) : p.vpair = q.vpair := by
   have hv : ∀ μ, vcls _ (p.A μ) = vcls _ (q.A μ) := fun μ => by
     have := (hp μ).1; have := (hp μ).2
     exact vcls_congr (h μ (Set.notMem_empty μ)).some
   exact Prod.ext (hv none) (funext fun l => hv (some l))
 
-variable (r : (V (ι → k) × ∀ l, V (R l)) → (V (ι → k) × ∀ l, V (R l)) → Prop)
+variable [DecidableEq Λ] (r : (V (ι → k) × ∀ l, V (R l)) → (V (ι → k) × ∀ l, V (R l)) → Prop)
   (hr : ∀ (a : V (ι → k)) (l : Λ), r (a, 0) (0, Pi.single l (V.map (σ l).toRingHom a)))
 include hr
 
 /-- A basic transfer moves `k^ι e_j` to `R_l e_j`. -/
 theorem StdPres.rel_of_transfer {p p' : StdPres σ σC inc M} (hp : p.FGP) (hp' : p'.FGP)
     (l : Λ) (j : ι) (hiso : p.IsoExcept p' {none, some l})
-    (φ1 : p.A (some l) ≃ₗ[Rμ k ι R (some l)] p'.A (some l) × lid σ (some l) j)
-    (φ2 : p'.A none ≃ₗ[Rμ k ι R none] p.A none × lid σ none j) :
+    (φ1 : p.A (some l) ≃ₗ[R_[some l]] p'.A (some l) × lid σ (some l) j)
+    (φ2 : p'.A none ≃ₗ[R_[none]] p.A none × lid σ none j) :
     addConGen r p.vpair p'.vpair := by
   have hl1 := fgp_lid (σ := σ) (some l) j
   have hl0 := fgp_lid (σ := σ) none j
@@ -372,9 +389,9 @@ theorem StdPres.rel_of_transfer {p p' : StdPres σ σC inc M} (hp : p.FGP) (hp' 
       have := (hp (some l')).1; have := (hp (some l')).2
       have := (hp' (some l')).1; have := (hp' (some l')).2
       have := hl1.1; have := hl1.2
-      have key : vcls (Rμ k ι R (some l')) (p.A (some l')) =
-          vcls (Rμ k ι R (some l')) (p'.A (some l')) +
-            vcls (Rμ k ι R (some l')) (lid σ (some l') j) := by
+      have key : vcls (R_[some l']) (p.A (some l')) =
+          vcls (R_[some l']) (p'.A (some l')) +
+            vcls (R_[some l']) (lid σ (some l') j) := by
         rw [vcls_congr φ1, vcls_prod]
       simp only [base, Prod.snd_add, Pi.add_apply, Pi.single_eq_same]
       rw [← vcls_lid_some]
@@ -387,8 +404,8 @@ theorem StdPres.rel_of_transfer {p p' : StdPres σ σC inc M} (hp : p.FGP) (hp' 
     have := (hp none).1; have := (hp none).2
     have := (hp' none).1; have := (hp' none).2
     have := hl0.1; have := hl0.2
-    have key : vcls (Rμ k ι R none) (p'.A none) =
-        vcls (Rμ k ι R none) (p.A none) + vcls (Rμ k ι R none) (lid σ none j) := by
+    have key : vcls (R_[none]) (p'.A none) =
+        vcls (R_[none]) (p.A none) + vcls (R_[none]) (lid σ none j) := by
       rw [vcls_congr φ2, vcls_prod]
     simp only [base, Prod.fst_add]
     rw [← vcls_lid_none (σ := σ)]

@@ -228,8 +228,8 @@ re-deriving them.
 
 The tree is layered by subject, not by paper section, and the layering is enforced by
 `scripts/check_layering.sh` in CI: each layer may import only the layers below it, nothing below
-`Modules/` other than `Bergman/` may mention a module, and only `Modules/Small.lean` (and, until
-their imports are trimmed, the files of `Bergman/`) may `import Mathlib`.
+`Modules/` other than `Bergman/` may mention a module, and only `Modules/Small.lean` may
+`import Mathlib`.
 
 | Layer | Contents |
 |---|---|

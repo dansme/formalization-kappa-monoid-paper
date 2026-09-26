@@ -5,7 +5,8 @@ For a surjective ring map `π : T → T'` whose kernel squares to zero, idempote
 isomorphisms between the images of idempotent matrices lift from `T'` to `T`.  These are the
 two lifting properties that make the realising algebra quasi-free (`Bergman/MainRing.lean`).
 -/
-import Mathlib
+import Mathlib.Data.Matrix.Mul
+import Mathlib.Tactic.Abel
 
 universe u
 

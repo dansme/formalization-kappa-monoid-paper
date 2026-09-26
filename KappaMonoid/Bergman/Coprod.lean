@@ -26,7 +26,7 @@ universe u
 namespace Bergman
 
 variable (k : Type u) [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
 
 variable {k}
@@ -38,7 +38,7 @@ variable {σ : ∀ l, (ι → k) →ₐ[k] R l} {C : Type u} [Ring C] [Algebra k
 
 variable (σC inc) in
 /-- The comparison map from the components to `V(C)`: induce each component up to `C`. -/
-noncomputable def coprodV : V (ι → k) × (∀ l, V (R l)) →+ V C where
+noncomputable def coprodV [Fintype Λ] : V (ι → k) × (∀ l, V (R l)) →+ V C where
   toFun p := V.map σC.toRingHom p.1 + ∑ l, V.map (inc l).toRingHom (p.2 l)
   map_zero' := by simp
   map_add' p q := by
@@ -47,12 +47,12 @@ noncomputable def coprodV : V (ι → k) × (∀ l, V (R l)) →+ V C where
 
 variable (σ) in
 /-- A **basic transfer**: move `a ∈ V(k^ι)` from the `k^ι`-component to the `l`-component. -/
-def transferRel (p q : V (ι → k) × (∀ l, V (R l))) : Prop :=
+def transferRel [DecidableEq Λ] (p q : V (ι → k) × (∀ l, V (R l))) : Prop :=
   ∃ (a : V (ι → k)) (l : Λ), p = (a, 0) ∧ q = (0, Pi.single l (V.map (σ l).toRingHom a))
 
 /-- **Bergman's theorem (Cor. 2.6, 2.8)**: every finitely generated projective module over a
 coproduct of faithful `k^ι`-rings is induced from the factors. -/
-theorem IsCoprod.coprodV_surjective (hC : IsCoprod k σ C σC inc)
+theorem IsCoprod.coprodV_surjective [Fintype Λ] [DecidableEq Λ] (hC : IsCoprod k σ C σC inc)
     (hσ : ∀ l, Function.Injective (σ l)) : Function.Surjective (coprodV σC inc) := by
   have : Fact (∀ l, Function.Injective (σ l)) := ⟨hσ⟩
   have : Fact (IsCoprod k σ C σC inc) := ⟨hC⟩
@@ -60,7 +60,7 @@ theorem IsCoprod.coprodV_surjective (hC : IsCoprod k σ C σC inc)
 
 /-- **Bergman's theorem (Cor. 2.8)**: induced modules are isomorphic iff their components are
 related by basic transfers. -/
-theorem IsCoprod.coprodV_eq_iff (hC : IsCoprod k σ C σC inc)
+theorem IsCoprod.coprodV_eq_iff [Fintype Λ] [DecidableEq Λ] (hC : IsCoprod k σ C σC inc)
     (hσ : ∀ l, Function.Injective (σ l)) (p q : V (ι → k) × (∀ l, V (R l))) :
     coprodV σC inc p = coprodV σC inc q ↔ addConGen (transferRel σ) p q := by
   have : Fact (∀ l, Function.Injective (σ l)) := ⟨hσ⟩

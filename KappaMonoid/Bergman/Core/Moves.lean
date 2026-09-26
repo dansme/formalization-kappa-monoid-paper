@@ -11,32 +11,35 @@ related by one `StdPres.Step`, and records how the images of the components chan
   `ε x = 0` (case `(b)`); the new presentation is `θ ∘ j` on `μ₁`.
 -/
 import KappaMonoid.Bergman.Core.Pres
+import Mathlib.RingTheory.Finiteness.Prod
 
 universe u
-
-set_option linter.unusedSectionVars false
 
 namespace Bergman.Core
 
 open Module
 
-variable {k : Type u} [Field k] {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Λ : Type} [Fintype Λ] [DecidableEq Λ]
+variable {k : Type u} [Field k] {ι : Type} [DecidableEq ι]
+  {Λ : Type}
   {R : Λ → Type u} [∀ l, Ring (R l)] [∀ l, Algebra k (R l)]
   {σ : ∀ l, (ι → k) →ₐ[k] R l} [Fact (∀ l, Function.Injective (σ l))]
   {C : Type u} [Ring C] [Algebra k C] {σC : (ι → k) →ₐ[k] C} {inc : ∀ l, R l →ₐ[k] C}
-  [Fact (IsCoprod k σ C σC inc)]
   {M : Type u} [AddCommGroup M] [Module C M] [Module k M] [IsScalarTower k C M]
+set_option hygiene false in
+local notation "R_[" μ "]" => Rμ k ι R μ
+set_option hygiene false in
+local notation "inc_[" μ "]" => incμ σC inc μ
 
+omit [DecidableEq ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [IsScalarTower k C M] in
 /-- The functional `ε : M → C` extending `incμ ∘ e` on `A μ₁` and `0` on the other components. -/
 theorem StdPres.exists_functional (p : StdPres σ σC inc M) (μ₁ : Option Λ)
-    (e : p.A μ₁ →ₗ[Rμ k ι R μ₁] Rμ k ι R μ₁) :
-    ∃ ε : M →ₗ[C] C, (∀ b, ε (p.j μ₁ b) = incμ σC inc μ₁ (e b)) ∧
+    (e : p.A μ₁ →ₗ[R_[μ₁]] R_[μ₁]) :
+    ∃ ε : M →ₗ[C] C, (∀ b, ε (p.j μ₁ b) = inc_[μ₁] (e b)) ∧
       ∀ μ ≠ μ₁, ∀ b, ε (p.j μ b) = 0 := by
   classical
-  let G : p.A μ₁ →ₗ[k] C := (incμ σC inc μ₁).toLinearMap.comp (e.restrictScalars k)
+  let G : p.A μ₁ →ₗ[k] C := (inc_[μ₁]).toLinearMap.comp (e.restrictScalars k)
   let g : ∀ μ, p.A μ →ₗ[k] C := Function.update (fun μ => 0) μ₁ G
-  have hg : ∀ μ (r : Rμ k ι R μ) b, g μ (r • b) = incμ σC inc μ r • g μ b := by
+  have hg : ∀ μ (r : R_[μ]) b, g μ (r • b) = inc_[μ] r • g μ b := by
     intro μ r b
     by_cases h : μ = μ₁
     · subst h
@@ -48,8 +51,9 @@ theorem StdPres.exists_functional (p : StdPres σ σC inc M) (μ₁ : Option Λ)
   · rw [hε]; simp [g, G]
   · rw [hε]; simp [g, Function.update_of_ne h]
 
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 theorem lid_mul_eμ {μ : Option Λ} {j : ι} (c : lid σ μ j) :
-    (c : Rμ k ι R μ) * eμ σ μ j = c := by
+    (c : R_[μ]) * eμ σ μ j = c := by
   obtain ⟨r, hr⟩ := Submodule.mem_span_singleton.1 c.2
   rw [← hr, smul_eq_mul, mul_assoc, eμ_mul_eμ, if_pos rfl]
 
@@ -63,26 +67,33 @@ elsewhere, and `(x, c) ↦ j x + c · j(a)`. -/
 namespace TransferAux
 
 variable (p : StdPres σ σC inc M) (μ₀ μ₁ : Option Λ) (j : ι)
-  (φ : p.A μ₀ →ₗ[Rμ k ι R μ₀] lid σ μ₀ j) (a : p.A μ₀)
+  (φ : p.A μ₀ →ₗ[R_[μ₀]] lid σ μ₀ j) (a : p.A μ₀)
 
 /-- `φ` on `A μ₀`, `0` on the other components. -/
-noncomputable def ψ : ∀ μ, p.A μ →ₗ[Rμ k ι R μ] lid σ μ j :=
+noncomputable def ψ [DecidableEq Λ] : ∀ μ, p.A μ →ₗ[R_[μ]] lid σ μ j :=
   Function.update (fun _ => 0) μ₀ φ
 
 /-- `a` in `A μ₀`, `0` in the other components. -/
-noncomputable def aμ : ∀ μ, p.A μ := Function.update (fun _ => 0) μ₀ a
+noncomputable def aμ [DecidableEq Λ] : ∀ μ, p.A μ := Function.update (fun _ => 0) μ₀ a
 
-theorem ψ_self : ψ p μ₀ j φ μ₀ = φ := Function.update_self _ _ _
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [IsScalarTower k C M] in
+theorem ψ_self [DecidableEq Λ] : ψ p μ₀ j φ μ₀ = φ := Function.update_self _ _ _
 
-theorem ψ_of_ne {μ : Option Λ} (h : μ ≠ μ₀) : ψ p μ₀ j φ μ = 0 := Function.update_of_ne h _ _
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [IsScalarTower k C M] in
+theorem ψ_of_ne [DecidableEq Λ] {μ : Option Λ} (h : μ ≠ μ₀) : ψ p μ₀ j φ μ = 0 :=
+  Function.update_of_ne h _ _
 
-theorem aμ_self : aμ p μ₀ a μ₀ = a := Function.update_self _ _ _
+omit [DecidableEq ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [IsScalarTower k C M] in
+theorem aμ_self [DecidableEq Λ] : aμ p μ₀ a μ₀ = a := Function.update_self _ _ _
 
-theorem aμ_of_ne {μ : Option Λ} (h : μ ≠ μ₀) : aμ p μ₀ a μ = 0 := Function.update_of_ne h _ _
+omit [DecidableEq ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [IsScalarTower k C M] in
+theorem aμ_of_ne [DecidableEq Λ] {μ : Option Λ} (h : μ ≠ μ₀) : aμ p μ₀ a μ = 0 :=
+  Function.update_of_ne h _ _
 
 variable {φ a} in
-theorem ψ_smul_aμ (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (μ : Option Λ) (x : p.A μ) :
-    ψ p μ₀ j φ μ ((ψ p μ₀ j φ μ x : Rμ k ι R μ) • aμ p μ₀ a μ) = ψ p μ₀ j φ μ x := by
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [IsScalarTower k C M] in
+theorem ψ_smul_aμ [DecidableEq Λ] (ha : (φ a : R_[μ₀]) = eμ σ μ₀ j) (μ : Option Λ) (x : p.A μ) :
+    ψ p μ₀ j φ μ ((ψ p μ₀ j φ μ x : R_[μ]) • aμ p μ₀ a μ) = ψ p μ₀ j φ μ x := by
   by_cases h : μ = μ₀
   · subst h
     rw [ψ_self, aμ_self]
@@ -91,7 +102,7 @@ theorem ψ_smul_aμ (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (μ : Opti
   · rw [ψ_of_ne p μ₀ j φ h]; simp
 
 /-- The new components. -/
-def newComp (μ : Option Λ) : Submodule (Rμ k ι R μ) (p.A μ × lid σ μ j) where
+def newComp [DecidableEq Λ] (μ : Option Λ) : Submodule (R_[μ]) (p.A μ × lid σ μ j) where
   carrier := {y | ψ p μ₀ j φ μ y.1 = 0 ∧ (μ ≠ μ₁ → y.2 = 0)}
   add_mem' := fun ha hb => ⟨by rw [Prod.fst_add, map_add, ha.1, hb.1, add_zero],
     fun h => by rw [Prod.snd_add, ha.2 h, hb.2 h, add_zero]⟩
@@ -99,14 +110,15 @@ def newComp (μ : Option Λ) : Submodule (Rμ k ι R μ) (p.A μ × lid σ μ j)
   smul_mem' := fun c y hy => ⟨by rw [Prod.smul_fst, map_smul, hy.1, smul_zero],
     fun h => by rw [Prod.smul_snd, hy.2 h, smul_zero]⟩
 
-theorem mem_newComp {μ : Option Λ} {y : p.A μ × lid σ μ j} :
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [IsScalarTower k C M] in
+theorem mem_newComp [DecidableEq Λ] {μ : Option Λ} {y : p.A μ × lid σ μ j} :
     y ∈ newComp p μ₀ μ₁ j φ μ ↔ ψ p μ₀ j φ μ y.1 = 0 ∧ (μ ≠ μ₁ → y.2 = 0) := Iff.rfl
 
 variable {φ a} in
 /-- The projection `x ↦ (x - ψ(x) a, 0)` onto the new component. -/
-noncomputable def proj (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (μ : Option Λ) :
-    p.A μ →ₗ[Rμ k ι R μ] newComp p μ₀ μ₁ j φ μ where
-  toFun x := ⟨(x - (ψ p μ₀ j φ μ x : Rμ k ι R μ) • aμ p μ₀ a μ, 0),
+noncomputable def proj [DecidableEq Λ] (ha : (φ a : R_[μ₀]) = eμ σ μ₀ j) (μ : Option Λ) :
+    p.A μ →ₗ[R_[μ]] newComp p μ₀ μ₁ j φ μ where
+  toFun x := ⟨(x - (ψ p μ₀ j φ μ x : R_[μ]) • aμ p μ₀ a μ, 0),
     ⟨by rw [map_sub, ψ_smul_aμ p μ₀ j ha, sub_self], fun _ => rfl⟩⟩
   map_add' x y := by
     apply Subtype.ext; apply Prod.ext
@@ -118,82 +130,91 @@ noncomputable def proj (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (μ : O
         Submodule.coe_smul, Prod.smul_fst]
     · simp
 
-theorem proj_coe (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (μ : Option Λ) (x : p.A μ) :
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] [IsScalarTower k C M] in
+theorem proj_coe [DecidableEq Λ] (ha : (φ a : R_[μ₀]) = eμ σ μ₀ j) (μ : Option Λ) (x : p.A μ) :
     (proj p μ₀ μ₁ j ha μ x : p.A μ × lid σ μ j) =
-      (x - (ψ p μ₀ j φ μ x : Rμ k ι R μ) • aμ p μ₀ a μ, 0) := rfl
+      (x - (ψ p μ₀ j φ μ x : R_[μ]) • aμ p μ₀ a μ, 0) := rfl
 
 /-- The new maps into `M`: `(x, c) ↦ j x + c · j(a)`. -/
-noncomputable def newJ (μ : Option Λ) : newComp p μ₀ μ₁ j φ μ →ₗ[k] M where
+noncomputable def newJ [DecidableEq Λ] (μ : Option Λ) : newComp p μ₀ μ₁ j φ μ →ₗ[k] M where
   toFun y := p.j μ (y : p.A μ × lid σ μ j).1 +
-    incμ σC inc μ ((y : p.A μ × lid σ μ j).2 : Rμ k ι R μ) • p.j μ₀ a
+    inc_[μ] ((y : p.A μ × lid σ μ j).2 : R_[μ]) • p.j μ₀ a
   map_add' y z := by
     simp only [Submodule.coe_add, Prod.fst_add, Prod.snd_add, map_add, add_smul]; abel
   map_smul' c y := by
     simp only [Submodule.coe_smul_of_tower, Prod.smul_fst, Prod.smul_snd, map_smul,
       RingHom.id_apply, smul_add, smul_assoc]
 
-theorem newJ_apply (μ : Option Λ) (y : newComp p μ₀ μ₁ j φ μ) :
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
+theorem newJ_apply [DecidableEq Λ] (μ : Option Λ) (y : newComp p μ₀ μ₁ j φ μ) :
     newJ p μ₀ μ₁ j φ a μ y = p.j μ (y : p.A μ × lid σ μ j).1 +
-      incμ σC inc μ ((y : p.A μ × lid σ μ j).2 : Rμ k ι R μ) • p.j μ₀ a := rfl
+      inc_[μ] ((y : p.A μ × lid σ μ j).2 : R_[μ]) • p.j μ₀ a := rfl
 
-theorem newJ_smul (μ : Option Λ) (r : Rμ k ι R μ) (y : newComp p μ₀ μ₁ j φ μ) :
-    newJ p μ₀ μ₁ j φ a μ (r • y) = incμ σC inc μ r • newJ p μ₀ μ₁ j φ a μ y := by
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
+theorem newJ_smul [DecidableEq Λ] (μ : Option Λ) (r : R_[μ]) (y : newComp p μ₀ μ₁ j φ μ) :
+    newJ p μ₀ μ₁ j φ a μ (r • y) = inc_[μ] r • newJ p μ₀ μ₁ j φ a μ y := by
   simp only [newJ_apply, Submodule.coe_smul, Prod.smul_fst, Prod.smul_snd, p.j_smul, smul_eq_mul,
     map_mul, mul_smul, smul_add]
 
 /-- `(0, e_j)` in the new component `μ₁`. -/
-def y₁ : newComp p μ₀ μ₁ j φ μ₁ :=
+def y₁ [DecidableEq Λ] : newComp p μ₀ μ₁ j φ μ₁ :=
   ⟨(0, ⟨eμ σ μ₁ j, Submodule.mem_span_singleton_self _⟩), ⟨map_zero _, fun h => (h rfl).elim⟩⟩
 
 variable {a} in
-theorem newJ_y₁ (hja : eμ σ μ₀ j • a = a) : newJ p μ₀ μ₁ j φ a μ₁ (y₁ p μ₀ μ₁ j φ) = p.j μ₀ a := by
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
+theorem newJ_y₁ [Fact (IsCoprod k σ C σC inc)] [DecidableEq Λ] (hja : eμ σ μ₀ j • a = a) :
+    newJ p μ₀ μ₁ j φ a μ₁ (y₁ p μ₀ μ₁ j φ) = p.j μ₀ a := by
   rw [newJ_apply]
-  change p.j μ₁ 0 + incμ σC inc μ₁ (eμ σ μ₁ j) • p.j μ₀ a = _
+  change p.j μ₁ 0 + inc_[μ₁] (eμ σ μ₁ j) • p.j μ₀ a = _
   rw [map_zero, zero_add, incμ_eμ (σ := σ) σC inc, ← incμ_eμ (σ := σ) σC inc μ₀, ← p.j_smul, hja]
 
 variable {φ a} in
-theorem j_eq (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (hja : eμ σ μ₀ j • a = a) (μ : Option Λ)
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
+theorem j_eq [Fact (IsCoprod k σ C σC inc)] [DecidableEq Λ] (ha : (φ a : R_[μ₀]) = eμ σ μ₀ j)
+    (hja : eμ σ μ₀ j • a = a) (μ : Option Λ)
     (x : p.A μ) :
     p.j μ x = newJ p μ₀ μ₁ j φ a μ (proj p μ₀ μ₁ j ha μ x) +
-      incμ σC inc μ (ψ p μ₀ j φ μ x : Rμ k ι R μ) • newJ p μ₀ μ₁ j φ a μ₁ (y₁ p μ₀ μ₁ j φ) := by
+      inc_[μ] (ψ p μ₀ j φ μ x : R_[μ]) • newJ p μ₀ μ₁ j φ a μ₁ (y₁ p μ₀ μ₁ j φ) := by
   rw [newJ_y₁ p μ₀ μ₁ j φ hja, newJ_apply, proj_coe]
   simp only [map_sub, p.j_smul, ZeroMemClass.coe_zero, map_zero, zero_smul, add_zero]
-  have : incμ σC inc μ (ψ p μ₀ j φ μ x : Rμ k ι R μ) • p.j μ (aμ p μ₀ a μ) =
-      incμ σC inc μ (ψ p μ₀ j φ μ x : Rμ k ι R μ) • p.j μ₀ a := by
+  have : inc_[μ] (ψ p μ₀ j φ μ x : R_[μ]) • p.j μ (aμ p μ₀ a μ) =
+      inc_[μ] (ψ p μ₀ j φ μ x : R_[μ]) • p.j μ₀ a := by
     by_cases h : μ = μ₀
     · subst h; rw [aμ_self]
     · rw [ψ_of_ne p μ₀ j φ h]; simp
   rw [this, sub_add_cancel]
 
 variable {φ a} in
-theorem exists_unique_lift (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (hja : eμ σ μ₀ j • a = a)
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
+theorem exists_unique_lift [Fact (IsCoprod k σ C σC inc)] [DecidableEq Λ]
+    (ha : (φ a : R_[μ₀]) = eμ σ μ₀ j) (hja : eμ σ μ₀ j • a = a)
     (P : Type u) [AddCommGroup P] [Module C P] [Module k P] [IsScalarTower k C P]
     (g' : ∀ μ, newComp p μ₀ μ₁ j φ μ →ₗ[k] P)
-    (hg' : ∀ μ (r : Rμ k ι R μ) y, g' μ (r • y) = incμ σC inc μ r • g' μ y) :
+    (hg' : ∀ μ (r : R_[μ]) y, g' μ (r • y) = inc_[μ] r • g' μ y) :
     ∃! f : M →ₗ[C] P, ∀ μ y, f (newJ p μ₀ μ₁ j φ a μ y) = g' μ y := by
   set q := g' μ₁ (y₁ p μ₀ μ₁ j φ) with hq_def
-  have hq : ∀ c : lid σ μ₁ j, incμ σC inc μ₁ (c : Rμ k ι R μ₁) • q =
+  have hq : ∀ c : lid σ μ₁ j, inc_[μ₁] (c : R_[μ₁]) • q =
       g' μ₁ ⟨(0, c), ⟨map_zero _, fun h => (h rfl).elim⟩⟩ := by
     intro c
     rw [hq_def, ← hg']
     congr 1
     apply Subtype.ext; apply Prod.ext
-    · change (c : Rμ k ι R μ₁) • (0 : p.A μ₁) = 0
+    · change (c : R_[μ₁]) • (0 : p.A μ₁) = 0
       exact smul_zero _
     · apply Subtype.ext
-      change (c : Rμ k ι R μ₁) * eμ σ μ₁ j = c
+      change (c : R_[μ₁]) * eμ σ μ₁ j = c
       exact lid_mul_eμ c
   let g : ∀ μ, p.A μ →ₗ[k] P := fun μ =>
     { toFun := fun x => g' μ (proj p μ₀ μ₁ j ha μ x) +
-        incμ σC inc μ (ψ p μ₀ j φ μ x : Rμ k ι R μ) • q
+        inc_[μ] (ψ p μ₀ j φ μ x : R_[μ]) • q
       map_add' := fun x y => by
         simp only [map_add, Submodule.coe_add, add_smul]; abel
       map_smul' := fun c x => by
         simp only [RingHom.id_apply, LinearMap.map_smul_of_tower, map_smul,
           Submodule.coe_smul_of_tower, smul_add, smul_assoc] }
   have hg_apply : ∀ μ x, g μ x = g' μ (proj p μ₀ μ₁ j ha μ x) +
-      incμ σC inc μ (ψ p μ₀ j φ μ x : Rμ k ι R μ) • q := fun _ _ => rfl
-  have hg : ∀ μ (r : Rμ k ι R μ) x, g μ (r • x) = incμ σC inc μ r • g μ x := by
+      inc_[μ] (ψ p μ₀ j φ μ x : R_[μ]) • q := fun _ _ => rfl
+  have hg : ∀ μ (r : R_[μ]) x, g μ (r • x) = inc_[μ] r • g μ x := by
     intro μ r x
     simp only [hg_apply, map_smul, hg', Submodule.coe_smul, smul_eq_mul, map_mul, mul_smul,
       smul_add]
@@ -217,10 +238,10 @@ theorem exists_unique_lift (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (hj
     have hπ : proj p μ₀ μ₁ j ha μ x = ⟨(x, 0), ⟨hx, fun _ => rfl⟩⟩ := by
       apply Subtype.ext
       rw [proj_coe]
-      change (x - (ψ p μ₀ j φ μ x : Rμ k ι R μ) • aμ p μ₀ a μ, 0) = (x, 0)
+      change (x - (ψ p μ₀ j φ μ x : R_[μ]) • aμ p μ₀ a μ, 0) = (x, 0)
       rw [hx]; simp
-    change g' μ _ + incμ σC inc μ (ψ p μ₀ j φ μ x : Rμ k ι R μ) • q +
-      incμ σC inc μ (c : Rμ k ι R μ) • q = _
+    change g' μ _ + inc_[μ] (ψ p μ₀ j φ μ x : R_[μ]) • q +
+      inc_[μ] (c : R_[μ]) • q = _
     have hx' : ψ p μ₀ j φ μ x = 0 := hx
     rw [hπ]; simp only [hx', ZeroMemClass.coe_zero, map_zero, zero_smul, add_zero]
     by_cases h : μ = μ₁
@@ -236,7 +257,8 @@ theorem exists_unique_lift (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (hj
   · rw [j_eq p μ₀ μ₁ j ha hja μ x, map_add, map_smul, hf₁, hf₁, hg_apply]
 
 /-- The new presentation. -/
-noncomputable def pres (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (hja : eμ σ μ₀ j • a = a) :
+noncomputable def pres [Fact (IsCoprod k σ C σC inc)] [DecidableEq Λ]
+    (ha : (φ a : R_[μ₀]) = eμ σ μ₀ j) (hja : eμ σ μ₀ j • a = a) :
     StdPres σ σC inc M where
   coprod := p.coprod
   A μ := newComp p μ₀ μ₁ j φ μ
@@ -247,48 +269,50 @@ noncomputable def pres (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (hja : 
 end TransferAux
 
 open TransferAux in
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 /-- **A general basic transfer**: the summand `R_{μ₀} a` of `A μ₀`, split off by `φ`, moves to
 `A μ₁` as a summand `R_{μ₁} e_j`. -/
-theorem StdPres.exists_transfer (p : StdPres σ σC inc M) (μ₀ μ₁ : Option Λ) (h01 : μ₀ ≠ μ₁)
-    (j : ι) (φ : p.A μ₀ →ₗ[Rμ k ι R μ₀] lid σ μ₀ j) (a : p.A μ₀)
-    (ha : (φ a : Rμ k ι R μ₀) = eμ σ μ₀ j) (hja : eμ σ μ₀ j • a = a) :
+theorem StdPres.exists_transfer [Fact (IsCoprod k σ C σC inc)] [DecidableEq Λ]
+    (p : StdPres σ σC inc M) (μ₀ μ₁ : Option Λ) (h01 : μ₀ ≠ μ₁)
+    (j : ι) (φ : p.A μ₀ →ₗ[R_[μ₀]] lid σ μ₀ j) (a : p.A μ₀)
+    (ha : (φ a : R_[μ₀]) = eμ σ μ₀ j) (hja : eμ σ μ₀ j • a = a) :
     ∃ p' : StdPres σ σC inc M,
-      Nonempty (p.A μ₀ ≃ₗ[Rμ k ι R μ₀] p'.A μ₀ × lid σ μ₀ j) ∧
-      Nonempty (p'.A μ₁ ≃ₗ[Rμ k ι R μ₁] p.A μ₁ × lid σ μ₁ j) ∧
+      Nonempty (p.A μ₀ ≃ₗ[R_[μ₀]] p'.A μ₀ × lid σ μ₀ j) ∧
+      Nonempty (p'.A μ₁ ≃ₗ[R_[μ₁]] p.A μ₁ × lid σ μ₁ j) ∧
       p.IsoExcept p' {μ₀, μ₁} ∧ (p.FG → p'.FG) ∧
       (∀ μ, μ ≠ μ₀ → μ ≠ μ₁ → Set.range (p'.j μ) = Set.range (p.j μ)) ∧
       Set.range (p'.j μ₀) = p.j μ₀ '' {x | φ x = 0} ∧
       Set.range (p'.j μ₁) =
-        {m | ∃ (x : p.A μ₁) (c : Rμ k ι R μ₁), m = p.j μ₁ x + incμ σC inc μ₁ c • p.j μ₀ a} := by
+        {m | ∃ (x : p.A μ₁) (c : R_[μ₁]), m = p.j μ₁ x + inc_[μ₁] c • p.j μ₀ a} := by
   let p' := pres p μ₀ μ₁ j φ a ha hja
   -- the source component
-  let e₀ : p.A μ₀ ≃ₗ[Rμ k ι R μ₀] newComp p μ₀ μ₁ j φ μ₀ × lid σ μ₀ j :=
+  let e₀ : p.A μ₀ ≃ₗ[R_[μ₀]] newComp p μ₀ μ₁ j φ μ₀ × lid σ μ₀ j :=
     { (proj p μ₀ μ₁ j ha μ₀).prod (ψ p μ₀ j φ μ₀) with
-      invFun := fun z => (z.1 : p.A μ₀ × lid σ μ₀ j).1 + (z.2 : Rμ k ι R μ₀) • a
+      invFun := fun z => (z.1 : p.A μ₀ × lid σ μ₀ j).1 + (z.2 : R_[μ₀]) • a
       left_inv := fun x => by
-        change (x - (ψ p μ₀ j φ μ₀ x : Rμ k ι R μ₀) • aμ p μ₀ a μ₀) +
-          (ψ p μ₀ j φ μ₀ x : Rμ k ι R μ₀) • a = x
+        change (x - (ψ p μ₀ j φ μ₀ x : R_[μ₀]) • aμ p μ₀ a μ₀) +
+          (ψ p μ₀ j φ μ₀ x : R_[μ₀]) • a = x
         rw [aμ_self, sub_add_cancel]
       right_inv := fun z => by
         obtain ⟨⟨⟨x, c⟩, hx, hc⟩, d⟩ := z
         have hx' : φ x = 0 := by rw [← ψ_self p μ₀ j φ]; exact hx
         have hc' : c = 0 := hc h01
         subst hc'
-        have hψ : ψ p μ₀ j φ μ₀ (x + (d : Rμ k ι R μ₀) • a) = d := by
+        have hψ : ψ p μ₀ j φ μ₀ (x + (d : R_[μ₀]) • a) = d := by
           rw [ψ_self]; apply Subtype.ext
           rw [map_add, hx', zero_add, map_smul, Submodule.coe_smul, smul_eq_mul, ha, lid_mul_eμ]
         refine Prod.ext (Subtype.ext ?_) hψ
-        change (x + (d : Rμ k ι R μ₀) • a -
-          (ψ p μ₀ j φ μ₀ (x + (d : Rμ k ι R μ₀) • a) : Rμ k ι R μ₀) • aμ p μ₀ a μ₀, 0) = (x, 0)
+        change (x + (d : R_[μ₀]) • a -
+          (ψ p μ₀ j φ μ₀ (x + (d : R_[μ₀]) • a) : R_[μ₀]) • aμ p μ₀ a μ₀, 0) = (x, 0)
         rw [hψ, aμ_self, add_sub_cancel_right] }
   -- the target component
-  let e₁ : newComp p μ₀ μ₁ j φ μ₁ ≃ₗ[Rμ k ι R μ₁] p.A μ₁ × lid σ μ₁ j :=
+  let e₁ : newComp p μ₀ μ₁ j φ μ₁ ≃ₗ[R_[μ₁]] p.A μ₁ × lid σ μ₁ j :=
     { (newComp p μ₀ μ₁ j φ μ₁).subtype with
       invFun := fun z => ⟨z, ⟨by rw [ψ_of_ne p μ₀ j φ h01.symm]; rfl, fun h => (h rfl).elim⟩⟩
       left_inv := fun _ => rfl
       right_inv := fun _ => rfl }
   -- the other components
-  let eo : ∀ μ, μ ≠ μ₀ → μ ≠ μ₁ → (p.A μ ≃ₗ[Rμ k ι R μ] newComp p μ₀ μ₁ j φ μ) := fun μ h0 h1 =>
+  let eo : ∀ μ, μ ≠ μ₀ → μ ≠ μ₁ → (p.A μ ≃ₗ[R_[μ]] newComp p μ₀ μ₁ j φ μ) := fun μ h0 h1 =>
     { toFun := fun x => ⟨(x, 0), ⟨by rw [ψ_of_ne p μ₀ j φ h0]; rfl, fun _ => rfl⟩⟩
       map_add' := fun x y => Subtype.ext (Prod.ext rfl (add_zero 0).symm)
       map_smul' := fun r x => Subtype.ext (Prod.ext rfl (smul_zero r).symm)
@@ -332,14 +356,16 @@ theorem StdPres.exists_transfer (p : StdPres σ σC inc M) (μ₀ μ₁ : Option
     · rintro ⟨x, c, rfl⟩
       refine ⟨⟨(x, ⟨c * eμ σ μ₁ j, Submodule.mem_span_singleton.2 ⟨c, rfl⟩⟩),
         ⟨by rw [ψ_of_ne p μ₀ j φ h01.symm]; rfl, fun h => (h rfl).elim⟩⟩, ?_⟩
-      change p.j μ₁ x + incμ σC inc μ₁ (c * eμ σ μ₁ j) • p.j μ₀ a = _
+      change p.j μ₁ x + inc_[μ₁] (c * eμ σ μ₁ j) • p.j μ₀ a = _
       rw [map_mul, mul_smul, incμ_eμ (σ := σ) σC inc, ← incμ_eμ (σ := σ) σC inc μ₀, ← p.j_smul,
         hja]
 
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 /-- **Basic transfer from `A l` to `A none`.** -/
-theorem StdPres.transfer_some (p : StdPres σ σC inc M) (l : Λ) (j : ι)
-    (φ : p.A (some l) →ₗ[Rμ k ι R (some l)] lid σ (some l) j) (a : p.A (some l))
-    (ha : (φ a : Rμ k ι R (some l)) = eμ σ (some l) j) (hja : eμ σ (some l) j • a = a) :
+theorem StdPres.transfer_some [Fact (IsCoprod k σ C σC inc)] [DecidableEq Λ]
+    (p : StdPres σ σC inc M) (l : Λ) (j : ι)
+    (φ : p.A (some l) →ₗ[R_[some l]] lid σ (some l) j) (a : p.A (some l))
+    (ha : (φ a : R_[some l]) = eμ σ (some l) j) (hja : eμ σ (some l) j • a = a) :
     ∃ p' : StdPres σ σC inc M, p.Step p' ∧ (p.FG → p'.FG) ∧
       (∀ μ, μ ≠ none → μ ≠ some l → Set.range (p'.j μ) = Set.range (p.j μ)) ∧
       Set.range (p'.j (some l)) = p.j (some l) '' {x | φ x = 0} ∧
@@ -350,10 +376,12 @@ theorem StdPres.transfer_some (p : StdPres σ σC inc M) (l : Λ) (j : ι)
   refine ⟨p', Or.inr (Or.inl ⟨l, j, ?_, h0, h1⟩), hfg, fun μ hn hs => hoth μ hs hn, hr0, hr1⟩
   rwa [Set.pair_comm] at hiso
 
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 /-- **Basic transfer from `A none` to `A l`.** -/
-theorem StdPres.transfer_none (p : StdPres σ σC inc M) (l : Λ) (j : ι)
-    (ψ : p.A none →ₗ[Rμ k ι R none] lid σ none j) (a : p.A none)
-    (ha : (ψ a : Rμ k ι R none) = eμ σ none j) (hja : eμ σ none j • a = a) :
+theorem StdPres.transfer_none [Fact (IsCoprod k σ C σC inc)] [DecidableEq Λ]
+    (p : StdPres σ σC inc M) (l : Λ) (j : ι)
+    (ψ : p.A none →ₗ[R_[none]] lid σ none j) (a : p.A none)
+    (ha : (ψ a : R_[none]) = eμ σ none j) (hja : eμ σ none j • a = a) :
     ∃ p' : StdPres σ σC inc M, p.Step p' ∧ (p.FG → p'.FG) ∧
       (∀ μ, μ ≠ none → μ ≠ some l → Set.range (p'.j μ) = Set.range (p.j μ)) ∧
       Set.range (p'.j none) = p.j none '' {x | ψ x = 0} ∧
@@ -383,10 +411,12 @@ noncomputable def StdPres.transport (p : StdPres σ σC inc M) {M' : Type u} [Ad
       rw [← this]
       simp
 
+omit [DecidableEq ι] [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 theorem StdPres.transport_j (p : StdPres σ σC inc M) {M' : Type u} [AddCommGroup M']
     [Module C M'] [Module k M'] [IsScalarTower k C M'] (θ : M ≃ₗ[C] M') (μ : Option Λ)
     (b : p.A μ) : (p.transport θ).j μ b = θ (p.j μ b) := rfl
 
+omit [Fact (∀ (l : Λ), Function.Injective ⇑(σ l))] in
 /-- **Transvection.** -/
 theorem StdPres.transvection (p : StdPres σ σC inc M) (μ₁ : Option Λ) (ε : M →ₗ[C] C)
     (hε : ∀ μ ≠ μ₁, ∀ b, ε (p.j μ b) = 0) (x : M) (hx : ε x = 0) :
