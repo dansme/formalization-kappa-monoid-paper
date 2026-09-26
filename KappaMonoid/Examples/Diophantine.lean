@@ -98,8 +98,7 @@ theorem linEval_sumOf (hκ : ℵ₀ ≤ κ) (a : Fin n → ℕ) {ι : Type u} (h
   calc linEval hκ a (KMonoid.sumOf (κ := κ) h z)
       = ∑ i, KMonoid.sumOf (κ := κ) h (fun k => (a i) • z k i) := by
         refine Finset.sum_congr rfl fun i _ => ?_
-        rw [show (KMonoid.sumOf (κ := κ) h z) i = KMonoid.sumOf (κ := κ) h (fun k => z k i) from
-          KMonoid.pi_sumOf κ (fun _ : Fin n => Fcard κ) hκ h z i, KMonoid.nsmul_sumOf]
+        rw [KMonoid.pi_sumOf κ (fun _ : Fin n => Fcard κ) hκ h z i, KMonoid.nsmul_sumOf]
     _ = KMonoid.sumOf (κ := κ) h fun k => linEval hκ a (z k) :=
         KMonoid.finsetSum_sumOf h Finset.univ fun i k => (a i) • z k i
 
@@ -393,12 +392,10 @@ theorem LinSystem.solutions_subset_kclosure (hκ0 : ℵ₀ ≤ κ) :
     refine funext fun i => Fcard.ext ?_
     have hsum : (((∑ j ∈ Λ, w j) i : Fcard κ) : Cardinal.{u})
         = ∑ j ∈ Λ, ((w j i : Fcard κ) : Cardinal.{u}) := by
-      rw [show ((∑ j ∈ Λ, w j) i : Fcard κ) = ∑ j ∈ Λ, w j i from Finset.sum_apply _ _ _,
+      rw [Finset.sum_apply,
         ← fcardVal_apply hκ0, map_sum]
       rfl
-    rw [show ((f (fun i => truncAleph0 (α i)) + ∑ j ∈ Λ, w j) i : Fcard κ)
-        = f (fun i => truncAleph0 (α i)) i + (∑ j ∈ Λ, w j) i from rfl,
-      Fcard.instKMonoid_add hκ0, hsum, hfdef]
+    rw [Pi.add_apply, Fcard.instKMonoid_add hκ0, hsum, hfdef]
     show _ = ((truncAleph0 (α i) : Fcard ℵ₀) : Cardinal.{u}) + _
     rw [val_truncAleph0]
     by_cases hi : ((α i : Fcard κ) : Cardinal.{u}) < ℵ₀
@@ -568,9 +565,9 @@ theorem LinSystem.addSubmonoid_finSolutions :
       ∀ a ∈ sys.finSolutions, ∀ b ∈ sys.finSolutions, a + b ∈ sys.finSolutions := by
   have hsub := sys.isKSubmonoid_solutions (le_refl (ℵ₀ : Cardinal.{u}))
   refine ⟨⟨hsub.zero_mem, fun i => ?_⟩, fun a ha b hb => ⟨hsub.add_mem ha.1 hb.1, fun i => ?_⟩⟩
-  · rw [show ((0 : Fin n → Fcard ℵ₀) i) = 0 from rfl, Fcard.instKMonoid_zero]
+  · rw [Pi.zero_apply, Fcard.instKMonoid_zero]
     exact Cardinal.aleph0_pos
-  · rw [show ((a + b : Fin n → Fcard ℵ₀) i) = a i + b i from rfl, Fcard.instKMonoid_add]
+  · rw [Pi.add_apply, Fcard.instKMonoid_add]
     exact Cardinal.add_lt_aleph0 (ha.2 i) (hb.2 i)
 
 /-! ### `H + ℵ₀H` is closed under countable sums
@@ -636,7 +633,7 @@ theorem LinSystem.exists_finSolutions_support (U : Finset (Fin n))
         (fun i' _ => zero_le) hi
     rw [← hval, hzero'] at hle
     exact hle
-  · rw [show ((∑ i ∈ U, g i) j : Fcard ℵ₀) = ∑ i ∈ U, g i j from Finset.sum_apply _ _ _,
+  · rw [Finset.sum_apply,
       ← fcardVal_apply (le_refl (ℵ₀ : Cardinal.{u})), map_sum]
     exact Finset.sum_eq_zero fun i hi => hzero i hi j hj
 
@@ -696,16 +693,8 @@ theorem LinSystem.ksum_mem_alephExt (p : Idx (ℵ₀ : Cardinal.{u}) → (Fin n 
   have hJle : #(J : Set (Idx (ℵ₀ : Cardinal.{u}))) ≤ ℵ₀ :=
     (Cardinal.mk_set_le J).trans (le_of_eq (mk_Idx _))
   have hp₁sum : KMonoid.sumOf (κ := ℵ₀) hidx p₁ = ∑ k : ↥J, p (k : Idx ℵ₀) := by
-    have hext : Function.extend (Function.Embedding.subtype (· ∈ J))
-        (fun k : ↥J => p (k : Idx ℵ₀)) 0 = p₁ := by
-      funext k
-      by_cases hk : k ∈ J
-      · have hk' : (Function.Embedding.subtype (· ∈ J)) ⟨k, hk⟩ = k := rfl
-        rw [← hk', (Function.Embedding.subtype (· ∈ J)).injective.extend_apply, hp₁def]
-        exact (if_pos hk).symm
-      · rw [Function.extend_apply' _ _ _ (by rintro ⟨⟨t, ht⟩, rfl⟩; exact hk ht), hp₁def]
-        exact (if_neg hk).symm
-    rw [← hext, KMonoid.sumOf_extend hJle hidx, KMonoid.sumOf_eq_sum]
+    rw [KMonoid.sumOf_eq_sumOf_subset hidx hJle p₁ fun k hk => if_neg hk, KMonoid.sumOf_eq_sum]
+    exact Finset.sum_congr rfl fun k _ => if_pos k.2
   have hhH : KMonoid.sumOf (κ := ℵ₀) hidx p₁ ∈ sys.finSolutions := by
     rw [hp₁sum]
     exact (sys.mem_finSubmonoid).mp
@@ -720,8 +709,7 @@ theorem LinSystem.ksum_mem_alephExt (p : Idx (ℵ₀ : Cardinal.{u}) → (Fin n 
       · rw [hp₂def]; simp only [if_pos hk]; rfl
       · rw [hp₂def]; simp only [if_neg hk]
         exact Fcard.ext ((hi k hk).trans (Fcard.instKMonoid_zero _).symm)
-    rw [show (KMonoid.sumOf (κ := ℵ₀) hidx p₂ i) = KMonoid.sumOf (κ := ℵ₀) hidx (fun k => p₂ k i)
-      from rfl, hfam, KMonoid.sumOf_zero, Fcard.instKMonoid_zero]
+    rw [KMonoid.pi_sumOf ℵ₀ _ le_rfl hidx p₂ i, hfam, KMonoid.sumOf_zero, Fcard.instKMonoid_zero]
   have hafin : ∀ i, (∀ k, k ∉ J → ((p k i : Fcard ℵ₀) : Cardinal.{u}) = 0) →
       ((a i : Fcard ℵ₀) : Cardinal.{u})
         = ((KMonoid.sumOf (κ := ℵ₀) hidx p₁ i : Fcard ℵ₀) : Cardinal.{u}) := by
@@ -781,9 +769,7 @@ theorem LinSystem.exists_alephPart_ksum (q : Idx (ℵ₀ : Cardinal.{u}) → (Fi
   obtain ⟨w, hwH, hw1, hw2⟩ := sys.exists_finSolutions_support U (fun i => q (kf i))
     (fun i => hq (kf i)) (fun i hi => hkf i hi) (fun i _ j hj => hout j hj _)
   refine ⟨w, hwH, funext fun i => Fcard.ext ?_⟩
-  rw [val_alephPart,
-    show (KMonoid.ksum (κ := ℵ₀) (fun k => alephPart (q k)) i)
-      = KMonoid.sumOf (κ := ℵ₀) hidx (fun k => alephPart (q k) i) from rfl]
+  rw [val_alephPart, ← KMonoid.sumOf_Idx, KMonoid.pi_sumOf ℵ₀ _ le_rfl hidx _ i]
   by_cases hi : i ∈ U
   · rw [if_neg (hw1 i hi)]
     refine le_antisymm (Fcard.le _) ?_

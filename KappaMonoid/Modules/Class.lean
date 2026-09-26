@@ -75,27 +75,17 @@ noncomputable def bareKMonoid (hκ : ℵ₀ ≤ κ) : @BareKMonoid κ C.carrier 
   · -- (A1): all but one summand is the zero module
     intro i₀ x hx
     refine C.eq_of_iso ?_
-    have hsub : ∀ i, i ≠ i₀ → Subsingleton (C.rep (x i)) := by
-      intro i hi
-      have h1 : C.rep (x i) = C.rep C.zero := congrArg C.rep (hx i hi)
-      rw [h1]
-      exact C.subsingleton_rep_zero
+    have hsub : ∀ i, i ≠ i₀ → Subsingleton (C.rep (x i)) := fun i hi => by
+      rw [hx i hi]; exact C.subsingleton_rep_zero
     exact (C.dsum_iso x).some.trans (directSumEquivOfSubsingleton R (fun i => C.rep (x i)) i₀ hsub)
-  · -- (A2): `⨁ᵢ ⨁ⱼ ≅ ⨁_{(i,j)} ≅ ⨁_k`
+  · -- (A2): `V(Σᵢ Σⱼ xᵢⱼ) ≅ ⨁ᵢ V(Σⱼ xᵢⱼ) ≅ ⨁ᵢ ⨁ⱼ V(xᵢⱼ) ≅ ⨁_{(i,j)} V(xᵢⱼ) ≅ ⨁ₖ … ≅ V(Σₖ …)`
     intro x π
     refine C.eq_of_iso ?_
-    set h : (Σ _ : Idx κ, Idx κ) ≃ Idx κ :=
-      (Equiv.sigmaEquivProd (Idx κ) (Idx κ)).trans π with hhdef
-    have e1 := (C.dsum_iso (fun i => C.dsum (x i))).some
-    have e2 : (⨁ i, C.rep (C.dsum (x i))) ≃ₗ[R] ⨁ i, ⨁ j, C.rep (x i j) :=
-      DirectSum.congrLinearEquiv (fun i => (C.dsum_iso (x i)).some)
-    have e3 : (⨁ p : (Σ _ : Idx κ, Idx κ), C.rep (x p.1 p.2)) ≃ₗ[R] ⨁ i, ⨁ j, C.rep (x i j) :=
-      DirectSum.sigmaLcurryEquiv (R := R) (ι := Idx κ) (α := fun _ => Idx κ)
-        (δ := fun i j => C.rep (x i j))
-    have e4 : (⨁ p : (Σ _ : Idx κ, Idx κ), C.rep (x p.1 p.2))
-        ≃ₗ[R] ⨁ k, C.rep (x (π.symm k).1 (π.symm k).2) := DirectSum.lequivCongrLeft R h
-    have e5 := (C.dsum_iso (fun k => x (π.symm k).1 (π.symm k).2)).some
-    exact e1.trans (e2.trans (e3.symm.trans (e4.trans e5.symm)))
+    exact (C.dsum_iso _).some
+      ≪≫ₗ DirectSum.congrLinearEquiv (fun i => (C.dsum_iso (x i)).some)
+      ≪≫ₗ (DirectSum.sigmaLcurryEquiv (R := R) (δ := fun i j => C.rep (x i j))).symm
+      ≪≫ₗ DirectSum.lequivCongrLeft R ((Equiv.sigmaEquivProd (Idx κ) (Idx κ)).trans π)
+      ≪≫ₗ (C.dsum_iso _).some.symm
 
 /-- `V^κ(C)` is a `κ`-monoid (Examples 2.3(4)); by Lemma 2.5 (`KMonoid.ofBare`) the additive
 structure is determined by the direct sum. -/
