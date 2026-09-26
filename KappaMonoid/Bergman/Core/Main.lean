@@ -89,34 +89,35 @@ theorem StdPres.j_injective (p : StdPres σ σC inc M) (μ : Option Λ) :
 variable {B : HomBases σ N}
 
 /-- The images `g (A μ)` of the components, as a `SubFam`. -/
-noncomputable def imgFam (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) : SubFam σC inc B where
+noncomputable def imageFamily (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) :
+    SubFam σC inc B where
   L μ := LinearMap.range ((g.restrictScalars k).comp (p.j μ))
   smul_mem μ r y := by
     rintro ⟨a, rfl⟩
     exact ⟨r • a, by simp [p.j_smul]⟩
 
-theorem imgFam_coe (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) :
-    (fun μ => ((imgFam g p).L μ : Set (Std σC inc B))) = img g p := by
+theorem imageFamily_coe (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) :
+    (fun μ => ((imageFamily g p).L μ : Set (Std σC inc B))) = img g p := by
   funext μ
-  rw [imgFam, LinearMap.coe_range]
+  rw [imageFamily, LinearMap.coe_range]
   rfl
 
-theorem imgFam_wp {g : M →ₗ[C] Std σC inc B} {p : StdPres σ σC inc M} (h : WP (img g p)) :
-    WP fun μ => ((imgFam g p).L μ : Set (Std σC inc B)) := by
-  rwa [imgFam_coe]
+theorem imageFamily_wp {g : M →ₗ[C] Std σC inc B} {p : StdPres σ σC inc M} (h : WP (img g p)) :
+    WP fun μ => ((imageFamily g p).L μ : Set (Std σC inc B)) := by
+  rwa [imageFamily_coe]
 
-theorem imgFam_span (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) :
-    (imgFam g p).span = LinearMap.range g := by
+theorem imageFamily_span (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) :
+    (imageFamily g p).span = LinearMap.range g := by
   rw [SubFam.span, LinearMap.range_eq_map, ← p.span_eq_top, Submodule.map_span, Set.image_iUnion]
   congr 1
   refine Set.iUnion_congr fun μ => ?_
-  rw [imgFam, LinearMap.coe_range, ← Set.range_comp]
+  rw [imageFamily, LinearMap.coe_range, ← Set.range_comp]
   rfl
 
-theorem imgFam_fg (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG)
-    (μ : Option Λ) : Module.Finite (Rμ k ι R μ) ((imgFam g p).L μ) := by
+theorem imageFamily_fg (g : M →ₗ[C] Std σC inc B) (p : StdPres σ σC inc M) (hp : p.FG)
+    (μ : Option Λ) : Module.Finite (Rμ k ι R μ) ((imageFamily g p).L μ) := by
   have := hp μ
-  let s : p.A μ →ₗ[Rμ k ι R μ] (imgFam g p).L μ :=
+  let s : p.A μ →ₗ[Rμ k ι R μ] (imageFamily g p).L μ :=
     { toFun := fun a => ⟨g (p.j μ a), a, rfl⟩
       map_add' := fun a b => Subtype.ext (by simp)
       map_smul' := fun r a => Subtype.ext (by
@@ -135,12 +136,12 @@ theorem exists_reach_of_equiv (p : StdPres σ σC inc M) (q : StdPres σ σC inc
   obtain ⟨Ψ, hΨ⟩ := q.exists_equivStd Bq
   let g : M →ₗ[C] Std σC inc Bq := Ψ.toLinearMap ∘ₗ e.toLinearMap
   obtain ⟨p', hreach, -, hW⟩ := exists_reach_wp g p hp
-  have hF := imgFam_wp hW
-  have htop : (imgFam g p').span = ⊤ := by
-    rw [imgFam_span]
+  have hF := imageFamily_wp hW
+  have htop : (imageFamily g p').span = ⊤ := by
+    rw [imageFamily_span]
     exact LinearMap.range_eq_top.2 (Ψ.surjective.comp e.surjective)
   refine ⟨p', hreach, fun μ _ => ⟨?_⟩⟩
-  have heq := (imgFam g p').eq_incl_of_wp hF htop μ
+  have heq := (imageFamily g p').eq_incl_of_wp hF htop μ
   have hinj : Function.Injective ((g.restrictScalars k).comp (p'.j μ)) :=
     (Ψ.injective.comp e.injective).comp (p'.j_injective μ)
   have hincl := Std.incl_injective σC inc Bq μ
@@ -171,10 +172,10 @@ theorem exists_pres_range (p : StdPres σ σC inc M) (hp : p.FG) (q : StdPres σ
   obtain ⟨Ψ, -⟩ := q.exists_equivStd (nonempty_homBases σ q.A).some
   let g := Ψ.toLinearMap ∘ₗ f
   obtain ⟨p', -, hp', hW⟩ := exists_reach_wp g p hp
-  let θ : (imgFam g p').span ≃ₗ[C] LinearMap.range f :=
-    (LinearEquiv.ofEq _ _ ((imgFam_span g p').trans (LinearMap.range_comp f _))).trans
+  let θ : (imageFamily g p').span ≃ₗ[C] LinearMap.range f :=
+    (LinearEquiv.ofEq _ _ ((imageFamily_span g p').trans (LinearMap.range_comp f _))).trans
       (Ψ.submoduleMap (LinearMap.range f)).symm
-  exact ⟨((imgFam g p').pres (imgFam_wp hW)).transport θ, imgFam_fg g p' hp'⟩
+  exact ⟨((imageFamily g p').pres (imageFamily_wp hW)).transport θ, imageFamily_fg g p' hp'⟩
 
 /-- The product of two standard presentations. -/
 noncomputable def StdPres.prod (p : StdPres σ σC inc M) (q : StdPres σ σC inc M') :

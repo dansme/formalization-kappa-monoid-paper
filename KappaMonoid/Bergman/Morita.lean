@@ -455,158 +455,196 @@ theorem isoHom_snd {j : R →ₐ[k] S} {D : Matrix m m R} {D' : Matrix m' m' R}
   rw [isoHom, matUnitsProdHom_snd, Fin.sum_univ_two]
   rfl
 
+/-- The square of `IsIsoExt.isCoprod` commutes: on `k³`, the two routes into `M_N(S)`, through
+`M_N(R)` and through `M₂(k) × k`, agree. -/
+theorem IsIsoExt.coprod_comm {j : R →ₐ[k] S} {D : Matrix m m R} {D' : Matrix m' m' R}
+    {A : Matrix m m' S} {B : Matrix m' m S} (hD : D * D = D) (hD' : D' * D' = D')
+    (hS : IsIsoExt j D D' A B) (l : Bool) :
+    (pairHom (AlgHom.mapMatrix j) (isoHom hD hD' hS) l).comp
+        (pairSigma (isoSigma D D' hD hD') (isoTarget k) l) =
+      isoSigma (D.map j) (D'.map j) (by rw [← Matrix.map_mul, hD])
+        (by rw [← Matrix.map_mul, hD']) := by
+  cases l
+  · refine algHom_pi_ext fun i => ?_
+    show isoHom hD hD' hS (isoTarget k (Pi.single i 1)) = _
+    rw [isoTarget_single, isoSigma_single]
+    fin_cases i
+    · exact isoHom_single hD hD' hS 0 0
+    · exact isoHom_single hD hD' hS 1 1
+    · simp only [Fin.reduceFinMk, Matrix.cons_val, map_sub, map_one, isoHom_single]
+      rfl
+  · exact isoSigma_map (k := k) j D D' hD hD' (by rw [← Matrix.map_mul, hD])
+      (by rw [← Matrix.map_mul, hD'])
+
+/-- The existence half of `IsIsoExt.isCoprod`: maps out of `M_N(R)` and `M₂(k) × k` that agree on
+`k³` extend to `M_N(S)`.
+
+Proof: work in the corner `e_c T e_c` at the `Unit` index `c`.  The images `w a b` of the matrix
+units of `M₂(k)` restrict to elements of the corner that satisfy the relations defining `S`
+(`r1`–`r4`), so the universal property of `S` (`IsIsoExt.lift`) gives `ψ : S → e_c T e_c`, and
+`moritaHom` spreads it back to `M_N(S) → T`. -/
+theorem IsIsoExt.coprod_lift {j : R →ₐ[k] S} {D : Matrix m m R} {D' : Matrix m' m' R}
+    {A : Matrix m m' S} {B : Matrix m' m S} (hD : D * D = D) (hD' : D' * D' = D')
+    (hS : IsIsoExt j D D' A B) (T : Type u) [Ring T] [Algebra k T]
+    (f₀ : (Fin 3 → k) →ₐ[k] T)
+    (f : ∀ b, pair (Matrix (isoIdx m m') (isoIdx m m') R) (Matrix (Fin 2) (Fin 2) k × k) b →ₐ[k] T)
+    (hf : ∀ b, (f b).comp (pairSigma (isoSigma D D' hD hD') (isoTarget k) b) = f₀) :
+    ∃ g : Matrix (isoIdx m m') (isoIdx m m') S →ₐ[k] T,
+      g.comp (isoSigma (D.map j) (D'.map j) (by rw [← Matrix.map_mul, hD])
+        (by rw [← Matrix.map_mul, hD'])) = f₀ ∧
+      ∀ b, g.comp (pairHom (AlgHom.mapMatrix j) (isoHom hD hD' hS) b) = f b := by
+  let c : isoIdx m m' := Sum.inr (Sum.inr ())
+  have hσ := isoSigma_map (k := k) j D D' hD hD' (by rw [← Matrix.map_mul, hD])
+    (by rw [← Matrix.map_mul, hD'])
+  let F : Matrix (isoIdx m m') (isoIdx m m') R →ₐ[k] T := f true
+  let G : Matrix (Fin 2) (Fin 2) k × k →ₐ[k] T := f false
+  have he : IsIdempotentElem (F (single c c 1)) := isIdempotentElem_single F c
+  let φ := cornerMap F c he rfl
+  let w : Fin 2 → Fin 2 → T := fun a b => G (single a b 1, 0)
+  have hw : ∀ a b c d, w a b * w c d = if b = c then w a d else 0 := by
+    intro a b c d
+    simp only [w, ← map_mul, Prod.mk_mul_mk, mul_zero]
+    split_ifs with h
+    · subst h; rw [single_mul_single_same, mul_one]
+    · rw [single_mul_single_of_ne (h := h), Prod.mk_zero_zero, map_zero]
+  have hq : ∀ i, F (isoSigma D D' hD hD' (Pi.single i 1)) = G (isoTarget k (Pi.single i 1)) :=
+    fun i => (congrArg (fun φ => φ (Pi.single i 1)) (hf true)).trans
+      (congrArg (fun φ => φ (Pi.single i 1)) (hf false)).symm
+  have hq1 : F (blk₁ m' D) = w 0 0 := by
+    have := hq 0; rw [isoSigma_single, isoTarget_single] at this; exact this
+  have hq2 : F (blk₂ m D') = w 1 1 := by
+    have := hq 1; rw [isoSigma_single, isoTarget_single] at this; exact this
+  have hw0 : ∀ b, w 0 b = w 0 0 * w 0 b := fun b => by rw [hw]; rfl
+  have hw0' : ∀ a, w a 0 = w a 0 * w 0 0 := fun a => by rw [hw]; rfl
+  have hw1 : ∀ b, w 1 b = w 1 1 * w 1 b := fun b => by rw [hw]; rfl
+  have hw1' : ∀ a, w a 1 = w a 1 * w 1 1 := fun a => by rw [hw]; rfl
+  have h1l : ∀ b, F (blk₁ m' 1) * w 0 b = w 0 b := fun b => by
+    rw [hw0, ← mul_assoc, ← hq1, ← map_mul, blk₁_mul_blk₁, one_mul]
+  have h1r : ∀ a, w a 0 * F (blk₁ m' 1) = w a 0 := fun a => by
+    rw [hw0', mul_assoc, ← hq1, ← map_mul, blk₁_mul_blk₁, mul_one]
+  have h2l : ∀ b, F (blk₂ m 1) * w 1 b = w 1 b := fun b => by
+    rw [hw1, ← mul_assoc, ← hq2, ← map_mul, blk₂_mul_blk₂, one_mul]
+  have h2r : ∀ a, w a 1 * F (blk₂ m 1) = w a 1 := fun a => by
+    rw [hw1', mul_assoc, ← hq2, ← map_mul, blk₂_mul_blk₂, mul_one]
+  have hDφ : D.map φ = cornerBlk F c he rfl (w 0 0) Sum.inl Sum.inl := by
+    rw [← hq1, cornerBlk_map, blk₁_submatrix]
+  have hD'φ : D'.map φ =
+      cornerBlk F c he rfl (w 1 1) (Sum.inr ∘ Sum.inl) (Sum.inr ∘ Sum.inl) := by
+    rw [← hq2, cornerBlk_map, blk₂_submatrix]
+  have r1 : D.map φ * cornerBlk F c he rfl (w 0 1) Sum.inl (Sum.inr ∘ Sum.inl) * D'.map φ =
+      cornerBlk F c he rfl (w 0 1) Sum.inl (Sum.inr ∘ Sum.inl) := by
+    rw [hDφ, hD'φ, cornerBlk_mul, cornerBlk_mul, sum_single_inl, sum_single_inr, h1r, hw,
+      if_pos rfl, h2r, hw, if_pos rfl]
+  have r2 : D'.map φ * cornerBlk F c he rfl (w 1 0) (Sum.inr ∘ Sum.inl) Sum.inl * D.map φ =
+      cornerBlk F c he rfl (w 1 0) (Sum.inr ∘ Sum.inl) Sum.inl := by
+    rw [hDφ, hD'φ, cornerBlk_mul, cornerBlk_mul, sum_single_inl, sum_single_inr, h2r, hw,
+      if_pos rfl, h1r, hw, if_pos rfl]
+  have r3 : cornerBlk F c he rfl (w 0 1) Sum.inl (Sum.inr ∘ Sum.inl) *
+      cornerBlk F c he rfl (w 1 0) (Sum.inr ∘ Sum.inl) Sum.inl = D.map φ := by
+    rw [hDφ, cornerBlk_mul, sum_single_inr, h2r, hw, if_pos rfl]
+  have r4 : cornerBlk F c he rfl (w 1 0) (Sum.inr ∘ Sum.inl) Sum.inl *
+      cornerBlk F c he rfl (w 0 1) Sum.inl (Sum.inr ∘ Sum.inl) = D'.map φ := by
+    rw [hD'φ, cornerBlk_mul, sum_single_inl, h1r, hw, if_pos rfl]
+  obtain ⟨ψ, hψj, hψA, hψB⟩ := hS.lift he.Corner φ _ _ r1 r2 r3 r4
+  have hgF : (moritaHom F c he rfl ψ).comp (AlgHom.mapMatrix j) = F :=
+    moritaHom_comp_mapMatrix F c he rfl ψ j hψj
+  have hgY : ∀ Y, moritaHom F c he rfl ψ (Y.map j) = F Y := fun Y =>
+    congrArg (fun φ : Matrix (isoIdx m m') (isoIdx m m') R →ₐ[k] T => φ Y) hgF
+  have hg1 : moritaHom F c he rfl ψ (blk₁ m' (D.map j)) = w 0 0 := by
+    rw [← blk₁_map D j (map_zero j), hgY, hq1]
+  have hg2 : moritaHom F c he rfl ψ (blk₂ m (D'.map j)) = w 1 1 := by
+    rw [← blk₂_map D' j (map_zero j), hgY, hq2]
+  refine ⟨moritaHom F c he rfl ψ, ?_, fun l => ?_⟩
+  · rw [← hσ, ← AlgHom.comp_assoc, hgF]
+    exact hf true
+  cases l
+  · show (moritaHom F c he rfl ψ).comp (isoHom hD hD' hS) = G
+    refine algHom_matrixProd_ext (fun a b => ?_) ?_
+    · rw [AlgHom.comp_apply, isoHom_single]
+      fin_cases a <;> fin_cases b
+      · exact hg1
+      · show moritaHom F c he rfl ψ (blk₁₂ A) = w 0 1
+        refine moritaHom_of_cornerEnt F c he rfl ψ _ _ ?_
+        have e1 : w 0 1 = F (blk₁ m' D) * w 0 1 * F (blk₂ m D') := by
+          rw [hq1, hq2, hw, if_pos rfl, hw, if_pos rfl]
+        show _ = cornerBlk F c he rfl (w 0 1) id id
+        conv_rhs => rw [e1]
+        rw [← cornerBlk_mul_id, ← cornerBlk_mul_id, cornerBlk_map, cornerBlk_map,
+          submatrix_id_id, submatrix_id_id, blk₁_map _ _ (map_zero _),
+          blk₂_map _ _ (map_zero _), blk₁_mul_mul_blk₂, blk₁₂_map _ _ (map_zero _), hψA]
+        exact congrArg blk₁₂ r1.symm
+      · show moritaHom F c he rfl ψ (blk₂₁ B) = w 1 0
+        refine moritaHom_of_cornerEnt F c he rfl ψ _ _ ?_
+        have e1 : w 1 0 = F (blk₂ m D') * w 1 0 * F (blk₁ m' D) := by
+          rw [hq1, hq2, hw, if_pos rfl, hw, if_pos rfl]
+        show _ = cornerBlk F c he rfl (w 1 0) id id
+        conv_rhs => rw [e1]
+        rw [← cornerBlk_mul_id, ← cornerBlk_mul_id, cornerBlk_map, cornerBlk_map,
+          submatrix_id_id, submatrix_id_id, blk₁_map _ _ (map_zero _),
+          blk₂_map _ _ (map_zero _), blk₂_mul_mul_blk₁, blk₂₁_map _ _ (map_zero _), hψB]
+        exact congrArg blk₂₁ r2.symm
+      · exact hg2
+    · have h01 : ((0 : Matrix (Fin 2) (Fin 2) k), (1 : k)) =
+          1 - ((single 0 0 1 : Matrix (Fin 2) (Fin 2) k), (0 : k)) -
+            ((single 1 1 1 : Matrix (Fin 2) (Fin 2) k), (0 : k)) := by
+        refine Prod.ext ?_ (by simp)
+        ext a b; fin_cases a <;> fin_cases b <;> simp [one_apply]
+      rw [AlgHom.comp_apply, isoHom_snd, map_sub, map_one, map_add, hg1, hg2, h01, map_sub,
+        map_sub, map_one, sub_sub]
+  · exact hgF
+
+/-- The uniqueness half of `IsIsoExt.isCoprod`: a map out of `M_N(S)` is determined by its
+restrictions to `M_N(R)` and `M₂(k) × k`.  Both determine the matrix units and, in the corner at
+`c`, the generators `j r`, `A`, `B` of `S`. -/
+theorem IsIsoExt.coprod_ext {j : R →ₐ[k] S} {D : Matrix m m R} {D' : Matrix m' m' R}
+    {A : Matrix m m' S} {B : Matrix m' m S} (hD : D * D = D) (hD' : D' * D' = D')
+    (hS : IsIsoExt j D D' A B) (T : Type u) [Ring T] [Algebra k T]
+    (g g' : Matrix (isoIdx m m') (isoIdx m m') S →ₐ[k] T)
+    (hl : ∀ b, g.comp (pairHom (AlgHom.mapMatrix j) (isoHom hD hD' hS) b) =
+      g'.comp (pairHom (AlgHom.mapMatrix j) (isoHom hD hD' hS) b)) : g = g' := by
+  let c : isoIdx m m' := Sum.inr (Sum.inr ())
+  have hlt : g.comp (AlgHom.mapMatrix j) = g'.comp (AlgHom.mapMatrix j) := hl true
+  have hlf : g.comp (isoHom hD hD' hS) = g'.comp (isoHom hD hD' hS) := hl false
+  have hr : ∀ a b (r : R), g (single a b (j r)) = g' (single a b (j r)) := fun a b r => by
+    have := congrArg
+      (fun φ : Matrix (isoIdx m m') (isoIdx m m') R →ₐ[k] T => φ (single a b r)) hlt
+    simpa [AlgHom.mapMatrix_apply, Matrix.map_single] using this
+  have h1 : ∀ a b, g (single a b 1) = g' (single a b 1) := fun a b => by
+    simpa using hr a b 1
+  have hX : ∀ x, g (isoHom hD hD' hS x) = g' (isoHom hD hD' hS x) := fun x =>
+    congrArg (fun φ : Matrix (Fin 2) (Fin 2) k × k →ₐ[k] T => φ x) hlf
+  have hA : g (blk₁₂ A) = g' (blk₁₂ A) := by
+    have := hX (single 0 1 1, 0); rw [isoHom_single] at this; exact this
+  have hB : g (blk₂₁ B) = g' (blk₂₁ B) := by
+    have := hX (single 1 0 1, 0); rw [isoHom_single] at this; exact this
+  refine ext_of_cornerMap c h1 (hS.ext _ _ _ ?_ ?_ ?_)
+  · ext r
+    exact corner_ext _ (hr c c r)
+  · ext a b
+    refine corner_ext _ ?_
+    have hs : single c (Sum.inl a) (1 : S) * blk₁₂ A * single (Sum.inr (Sum.inl b)) c 1 =
+        single c c (A a b) := by
+      simp [single_mul_mul_single, blk₁₂]
+    simp only [Matrix.map_apply, cornerMap_val]
+    rw [← hs, map_mul, map_mul, map_mul, map_mul, h1, h1, hA]
+  · ext a b
+    refine corner_ext _ ?_
+    have hs : single c (Sum.inr (Sum.inl a)) (1 : S) * blk₂₁ B * single (Sum.inl b) c 1 =
+        single c c (B a b) := by
+      simp [single_mul_mul_single, blk₂₁]
+    simp only [Matrix.map_apply, cornerMap_val]
+    rw [← hs, map_mul, map_mul, map_mul, map_mul, h1, h1, hB]
+
 /-- **`M_N(R⟨D ≅ D'⟩) = M_N(R) ⊔_{k³} (M₂(k) × k)`.** -/
 theorem IsIsoExt.isCoprod {j : R →ₐ[k] S} {D : Matrix m m R} {D' : Matrix m' m' R}
     {A : Matrix m m' S} {B : Matrix m' m S} (hD : D * D = D) (hD' : D' * D' = D')
     (hS : IsIsoExt j D D' A B) :
     IsCoprod k (pairSigma (isoSigma D D' hD hD') (isoTarget k))
       (Matrix (isoIdx m m') (isoIdx m m') S)
-      (isoSigma (D.map j) (D'.map j) (by rw [← Matrix.map_mul, hD])
-        (by rw [← Matrix.map_mul, hD']))
-      (pairHom (AlgHom.mapMatrix j) (isoHom hD hD' hS)) := by
-  let c : isoIdx m m' := Sum.inr (Sum.inr ())
-  have hσ := isoSigma_map (k := k) j D D' hD hD' (by rw [← Matrix.map_mul, hD])
-    (by rw [← Matrix.map_mul, hD'])
-  refine ⟨fun l => ?_, ?_, ?_⟩
-  · cases l
-    · refine algHom_pi_ext fun i => ?_
-      show isoHom hD hD' hS (isoTarget k (Pi.single i 1)) = _
-      rw [isoTarget_single, isoSigma_single]
-      fin_cases i
-      · exact isoHom_single hD hD' hS 0 0
-      · exact isoHom_single hD hD' hS 1 1
-      · simp only [Fin.reduceFinMk, Matrix.cons_val, map_sub, map_one, isoHom_single]
-        rfl
-    · exact hσ
-  · intro T _ _ f₀ f hf
-    let F : Matrix (isoIdx m m') (isoIdx m m') R →ₐ[k] T := f true
-    let G : Matrix (Fin 2) (Fin 2) k × k →ₐ[k] T := f false
-    have he : IsIdempotentElem (F (single c c 1)) := isIdempotentElem_single F c
-    let φ := cornerMap F c he rfl
-    let w : Fin 2 → Fin 2 → T := fun a b => G (single a b 1, 0)
-    have hw : ∀ a b c d, w a b * w c d = if b = c then w a d else 0 := by
-      intro a b c d
-      simp only [w, ← map_mul, Prod.mk_mul_mk, mul_zero]
-      split_ifs with h
-      · subst h; rw [single_mul_single_same, mul_one]
-      · rw [single_mul_single_of_ne (h := h), Prod.mk_zero_zero, map_zero]
-    have hq : ∀ i, F (isoSigma D D' hD hD' (Pi.single i 1)) = G (isoTarget k (Pi.single i 1)) :=
-      fun i => (congrArg (fun φ => φ (Pi.single i 1)) (hf true)).trans
-        (congrArg (fun φ => φ (Pi.single i 1)) (hf false)).symm
-    have hq1 : F (blk₁ m' D) = w 0 0 := by
-      have := hq 0; rw [isoSigma_single, isoTarget_single] at this; exact this
-    have hq2 : F (blk₂ m D') = w 1 1 := by
-      have := hq 1; rw [isoSigma_single, isoTarget_single] at this; exact this
-    have hw0 : ∀ b, w 0 b = w 0 0 * w 0 b := fun b => by rw [hw]; rfl
-    have hw0' : ∀ a, w a 0 = w a 0 * w 0 0 := fun a => by rw [hw]; rfl
-    have hw1 : ∀ b, w 1 b = w 1 1 * w 1 b := fun b => by rw [hw]; rfl
-    have hw1' : ∀ a, w a 1 = w a 1 * w 1 1 := fun a => by rw [hw]; rfl
-    have h1l : ∀ b, F (blk₁ m' 1) * w 0 b = w 0 b := fun b => by
-      rw [hw0, ← mul_assoc, ← hq1, ← map_mul, blk₁_mul_blk₁, one_mul]
-    have h1r : ∀ a, w a 0 * F (blk₁ m' 1) = w a 0 := fun a => by
-      rw [hw0', mul_assoc, ← hq1, ← map_mul, blk₁_mul_blk₁, mul_one]
-    have h2l : ∀ b, F (blk₂ m 1) * w 1 b = w 1 b := fun b => by
-      rw [hw1, ← mul_assoc, ← hq2, ← map_mul, blk₂_mul_blk₂, one_mul]
-    have h2r : ∀ a, w a 1 * F (blk₂ m 1) = w a 1 := fun a => by
-      rw [hw1', mul_assoc, ← hq2, ← map_mul, blk₂_mul_blk₂, mul_one]
-    have hDφ : D.map φ = cornerBlk F c he rfl (w 0 0) Sum.inl Sum.inl := by
-      rw [← hq1, cornerBlk_map, blk₁_submatrix]
-    have hD'φ : D'.map φ =
-        cornerBlk F c he rfl (w 1 1) (Sum.inr ∘ Sum.inl) (Sum.inr ∘ Sum.inl) := by
-      rw [← hq2, cornerBlk_map, blk₂_submatrix]
-    have r1 : D.map φ * cornerBlk F c he rfl (w 0 1) Sum.inl (Sum.inr ∘ Sum.inl) * D'.map φ =
-        cornerBlk F c he rfl (w 0 1) Sum.inl (Sum.inr ∘ Sum.inl) := by
-      rw [hDφ, hD'φ, cornerBlk_mul, cornerBlk_mul, sum_single_inl, sum_single_inr, h1r, hw,
-        if_pos rfl, h2r, hw, if_pos rfl]
-    have r2 : D'.map φ * cornerBlk F c he rfl (w 1 0) (Sum.inr ∘ Sum.inl) Sum.inl * D.map φ =
-        cornerBlk F c he rfl (w 1 0) (Sum.inr ∘ Sum.inl) Sum.inl := by
-      rw [hDφ, hD'φ, cornerBlk_mul, cornerBlk_mul, sum_single_inl, sum_single_inr, h2r, hw,
-        if_pos rfl, h1r, hw, if_pos rfl]
-    have r3 : cornerBlk F c he rfl (w 0 1) Sum.inl (Sum.inr ∘ Sum.inl) *
-        cornerBlk F c he rfl (w 1 0) (Sum.inr ∘ Sum.inl) Sum.inl = D.map φ := by
-      rw [hDφ, cornerBlk_mul, sum_single_inr, h2r, hw, if_pos rfl]
-    have r4 : cornerBlk F c he rfl (w 1 0) (Sum.inr ∘ Sum.inl) Sum.inl *
-        cornerBlk F c he rfl (w 0 1) Sum.inl (Sum.inr ∘ Sum.inl) = D'.map φ := by
-      rw [hD'φ, cornerBlk_mul, sum_single_inl, h1r, hw, if_pos rfl]
-    obtain ⟨ψ, hψj, hψA, hψB⟩ := hS.lift he.Corner φ _ _ r1 r2 r3 r4
-    have hgF : (moritaHom F c he rfl ψ).comp (AlgHom.mapMatrix j) = F :=
-      moritaHom_comp_mapMatrix F c he rfl ψ j hψj
-    have hgY : ∀ Y, moritaHom F c he rfl ψ (Y.map j) = F Y := fun Y =>
-      congrArg (fun φ : Matrix (isoIdx m m') (isoIdx m m') R →ₐ[k] T => φ Y) hgF
-    have hg1 : moritaHom F c he rfl ψ (blk₁ m' (D.map j)) = w 0 0 := by
-      rw [← blk₁_map D j (map_zero j), hgY, hq1]
-    have hg2 : moritaHom F c he rfl ψ (blk₂ m (D'.map j)) = w 1 1 := by
-      rw [← blk₂_map D' j (map_zero j), hgY, hq2]
-    refine ⟨moritaHom F c he rfl ψ, ?_, fun l => ?_⟩
-    · rw [← hσ, ← AlgHom.comp_assoc, hgF]
-      exact hf true
-    cases l
-    · show (moritaHom F c he rfl ψ).comp (isoHom hD hD' hS) = G
-      refine algHom_matrixProd_ext (fun a b => ?_) ?_
-      · rw [AlgHom.comp_apply, isoHom_single]
-        fin_cases a <;> fin_cases b
-        · exact hg1
-        · show moritaHom F c he rfl ψ (blk₁₂ A) = w 0 1
-          refine moritaHom_of_cornerEnt F c he rfl ψ _ _ ?_
-          have e1 : w 0 1 = F (blk₁ m' D) * w 0 1 * F (blk₂ m D') := by
-            rw [hq1, hq2, hw, if_pos rfl, hw, if_pos rfl]
-          show _ = cornerBlk F c he rfl (w 0 1) id id
-          conv_rhs => rw [e1]
-          rw [← cornerBlk_mul_id, ← cornerBlk_mul_id, cornerBlk_map, cornerBlk_map,
-            submatrix_id_id, submatrix_id_id, blk₁_map _ _ (map_zero _),
-            blk₂_map _ _ (map_zero _), blk₁_mul_mul_blk₂, blk₁₂_map _ _ (map_zero _), hψA]
-          exact congrArg blk₁₂ r1.symm
-        · show moritaHom F c he rfl ψ (blk₂₁ B) = w 1 0
-          refine moritaHom_of_cornerEnt F c he rfl ψ _ _ ?_
-          have e1 : w 1 0 = F (blk₂ m D') * w 1 0 * F (blk₁ m' D) := by
-            rw [hq1, hq2, hw, if_pos rfl, hw, if_pos rfl]
-          show _ = cornerBlk F c he rfl (w 1 0) id id
-          conv_rhs => rw [e1]
-          rw [← cornerBlk_mul_id, ← cornerBlk_mul_id, cornerBlk_map, cornerBlk_map,
-            submatrix_id_id, submatrix_id_id, blk₁_map _ _ (map_zero _),
-            blk₂_map _ _ (map_zero _), blk₂_mul_mul_blk₁, blk₂₁_map _ _ (map_zero _), hψB]
-          exact congrArg blk₂₁ r2.symm
-        · exact hg2
-      · have h01 : ((0 : Matrix (Fin 2) (Fin 2) k), (1 : k)) =
-            1 - ((single 0 0 1 : Matrix (Fin 2) (Fin 2) k), (0 : k)) -
-              ((single 1 1 1 : Matrix (Fin 2) (Fin 2) k), (0 : k)) := by
-          refine Prod.ext ?_ (by simp)
-          ext a b; fin_cases a <;> fin_cases b <;> simp [one_apply]
-        rw [AlgHom.comp_apply, isoHom_snd, map_sub, map_one, map_add, hg1, hg2, h01, map_sub,
-          map_sub, map_one, sub_sub]
-    · exact hgF
-  · intro T _ _ g g' _ hl
-    have hlt : g.comp (AlgHom.mapMatrix j) = g'.comp (AlgHom.mapMatrix j) := hl true
-    have hlf : g.comp (isoHom hD hD' hS) = g'.comp (isoHom hD hD' hS) := hl false
-    have hr : ∀ a b (r : R), g (single a b (j r)) = g' (single a b (j r)) := fun a b r => by
-      have := congrArg
-        (fun φ : Matrix (isoIdx m m') (isoIdx m m') R →ₐ[k] T => φ (single a b r)) hlt
-      simpa [AlgHom.mapMatrix_apply, Matrix.map_single] using this
-    have h1 : ∀ a b, g (single a b 1) = g' (single a b 1) := fun a b => by
-      simpa using hr a b 1
-    have hX : ∀ x, g (isoHom hD hD' hS x) = g' (isoHom hD hD' hS x) := fun x =>
-      congrArg (fun φ : Matrix (Fin 2) (Fin 2) k × k →ₐ[k] T => φ x) hlf
-    have hA : g (blk₁₂ A) = g' (blk₁₂ A) := by
-      have := hX (single 0 1 1, 0); rw [isoHom_single] at this; exact this
-    have hB : g (blk₂₁ B) = g' (blk₂₁ B) := by
-      have := hX (single 1 0 1, 0); rw [isoHom_single] at this; exact this
-    refine ext_of_cornerMap c h1 (hS.ext _ _ _ ?_ ?_ ?_)
-    · ext r
-      exact corner_ext _ (hr c c r)
-    · ext a b
-      refine corner_ext _ ?_
-      have hs : single c (Sum.inl a) (1 : S) * blk₁₂ A * single (Sum.inr (Sum.inl b)) c 1 =
-          single c c (A a b) := by
-        simp [single_mul_mul_single, blk₁₂]
-      simp only [Matrix.map_apply, cornerMap_val]
-      rw [← hs, map_mul, map_mul, map_mul, map_mul, h1, h1, hA]
-    · ext a b
-      refine corner_ext _ ?_
-      have hs : single c (Sum.inr (Sum.inl a)) (1 : S) * blk₂₁ B * single (Sum.inl b) c 1 =
-          single c c (B a b) := by
-        simp [single_mul_mul_single, blk₂₁]
-      simp only [Matrix.map_apply, cornerMap_val]
-      rw [← hs, map_mul, map_mul, map_mul, map_mul, h1, h1, hB]
+      (isoSigma (D.map j) (D'.map j) (by rw [← Matrix.map_mul, hD]) (by rw [← Matrix.map_mul, hD']))
+      (pairHom (AlgHom.mapMatrix j) (isoHom hD hD' hS)) :=
+  ⟨hS.coprod_comm hD hD', fun T _ _ f₀ f hf => hS.coprod_lift hD hD' T f₀ f hf,
+    fun T _ _ g g' _ hl => hS.coprod_ext hD hD' T g g' hl⟩
 
 end Iso
 

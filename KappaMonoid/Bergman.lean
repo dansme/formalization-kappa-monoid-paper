@@ -8,7 +8,8 @@ compactness, one generator or relation at a time (`Steps.lean`), each step a cop
 after passing to a matrix ring (`Morita.lean`); and Bergman's theorem on `V` of such a coproduct
 (`Coprod.lean`, `Core/`), following *Modules over coproducts of rings* (1974), §§4–9.
 
-The layer depends only on Mathlib and `ForMathlib/`, and mentions no `κ`-monoid.
+`Bergman/Index.lean` maps Bergman's numbered results to their declarations.  The layer depends
+only on Mathlib and `ForMathlib/`, and mentions no `κ`-monoid.
 -/
 import KappaMonoid.Bergman.Bridge
 import KappaMonoid.Bergman.Coprod
@@ -30,6 +31,7 @@ import KappaMonoid.Bergman.Corner
 import KappaMonoid.Bergman.Data
 import KappaMonoid.Bergman.Idem
 import KappaMonoid.Bergman.IdemModule
+import KappaMonoid.Bergman.Index
 import KappaMonoid.Bergman.IsCoprod
 import KappaMonoid.Bergman.MainRing
 import KappaMonoid.Bergman.Morita

@@ -4,7 +4,7 @@ family of `R_μ`-modules `N' μ` embedded in `Std` by `R_μ`-linear maps `φ μ`
 images.
 
 * `Idx`: the index set of Bergman's family `t_n ⋯ t_1 q` of Lemma 8.1: `q` runs over a basis of
-  `e_j N'_μ` with distinct greatest terms for the order `gord (side t_1)` (`eb`).
+  `e_j N'_μ` with distinct greatest terms for the order `basisOrder (side t_1)` (`eb`).
 * `Idx.linearIndependent_V`: **Lemma 8.1**: these products have distinct leading terms
   (`Idx.K_injective`), hence are linearly independent.
 * `exists_liftΦ`: **Proposition 8.2**: the lift `Std(N') → Std` of the `φ μ` is injective, with
@@ -124,9 +124,10 @@ include hφ in
 theorem φe_injective (μ : Option Λ) (j : ι) : Function.Injective (φe φ μ j) :=
   fun _ _ h => Subtype.ext (hφ μ ((Std.coeff σC inc B).injective h))
 
-/-- The chosen bases: a basis of `e_j N'_μ` with distinct greatest terms for `gord o`. -/
-noncomputable def eb (μ : Option Λ) (j : ι) (o : Option Λ) : EchBasis (gord o) (φe φ μ j) :=
-  (nonempty_echBasis (gord o) (gord_injective o) (φe φ μ j) (φe_injective φ hφ μ j)).some
+/-- The chosen bases: a basis of `e_j N'_μ` with distinct greatest terms for `basisOrder o`. -/
+noncomputable def eb (μ : Option Λ) (j : ι) (o : Option Λ) : EchBasis (basisOrder o) (φe φ μ j) :=
+  (nonempty_echBasis (basisOrder o) (basisOrder_injective o) (φe φ μ j)
+    (φe_injective φ hφ μ j)).some
 
 /-- The index set of Bergman's family `t_n ⋯ t_1 q`. -/
 structure Idx where
@@ -150,13 +151,13 @@ noncomputable def elt (i : Idx φ hφ) : N' i.μ := ((eb φ hφ i.μ i.j (firstS
 /-- The basis element `q`, in `Std`. -/
 noncomputable def qv (i : Idx φ hφ) : Std σC inc B := φ i.μ i.elt
 
-/-- The greatest term of `q` for `gord (side t_1)`. -/
+/-- The greatest term of `q` for `basisOrder (side t_1)`. -/
 def kap (i : Idx φ hφ) : Mono σ B.S := i.q.1
 
 /-- The member `t_n ⋯ t_1 q` of the family. -/
 noncomputable def V (i : Idx φ hφ) : Std σC inc B := wordAct inc i.ts • i.qv
 
-theorem top (i : Idx φ hφ) : IsTopF (gord (firstSide i.ts)) (Std.coeff σC inc B i.qv) i.kap :=
+theorem top (i : Idx φ hφ) : IsTopF (basisOrder (firstSide i.ts)) (Std.coeff σC inc B i.qv) i.kap :=
   (eb φ hφ i.μ i.j (firstSide i.ts)).top i.q
 
 theorem qv_ne_zero (i : Idx φ hφ) : i.qv ≠ 0 := fun h =>

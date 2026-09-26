@@ -184,6 +184,83 @@ theorem PresentedBy.idemExt (h : PresentedBy γ rel) (a₀ : A) (ha₀ : γ a₀
         rw [e1]
         exact (hf false _).trans (V.piFieldLift_basis t 0)
 
+/-- The structure maps `k³ → M_N(R)` and `k³ → M₂(k) × k` of `IsIsoExt.isCoprod` are injective
+when `D` and `D'` are nonzero: the hypothesis under which Bergman's coproduct theorem applies. -/
+theorem isoPairSigma_injective [Nontrivial R] {m m' : Type} [Fintype m] [Fintype m']
+    [DecidableEq m] [DecidableEq m'] {D : Matrix m m R} {D' : Matrix m' m' R}
+    (hD : D * D = D) (hD' : D' * D' = D') (hDne : D ≠ 0) (hD'ne : D' ≠ 0) :
+    ∀ l, Function.Injective (pairSigma (isoSigma D D' hD hD') (isoTarget k) l) := by
+  have hσ0 : isoSigma (k := k) D D' hD hD' (Pi.single 0 1) = fromBlocks D 0 0 0 := by
+    rw [isoSigma_single]; rfl
+  have hσ1 : isoSigma (k := k) D D' hD hD' (Pi.single 1 1) =
+      fromBlocks 0 0 0 (fromBlocks D' 0 0 0) := by
+    rw [isoSigma_single]; rfl
+  have hσ2 : isoSigma (k := k) D D' hD hD' (Pi.single 2 1) =
+      1 - fromBlocks D 0 0 0 - fromBlocks 0 0 0 (fromBlocks D' 0 0 0) := by
+    rw [isoSigma_single]; rfl
+  rintro (_ | _)
+  · refine pi_algHom_injective (isoTarget k) fun i => ?_
+    rw [isoTarget_single]
+    fin_cases i
+    · intro h0
+      have := congrFun (congrFun (congrArg Prod.fst h0) 0) 0
+      simp at this
+    · intro h0
+      have := congrFun (congrFun (congrArg Prod.fst h0) 1) 1
+      simp at this
+    · intro h0
+      have := congrArg Prod.snd h0
+      simp at this
+  · refine pi_algHom_injective (isoSigma D D' hD hD') fun i => ?_
+    fin_cases i
+    · show isoSigma D D' hD hD' (Pi.single 0 1) ≠ 0
+      rw [hσ0]
+      exact fun h0 => hDne (Matrix.ext fun a b => by
+        simpa using congrFun (congrFun h0 (Sum.inl a)) (Sum.inl b))
+    · show isoSigma D D' hD hD' (Pi.single 1 1) ≠ 0
+      rw [hσ1]
+      exact fun h0 => hD'ne (Matrix.ext fun a b => by
+        simpa using congrFun (congrFun h0 (Sum.inr (Sum.inl a))) (Sum.inr (Sum.inl b)))
+    · show isoSigma D D' hD hD' (Pi.single 2 1) ≠ 0
+      rw [hσ2]
+      intro h0
+      have := congrFun (congrFun h0 (Sum.inr (Sum.inr ()))) (Sum.inr (Sum.inr ()))
+      simp at this
+
+/-- `V` along `isoTarget : k³ → M₂(k) × k`, first factor: the first two coordinate idempotents
+go to rank-one idempotents of `M₂(k)`, the third to `0`. -/
+theorem V_isoTarget_fst (i : Fin 3) : V.matrixEquiv (Fin 2) (V.map (RingHom.fst _ _)
+    (V.map (isoTarget k).toRingHom (V.basis k i))) = if i = 2 then 0 else V.one k := by
+  rw [V.map_basis, V.map_cls1, V.matrixEquiv_cls1]
+  fin_cases i
+  · rw [if_neg (by decide), ← cls_single_one (0 : Fin 2)]
+    refine cls_congr ?_ _ _
+    ext a b
+    fin_cases a <;> fin_cases b <;> simp [isoTarget_single]
+  · rw [if_neg (by decide), ← cls_single_one (1 : Fin 2)]
+    refine cls_congr ?_ _ _
+    ext a b
+    fin_cases a <;> fin_cases b <;> simp [isoTarget_single]
+  · refine Eq.trans ?_ (if_pos rfl).symm
+    rw [cls_eq_zero_iff]
+    ext a b
+    fin_cases a <;> fin_cases b <;> simp [isoTarget_single]
+
+/-- `V` along `isoTarget : k³ → M₂(k) × k`, second factor: only the third coordinate idempotent
+survives. -/
+theorem V_isoTarget_snd (i : Fin 3) : V.map (RingHom.snd _ _)
+    (V.map (isoTarget k).toRingHom (V.basis k i)) = if i = 2 then V.one k else 0 := by
+  rw [V.map_basis, V.map_cls1]
+  fin_cases i
+  · rw [if_neg (by decide), ← cls1_zero]
+    exact cls1_congr (by simp [isoTarget_single]) _ _
+  · rw [if_neg (by decide), ← cls1_zero]
+    exact cls1_congr (by simp [isoTarget_single]) _ _
+  · refine Eq.trans ?_ (if_pos rfl).symm
+    rw [← cls1_one]
+    exact cls1_congr (by simp [isoTarget_single]) _ _
+
+
 /-- **Theorem 5.2** (on `V`): a universal isomorphism between two nonzero projectives adds the
 relation `[P] = [Q]`.
 
@@ -216,66 +293,11 @@ theorem PresentedBy.isoExt (h : PresentedBy γ rel) {m m' : Type} [Fintype m] [F
   have hσ2 : isoSigma (k := k) D D' hD hD' (Pi.single 2 1) =
       1 - fromBlocks D 0 0 0 - fromBlocks 0 0 0 (fromBlocks D' 0 0 0) := by
     rw [isoSigma_single]; rfl
-  have hσ : ∀ l, Function.Injective (pairSigma (isoSigma D D' hD hD') (isoTarget k) l) := by
-    rintro (_ | _)
-    · refine pi_algHom_injective (isoTarget k) fun i => ?_
-      rw [isoTarget_single]
-      fin_cases i
-      · intro h0
-        have := congrFun (congrFun (congrArg Prod.fst h0) 0) 0
-        simp at this
-      · intro h0
-        have := congrFun (congrFun (congrArg Prod.fst h0) 1) 1
-        simp at this
-      · intro h0
-        have := congrArg Prod.snd h0
-        simp at this
-    · refine pi_algHom_injective (isoSigma D D' hD hD') fun i => ?_
-      fin_cases i
-      · show isoSigma D D' hD hD' (Pi.single 0 1) ≠ 0
-        rw [hσ0]
-        exact fun h0 => hDne (Matrix.ext fun a b => by
-          simpa using congrFun (congrFun h0 (Sum.inl a)) (Sum.inl b))
-      · show isoSigma D D' hD hD' (Pi.single 1 1) ≠ 0
-        rw [hσ1]
-        exact fun h0 => hD'ne (Matrix.ext fun a b => by
-          simpa using congrFun (congrFun h0 (Sum.inr (Sum.inl a))) (Sum.inr (Sum.inl b)))
-      · show isoSigma D D' hD hD' (Pi.single 2 1) ≠ 0
-        rw [hσ2]
-        intro h0
-        have := congrFun (congrFun h0 (Sum.inr (Sum.inr ()))) (Sum.inr (Sum.inr ()))
-        simp at this
-  -- `V` of `M₂(k) × k` along `isoTarget`
-  have hT1 : ∀ i : Fin 3, V.matrixEquiv (Fin 2) (V.map (RingHom.fst _ _)
-      (V.map (isoTarget k).toRingHom (V.basis k i))) = if i = 2 then 0 else V.one k := by
-    intro i
-    rw [V.map_basis, V.map_cls1, V.matrixEquiv_cls1]
-    fin_cases i
-    · rw [if_neg (by decide), ← cls_single_one (0 : Fin 2)]
-      refine cls_congr ?_ _ _
-      ext a b
-      fin_cases a <;> fin_cases b <;> simp [isoTarget_single]
-    · rw [if_neg (by decide), ← cls_single_one (1 : Fin 2)]
-      refine cls_congr ?_ _ _
-      ext a b
-      fin_cases a <;> fin_cases b <;> simp [isoTarget_single]
-    · refine Eq.trans ?_ (if_pos rfl).symm
-      rw [cls_eq_zero_iff]
-      ext a b
-      fin_cases a <;> fin_cases b <;> simp [isoTarget_single]
-  have hT2 : ∀ i : Fin 3, V.map (RingHom.snd _ _)
-      (V.map (isoTarget k).toRingHom (V.basis k i)) = if i = 2 then V.one k else 0 := by
-    intro i
-    rw [V.map_basis, V.map_cls1]
-    fin_cases i
-    · rw [if_neg (by decide), ← cls1_zero]
-      exact cls1_congr (by simp [isoTarget_single]) _ _
-    · rw [if_neg (by decide), ← cls1_zero]
-      exact cls1_congr (by simp [isoTarget_single]) _ _
-    · refine Eq.trans ?_ (if_pos rfl).symm
-      rw [← cls1_one]
-      exact cls1_congr (by simp [isoTarget_single]) _ _
-  -- the model
+  have hσ := isoPairSigma_injective (k := k) hD hD' hDne hD'ne
+  have hT1 := V_isoTarget_fst (k := k)
+  have hT2 := V_isoTarget_snd (k := k)
+  -- the model: the monoid presented by the old relations and `x = y`, with the maps to it from
+  -- `V(M_N(R))` (through the old presentation) and from `V(M₂(k) × k)`
   set c := addConGen (rel ⊔ fun x' y' => x' = x ∧ y' = y) with hc
   have hrelc : ∀ x' y', (rel ⊔ fun x' y' => x' = x ∧ y' = y) x' y' →
       (x' : c.Quotient) = y' := fun x' y' hr =>
@@ -305,6 +327,7 @@ theorem PresentedBy.isoExt (h : PresentedBy γ rel) {m m' : Type} [Fintype m] [F
     simp only [Ψ₀, Ψt, AddMonoidHom.comp_apply, AddEquiv.coe_toAddMonoidHom]
     rw [V.map_basis, V.matrixEquiv_cls1]
     rfl
+  -- the map `V(M_N(S)) → model`, glued from the factors by the coproduct theorem
   obtain ⟨f, hf⟩ := hC.exists_V_hom hσ Ψ₀ (pairHomV Ψt Ψf) (by
     rintro (_ | _) a
     · show Ψf (V.map (isoTarget k).toRingHom a) = Ψ₀ a
@@ -342,6 +365,8 @@ theorem PresentedBy.isoExt (h : PresentedBy γ rel) {m m' : Type} [Fintype m] [F
     rw [msum_hom]; rfl
   refine PresentedBy.of_retract ?_ ?_
     (f.comp (V.matrixEquiv (isoIdx m m')).symm.toAddMonoidHom) ?_
+  -- (1) the old generators generate `V(S)`: by the coproduct theorem, every class comes from
+  -- `M_N(R)` or from `M₂(k) × k`, and `V(M₂(k) × k)` is spanned by images of `V(k³)`
   · intro z
     obtain ⟨w, rfl⟩ := (V.matrixEquiv (isoIdx m m') (R := S)).surjective z
     let T : AddSubmonoid (V (Matrix (isoIdx m m') (isoIdx m m') S)) :=
@@ -374,10 +399,12 @@ theorem PresentedBy.isoExt (h : PresentedBy γ rel) {m m' : Type} [Fintype m] [F
       have := hC.V_map_comm false true (p' • V.basis k 0 + q' • V.basis k 2)
       exact this ▸ htrue _
     · exact htrue c'
+  -- (2) the relations hold in `V(S)`: the old ones, and `[D] = [D']` via `A`, `B`
   · rintro x' y' (hr | ⟨rfl, rfl⟩)
     · rw [hjγ, hjγ, (h.2 x' y').2 (AddConGen.Rel.of _ _ hr)]
     · rw [hjγ, hjγ, ← hx, ← hy, V.map_cls, V.map_cls, cls_eq_cls]
       exact ⟨Aₘ, Bₘ, hS.mulAB, hS.mulBA⟩
+  -- (3) the map to the model sends each generator to itself
   · intro a
     show f ((V.matrixEquiv (isoIdx m m')).symm (V.map j.toRingHom (γ a))) = _
     have e1 : (V.matrixEquiv (isoIdx m m')).symm (V.map j.toRingHom (γ a)) =

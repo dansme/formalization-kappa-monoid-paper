@@ -96,7 +96,8 @@ These have no κ-monoid content and are not in Mathlib.
 - **The Bergman–Dicks realisation theorem** (`Bergman/`). The ring is presented by universal
   idempotents and isomorphisms. Its `V` is computed with Bergman's theorem on coproducts of rings
   (*Modules over coproducts of rings*, 1974). Heredity follows from quasi-freeness: idempotents and
-  isomorphisms lift along square-zero extensions.
+  isomorphisms lift along square-zero extensions. `Bergman/Index.lean` maps Bergman's numbered
+  results to their declarations.
 - **Kaplansky's theorem**: every projective module is a direct sum of countably generated
   projectives.
 - **Albrecht's theorem**: over a hereditary ring, every projective module is a direct sum of

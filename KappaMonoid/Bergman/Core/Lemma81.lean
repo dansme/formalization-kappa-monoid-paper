@@ -4,7 +4,7 @@
 * `ChainAt i s ts`: the letters `ts` can be put, in order, in front of a monomial with left index
   `i` and side `s`; `Mono.pre ts w` is the resulting monomial, and `Std.mono_pre` says it is the
   image of `w` under the product `wordAct inc ts` of the letters.
-* `gord o`: the orders used to choose the bases of Bergman §8: for `o = none` the order of
+* `basisOrder o`: the orders used to choose the bases of Bergman §8: for `o = none` the order of
   monomials, for `o = some l` the order "degree, then not on side `l`, then the order of
   monomials", whose greatest term in an element that is not `l`-pure is its `l`-leading term
   (`isLead_of_top`).
@@ -205,7 +205,7 @@ theorem left_of_mem_supp_homog {j : ι} {y : Std σC inc B} (hy : σC (ee j) •
   rw [← hy, Std.coeff_σC_smul]
   simp [ee, hne]
 
-/-! ## The orders `gord` -/
+/-! ## The orders `basisOrder` -/
 
 /-- `true` unless the monomial is on side `l` (always `true` for `o = none`). -/
 def sideBit : Option Λ → Mono σ S → Bool
@@ -213,20 +213,20 @@ def sideBit : Option Λ → Mono σ S → Bool
   | some l, w => decide (w.side ≠ some l)
 
 /-- The order used to choose the bases of Bergman §8. -/
-noncomputable def gord (o : Option Λ) (w : Mono σ S) : ℕ ×ₗ (Bool ×ₗ Mono σ S) :=
+noncomputable def basisOrder (o : Option Λ) (w : Mono σ S) : ℕ ×ₗ (Bool ×ₗ Mono σ S) :=
   toLex (w.deg, toLex (sideBit o w, w))
 
-theorem gord_injective (o : Option Λ) : Function.Injective (gord (σ := σ) (S := S) o) :=
+theorem basisOrder_injective (o : Option Λ) : Function.Injective (basisOrder (σ := σ) (S := S) o) :=
   fun _ _ h => congrArg (fun p => (ofLex (ofLex p).2).2) h
 
-theorem gord_le_iff {o : Option Λ} {w w' : Mono σ S} :
-    gord o w ≤ gord o w' ↔ w.deg < w'.deg ∨ w.deg = w'.deg ∧
+theorem basisOrder_le_iff {o : Option Λ} {w w' : Mono σ S} :
+    basisOrder o w ≤ basisOrder o w' ↔ w.deg < w'.deg ∨ w.deg = w'.deg ∧
       (sideBit o w < sideBit o w' ∨ sideBit o w = sideBit o w' ∧ w ≤ w') := by
-  rw [gord, gord, Prod.Lex.toLex_le_toLex, Prod.Lex.toLex_le_toLex]
+  rw [basisOrder, basisOrder, Prod.Lex.toLex_le_toLex, Prod.Lex.toLex_le_toLex]
 
-theorem deg_le_of_gord_le {o : Option Λ} {w w' : Mono σ S} (h : gord o w ≤ gord o w') :
-    w.deg ≤ w'.deg := by
-  rcases gord_le_iff.1 h with h | h
+theorem deg_le_of_basisOrder_le {o : Option Λ} {w w' : Mono σ S}
+    (h : basisOrder o w ≤ basisOrder o w') : w.deg ≤ w'.deg := by
+  rcases basisOrder_le_iff.1 h with h | h
   · exact h.le
   · exact h.1.le
 
@@ -235,18 +235,18 @@ theorem isTopF_iff {f : Mono σ B.S → ℕ ×ₗ (Bool ×ₗ Mono σ B.S)} {y :
     IsTopF f (Std.coeff σC inc B y) v ↔ v ∈ y.supp ∧ ∀ w ∈ y.supp, f w ≤ f v := Iff.rfl
 
 theorem IsTopF.deg_eq {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
-    (h : IsTopF (gord o) (Std.coeff σC inc B y) v) : v.deg = y.deg := by
+    (h : IsTopF (basisOrder o) (Std.coeff σC inc B y) v) : v.deg = y.deg := by
   have hy : y ≠ 0 := by rintro rfl; exact absurd h.1 (by simp)
   obtain ⟨w, hw, hwd⟩ := Std.exists_mem_supp hy
-  exact le_antisymm (Std.deg_le h.1) (hwd ▸ deg_le_of_gord_le (h.2 w hw))
+  exact le_antisymm (Std.deg_le h.1) (hwd ▸ deg_le_of_basisOrder_le (h.2 w hw))
 
-/-- The greatest term for `gord o` is greatest for the order of monomials, when the terms of top
-degree are not on side `o`. -/
+/-- The greatest term for `basisOrder o` is greatest for the order of monomials, when the terms of
+top degree are not on side `o`. -/
 theorem IsTopF.le_of_bit {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
-    (h : IsTopF (gord o) (Std.coeff σC inc B y) v)
+    (h : IsTopF (basisOrder o) (Std.coeff σC inc B y) v)
     (hb : ∀ w ∈ y.supp, w.deg = y.deg → sideBit o w = true) : ∀ w ∈ y.supp, w ≤ v := by
   intro w hw
-  rcases gord_le_iff.1 (h.2 w hw) with hd | ⟨hd, hb' | ⟨-, hle⟩⟩
+  rcases basisOrder_le_iff.1 (h.2 w hw) with hd | ⟨hd, hb' | ⟨-, hle⟩⟩
   · exact (Mono.lt_of_deg_lt hd).le
   · have hvd := h.deg_eq
     rw [hb v h.1 hvd, hb w hw (hd.trans hvd)] at hb'
@@ -254,13 +254,13 @@ theorem IsTopF.le_of_bit {o : Option Λ} {y : Std σC inc B} {v : Mono σ B.S}
   · exact hle
 
 theorem IsTopF.le_none {y : Std σC inc B} {v : Mono σ B.S}
-    (h : IsTopF (gord none) (Std.coeff σC inc B y) v) : ∀ w ∈ y.supp, w ≤ v :=
+    (h : IsTopF (basisOrder none) (Std.coeff σC inc B y) v) : ∀ w ∈ y.supp, w ≤ v :=
   h.le_of_bit fun _ _ _ => rfl
 
-/-- For an element that is not `l`-pure, the greatest term for `gord (some l)` is its `l`-leading
-term. -/
+/-- For an element that is not `l`-pure, the greatest term for `basisOrder (some l)` is its
+`l`-leading term. -/
 theorem IsTopF.isLead {l : Λ} {y : Std σC inc B} {v : Mono σ B.S}
-    (h : IsTopF (gord (some l)) (Std.coeff σC inc B y) v) (hp : ¬ IsPureS l y) :
+    (h : IsTopF (basisOrder (some l)) (Std.coeff σC inc B y) v) (hp : ¬ IsPureS l y) :
     IsLead (some l) y v := by
   have hy : y ≠ 0 := by rintro rfl; exact absurd h.1 (by simp)
   have hvd := h.deg_eq
@@ -270,14 +270,14 @@ theorem IsTopF.isLead {l : Λ} {y : Std σC inc B} {v : Mono σ B.S}
     exact hp ⟨hy, hc⟩
   have hvs : v.side ≠ some l := by
     intro hvs
-    rcases gord_le_iff.1 (h.2 w₀ hw₀) with hd | ⟨-, hb | ⟨hb, -⟩⟩
+    rcases basisOrder_le_iff.1 (h.2 w₀ hw₀) with hd | ⟨-, hb | ⟨hb, -⟩⟩
     · omega
     · have hv' : sideBit (some l) v = false := by simp [sideBit, hvs]
       rw [hv'] at hb
       exact absurd hb (by cases sideBit (some l) w₀ <;> decide)
     · simp [sideBit, hvs, hw₀s] at hb
   refine ⟨h.1, hvd, hvs, fun w hw hwd hws => ?_⟩
-  rcases gord_le_iff.1 (h.2 w hw) with hd | ⟨-, hb | ⟨-, hle⟩⟩
+  rcases basisOrder_le_iff.1 (h.2 w hw) with hd | ⟨-, hb | ⟨-, hle⟩⟩
   · omega
   · simp [sideBit, hvs, hws] at hb
   · exact hle
