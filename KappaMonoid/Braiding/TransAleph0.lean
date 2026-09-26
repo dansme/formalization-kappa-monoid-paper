@@ -561,15 +561,15 @@ positions already used) of a seed consisting of
 * the successors of the right endpoints of the previous step (successor linking), and
 * the position `μ` itself, if it has not been used yet (this forces exhaustion). -/
 
-/-- The positions used strictly before `μ`. -/
-def usedBefore (A : ι × ℕ → Set (ι × ℕ)) (μ : ι × ℕ) : Set (ι × ℕ) :=
+/-- The elements used strictly before `μ`: the union of the pieces `A ρ` over `ρ < μ`. -/
+def usedBefore {α : Type w} (A : ι × ℕ → Set α) (μ : ι × ℕ) : Set α :=
   {ν | ∃ ρ, ∃ _ : kOrd ι ρ μ, ν ∈ A ρ}
 
 /-- The positions added at the immediately preceding step (empty at limit positions). -/
 def prevOf (A : ι × ℕ → Set (ι × ℕ)) (μ : ι × ℕ) : Set (ι × ℕ) :=
   if μ.2 = 0 then ∅ else A (μ.1, μ.2 - 1)
 
-theorem mem_usedBefore {A : ι × ℕ → Set (ι × ℕ)} {μ ν : ι × ℕ} :
+theorem mem_usedBefore {α : Type w} {A : ι × ℕ → Set α} {μ : ι × ℕ} {ν : α} :
     ν ∈ usedBefore A μ ↔ ∃ ρ, kOrd ι ρ μ ∧ ν ∈ A ρ :=
   exists_congr fun _ => exists_prop
 
@@ -604,7 +604,7 @@ theorem kOrd_lt_bsucc_iff {ρ μ : ι × ℕ} : kOrd ι ρ (bsucc μ) ↔ kOrd �
     · exact kOrd_trans h (kOrd_bsucc μ)
     · exact kOrd_bsucc ρ
 
-theorem usedBefore_bsucc (A : ι × ℕ → Set (ι × ℕ)) (μ : ι × ℕ) :
+theorem usedBefore_bsucc {α : Type w} (A : ι × ℕ → Set α) (μ : ι × ℕ) :
     usedBefore A (bsucc μ) = usedBefore A μ ∪ A μ := by
   apply Set.Subset.antisymm
   · intro ν hν
@@ -617,14 +617,61 @@ theorem usedBefore_bsucc (A : ι × ℕ → Set (ι × ℕ)) (μ : ι × ℕ) :
       exact mem_usedBefore.mpr ⟨ρ, kOrd_trans hρ (kOrd_bsucc μ), hρA⟩
     · exact mem_usedBefore.mpr ⟨μ, kOrd_bsucc μ, hν⟩
 
-theorem usedBefore_mono {A : ι × ℕ → Set (ι × ℕ)} {ρ μ : ι × ℕ} (h : kOrd ι ρ μ) :
+theorem usedBefore_mono {α : Type w} {A : ι × ℕ → Set α} {ρ μ : ι × ℕ} (h : kOrd ι ρ μ) :
     usedBefore A ρ ⊆ usedBefore A μ := by
   intro ν hν
   obtain ⟨σ, hσ, hσA⟩ := mem_usedBefore.mp hν
   exact mem_usedBefore.mpr ⟨σ, kOrd_trans hσ h, hσA⟩
 
-theorem subset_usedBefore {A : ι × ℕ → Set (ι × ℕ)} {ρ μ : ι × ℕ} (h : kOrd ι ρ μ) :
+theorem subset_usedBefore {α : Type w} {A : ι × ℕ → Set α} {ρ μ : ι × ℕ} (h : kOrd ι ρ μ) :
     A ρ ⊆ usedBefore A μ := fun _ hν => mem_usedBefore.mpr ⟨ρ, h, hν⟩
+
+/-- `usedBefore A μ` only depends on the pieces at positions before `μ`. -/
+theorem usedBefore_congr {α : Type w} {A A' : ι × ℕ → Set α} {μ : ι × ℕ}
+    (h : ∀ ν, kOrd ι ν μ → A ν = A' ν) : usedBefore A μ = usedBefore A' μ :=
+  Set.ext fun _ => by
+    simp only [mem_usedBefore]
+    exact exists_congr fun ν => and_congr_right fun hν => by rw [h ν hν]
+
+theorem usedBefore_subset_iUnion {α : Type w} (A : ι × ℕ → Set α) (μ : ι × ℕ) :
+    usedBefore A μ ⊆ ⋃ ν, A ν := fun _ hν =>
+  let ⟨ρ, _, hρ⟩ := mem_usedBefore.mp hν
+  Set.mem_iUnion.mpr ⟨ρ, hρ⟩
+
+/-- Everything is used before some position. -/
+theorem iUnion_usedBefore {α : Type w} (A : ι × ℕ → Set α) :
+    (⋃ μ, usedBefore A μ) = ⋃ ν, A ν :=
+  (Set.iUnion_subset (usedBefore_subset_iUnion A)).antisymm
+    (Set.iUnion_subset fun ν => (subset_usedBefore (kOrd_bsucc ν)).trans
+      (Set.subset_iUnion _ (bsucc ν)))
+
+/-- Pieces disjoint from everything used before them are pairwise disjoint. -/
+theorem pairwise_disjoint_of_disjoint_usedBefore {α : Type w} {A : ι × ℕ → Set α}
+    (h : ∀ μ, Disjoint (A μ) (usedBefore A μ)) {μ ρ : ι × ℕ} (hne : μ ≠ ρ) :
+    Disjoint (A μ) (A ρ) := by
+  rcases trichotomous_of (kOrd ι) μ ρ with hlt | heq | hgt
+  · exact ((h ρ).mono_right (subset_usedBefore hlt)).symm
+  · exact absurd heq hne
+  · exact (h μ).mono_right (subset_usedBefore hgt)
+
+/-- Below a limit position, the successor of an earlier position is still earlier. -/
+theorem kOrd_bsucc_of_limit {ν μ : ι × ℕ} (hμ : μ.2 = 0) (h : kOrd ι ν μ) :
+    kOrd ι (bsucc ν) μ := by
+  rw [kOrd_iff] at h ⊢
+  rcases h with h | ⟨_, h⟩
+  · exact Or.inl h
+  · omega
+
+/-- At a limit position, what was used before is the union of what was used before the earlier
+positions. -/
+theorem usedBefore_limit {α : Type w} (A : ι × ℕ → Set α) {μ : ι × ℕ} (hμ : μ.2 = 0) :
+    usedBefore A μ = ⋃ ρ : {ρ : ι × ℕ // kOrd ι ρ μ}, usedBefore A ρ.1 := by
+  apply Set.eq_of_subset_of_subset
+  · intro i hi
+    obtain ⟨ν, hν, hiν⟩ := mem_usedBefore.mp hi
+    exact Set.mem_iUnion.mpr ⟨⟨bsucc ν, kOrd_bsucc_of_limit hμ hν⟩,
+      subset_usedBefore (kOrd_bsucc ν) hiν⟩
+  · exact Set.iUnion_subset fun ρ => usedBefore_mono ρ.2
 
 theorem prevOf_of_zero (A : ι × ℕ → Set (ι × ℕ)) {μ : ι × ℕ} (h : μ.2 = 0) :
     prevOf A μ = ∅ := by
@@ -730,11 +777,8 @@ theorem disj (h : IsSatRec A C) (μ : ι × ℕ) : Disjoint (A μ) (usedBefore A
       exact kOrd_not_between hσ (by rw [bsucc_prev hμ2]; exact hρ)
   · exact hp.2 hpU
 
-theorem pairwise (h : IsSatRec A C) (μ ρ : ι × ℕ) (hne : μ ≠ ρ) : Disjoint (A μ) (A ρ) := by
-  rcases trichotomous_of (kOrd ι) μ ρ with hlt | heq | hgt
-  · exact ((h.disj ρ).mono_right (subset_usedBefore hlt)).symm
-  · exact absurd heq hne
-  · exact (h.disj μ).mono_right (subset_usedBefore hgt)
+theorem pairwise (h : IsSatRec A C) (μ ρ : ι × ℕ) (hne : μ ≠ ρ) : Disjoint (A μ) (A ρ) :=
+  pairwise_disjoint_of_disjoint_usedBefore h.disj hne
 
 /-- The local form of left saturation used in Stage 1d: if a successor position lies in step `μ`
 but its predecessor does not, then `μ` is a successor step and the predecessor is a right

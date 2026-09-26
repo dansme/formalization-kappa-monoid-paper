@@ -282,6 +282,11 @@ theorem mk_Iio_Idx_lt (i : Idx κ) : #(Set.Iio i) < κ := by
     rw [mk_Idx, Ordinal.type_toType]
   simpa using Cardinal.mk_Iio_lt i h1
 
+/-- There are at least `κ` positions `Idx κ × ℕ`. -/
+theorem le_mk_Idx_prod_nat : κ ≤ #(Idx κ × ℕ) :=
+  (mk_Idx κ).symm.le.trans (Cardinal.mk_le_of_injective (f := fun i : Idx κ => (i, 0))
+    fun _ _ h => (Prod.ext_iff.mp h).1)
+
 theorem mk_Iic_Idx_lt (hκ : ℵ₀ ≤ κ) (i : Idx κ) : #(Set.Iic i) < κ := by
   have hsub : Set.Iic i ⊆ Set.Iio i ∪ {i} := by
     intro j hj
@@ -405,139 +410,93 @@ complements at every step.  See `ModuleClass.IsSummandClosed`. -/
 
 variable [C.IsSummandClosed]
 
+/-- **Half a step of Theorem 4.3.**  Let `E` be one of the two decompositions, `U` the indices of
+`E` used so far, and `X` a module with class `x ∈ S` such that `X ⊕ E_U = Q` for a direct summand
+`Q` of `M`.  Then a set `I` of `< λ` fresh indices, containing a prescribed small set `I₀` of fresh
+indices, has `X ≤ E_{U ∪ I}`; the complement `Y = Qᶜ ⊓ E_{U ∪ I}` of `Q` in `E_{U ∪ I}` has a class
+`y ∈ S`; and `x + y = Σ_{i ∈ I} a i`.
+
+This is the paper's "there exists `I_α ⊆ I'` with `|I_α| < λ` such that `T_α ⊕ ⨁_{μ<α} ⨁_{I_μ} A_i
+⊆ ⨁_{μ≤α} ⨁_{I_μ} A_i` … so we can choose `S_α`", with `E` the first decomposition and `Q` a partial
+sum of the second; with the roles exchanged it is the step producing `J_α` and `T_{α+1}`.
+
+Paper proof: `X` is `λ⁻`-small, so it lies in a sub-sum over `< λ` fresh indices
+(`exists_small_cover`).  `Q` is a direct summand of `M` contained in `E_{U ∪ I}`, so it is one of
+`E_{U ∪ I}` (M2).  Both `X ⊕ Y` and `E_I` are complements of `E_U` in `E_{U ∪ I}`, so they are
+isomorphic (M1); hence `Y` is a summand of a module in the class, with `x + y = Σ_{i ∈ I} a i`,
+and `y ∈ S` because `S` is closed under summands. -/
+theorem exists_halfStep {a : Idx κ → C.carrier} (ha : ∀ i, a i ∈ B.S) (E : Decomp C M a)
+    (U I₀ : Set (Idx κ)) (hI₀ : I₀ ⊆ Uᶜ) (hI₀small : #I₀ < lam)
+    {Q Qc X : Submodule R M} (hQ : IsCompl Q Qc) {x : C.carrier} (hxS : x ∈ B.S)
+    (hx : IsRep C x X) (hdisj : Disjoint X (E.P U)) (heq : X ⊔ E.P U = Q) :
+    letI := C.instKMonoid B.hκ
+    ∃ (I : Set (Idx κ)) (hI : #I < lam) (y : C.carrier),
+      I₀ ⊆ I ∧ I ⊆ Uᶜ ∧ X ≤ E.P (U ∪ I) ∧ y ∈ B.S ∧ IsRep C y (Qc ⊓ E.P (U ∪ I)) ∧
+      Disjoint Q (Qc ⊓ E.P (U ∪ I)) ∧ Q ⊔ (Qc ⊓ E.P (U ∪ I)) = E.P (U ∪ I) ∧
+      x + y = sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk hI) fun i : I => a i.1 := by
+  let := C.instKMonoid B.hκ
+  -- `X` is `λ⁻`-small, so it lies in a sub-sum over `< λ` fresh indices; add `I₀`
+  obtain ⟨t, ht, htU, hXt⟩ :=
+    E.exists_small_cover (IsLambdaSmall.of_equiv (B.hsmall x hxS) hx.some) U
+  have hI : #(t ∪ I₀ : Set (Idx κ)) < lam := (Cardinal.mk_union_le _ _).trans_lt
+    (Cardinal.add_lt_of_lt B.hlam.aleph0_le ht hI₀small)
+  have hIU : t ∪ I₀ ⊆ Uᶜ := Set.union_subset (fun i hi hU => Set.disjoint_left.mp htU hi hU) hI₀
+  have hXle : X ≤ E.P (U ∪ (t ∪ I₀)) :=
+    hXt.trans (E.P_mono (Set.union_subset_union_right _ Set.subset_union_left))
+  -- (M2): `Q` is a summand of `M` inside `E_{U ∪ I}`, so it has the complement `Y` there
+  have hQle : Q ≤ E.P (U ∪ (t ∪ I₀)) := heq ▸ sup_le hXle (E.P_mono Set.subset_union_left)
+  obtain ⟨hdQY, hsQY⟩ := relCompl_of_isCompl hQ hQle
+  -- (M1): `X ⊕ Y` and `E_I` are both complements of `E_U` in `E_{U ∪ I}`
+  have hXY : Disjoint X (Qc ⊓ E.P (U ∪ (t ∪ I₀))) := hdQY.mono_left (heq ▸ le_sup_left)
+  have hU_XY : Disjoint (E.P U) (X ⊔ (Qc ⊓ E.P (U ∪ (t ∪ I₀)))) :=
+    hdisj.symm.disjoint_sup_right_of_disjoint_sup_left (by rw [sup_comm, heq]; exact hdQY)
+  have hsU_XY : E.P U ⊔ (X ⊔ (Qc ⊓ E.P (U ∪ (t ∪ I₀)))) = E.P (U ∪ (t ∪ I₀)) := by
+    rw [← sup_assoc, sup_comm (E.P U) X, heq, hsQY]
+  obtain ⟨e⟩ := iso_of_relCompl hU_XY hsU_XY
+    (E.P_disjoint (Set.disjoint_left.mpr fun i hi hi' => hIU hi' hi)) (E.P_union _ _).symm
+  -- so `Y` is represented by a class `y` with `x + y = Σ_{i ∈ I} a i`, and `y ∈ S`
+  have hA : Nonempty (C.rep (sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk hI)
+      fun i : (t ∪ I₀ : Set (Idx κ)) => a i.1) ≃ₗ[R] ↥(X ⊔ (Qc ⊓ E.P (U ∪ (t ∪ I₀))))) :=
+    ⟨(E.P_class B.hκ _ _).some.trans e.symm⟩
+  obtain ⟨y, hy⟩ := C.exists_class_of_relCompl _ hXY.symm (sup_comm _ _) hA.some
+  have hsum := C.add_eq_of_relCompl B.hκ hXY rfl hx hy hA
+  have hyS : y ∈ B.S := B.hSsummand _ (B.hSsub.sumOf_mem hI _ fun i => ha i.1) y
+    ⟨x, by rw [add_comm]; exact hsum⟩
+  exact ⟨t ∪ I₀, hI, y, Set.subset_union_right, hIU, hXle, hyS, hy, hdQY, hsQY, hsum⟩
+
 /-- **The recursion step of Theorem 4.3.**  Given that `Told ⊕ ⨁_{i ∈ Uidx} A i` is the
 internal sum `⨁_{j ∈ Jidx} B j`, we find fresh blocks `I_α`, `J_α` of size `< λ` and modules
-`S_α`, `T_{α+1}` continuing the two decompositions. -/
+`S_α`, `T_{α+1}` continuing the two decompositions: two half steps (`exists_halfStep`), one in
+each decomposition.  `I_α` contains the least unused index of the first decomposition, if there
+is one, which makes the blocks exhaust `Idx κ`; when there is none, `Told = 0` and the step is
+empty. -/
 theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.carrier)
     (hvcS : vc ∈ B.S) (hvrep : IsRep C vc Told)
     (hdisj : Disjoint Told (B.D₁.P Uidx))
     (heq : Told ⊔ B.D₁.P Uidx = B.D₂.P Jidx) :
     ∃ st : B.Step, B.StepProps Uidx Jidx Told vc st := by
   let := C.instKMonoid B.hκ
-  have hlam0 : ℵ₀ ≤ lam := Cardinal.IsRegular.aleph0_le B.hlam
-  have hlam1 : (1 : Cardinal) < lam := lt_of_lt_of_le one_lt_aleph0 hlam0
-  by_cases hUc : (Uidxᶜ : Set (Idx κ)).Nonempty
-  · -- the main case
-    have hi₀ : wfMin Uidxᶜ hUc ∈ Uidxᶜ := wfMin_mem _ hUc
-    -- `T_α` is `λ⁻`-small, so it lands in a sub-sum indexed by `< λ` fresh indices
-    have hTsmall : IsLambdaSmall R lam ↥Told := IsLambdaSmall.of_equiv (B.hsmall vc hvcS) hvrep.some
-    obtain ⟨t, ht_lt, ht_disj, ht_le⟩ := B.D₁.exists_small_cover hTsmall Uidx
-    have hIset_lt : #((t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ))) < lam := by
-      refine lt_of_le_of_lt (Cardinal.mk_union_le _ _) ?_
-      rw [Cardinal.mk_singleton]
-      exact Cardinal.add_lt_of_lt hlam0 ht_lt hlam1
-    have hIsub : (t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ)) ⊆ Uidxᶜ := by
-      rintro i (hi | hi)
-      · exact fun hU => Set.disjoint_left.mp ht_disj hi hU
-      · rw [Set.mem_singleton_iff.mp hi]; exact hi₀
-    have hUdisjI : Disjoint Uidx (t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ)) :=
-      Set.disjoint_left.mpr fun i hi hi' => hIsub hi' hi
-    have hToldLe : Told ≤ B.D₁.P (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc})) :=
-      ht_le.trans (B.D₁.P_mono (Set.union_subset_union_right _ Set.subset_union_left))
-    -- (M2): split off `S_α` inside `⨁_{μ ≤ α} ⨁_{i ∈ I_μ} A i`
-    have hPJ_le : B.D₂.P Jidx ≤ B.D₁.P (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc})) := by
-      rw [← heq]
-      exact sup_le hToldLe (B.D₁.P_mono Set.subset_union_left)
-    obtain ⟨hd1, hs1⟩ := relCompl_of_isCompl (B.D₂.P_isCompl Jidx) hPJ_le
-    set Ssub : Submodule R M :=
-      B.D₂.P Jidxᶜ ⊓ B.D₁.P (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc})) with hSsubdef
-    have hSsub_le : Ssub ≤ B.D₁.P (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc})) := by
-      rw [hSsubdef]; exact inf_le_right
-    have hTold_le_PJ : Told ≤ B.D₂.P Jidx := heq ▸ le_sup_left
-    have hdTS : Disjoint Told Ssub := hd1.mono_left hTold_le_PJ
-    -- (M1): `S_α ⊕ T_α ≅ ⨁_{i ∈ I_α} A i`
-    have hd_U_TS : Disjoint (B.D₁.P Uidx) (Told ⊔ Ssub) := by
-      refine hdisj.symm.disjoint_sup_right_of_disjoint_sup_left ?_
-      rw [sup_comm]
-      exact hd1.mono_left (le_of_eq heq)
-    have hs_U_TS : B.D₁.P Uidx ⊔ (Told ⊔ Ssub)
-        = B.D₁.P (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc})) := by
-      rw [← sup_assoc, sup_comm (B.D₁.P Uidx) Told, heq, hs1]
-    obtain ⟨eTS⟩ := iso_of_relCompl hd_U_TS hs_U_TS (B.D₁.P_disjoint hUdisjI)
-      (B.D₁.P_union _ _).symm
-    have hIle : #((t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ))) ≤ κ := le_of_lt_of_le_succ B.hlk hIset_lt
-    have hA₁rep : Nonempty (C.rep (sumOf (κ := κ) hIle
-        (fun i : (t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ)) => B.a₁ i.1)) ≃ₗ[R]
-          ↥(Told ⊔ Ssub)) :=
-      ⟨(B.D₁.P_class B.hκ _ hIle).some.trans eTS.symm⟩
-    obtain ⟨uc, hucrep⟩ := C.exists_class_of_relCompl _ hdTS.symm (sup_comm Ssub Told) hA₁rep.some
-    have hA₁S : sumOf (κ := κ) hIle
-        (fun i : (t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ)) => B.a₁ i.1) ∈ B.S :=
-      B.hSsub.sumOf_mem hIset_lt _ (fun i => B.ha₁ i.1)
-    have hIsum : vc + uc = sumOf (κ := κ) hIle
-        (fun i : (t ∪ {wfMin Uidxᶜ hUc} : Set (Idx κ)) => B.a₁ i.1) :=
-      C.add_eq_of_relCompl B.hκ hdTS rfl hvrep hucrep hA₁rep
-    have hucS : uc ∈ B.S := B.hSsummand _ hA₁S uc ⟨vc, by rw [add_comm]; exact hIsum⟩
-    -- now the same on the second decomposition
-    have hSsmall : IsLambdaSmall R lam ↥Ssub := IsLambdaSmall.of_equiv (B.hsmall uc hucS) hucrep.some
-    obtain ⟨t', ht'_lt, ht'_disj, ht'_le⟩ := B.D₂.exists_small_cover hSsmall Jidx
-    have hP1_le : B.D₁.P (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc})) ≤ B.D₂.P (Jidx ∪ t') := by
-      rw [← hs1]
-      exact sup_le (B.D₂.P_mono Set.subset_union_left) ht'_le
-    obtain ⟨hd2, hs2⟩ :=
-      relCompl_of_isCompl (B.D₁.P_isCompl (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc}))) hP1_le
-    set Tsub : Submodule R M :=
-      B.D₁.P (Uidx ∪ (t ∪ {wfMin Uidxᶜ hUc}))ᶜ ⊓ B.D₂.P (Jidx ∪ t') with hTsubdef
-    have hd_S_T : Disjoint Ssub Tsub := hd2.mono_left hSsub_le
-    have hd_J_ST : Disjoint (B.D₂.P Jidx) (Ssub ⊔ Tsub) := by
-      refine hd1.disjoint_sup_right_of_disjoint_sup_left ?_
-      rw [hs1]; exact hd2
-    have hs_J_ST : B.D₂.P Jidx ⊔ (Ssub ⊔ Tsub) = B.D₂.P (Jidx ∪ t') := by
-      rw [← sup_assoc, hs1, hs2]
-    obtain ⟨eST⟩ := iso_of_relCompl hd_J_ST hs_J_ST
-      (B.D₂.P_disjoint ht'_disj.symm) (B.D₂.P_union _ _).symm
-    have hJle : #((t' : Set (Idx κ))) ≤ κ := le_of_lt_of_le_succ B.hlk ht'_lt
-    have hA₂rep : Nonempty (C.rep (sumOf (κ := κ) hJle (fun j : (t' : Set (Idx κ)) => B.a₂ j.1))
-        ≃ₗ[R] ↥(Tsub ⊔ Ssub)) :=
-      ⟨((B.D₂.P_class B.hκ _ hJle).some.trans eST.symm).trans
-        (LinearEquiv.ofEq _ _ (sup_comm Ssub Tsub))⟩
-    obtain ⟨tc, htcrep⟩ := C.exists_class_of_relCompl _ hd_S_T.symm rfl hA₂rep.some
-    have hA₂S : sumOf (κ := κ) hJle (fun j : (t' : Set (Idx κ)) => B.a₂ j.1) ∈ B.S :=
-      B.hSsub.sumOf_mem ht'_lt _ (fun j => B.ha₂ j.1)
-    have hJsum : tc + uc = sumOf (κ := κ) hJle (fun j : (t' : Set (Idx κ)) => B.a₂ j.1) :=
-      C.add_eq_of_relCompl B.hκ hd_S_T.symm rfl htcrep hucrep hA₂rep
-    have htcS : tc ∈ B.S := B.hSsummand _ hA₂S tc ⟨uc, hJsum⟩
-    refine ⟨{ Iset := t ∪ {wfMin Uidxᶜ hUc}, Jset := t', Ssub := Ssub, Tsub := Tsub
-              uc := uc, tc := tc, Ismall := hIset_lt, Jsmall := ht'_lt, ucS := hucS
-              tcS := htcS, urep := hucrep, trep := htcrep },
-      { Isub := hIsub
-        Jsub := fun j hj hJ => Set.disjoint_left.mp ht'_disj hj hJ
-        minMem := fun h => Set.mem_union_right _ (Set.mem_singleton_iff.mpr rfl)
-        ToldLe := hToldLe
-        Tdisj := hd2.symm
-        Teq := by rw [sup_comm]; exact hs2
-        hI := hIsum.symm
-        hJ := hJsum.symm }⟩
-  · -- degenerate case: all indices of the first decomposition are already used
-    have hUuniv : Uidx = Set.univ := by
-      rw [Set.not_nonempty_iff_eq_empty, Set.compl_empty_iff] at hUc
-      exact hUc
-    have hPtop : B.D₁.P Uidx = ⊤ := by rw [hUuniv, B.D₁.P_univ]
-    have hTold : Told = ⊥ := disjoint_top.mp (hPtop ▸ hdisj)
-    have hsubT : Subsingleton ↥Told := by rw [hTold]; infer_instance
-    have hvc0 : vc = C.zero :=
-      C.eq_zero_of_subsingleton (Equiv.subsingleton hvrep.some.toEquiv)
-    refine ⟨B.defaultStep, ?_⟩
-    refine
-      { Isub := Set.empty_subset _
-        Jsub := Set.empty_subset _
-        minMem := ?_
-        ToldLe := ?_
-        Tdisj := disjoint_bot_left
-        Teq := ?_
-        hI := ?_
-        hJ := ?_ }
-    · intro h
-      exact absurd h (by rw [Set.not_nonempty_iff_eq_empty, hUuniv, Set.compl_univ])
-    · rw [hTold]; exact bot_le
-    · show (⊥ : Submodule R M) ⊔ B.D₁.P (Uidx ∪ ∅) = B.D₂.P (Jidx ∪ ∅)
-      rw [Set.union_empty, Set.union_empty, ← heq, hTold]
-    · show sumOf (κ := κ) _ (fun i : (∅ : Set (Idx κ)) => B.a₁ i.1) = vc + C.zero
-      rw [hvc0, ← C.instKMonoid_zero B.hκ, add_zero]
-      exact KMonoid.sumOf_of_isEmpty _ _
-    · show sumOf (κ := κ) _ (fun j : (∅ : Set (Idx κ)) => B.a₂ j.1) = C.zero + C.zero
-      rw [← C.instKMonoid_zero B.hκ, add_zero]
-      exact KMonoid.sumOf_of_isEmpty _ _
+  -- the least unused index of the first decomposition, if any
+  let I₀ : Set (Idx κ) := Set.range fun h : (Uidxᶜ).Nonempty => wfMin Uidxᶜ h
+  have hI₀ : I₀ ⊆ Uidxᶜ := Set.range_subset_iff.mpr fun h => wfMin_mem _ h
+  have hI₀small : #I₀ < lam := (Set.finite_range _).lt_aleph0.trans_le B.hlam.aleph0_le
+  -- absorb `T_α` into the first decomposition, splitting off `S_α`
+  obtain ⟨I, hI, uc, hI₀I, hIU, hTold, hucS, hucrep, hd₁, hs₁, hIsum⟩ :=
+    B.exists_halfStep B.ha₁ B.D₁ Uidx I₀ hI₀ hI₀small (B.D₂.P_isCompl Jidx) hvcS hvrep hdisj heq
+  -- absorb `S_α` into the second decomposition, splitting off `T_{α+1}`
+  obtain ⟨J, hJ, tc, -, hJU, -, htcS, htcrep, hd₂, hs₂, hJsum⟩ :=
+    B.exists_halfStep B.ha₂ B.D₂ Jidx ∅ (Set.empty_subset _) (empty_small B.hlam)
+      (B.D₁.P_isCompl (Uidx ∪ I)) hucS hucrep hd₁.symm (by rw [sup_comm]; exact hs₁)
+  exact ⟨{ Iset := I, Jset := J, Ssub := _, Tsub := _, uc := uc, tc := tc, Ismall := hI
+           Jsmall := hJ, ucS := hucS, tcS := htcS, urep := hucrep, trep := htcrep },
+    { Isub := hIU
+      Jsub := hJU
+      minMem := fun h => hI₀I ⟨h, rfl⟩
+      ToldLe := hTold
+      Tdisj := hd₂.symm
+      Teq := by rw [sup_comm]; exact hs₂
+      hI := hIsum.symm
+      hJ := (add_comm tc uc).trans hJsum |>.symm }⟩
 
 /-- The step as a function; junk outside the intended domain. -/
 noncomputable def stepCore (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.carrier) :
@@ -564,12 +523,12 @@ theorem stepCore_spec {Uidx Jidx : Set (Idx κ)} {Told : Submodule R M} {vc : C.
 open IsBraided in
 /-- The indices of the first decomposition used strictly before `μ`. -/
 def UidxOf (F : Idx κ × ℕ → B.Step) (μ : Idx κ × ℕ) : Set (Idx κ) :=
-  ⋃ ν ∈ {ν | kOrd (Idx κ) ν μ}, (F ν).Iset
+  usedBefore (fun ν => (F ν).Iset) μ
 
 open IsBraided in
 /-- The indices of the second decomposition used strictly before `μ`. -/
 def JidxOf (F : Idx κ × ℕ → B.Step) (μ : Idx κ × ℕ) : Set (Idx κ) :=
-  ⋃ ν ∈ {ν | kOrd (Idx κ) ν μ}, (F ν).Jset
+  usedBefore (fun ν => (F ν).Jset) μ
 
 /-- The paper's `T_μ`: the module carried over from the preceding stage; `0` at limits. -/
 def TmOf (F : Idx κ × ℕ → B.Step) (μ : Idx κ × ℕ) : Submodule R M :=
@@ -599,12 +558,8 @@ noncomputable def stepOf (F : Idx κ × ℕ → B.Step) (μ : Idx κ × ℕ) : B
 open IsBraided in
 theorem stepOf_congr {F G : Idx κ × ℕ → B.Step} {μ : Idx κ × ℕ}
     (h : ∀ ν, kOrd (Idx κ) ν μ → F ν = G ν) : B.stepOf F μ = B.stepOf G μ := by
-  have hU : B.UidxOf F μ = B.UidxOf G μ := by
-    unfold UidxOf
-    exact Set.iUnion₂_congr fun ν hν => by rw [h ν hν]
-  have hJ : B.JidxOf F μ = B.JidxOf G μ := by
-    unfold JidxOf
-    exact Set.iUnion₂_congr fun ν hν => by rw [h ν hν]
+  have hU : B.UidxOf F μ = B.UidxOf G μ := usedBefore_congr fun ν hν => by rw [h ν hν]
+  have hJ : B.JidxOf F μ = B.JidxOf G μ := usedBefore_congr fun ν hν => by rw [h ν hν]
   have hT : B.TmOf F μ = B.TmOf G μ := by
     unfold TmOf
     by_cases hμ : μ.2 = 0
@@ -653,41 +608,19 @@ theorem fam_spec (μ : Idx κ × ℕ) (h3 : Disjoint (B.Tm μ) (B.D₁.P (B.Uidx
 
 open IsBraided in
 theorem mem_Uidx {μ : Idx κ × ℕ} {i : Idx κ} :
-    i ∈ B.Uidx μ ↔ ∃ ν, kOrd (Idx κ) ν μ ∧ i ∈ (B.fam ν).Iset := by
-  unfold Uidx UidxOf
-  simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
+    i ∈ B.Uidx μ ↔ ∃ ν, kOrd (Idx κ) ν μ ∧ i ∈ (B.fam ν).Iset := mem_usedBefore
 
 open IsBraided in
 theorem mem_Jidx {μ : Idx κ × ℕ} {j : Idx κ} :
-    j ∈ B.Jidx μ ↔ ∃ ν, kOrd (Idx κ) ν μ ∧ j ∈ (B.fam ν).Jset := by
-  unfold Jidx JidxOf
-  simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
+    j ∈ B.Jidx μ ↔ ∃ ν, kOrd (Idx κ) ν μ ∧ j ∈ (B.fam ν).Jset := mem_usedBefore
 
 open IsBraided in
-theorem Uidx_bsucc (μ : Idx κ × ℕ) : B.Uidx (bsucc μ) = B.Uidx μ ∪ (B.fam μ).Iset := by
-  ext i
-  simp only [B.mem_Uidx, Set.mem_union]
-  constructor
-  · rintro ⟨ν, hν, hi⟩
-    rcases kOrd_lt_bsucc_iff.mp hν with h | rfl
-    · exact Or.inl ⟨ν, h, hi⟩
-    · exact Or.inr hi
-  · rintro (⟨ν, hν, hi⟩ | hi)
-    · exact ⟨ν, kOrd_trans hν (kOrd_bsucc μ), hi⟩
-    · exact ⟨μ, kOrd_bsucc μ, hi⟩
+theorem Uidx_bsucc (μ : Idx κ × ℕ) : B.Uidx (bsucc μ) = B.Uidx μ ∪ (B.fam μ).Iset :=
+  usedBefore_bsucc _ μ
 
 open IsBraided in
-theorem Jidx_bsucc (μ : Idx κ × ℕ) : B.Jidx (bsucc μ) = B.Jidx μ ∪ (B.fam μ).Jset := by
-  ext j
-  simp only [B.mem_Jidx, Set.mem_union]
-  constructor
-  · rintro ⟨ν, hν, hj⟩
-    rcases kOrd_lt_bsucc_iff.mp hν with h | rfl
-    · exact Or.inl ⟨ν, h, hj⟩
-    · exact Or.inr hj
-  · rintro (⟨ν, hν, hj⟩ | hj)
-    · exact ⟨ν, kOrd_trans hν (kOrd_bsucc μ), hj⟩
-    · exact ⟨μ, kOrd_bsucc μ, hj⟩
+theorem Jidx_bsucc (μ : Idx κ × ℕ) : B.Jidx (bsucc μ) = B.Jidx μ ∪ (B.fam μ).Jset :=
+  usedBefore_bsucc _ μ
 
 theorem Tm_bsucc (μ : Idx κ × ℕ) : B.Tm (bsucc μ) = (B.fam μ).Tsub := by
   unfold Tm TmOf
@@ -706,16 +639,12 @@ theorem vcm_limit {μ : Idx κ × ℕ} (h : μ.2 = 0) : B.vcm μ = C.zero := by
   unfold vcm vcOf; rw [if_pos h]
 
 open IsBraided in
-theorem Uidx_mono {ρ μ : Idx κ × ℕ} (h : kOrd (Idx κ) ρ μ) : B.Uidx ρ ⊆ B.Uidx μ := by
-  intro i hi
-  obtain ⟨ν, hν, hiν⟩ := B.mem_Uidx.mp hi
-  exact B.mem_Uidx.mpr ⟨ν, kOrd_trans hν h, hiν⟩
+theorem Uidx_mono {ρ μ : Idx κ × ℕ} (h : kOrd (Idx κ) ρ μ) : B.Uidx ρ ⊆ B.Uidx μ :=
+  usedBefore_mono h
 
 open IsBraided in
-theorem Jidx_mono {ρ μ : Idx κ × ℕ} (h : kOrd (Idx κ) ρ μ) : B.Jidx ρ ⊆ B.Jidx μ := by
-  intro j hj
-  obtain ⟨ν, hν, hjν⟩ := B.mem_Jidx.mp hj
-  exact B.mem_Jidx.mpr ⟨ν, kOrd_trans hν h, hjν⟩
+theorem Jidx_mono {ρ μ : Idx κ × ℕ} (h : kOrd (Idx κ) ρ μ) : B.Jidx ρ ⊆ B.Jidx μ :=
+  usedBefore_mono h
 
 /-! ### The invariant -/
 
@@ -723,39 +652,13 @@ open IsBraided in
 /-- At a limit position the blocks used so far are the union of those used before any earlier
 position. -/
 theorem Uidx_limit_eq {μ : Idx κ × ℕ} (h : μ.2 = 0) :
-    B.Uidx μ = ⋃ ρ : {ρ : Idx κ × ℕ // kOrd (Idx κ) ρ μ}, B.Uidx ρ.1 := by
-  apply Set.eq_of_subset_of_subset
-  · intro i hi
-    obtain ⟨ν, hν, hiν⟩ := B.mem_Uidx.mp hi
-    have hsucc : kOrd (Idx κ) (bsucc ν) μ := by
-      rw [kOrd_iff] at hν ⊢
-      rcases hν with h1 | ⟨_, h2⟩
-      · exact Or.inl h1
-      · omega
-    refine Set.mem_iUnion.mpr ⟨⟨bsucc ν, hsucc⟩, ?_⟩
-    rw [B.Uidx_bsucc ν]
-    exact Or.inr hiν
-  · intro i hi
-    obtain ⟨ρ, hiρ⟩ := Set.mem_iUnion.mp hi
-    exact B.Uidx_mono ρ.2 hiρ
+    B.Uidx μ = ⋃ ρ : {ρ : Idx κ × ℕ // kOrd (Idx κ) ρ μ}, B.Uidx ρ.1 :=
+  usedBefore_limit _ h
 
 open IsBraided in
 theorem Jidx_limit_eq {μ : Idx κ × ℕ} (h : μ.2 = 0) :
-    B.Jidx μ = ⋃ ρ : {ρ : Idx κ × ℕ // kOrd (Idx κ) ρ μ}, B.Jidx ρ.1 := by
-  apply Set.eq_of_subset_of_subset
-  · intro j hj
-    obtain ⟨ν, hν, hjν⟩ := B.mem_Jidx.mp hj
-    have hsucc : kOrd (Idx κ) (bsucc ν) μ := by
-      rw [kOrd_iff] at hν ⊢
-      rcases hν with h1 | ⟨_, h2⟩
-      · exact Or.inl h1
-      · omega
-    refine Set.mem_iUnion.mpr ⟨⟨bsucc ν, hsucc⟩, ?_⟩
-    rw [B.Jidx_bsucc ν]
-    exact Or.inr hjν
-  · intro j hj
-    obtain ⟨ρ, hjρ⟩ := Set.mem_iUnion.mp hj
-    exact B.Jidx_mono ρ.2 hjρ
+    B.Jidx μ = ⋃ ρ : {ρ : Idx κ × ℕ // kOrd (Idx κ) ρ μ}, B.Jidx ρ.1 :=
+  usedBefore_limit _ h
 
 open IsBraided in
 /-- The invariant of the construction: `T_α ⊕ ⨁_{μ<α} ⨁_{i ∈ I_μ} A i = ⨁_{μ<α} ⨁_{j ∈ J_μ} B j`
@@ -778,15 +681,9 @@ theorem inv (μ : Idx κ × ℕ) : Disjoint (B.Tm μ) (B.D₁.P (B.Uidx μ)) ∧
       · -- conversely `T_ρ ≤ ⨁_{i ∈ Uidx (bsucc ρ)} A i`
         rw [← (ih ρ.1 ρ.2).2]
         refine sup_le ?_ ?_
-        · have hsucc : kOrd (Idx κ) (bsucc ρ.1) μ := by
-            have hν := ρ.2
-            rw [kOrd_iff] at hν ⊢
-            rcases hν with h1 | ⟨_, h2⟩
-            · exact Or.inl h1
-            · omega
-          refine le_trans ?_ (le_iSup
+        · refine le_trans ?_ (le_iSup
             (fun j : {ρ : Idx κ × ℕ // kOrd (Idx κ) ρ μ} => B.D₁.P (B.Uidx j.1))
-            (⟨bsucc ρ.1, hsucc⟩ : {ρ : Idx κ × ℕ // kOrd (Idx κ) ρ μ}))
+            (⟨bsucc ρ.1, kOrd_bsucc_of_limit hμ ρ.2⟩ : {ρ : Idx κ × ℕ // kOrd (Idx κ) ρ μ}))
           rw [show B.Uidx (bsucc ρ.1) = B.Uidx ρ.1 ∪ (B.fam ρ.1).Iset from B.Uidx_bsucc ρ.1]
           exact (B.fam_spec ρ.1 (ih ρ.1 ρ.2).1 (ih ρ.1 ρ.2).2).ToldLe
         · exact le_iSup (fun ρ : {ρ : Idx κ × ℕ // kOrd (Idx κ) ρ μ} => B.D₁.P (B.Uidx ρ.1)) ρ
@@ -808,49 +705,33 @@ theorem spec (μ : Idx κ × ℕ) :
 
 open IsBraided in
 theorem Iset_subset_Uidx {ν μ : Idx κ × ℕ} (h : kOrd (Idx κ) ν μ) :
-    (B.fam ν).Iset ⊆ B.Uidx μ := fun _ hi => B.mem_Uidx.mpr ⟨ν, h, hi⟩
+    (B.fam ν).Iset ⊆ B.Uidx μ := subset_usedBefore (A := fun ν => (B.fam ν).Iset) h
 
 open IsBraided in
 theorem Jset_subset_Jidx {ν μ : Idx κ × ℕ} (h : kOrd (Idx κ) ν μ) :
-    (B.fam ν).Jset ⊆ B.Jidx μ := fun _ hj => B.mem_Jidx.mpr ⟨ν, h, hj⟩
+    (B.fam ν).Jset ⊆ B.Jidx μ := subset_usedBefore (A := fun ν => (B.fam ν).Jset) h
 
 open IsBraided in
 theorem Iset_disjoint {μ ρ : Idx κ × ℕ} (h : μ ≠ ρ) :
-    Disjoint (B.fam μ).Iset (B.fam ρ).Iset := by
-  rcases trichotomous_of (kOrd (Idx κ)) μ ρ with h1 | h1 | h1
-  · exact Set.disjoint_left.mpr fun i hi hi' => (B.spec ρ).Isub hi' (B.Iset_subset_Uidx h1 hi)
-  · exact absurd h1 h
-  · exact Set.disjoint_left.mpr fun i hi hi' => (B.spec μ).Isub hi (B.Iset_subset_Uidx h1 hi')
+    Disjoint (B.fam μ).Iset (B.fam ρ).Iset :=
+  pairwise_disjoint_of_disjoint_usedBefore
+    (fun ν => Set.subset_compl_iff_disjoint_right.mp (B.spec ν).Isub) h
 
 open IsBraided in
 theorem Jset_disjoint {μ ρ : Idx κ × ℕ} (h : μ ≠ ρ) :
-    Disjoint (B.fam μ).Jset (B.fam ρ).Jset := by
-  rcases trichotomous_of (kOrd (Idx κ)) μ ρ with h1 | h1 | h1
-  · exact Set.disjoint_left.mpr fun j hj hj' => (B.spec ρ).Jsub hj' (B.Jset_subset_Jidx h1 hj)
-  · exact absurd h1 h
-  · exact Set.disjoint_left.mpr fun j hj hj' => (B.spec μ).Jsub hj (B.Jset_subset_Jidx h1 hj')
+    Disjoint (B.fam μ).Jset (B.fam ρ).Jset :=
+  pairwise_disjoint_of_disjoint_usedBefore
+    (fun ν => Set.subset_compl_iff_disjoint_right.mp (B.spec ν).Jsub) h
 
 open IsBraided in
-theorem Uidx_subset_iUnion (μ : Idx κ × ℕ) : B.Uidx μ ⊆ ⋃ ν, (B.fam ν).Iset := by
-  intro i hi
-  obtain ⟨ν, _, hiν⟩ := B.mem_Uidx.mp hi
-  exact Set.mem_iUnion.mpr ⟨ν, hiν⟩
+theorem Uidx_subset_iUnion (μ : Idx κ × ℕ) : B.Uidx μ ⊆ ⋃ ν, (B.fam ν).Iset :=
+  usedBefore_subset_iUnion _ μ
 
 open IsBraided in
-theorem Uidx_iUnion : (⋃ μ, B.Uidx μ) = ⋃ ν, (B.fam ν).Iset := by
-  apply Set.eq_of_subset_of_subset
-  · exact Set.iUnion_subset fun μ => B.Uidx_subset_iUnion μ
-  · refine Set.iUnion_subset fun ν i hi => Set.mem_iUnion.mpr ⟨bsucc ν, ?_⟩
-    exact B.Iset_subset_Uidx (kOrd_bsucc ν) hi
+theorem Uidx_iUnion : (⋃ μ, B.Uidx μ) = ⋃ ν, (B.fam ν).Iset := iUnion_usedBefore _
 
 open IsBraided in
-theorem Jidx_iUnion : (⋃ μ, B.Jidx μ) = ⋃ ν, (B.fam ν).Jset := by
-  apply Set.eq_of_subset_of_subset
-  · refine Set.iUnion_subset fun μ j hj => ?_
-    obtain ⟨ν, _, hjν⟩ := B.mem_Jidx.mp hj
-    exact Set.mem_iUnion.mpr ⟨ν, hjν⟩
-  · refine Set.iUnion_subset fun ν j hj => Set.mem_iUnion.mpr ⟨bsucc ν, ?_⟩
-    exact B.Jset_subset_Jidx (kOrd_bsucc ν) hj
+theorem Jidx_iUnion : (⋃ μ, B.Jidx μ) = ⋃ ν, (B.fam ν).Jset := iUnion_usedBefore _
 
 /-- The blocks `I_μ` exhaust `Idx κ`: this is the point of always adjoining `min I'`. -/
 theorem Iset_cover : (⋃ μ, (B.fam μ).Iset) = Set.univ := by
@@ -868,12 +749,7 @@ theorem Iset_cover : (⋃ μ, (B.fam μ).Iset) = Set.univ := by
     have hval : f μ = f ρ := congrArg Subtype.val h
     exact Set.disjoint_left.mp (B.Iset_disjoint hne') (hfI μ) (hval ▸ hfI ρ)
   have h1 : #(Idx κ × ℕ) ≤ #(Set.Iic i₀) := Cardinal.mk_le_of_injective hinj
-  have h2 : κ ≤ #(Idx κ × ℕ) := by
-    have hinj2 : Function.Injective (fun i : Idx κ => (i, (0 : ℕ))) :=
-      fun i j h => (Prod.ext_iff.mp h).1
-    calc κ = #(Idx κ) := (mk_Idx κ).symm
-      _ ≤ #(Idx κ × ℕ) := Cardinal.mk_le_of_injective hinj2
-  exact absurd ((h2.trans h1).trans_lt (mk_Iic_Idx_lt B.hκ i₀)) (lt_irrefl κ)
+  exact absurd ((le_mk_Idx_prod_nat.trans h1).trans_lt (mk_Iic_Idx_lt B.hκ i₀)) (lt_irrefl κ)
 
 /-- Consequently the second decomposition is exhausted as well. -/
 theorem P₂_iUnion_eq_top : B.D₂.P (⋃ ν, (B.fam ν).Jset) = ⊤ := by
@@ -918,13 +794,8 @@ theorem exists_extra : ∃ E : Idx κ × ℕ → Set (Idx κ),
       (⋃ μ, E μ) = (⋃ ν, (B.fam ν).Jset)ᶜ ∧
       ∀ μ, E μ ⊆ (⋃ ν, (B.fam ν).Jset)ᶜ := by
   set W : Set (Idx κ) := ⋃ ν, (B.fam ν).Jset with hWdef
-  have hprod : κ ≤ #(Idx κ × ℕ) := by
-    have hinj2 : Function.Injective (fun i : Idx κ => (i, (0 : ℕ))) :=
-      fun i j h => (Prod.ext_iff.mp h).1
-    calc κ = #(Idx κ) := (mk_Idx κ).symm
-      _ ≤ #(Idx κ × ℕ) := Cardinal.mk_le_of_injective hinj2
   have hcard : #(↥(Wᶜ)) ≤ #(Idx κ × ℕ) :=
-    ((Cardinal.mk_set_le _).trans_eq (mk_Idx κ)).trans hprod
+    ((Cardinal.mk_set_le _).trans_eq (mk_Idx κ)).trans le_mk_Idx_prod_nat
   obtain ⟨e⟩ := (Cardinal.le_def _ _).mp hcard
   refine ⟨fun μ => {j | ∃ h : j ∈ Wᶜ, e ⟨j, h⟩ = μ}, ?_, ?_, ?_, ?_⟩
   · intro μ
