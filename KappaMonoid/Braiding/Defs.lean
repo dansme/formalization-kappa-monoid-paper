@@ -377,114 +377,83 @@ theorem of_perm (x : ι → X) (π : ι ≃ ι) : IsBraided lam x (x ∘ π) := 
 
 /-- Lemma 3.6(2), symmetry.  Paper proof: shift the indices, replacing `(u, v)` by
 `u' μ = u μ + v (μ+1)`, `v' μ = 0` at limit elements and `u' μ = v (μ+1)`, `v' μ = u μ`
-otherwise. -/
+otherwise; the new partitions are `I' = J` and `J'_μ = I_μ ∪ I_{μ+1}` at limit elements,
+`J'_μ = I_{μ+1}` otherwise.  That `J'` is again an indexed partition, which the paper leaves
+implicit, is `regroup` along the fibres of `(a, n) ↦ (a, n - 1)`. -/
 @[symm] theorem symm {x y : ι → X} (h : IsBraided lam x y) : IsBraided lam y x := by
-  classical
   obtain ⟨d⟩ := h
-  have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
-  set J' : ι × ℕ → Set ι :=
-    fun p => if p.2 = 0 then d.I p ∪ d.I (bsucc p) else d.I (bsucc p) with hJ'def
-  set u' : ι × ℕ → X :=
-    fun p => if p.2 = 0 then d.u p + d.v (bsucc p) else d.v (bsucc p) with hu'def
-  set v' : ι × ℕ → X := fun p => if p.2 = 0 then (0 : X) else d.u p with hv'def
-  -- `bsucc` never fixes an index, and distinct pieces of `I` are disjoint, so each element
-  -- of `ι` lies in exactly one piece.
-  have hne_succ : ∀ p : ι × ℕ, p ≠ bsucc p := fun p hp =>
-    Nat.succ_ne_self p.2 (congrArg Prod.snd hp).symm
-  have huniq : ∀ (r s : ι × ℕ) (i : ι), i ∈ d.I r → i ∈ d.I s → r = s := by
-    intro r s i hir his
-    by_contra hrs
-    exact Set.disjoint_left.mp (d.I_disjoint r s hrs) hir his
-  have hJ'zero : ∀ a : ι, J' (a, 0) = d.I (a, 0) ∪ d.I (bsucc (a, 0)) := fun _ => rfl
-  have hJ'succ : ∀ (a : ι) (m : ℕ), J' (a, m + 1) = d.I (bsucc (a, m + 1)) := fun _ _ => rfl
-  have hJ'small : ∀ p, #(J' p) < lam := by
-    rintro ⟨a, n⟩
-    rcases n with _ | m
-    · rw [hJ'zero a]
-      exact lt_of_le_of_lt (Cardinal.mk_union_le _ _)
-        (Cardinal.add_lt_of_lt hlam0 (d.I_small (a, 0)) (d.I_small (bsucc (a, 0))))
-    · rw [hJ'succ a m]
-      exact d.I_small _
-  have hJ'mem : ∀ (p : ι × ℕ) (i : ι), i ∈ J' p →
-      ∃ r : ι × ℕ, i ∈ d.I r ∧ (r = bsucc p ∨ (p.2 = 0 ∧ r = p)) := by
-    rintro ⟨a, n⟩ i hi
-    rcases n with _ | m
-    · rw [hJ'zero a] at hi
-      rcases hi with hi | hi
-      · exact ⟨(a, 0), hi, Or.inr ⟨rfl, rfl⟩⟩
-      · exact ⟨bsucc (a, 0), hi, Or.inl rfl⟩
-    · rw [hJ'succ a m] at hi
-      exact ⟨bsucc (a, m + 1), hi, Or.inl rfl⟩
-  have hJ'disjoint : ∀ p q, p ≠ q → Disjoint (J' p) (J' q) := by
-    intro p q hpq
-    rw [Set.disjoint_left]
-    intro i hip hiq
-    obtain ⟨r, hir, hr⟩ := hJ'mem p i hip
-    obtain ⟨s, his, hs⟩ := hJ'mem q i hiq
-    have hrs : r = s := huniq r s i hir his
-    refine hpq ?_
-    rcases hr with hr | ⟨hp0, hrp⟩ <;> rcases hs with hs | ⟨hq0, hsq⟩
-    · exact bsucc_injective (hr.symm.trans (hrs.trans hs))
-    · exact absurd ((congrArg Prod.snd (hr.symm.trans (hrs.trans hsq))).trans hq0)
-        (Nat.succ_ne_zero p.2)
-    · exact absurd ((congrArg Prod.snd (hrp.symm.trans (hrs.trans hs))).symm.trans hp0)
-        (Nat.succ_ne_zero q.2)
-    · exact hrp.symm.trans (hrs.trans hsq)
-  have hJ'cover : (⋃ p, J' p) = Set.univ := by
-    apply Set.eq_univ_of_forall
-    intro i
-    have hi : i ∈ (⋃ r, d.I r) := d.I_cover ▸ Set.mem_univ i
-    obtain ⟨r, hr⟩ := Set.mem_iUnion.mp hi
-    obtain ⟨a, m⟩ := r
-    rcases m with _ | m
-    · exact Set.mem_iUnion.mpr ⟨(a, 0), by rw [hJ'zero a]; exact Or.inl hr⟩
-    · refine Set.mem_iUnion.mpr ⟨(a, m), ?_⟩
-      rcases m with _ | m'
-      · rw [hJ'zero a]; exact Or.inr hr
-      · rw [hJ'succ a m']; exact hr
-  -- the shifted braiding families
-  have hv'zero : ∀ a : ι, v' (a, 0) = 0 := fun _ => rfl
-  have hv'succ : ∀ p : ι × ℕ, v' (bsucc p) = d.u (bsucc p) := fun _ => rfl
-  have hu'zero : ∀ a : ι, u' (a, 0) = d.u (a, 0) + d.v (bsucc (a, 0)) := fun _ => rfl
-  have hu'succ : ∀ (a : ι) (m : ℕ), u' (a, m + 1) = d.v (bsucc (a, m + 1)) := fun _ _ => rfl
-  have hvu' : ∀ p : ι × ℕ, v' p + u' p = d.u p + d.v (bsucc p) := by
-    rintro ⟨a, n⟩
-    rcases n with _ | m
-    · rw [hv'zero a, hu'zero a, zero_add]
-    · rw [hu'succ a m]
-      exact congrArg₂ (· + ·) rfl rfl
-  -- the two defining equations
-  have hI'eq : ∀ p, lsumOf (lam := lam) (d.J_small p) (fun i : d.J p => y i) = v' p + u' p := by
-    intro p
-    rw [d.hJ p, hvu' p]
-    exact add_comm _ _
-  have hJ'eq : ∀ p, lsumOf (lam := lam) (hJ'small p) (fun j : J' p => x j)
-      = v' (bsucc p) + u' p := by
-    rintro ⟨a, n⟩
-    rcases n with _ | m
-    · have hdisj : Disjoint (d.I (a, 0)) (d.I (bsucc (a, 0))) :=
-        d.I_disjoint _ _ (hne_succ (a, 0))
-      refine (lsumOf_union (d.I (a, 0)) (d.I (bsucc (a, 0))) hdisj (d.I_small (a, 0))
-        (d.I_small (bsucc (a, 0))) (hJ'small (a, 0)) x).trans ?_
-      rw [d.hI (a, 0), d.hI (bsucc (a, 0)), d.v_limit a, hv'succ (a, 0), hu'zero a, zero_add]
+  -- The paper's shifted data.  At a limit `μ = (a, 0)`: `J'_μ = I_μ ∪ I_{μ+1}`,
+  -- `u'_μ = u_μ + v_{μ+1}`, `v'_μ = 0`.  Otherwise: `J'_μ = I_{μ+1}`, `u'_μ = v_{μ+1}`,
+  -- `v'_μ = u_μ`.  The roles of `I` and `J` are swapped: `I' = J`.
+  let J' : ι × ℕ → Set ι := fun p => if p.2 = 0 then d.I p ∪ d.I (bsucc p) else d.I (bsucc p)
+  let u' : ι × ℕ → X := fun p => if p.2 = 0 then d.u p + d.v (bsucc p) else d.v (bsucc p)
+  let v' : ι × ℕ → X := fun p => if p.2 = 0 then 0 else d.u p
+  -- `J'` is `I` regrouped along the fibres of `pred : (a, n) ↦ (a, n - 1)`, so it is again an
+  -- indexed partition.
+  let pred : ι × ℕ → ι × ℕ := fun p => (p.1, p.2 - 1)
+  have hJ' : J' = regroup d.I fun p => pred ⁻¹' {p} := by
+    funext ⟨a, n⟩
+    ext i
+    simp only [J', regroup, pred, bsucc, Set.mem_preimage, Set.mem_singleton_iff, Prod.ext_iff,
+      Set.mem_iUnion, exists_prop, Prod.exists]
+    constructor
+    · rintro hi
+      split_ifs at hi with hn
+      · rcases hi with hi | hi
+        · exact ⟨a, n, ⟨rfl, by omega⟩, hi⟩
+        · exact ⟨a, n + 1, ⟨rfl, by omega⟩, hi⟩
+      · exact ⟨a, n + 1, ⟨rfl, by omega⟩, hi⟩
+    · rintro ⟨b, m, ⟨rfl, hm⟩, hi⟩
+      split_ifs with hn
+      · subst hn
+        rcases Nat.lt_or_ge m 1 with h | h
+        · exact Or.inl (by rwa [show m = 0 by omega] at hi)
+        · exact Or.inr (by rwa [show m = 0 + 1 by omega] at hi)
+      · rwa [show m = n + 1 by omega] at hi
+  have J'_disjoint : ∀ p q, p ≠ q → Disjoint (J' p) (J' q) := by
+    rw [hJ']
+    exact fun p q hpq => regroup_disjoint d.I_disjoint
+      (fun p q hpq => Set.disjoint_left.mpr fun r hp hq => hpq (hp.symm.trans hq)) hpq
+  have J'_cover : (⋃ p, J' p) = Set.univ := by
+    rw [hJ']
+    exact regroup_cover d.I_cover (Set.eq_univ_of_forall fun r => Set.mem_iUnion.mpr ⟨pred r, rfl⟩)
+  have J'_small : ∀ p, #(J' p) < lam := fun p => by
+    have hsub : J' p ⊆ d.I p ∪ d.I (bsucc p) := by
+      dsimp only [J']; split_ifs
+      exacts [le_rfl, Set.subset_union_right]
+    exact (mk_le_mk_of_subset hsub).trans_lt ((mk_union_le _ _).trans_lt
+      (add_lt_of_lt (aleph0_le (X := X)) (d.I_small p) (d.I_small (bsucc p))))
+  refine ⟨{ I := d.J
+            J := J'
+            I_disjoint := d.J_disjoint
+            J_disjoint := J'_disjoint
+            I_cover := d.J_cover
+            J_cover := J'_cover
+            I_small := d.J_small
+            J_small := J'_small
+            u := u'
+            v := v'
+            v_limit := fun _ => rfl
+            hI := fun p => ?_
+            hJ := fun p => ?_ }⟩
+  · -- `Σ_{I'_μ} y = v_{μ+1} + u_μ = v'_μ + u'_μ`
+    rw [d.hJ p]
+    obtain ⟨a, _ | m⟩ := p
+    · simp [v', u', add_comm]
+    · simp [v', u', bsucc, add_comm]
+  · -- `Σ_{J'_μ} x = v'_{μ+1} + u'_μ`
+    obtain ⟨a, _ | m⟩ := p
+    · -- limit: `Σ_{I_μ ∪ I_{μ+1}} x = (v_μ + u_μ) + (v_{μ+1} + u_{μ+1})`, and `v_μ = 0`
+      have hdisj : Disjoint (d.I (a, 0)) (d.I (bsucc (a, 0))) :=
+        d.I_disjoint _ _ fun h => by simp [bsucc] at h
+      refine (lsumOf_union _ _ hdisj (d.I_small _) (d.I_small _) (J'_small (a, 0)) x).trans ?_
+      rw [d.hI, d.hI, d.v_limit]
+      simp only [v', u', bsucc]
+      simp
       abel
-    · have hU : lsumOf (lam := lam) (hJ'small (a, m + 1)) (fun j : J' (a, m + 1) => x j)
-          = d.v (bsucc (a, m + 1)) + d.u (bsucc (a, m + 1)) := d.hI (bsucc (a, m + 1))
-      rw [hU, hv'succ (a, m + 1), hu'succ a m]
-      exact add_comm _ _
-  exact ⟨{ I := d.J
-           J := J'
-           I_disjoint := d.J_disjoint
-           J_disjoint := hJ'disjoint
-           I_cover := d.J_cover
-           J_cover := hJ'cover
-           I_small := d.J_small
-           J_small := hJ'small
-           u := u'
-           v := v'
-           v_limit := hv'zero
-           hI := hI'eq
-           hJ := hJ'eq }⟩
+    · -- successor: `Σ_{I_{μ+1}} x = v_{μ+1} + u_{μ+1}`
+      refine (d.hI (bsucc (a, m + 1))).trans ?_
+      simp [v', u', bsucc, add_comm]
 
 end IsBraided
 

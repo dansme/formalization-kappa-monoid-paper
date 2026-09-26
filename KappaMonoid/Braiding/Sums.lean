@@ -302,6 +302,45 @@ theorem BraidingData.telescope {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
     abel
   rw [finsum_mem_congr rfl (fun a _ => hchain a), finsum_mem_add_distrib hA]
 
+/-! ### Rectangles of a partition -/
+
+/-- The *rectangle* of the partition `P` over the chains `a ∈ A` up to level `K`: the union of the
+pieces `P (a, k)` with `a ∈ A` and `k ≤ K`.  This is what the paper's cut `μ ≤ α` becomes for the
+`ι × ℕ` normal form, whose positions form many `ω`-chains instead of one well-order. -/
+def rect (P : ι × ℕ → Set ι) (A : Set ι) (K : ℕ) : Set ι :=
+  ⋃ a ∈ A, ⋃ k ∈ (Finset.range (K + 1) : Set ℕ), P (a, k)
+
+theorem rect_finite {P : ι × ℕ → Set ι} (hP : ∀ p, #(P p) < ℵ₀) {A : Set ι} (hA : A.Finite)
+    (K : ℕ) : (rect P A K).Finite :=
+  hA.biUnion fun a _ => (Finset.range (K + 1)).finite_toSet.biUnion
+    fun k _ => lt_aleph0_iff_set_finite.mp (hP (a, k))
+
+/-- An element lies in the rectangle as soon as its piece does. -/
+theorem mem_rect {P : ι × ℕ → Set ι} {A : Set ι} {K : ℕ} {i : ι} {p : ι × ℕ} (hi : i ∈ P p)
+    (hA : p.1 ∈ A) (hK : p.2 ≤ K) : i ∈ rect P A K :=
+  mem_biUnion hA (mem_biUnion (by simpa [Nat.lt_succ_iff] using hK) hi)
+
+/-- A sum over a rectangle of a partition is the double sum over its pieces. -/
+theorem finsum_rect {X : Type v} [LMonoid ℵ₀ X] {P : ι × ℕ → Set ι}
+    (hPd : ∀ p q, p ≠ q → Disjoint (P p) (P q)) (hP : ∀ p, #(P p) < ℵ₀) {A : Set ι}
+    (hA : A.Finite) (K : ℕ) (f : ι → X) :
+    ∑ᶠ i ∈ rect P A K, f i
+      = ∑ᶠ a ∈ A, ∑ k ∈ Finset.range (K + 1),
+        LMonoid.lsumOf (lam := ℵ₀) (hP (a, k)) (fun i : P (a, k) => f i) := by
+  have hfin : ∀ p, (P p).Finite := fun p => lt_aleph0_iff_set_finite.mp (hP p)
+  rw [rect, finsum_mem_biUnion _ hA fun a _ => (Finset.range (K + 1)).finite_toSet.biUnion
+    fun k _ => hfin (a, k)]
+  · refine finsum_mem_congr rfl fun a _ => ?_
+    rw [finsum_mem_biUnion _ (Finset.range (K + 1)).finite_toSet fun k _ => hfin (a, k),
+      finsum_mem_coe_finset]
+    · exact Finset.sum_congr rfl fun k _ => (LMonoid.lsumOf_eq_finsum (hP (a, k)) f).symm
+    · exact fun k _ k' _ hkk' => hPd (a, k) (a, k') fun h => hkk' (congrArg Prod.snd h)
+  · intro a _ a' _ haa'
+    refine Set.disjoint_left.mpr fun i hi hi' => ?_
+    obtain ⟨k, -, hk⟩ := mem_iUnion₂.mp hi
+    obtain ⟨k', -, hk'⟩ := mem_iUnion₂.mp hi'
+    exact Set.disjoint_left.mp (hPd (a, k) (a', k') fun h => haa' (congrArg Prod.fst h)) hk hk'
+
 /-- Forward implication of Lemma 3.4(4) (uncountable-`λ` collapse of braiding data), used in
 `isBraided_iff_of_ne_aleph0`. -/
 theorem exists_partition_of_isBraided_of_ne_aleph0 {lam : Cardinal.{u}} {X : Type v}
