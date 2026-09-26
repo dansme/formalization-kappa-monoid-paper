@@ -103,24 +103,21 @@ theorem sumOf_add {ι : Type u} (h : #ι ≤ κ) (f g : ι → H) :
     sumOf (κ := κ) h (fun i => f i + g i) = sumOf (κ := κ) h f + sumOf (κ := κ) h g :=
   LMonoid.lsumOf_add _ f g
 
+/-- Indices outside a subset off which the family vanishes may be dropped from a sum. -/
+theorem sumOf_eq_sumOf_subset {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (f : ι → H)
+    (hout : ∀ i ∉ S, f i = 0) :
+    sumOf (κ := κ) hι f = sumOf (κ := κ) hS (fun i : S => f i) := by
+  have huniv : #(Set.univ : Set ι) ≤ κ := (Cardinal.mk_congr (Equiv.Set.univ ι)).trans_le hι
+  calc sumOf (κ := κ) hι f = sumOf (κ := κ) huniv (fun i : (Set.univ : Set ι) => f i) :=
+        sumOf_equiv hι huniv (Equiv.Set.univ ι) f
+    _ = sumOf (κ := κ) hS (fun i : S => f i) :=
+        LMonoid.lsumOf_of_subset _ _ (Set.subset_univ S) f fun i _ hi => hout i hi
+
 /-- Terms with value `0` may be discarded. -/
 theorem sumOf_subtype_support {ι : Type u} (h : #ι ≤ κ) (x : ι → H)
     (h' : #(Function.support x) ≤ κ) :
-    sumOf (κ := κ) h x = sumOf (κ := κ) h' (fun i : Function.support x => x i) := by
-  classical
-  set e : Function.support x ↪ ι := Function.Embedding.subtype _ with hedef
-  have hfun : x = Function.extend (⇑e) (fun i : Function.support x => x i) 0 := by
-    funext i
-    by_cases hi : i ∈ Function.support x
-    · have hval : e ⟨i, hi⟩ = i := rfl
-      rw [← hval, e.injective.extend_apply]
-      rfl
-    · rw [Function.extend_apply' (fun i : Function.support x => x i) (0 : ι → H) i ?_]
-      · exact not_not.mp hi
-      · rintro ⟨t, ht⟩
-        exact hi (ht ▸ t.2)
-  conv_lhs => rw [hfun]
-  exact sumOf_extend h' h e _
+    sumOf (κ := κ) h x = sumOf (κ := κ) h' (fun i : Function.support x => x i) :=
+  sumOf_eq_sumOf_subset h h' x fun _ => Function.notMem_support.mp
 
 /-- A sum over `α ⊕ β` splits as a binary sum. -/
 theorem sumOf_sumType {α β : Type u} (hα : #α ≤ κ) (hβ : #β ≤ κ) (hαβ : #(α ⊕ β) ≤ κ)
@@ -158,69 +155,32 @@ theorem sumOf_eq_extend {ι : Type u} (h : #ι ≤ κ) (e : ι ↪ Idx κ) (x : 
 
 /-- (A1): a family concentrated in one index sums to its unique possibly nonzero entry. -/
 theorem ksum_single (i₀ : Idx κ) (x : Idx κ → H) (hx : ∀ i, i ≠ i₀ → x i = 0) :
-    ksum (κ := κ) x = x i₀ := by
-  classical
-  have hpt : #PUnit.{u + 1} ≤ κ := mk_le_of_finite (H := H) _
-  set e : PUnit.{u + 1} ↪ Idx κ := ⟨fun _ => i₀, fun _ _ _ => rfl⟩ with hedef
-  have hfun : x = Function.extend (⇑e) (fun _ : PUnit.{u + 1} => x i₀) 0 := by
-    funext i
-    by_cases hi : i = i₀
-    · have hval : e PUnit.unit = i₀ := rfl
-      rw [hi, ← hval, e.injective.extend_apply]
-    · rw [Function.extend_apply' _ _ _ (by rintro ⟨p, hp⟩; exact hi hp.symm)]
-      exact hx i hi
-  show sumOf (κ := κ) (le_of_eq (mk_Idx κ)) x = x i₀
-  conv_lhs => rw [hfun]
-  rw [sumOf_extend hpt (le_of_eq (mk_Idx κ)) e, sumOf_unique]
+    ksum (κ := κ) x = x i₀ :=
+  (sumOf_eq_sumOf_subset (S := {i₀}) _ (mk_le_of_finite (H := H) _) x hx).trans
+    (LMonoid.lsumOf_unique _ _)
 
 /-- (A2): the associativity law modelled on `⨁ᵢ ⨁ⱼ Mᵢⱼ ≅ ⨁_{(i,j)} Mᵢⱼ`. -/
 theorem ksum_sigma (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx κ) :
     ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
       = ksum (κ := κ) fun k => x (π.symm k).1 (π.symm k).2 := by
   have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
-  have hσ : #((_ : Idx κ) × Idx κ) ≤ κ := mk_sigma_le (H := H) hidx fun _ => hidx
-  have h1 : ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
-      = sumOf (κ := κ) hσ (fun p => x p.1 p.2) := sumOf_sigma hidx (fun _ => hidx) hσ x
-  have h2 : sumOf (κ := κ) hσ (fun p => x p.1 p.2)
-      = ksum (κ := κ) (fun k => x (π.symm k).1 (π.symm k).2) :=
-    sumOf_equiv hσ hidx (π.symm.trans (Equiv.sigmaEquivProd (Idx κ) (Idx κ)).symm) _
-  exact h1.trans h2
+  have hprod : #(Idx κ × Idx κ) ≤ κ := mk_prod_le (H := H) hidx hidx
+  calc ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
+      = sumOf (κ := κ) hprod (fun p => x p.1 p.2) := LMonoid.lsumOf_prod _ _ _ x
+    _ = ksum (κ := κ) fun k => x (π.symm k).1 (π.symm k).2 := sumOf_equiv hprod hidx π.symm _
 
 /-- Compatibility of `+` with `Σ`. -/
 theorem ksum_two (a b : H) (i₀ i₁ : Idx κ) (hne : i₀ ≠ i₁) :
     ksum (κ := κ) (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b := by
-  classical
-  have hUB : #(ULift.{u} Bool) ≤ κ := mk_uLift_bool_le κ H
-  set e : ULift.{u} Bool ↪ Idx κ := ⟨fun p => if p.down then i₀ else i₁, by
-    rintro ⟨(_ | _)⟩ ⟨(_ | _)⟩ h
-    · rfl
-    · exact absurd h.symm hne
-    · exact absurd h hne
-    · rfl⟩ with hedef
-  have he0 : e ⟨true⟩ = i₀ := rfl
-  have he1 : e ⟨false⟩ = i₁ := rfl
-  set F : ULift.{u} Bool → H := fun p => if p.down then a else b with hFdef
-  have hfun : (fun i => if i = i₀ then a else if i = i₁ then b else 0)
-      = Function.extend (⇑e) F 0 := by
-    funext i
-    by_cases h0 : i = i₀
-    · have hval : Function.extend (⇑e) F 0 i = a := by
-        rw [h0, ← he0, e.injective.extend_apply]
-        simp [hFdef]
-      rw [hval, if_pos h0]
-    · by_cases h1 : i = i₁
-      · have hval : Function.extend (⇑e) F 0 i = b := by
-          rw [h1, ← he1, e.injective.extend_apply]
-          simp [hFdef]
-        rw [hval, if_neg h0, if_pos h1]
-      · have hval : Function.extend (⇑e) F 0 i = 0 := by
-          apply Function.extend_apply'
-          rintro ⟨⟨(_ | _)⟩, hp⟩
-          · exact h1 (by rw [← hp, he1])
-          · exact h0 (by rw [← hp, he0])
-        rw [hval, if_neg h0, if_neg h1]
-  show sumOf (κ := κ) (le_of_eq (mk_Idx κ)) _ = a + b
-  rw [hfun, sumOf_extend hUB (le_of_eq (mk_Idx κ)) e, sumOf_two a b hUB]
+  let f : Idx κ → H := fun i => if i = i₀ then a else if i = i₁ then b else 0
+  have hp : #(↥({i₀, i₁} : Set (Idx κ))) ≤ κ := mk_le_of_finite (H := H) _
+  calc ksum (κ := κ) f
+      = sumOf (κ := κ) hp (fun i : ({i₀, i₁} : Set (Idx κ)) => f i) :=
+        sumOf_eq_sumOf_subset _ hp f fun i hi => by
+          simp only [Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at hi
+          simp [f, hi.1, hi.2]
+    _ = f i₀ + f i₁ := LMonoid.lsumOf_pair hne _ f
+    _ = a + b := by simp [f, hne.symm]
 
 /-- (A3), Lemma 2.5: `Σ` is invariant under permutations of the index set. -/
 theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) :
@@ -230,17 +190,8 @@ theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) :
 /-- (A4), Lemma 2.5: iterated sums may be interchanged. -/
 theorem ksum_comm (x : Idx κ → Idx κ → H) :
     ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
-      = ksum (κ := κ) (fun j => ksum (κ := κ) fun i => x i j) := by
-  have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
-  have hσ : #((_ : Idx κ) × Idx κ) ≤ κ := mk_sigma_le (H := H) hidx fun _ => hidx
-  have h1 : ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
-      = sumOf (κ := κ) hσ (fun p => x p.1 p.2) := sumOf_sigma hidx (fun _ => hidx) hσ x
-  have h2 : ksum (κ := κ) (fun j => ksum (κ := κ) fun i => x i j)
-      = sumOf (κ := κ) hσ (fun p => x p.2 p.1) :=
-    sumOf_sigma hidx (fun _ => hidx) hσ (fun j i => x i j)
-  rw [h1, h2]
-  exact sumOf_equiv hσ hσ ((Equiv.sigmaEquivProd (Idx κ) (Idx κ)).trans
-    ((Equiv.prodComm (Idx κ) (Idx κ)).trans (Equiv.sigmaEquivProd (Idx κ) (Idx κ)).symm)) _
+      = ksum (κ := κ) (fun j => ksum (κ := κ) fun i => x i j) :=
+  LMonoid.lsumOf_comm _ _ x
 
 /-- Zero-padding along a self-embedding of `Idx κ` does not change a `κ`-sum. -/
 theorem ksum_extend (g : Idx κ ↪ Idx κ) (x : Idx κ → H) :
@@ -322,23 +273,6 @@ theorem cmul_eq_sumOf {ι : Type u} (hι : #ι ≤ κ) (x : H) :
     cmul (κ := κ) #ι hι x = sumOf (κ := κ) hι (fun _ : ι => x) := by
   obtain ⟨e⟩ := Cardinal.eq.mp (mk_Idx (#ι))
   exact (sumOf_equiv hι (le_of_eq_of_le (mk_Idx (#ι)) hι) e (fun _ : ι => x)).symm
-
-/-- Indices outside a subset off which the family vanishes may be dropped from a sum. -/
-theorem sumOf_eq_sumOf_subset {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (f : ι → H)
-    (hout : ∀ i ∉ S, f i = 0) :
-    sumOf (κ := κ) hι f = sumOf (κ := κ) hS (fun i : S => f i) := by
-  classical
-  have hfun : f = Function.extend (Function.Embedding.subtype (· ∈ S)) (fun i : S => f i) 0 := by
-    funext i
-    by_cases hi : i ∈ S
-    · have hval : (Function.Embedding.subtype (· ∈ S)) ⟨i, hi⟩ = i := rfl
-      rw [← hval, (Function.Embedding.subtype (· ∈ S)).injective.extend_apply]
-      rfl
-    · rw [Function.extend_apply' (fun i : S => f i) (0 : ι → H) i
-        (by rintro ⟨t, ht⟩; exact hi (ht ▸ t.2))]
-      exact hout i hi
-  conv_lhs => rw [hfun]
-  exact sumOf_extend hS hι _ (fun i : S => f i)
 
 /-- A family taking the value `x` on `S` and `0` off it sums to `#S · x`. -/
 theorem sumOf_indicator {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (x : H) (f : ι → H)
