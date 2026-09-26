@@ -355,7 +355,7 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
             (fun i : (⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)) => x i)
         = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) =>
             lsumOf (lam := lam) (d.I_small (p : M)) (fun i : d.I (p : M) => x i)) :=
-          (LMonoid.lsumOf_biUnion_subset _ _ (fun p => Set.subset_iUnion _ p)
+          (LMonoid.lsumOf_biUnion_subset _ _
             (fun p p' hpp' => d.I_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl
             (hFlt q) (hIsmall q) (fun p => d.I_small (p : M)) x).symm
       _ = lsumOf (lam := lam) (hFlt q)
@@ -409,7 +409,7 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
             (fun j : (⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)) => y j)
         = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) =>
             lsumOf (lam := lam) (d.J_small (p : M)) (fun j : d.J (p : M) => y j)) :=
-          (LMonoid.lsumOf_biUnion_subset _ _ (fun p => Set.subset_iUnion _ p)
+          (LMonoid.lsumOf_biUnion_subset _ _
             (fun p p' hpp' => d.J_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl
             (hFlt q) (hJsmall q) (fun p => d.J_small (p : M)) y).symm
       _ = lsumOf (lam := lam) (hFlt q)

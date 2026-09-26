@@ -136,7 +136,7 @@ theorem sumOf_biUnion {ι J : Type u} (I : J → Set ι) (hdisj : ∀ p q, p ≠
       = sumOf (κ := κ) hι x := by
   have huniv : #(↥(Set.univ : Set ι)) ≤ κ := (Cardinal.mk_congr (Equiv.Set.univ ι)).trans_le hι
   have hkey := LMonoid.lsumOf_biUnion_subset (X := H) (Set.univ : Set ι) I
-    (fun p => Set.subset_univ _) hdisj hcover (lt_succ hJ) (lt_succ huniv)
+    hdisj hcover (lt_succ hJ) (lt_succ huniv)
     (fun p => lt_succ (hI p)) x
   calc sumOf (κ := κ) hJ (fun p => sumOf (κ := κ) (hI p) (fun i : I p => x i))
       = sumOf (κ := κ) huniv (fun i : (Set.univ : Set ι) => x i) := hkey

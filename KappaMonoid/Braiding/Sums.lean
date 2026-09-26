@@ -218,10 +218,10 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
       _ = ULift.up q.down := by rw [hd]
       _ = q := rfl
   have step1 := (LMonoid.lsumOf_biUnion_subset (⋃ n : N, d.I (a, n.down))
-    (fun n : N => d.I (a, n.down)) (fun n => Set.subset_iUnion (fun n : N => d.I (a, n.down)) n)
+    (fun n : N => d.I (a, n.down))
     hIdisj' rfl hNlt hI (fun n => d.I_small (a, n.down)) x).symm
   have step2 := (LMonoid.lsumOf_biUnion_subset (⋃ n : N, d.J (a, n.down))
-    (fun n : N => d.J (a, n.down)) (fun n => Set.subset_iUnion (fun n : N => d.J (a, n.down)) n)
+    (fun n : N => d.J (a, n.down))
     hJdisj' rfl hNlt hJ (fun n => d.J_small (a, n.down)) y).symm
   rw [step1, step2]
   have hIeq : (fun n : N =>
