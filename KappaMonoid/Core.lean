@@ -38,5 +38,6 @@ import KappaMonoid.Core.LamSmall
 import KappaMonoid.Core.LMonoid
 import KappaMonoid.Core.KMonoid
 import KappaMonoid.Core.Subobject
+import KappaMonoid.Core.IdxSum
 import KappaMonoid.Core.Bare
 import KappaMonoid.Core.LHom
