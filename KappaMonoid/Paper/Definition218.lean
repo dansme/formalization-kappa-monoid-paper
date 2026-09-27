@@ -351,7 +351,7 @@ theorem paper_B1 (a : Idx lam) (x : Idx lam → H) (hx : #(support x) < lam)
     exact Cardinal.one_lt_aleph0.trans_le (aleph0_le (lam := lam) (X := H))
   rw [← lsumOf_of_subset (hS := ⟨hsing⟩) (hT := ⟨hx⟩) hsub x
     fun i _ hi => Function.notMem_support.mp hi]
-  exact lsumOf_unique hsing _
+  exact lsumOf_unique (h := ⟨hsing⟩) _
 
 /-- (B2) for the sum over the support. -/
 theorem paper_B2 (x : Idx lam → Idx lam → H) (hrows : #{i | ∃ j, x i j ≠ 0} < lam)
@@ -392,7 +392,7 @@ theorem paper_B2 (x : Idx lam → Idx lam → H) (hrows : #{i | ∃ j, x i j ≠
     _ = lsumOf hrows (fun i : R => lsumOf hcols (fun j : C => x i j)) := by
         congr 1; funext i; exact hF i
     _ = lsumOf hsig (fun p : (_ : R) × C => x p.1 p.2) :=
-        lsumOf_sigma hrows (fun _ => hcols) (fun (i : R) (j : C) => x i j) hsig
+        lsumOf_sigma (h := ⟨hrows⟩) (hρ := fun _ => ⟨hcols⟩) (fun (i : R) (j : C) => x i j)
     _ = lsumOf hprod (fun p : R × C => x p.1 p.2) :=
         lsumOf_equiv (h := ⟨hsig⟩) (h' := ⟨hprod⟩) (Equiv.sigmaEquivProd R C).symm _
     _ = lsumOf hprod ((fun k : range φ => G k) ∘ Equiv.ofInjective φ hφ) := by

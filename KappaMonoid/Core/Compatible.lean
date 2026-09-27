@@ -22,8 +22,8 @@ theorem LMonoid.ext_of_lsumOf {lam : Cardinal.{u}} {X : Type v} {A B : LMonoid l
     (hadd : (letI := A; HAdd.hAdd : X → X → X) = (letI := B; HAdd.hAdd : X → X → X))
     (hsum : ∀ {ι : Type u} (h : #ι < lam) (x : ι → X),
       @LMonoid.lsumOf lam X A ι h x = @LMonoid.lsumOf lam X B ι h x) : A = B := by
-  obtain @⟨acmA, regA, sA, _, _, _, _⟩ := A
-  obtain @⟨acmB, regB, sB, _, _, _, _⟩ := B
+  obtain @⟨acmA, @⟨regA, sA, _, _, _⟩, _⟩ := A
+  obtain @⟨acmB, @⟨regB, sB, _, _, _⟩, _⟩ := B
   obtain rfl : acmA = acmB := AddCommMonoid.ext hadd
   obtain rfl : @sA = @sB := by
     funext ι h x
@@ -148,7 +148,7 @@ Paper proof: the only difficulty is (B2).  Since `κ` is regular, for a family o
 `λ_i < κ` indexed by a set of cardinality `< κ` also `λ' = ∑ λ_i < κ`, so any sum occurring in
 (B2) can be expressed in the `λ'`-monoid, where (B2) holds.  In the formalisation the regularity
 of `κ` is what guarantees the index `Σ i, ρ i` of (B2) to have cardinality `< κ` (the hypothesis
-`hσ` of `LMonoid.lsumOf_sigma`, supplied by `mk_sigma_lt`); `λ'` is then
+`hσ` of `SumData.sum_sigma`, supplied by `mk_sigma_lt`); `λ'` is then
 `max (max #ι #(Σ i, ρ i)) ℵ₀`, see `IsCompatible.compatSum_sigma`. -/
 @[instance_reducible]
 noncomputable def ofCompatible (hκ : κ.IsRegular) (hκ0 : ℵ₀ < κ)
@@ -156,11 +156,11 @@ noncomputable def ofCompatible (hκ : κ.IsRegular) (hκ0 : ℵ₀ < κ)
     LMonoid κ H :=
   { toAddCommMonoid := (S ℵ₀ le_rfl hκ0).toAddCommMonoid
     isRegular := hκ
-    lsumOf := compatSum S hκ0
-    lsumOf_congr := hS.compatSum_congr hκ0
-    lsumOf_unique := compatSum_unique hκ0
-    lsumOf_sigma := hS.compatSum_sigma hκ0
-    add_eq_lsumOf := hS.add_eq_compatSum hκ0 }
+    sum := compatSum S hκ0
+    sum_congr := hS.compatSum_congr hκ0
+    sum_unique := compatSum_unique hκ0
+    sum_sigma := hS.compatSum_sigma hκ0
+    add_eq_sum := hS.add_eq_compatSum hκ0 }
 
 /-- **Remark 2.19**: the sums of `ofCompatible` restrict to those of each member of the family. -/
 theorem ofCompatible_lsumOf (hκ : κ.IsRegular) (hκ0 : ℵ₀ < κ) (hS : IsCompatible κ S)
@@ -169,7 +169,7 @@ theorem ofCompatible_lsumOf (hκ : κ.IsRegular) (hκ0 : ℵ₀ < κ) (hS : IsCo
     letI := ofCompatible hκ hκ0 S hS
     lsumOf (lam := κ) (hι.trans_lt hl) x = (letI := S lam h0 hl; ∑[≤ lam] i, x i) := by
   let := ofCompatible hκ hκ0 S hS
-  exact hS.compatSum_eq hκ0 h0 hl hι _ x
+  exact hS.compatSum_eq hκ0 h0 hl hι (hι.trans_lt hl) x
 
 /-- **Remark 2.19**: the addition of `ofCompatible` is that of each member of the family. -/
 theorem ofCompatible_add (hκ : κ.IsRegular) (hκ0 : ℵ₀ < κ) (hS : IsCompatible κ S)

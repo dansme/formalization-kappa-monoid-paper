@@ -23,11 +23,11 @@ summation. -/
 noncomputable def ofAddCommMonoid (M : Type v) [inst : AddCommMonoid M] : LMonoid ℵ₀ M where
   toAddCommMonoid := inst
   isRegular := Cardinal.isRegular_aleph0
-  lsumOf := fun _ x => ∑ᶠ i, x i
-  lsumOf_congr := fun _ _ e x => finsum_comp_equiv e
-  lsumOf_unique := fun _ x =>
+  sum := fun _ x => ∑ᶠ i, x i
+  sum_congr := fun _ _ e x => finsum_comp_equiv e
+  sum_unique := fun _ x =>
     finsum_eq_single x default fun b hb => absurd (Unique.eq_default b) hb
-  lsumOf_sigma := fun {ι ρ} h hρ x hσ => by
+  sum_sigma := fun {ι ρ} h hρ x hσ => by
     have : Finite ι := mk_lt_aleph0_iff_finite.mp h
     have : ∀ i, Finite (ρ i) := fun i => mk_lt_aleph0_iff_finite.mp (hρ i)
     have : Finite ((i : ι) × ρ i) := mk_lt_aleph0_iff_finite.mp hσ
@@ -37,7 +37,7 @@ noncomputable def ofAddCommMonoid (M : Type v) [inst : AddCommMonoid M] : LMonoi
     rw [show (fun i => ∑ᶠ j, x i j) = fun i => ∑ j, x i j from
       funext fun i => finsum_eq_sum_of_fintype _]
     rw [finsum_eq_sum_of_fintype, ← Finset.univ_sigma_univ, Finset.sum_sigma]
-  add_eq_lsumOf := fun _ a b => by
+  add_eq_sum := fun _ a b => by
     rw [finsum_eq_sum_of_fintype, Fintype.sum_sum_type]
     simp
 
@@ -66,7 +66,8 @@ theorem lsumOf_eq_sum {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Ty
       show (fun p => x ((Equiv.optionEquivSumPUnit α).symm p))
         = Sum.elim (fun a => x (some a)) (fun _ => x none) by
         funext p; rcases p with p | p <;> rfl,
-      lsumOf_sumType (hα := ⟨hα⟩) (hβ := ⟨hu⟩), ih hα (fun a => x (some a)), lsumOf_unique,
+      lsumOf_sumType (hα := ⟨hα⟩) (hβ := ⟨hu⟩), ih hα (fun a => x (some a)),
+      lsumOf_unique (h := ⟨hu⟩),
       Fintype.sum_option]
     exact add_comm _ _
 

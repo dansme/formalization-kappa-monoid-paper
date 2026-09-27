@@ -92,14 +92,15 @@ noncomputable def lmonoid (hS : IsLSubmonoid lam S) : LMonoid lam ↥S :=
     addCommMonoidOfClosed hS.zero_mem fun _ ha _ hb => hS.add_mem ha hb
   { toAddCommMonoid := acm
     isRegular := LMonoid.isRegular' (X := X)
-    lsumOf := fun {ι} h x =>
+    sum := fun {ι} h x =>
       ⟨LMonoid.lsumOf (lam := lam) h fun i => (x i : X), hS.lsumOf_mem h _ fun i => (x i).2⟩
-    lsumOf_congr := fun h h' e x =>
+    sum_congr := fun h h' e x =>
       Subtype.ext (LMonoid.lsumOf_congr h h' e fun i => (x i : X))
-    lsumOf_unique := fun h x => Subtype.ext (LMonoid.lsumOf_unique h fun i => (x i : X))
-    lsumOf_sigma := fun h hρ x hσ =>
-      Subtype.ext (LMonoid.lsumOf_sigma h hρ (fun i j => (x i j : X)) hσ)
-    add_eq_lsumOf := fun h a b => Subtype.ext (by
+    sum_unique := fun h x => Subtype.ext (LMonoid.lsumOf_unique (h := ⟨h⟩) fun i => (x i : X))
+    sum_sigma := fun h hρ x hσ =>
+      Subtype.ext
+        (LMonoid.lsumOf_sigma (h := ⟨h⟩) (hρ := fun i => ⟨hρ i⟩) (fun i j => (x i j : X)))
+    add_eq_sum := fun h a b => Subtype.ext (by
       show (a : X) + (b : X) = LMonoid.lsumOf (lam := lam) h _
       rw [LMonoid.add_eq_lsumOf (lam := lam) h (a : X) (b : X)]
       exact congrArg _ (funext fun p => by rcases p with p | p <;> rfl)) }
@@ -151,15 +152,16 @@ noncomputable def IsKSubmonoid.kmonoid {S : Set H} (hS : IsKSubmonoid κ S) : KM
   { toAddCommMonoid := acm
     aleph0_le := aleph0_le (κ := κ) (H := H)
     isRegular := isRegular_succ' (H := H)
-    lsumOf := fun {ι} h x =>
+    sum := fun {ι} h x =>
       ⟨∑[≤ κ] i, (x i : H),
         hS.sumOf_mem (h := ⟨h⟩) _ fun i => (x i).2⟩
-    lsumOf_congr := fun h h' e x =>
+    sum_congr := fun h h' e x =>
       Subtype.ext (sumOf_equiv (h := CardLE.mk' (le_of_lt_succ h')) (h' := CardLE.mk' (le_of_lt_succ h)) e fun i => (x i : H)).symm
-    lsumOf_unique := fun h x => Subtype.ext (sumOf_unique (h := CardLE.mk' (le_of_lt_succ h)) fun i => (x i : H))
-    lsumOf_sigma := fun h hρ x hσ =>
+    sum_unique := fun h x =>
+      Subtype.ext (sumOf_unique (h := CardLE.mk' (le_of_lt_succ h)) fun i => (x i : H))
+    sum_sigma := fun h hρ x hσ =>
       Subtype.ext (sumOf_sigma (h := CardLE.mk' (le_of_lt_succ h)) (hρ := fun p => CardLE.mk' ((fun i => le_of_lt_succ (hρ i)) p)) fun i j => (x i j : H))
-    add_eq_lsumOf := fun h a b => Subtype.ext (by
+    add_eq_sum := fun h a b => Subtype.ext (by
       show (a : H) + (b : H) = LMonoid.lsumOf (lam := Order.succ κ) _ _
       rw [LMonoid.add_eq_lsumOf (lam := Order.succ κ) (le_of_lt_succ h |> lt_succ) (a : H) (b : H)]
       exact congrArg _ (funext fun p => by rcases p with p | p <;> rfl)) }
@@ -178,14 +180,15 @@ noncomputable def _root_.KappaMonoid.IsLSubset.lmonoid {lam : Cardinal.{u}} {hlk
   letI acm : AddCommMonoid ↥S := addCommMonoidOfClosed hS.zero_mem hadd
   { toAddCommMonoid := acm
     isRegular := hlam
-    lsumOf := fun {ι} h x =>
+    sum := fun {ι} h x =>
       ⟨∑[≤ κ] i, (x i : H), hS.sumOf_mem h _ fun i => (x i).2⟩
-    lsumOf_congr := fun h h' e x =>
+    sum_congr := fun h h' e x =>
       Subtype.ext (sumOf_equiv (h := CardLE.mk' (le_of_lt_of_le_succ hlk h')) (h' := CardLE.mk' (le_of_lt_of_le_succ hlk h)) e fun i => (x i : H)).symm
-    lsumOf_unique := fun h x => Subtype.ext (sumOf_unique (h := CardLE.mk' (le_of_lt_of_le_succ hlk h)) fun i => (x i : H))
-    lsumOf_sigma := fun h hρ x hσ =>
+    sum_unique := fun h x =>
+      Subtype.ext (sumOf_unique (h := CardLE.mk' (le_of_lt_of_le_succ hlk h)) fun i => (x i : H))
+    sum_sigma := fun h hρ x hσ =>
       Subtype.ext (sumOf_sigma (h := CardLE.mk' (le_of_lt_of_le_succ hlk h)) (hρ := fun p => CardLE.mk' ((fun i => le_of_lt_of_le_succ hlk (hρ i)) p)) fun i j => (x i j : H))
-    add_eq_lsumOf := fun h a b => Subtype.ext (by
+    add_eq_sum := fun h a b => Subtype.ext (by
       show (a : H) + (b : H) = LMonoid.lsumOf (lam := Order.succ κ) _ _
       rw [LMonoid.add_eq_lsumOf (lam := Order.succ κ) (lt_succ (le_of_lt_of_le_succ hlk h)) (a : H) (b : H)]
       exact congrArg _ (funext fun p => by rcases p with p | p <;> rfl)) }

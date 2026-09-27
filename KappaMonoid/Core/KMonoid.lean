@@ -72,7 +72,7 @@ theorem sumOf_equiv {ι ι' : Type u} [h : CardLE ι κ] [h' : CardLE ι' κ] (e
 
 @[simp] theorem sumOf_unique {ι : Type u} [Unique ι] [h : CardLE ι κ] (x : ι → H) :
     ∑[≤ κ] i, x i = x default :=
-  LMonoid.lsumOf_unique _ x
+  LMonoid.lsumOf_unique x
 
 @[simp] theorem sumOf_of_isEmpty {ι : Type u} [IsEmpty ι] [h : CardLE ι κ] (x : ι → H) :
     ∑[≤ κ] i, x i = 0 :=
@@ -86,7 +86,7 @@ of a partition. -/
 theorem sumOf_sigma {ι : Type u} {ρ : ι → Type u} [h : CardLE ι κ] [hρ : ∀ i, CardLE (ρ i) κ]
     (x : ∀ i, ρ i → H) :
     ∑[≤ κ] i, ∑[≤ κ] j, x i j = ∑[≤ κ] p : (i : ι) × ρ i, x p.1 p.2 :=
-  LMonoid.lsumOf_sigma _ (fun i => (hρ i).lt) x _
+  LMonoid.lsumOf_sigma x
 
 /-- Zero-padding along an embedding does not change a `κ`-sum. -/
 theorem sumOf_extend {ι ι' : Type u} [h : CardLE ι κ] [h' : CardLE ι' κ] (e : ι ↪ ι')
@@ -154,7 +154,7 @@ theorem sumOf_eq_extend {ι : Type u} [h : CardLE ι κ] (e : ι ↪ Idx κ) (x 
 theorem ksum_single (i₀ : Idx κ) (x : Idx κ → H) (hx : ∀ i, i ≠ i₀ → x i = 0) :
     ksum (κ := κ) x = x i₀ := by
   have := LMonoid.factRegular (lam := Order.succ κ) (X := H)
-  exact (sumOf_eq_sumOf_subset (S := {i₀}) x hx).trans (LMonoid.lsumOf_unique _ _)
+  exact (sumOf_eq_sumOf_subset (S := {i₀}) x hx).trans (LMonoid.lsumOf_unique _)
 
 /-- (A2): the associativity law modelled on `⨁ᵢ ⨁ⱼ Mᵢⱼ ≅ ⨁_{(i,j)} Mᵢⱼ`. -/
 theorem ksum_sigma (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx κ) :

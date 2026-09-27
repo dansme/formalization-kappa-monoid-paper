@@ -512,7 +512,7 @@ theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < l
   have : Unique ({i} : Set ι) := ⟨⟨⟨i, rfl⟩⟩, fun j => Subtype.ext j.2⟩
   have hdef : ((default : ({i} : Set ι)) : ι) = i := (default : ({i} : Set ι)).2
   have hsingle : ∑[lam] j ∈ ({i} : Set ι), f j = f i := by
-    rw [LMonoid.lsumOf_unique h1 (fun j : ({i} : Set ι) => f j), hdef]
+    rw [LMonoid.lsumOf_unique (h := ⟨h1⟩) (fun j : ({i} : Set ι) => f j), hdef]
   rw [hsingle] at hsplit
   exact (hcon _ _ hsplit.symm).1
 

@@ -166,7 +166,8 @@ theorem lsumOf_slot0 (hlam0 : ℵ₀ ≤ lam) (f : ι → ι) (x : ι → X) (p 
       = if p.2 = 0 then x (f p.1) else 0 := by
   obtain ⟨a, (_ | n)⟩ := p
   · let : Unique ↥(slot0 f (a, 0)) := Set.uniqueSingleton (f a)
-    rw [lsumOf_unique (slot0_small hlam0 f (a, 0)) (fun i : slot0 f (a, 0) => x i), if_pos rfl]
+    rw [lsumOf_unique (h := ⟨slot0_small hlam0 f (a, 0)⟩)
+      (fun i : slot0 f (a, 0) => x i), if_pos rfl]
     rfl
   · let : IsEmpty ↥(slot0 f (a, n + 1)) := inferInstanceAs (IsEmpty (↥(∅ : Set ι)))
     rw [lsumOf_isEmpty (h := ⟨slot0_small hlam0 f (a, n + 1)⟩) (fun i => x i),

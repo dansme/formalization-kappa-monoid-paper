@@ -77,7 +77,8 @@ elab "lam_small" : tactic => withMainContext do
       break
     if t.isAppOfArity ``KappaMonoid.LMonoid 2 then
       if ← isDefEq t.appFn!.appArg! lam then
-        proof? := some (← mkAppOptM ``KappaMonoid.LMonoid.isRegular #[lam, t.appArg!, d.toExpr])
+        proof? := some (← mkAppM ``KappaMonoid.SumData.isRegular
+          #[← mkAppOptM ``KappaMonoid.LMonoid.toSumData #[lam, t.appArg!, d.toExpr]])
         break
     -- a `κ`-monoid is a `λ⁻`-monoid for `λ = κ⁺`
     if t.isAppOfArity `KappaMonoid.KMonoid 2 then

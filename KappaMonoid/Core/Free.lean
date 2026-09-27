@@ -212,7 +212,7 @@ theorem lift_eq_of_subset (f : B → X) (x : ↥(FreeL lam B)) {S : Set B} (hS :
     le_of_eq (csupport_iotaFun b)
   rw [lift_eq_of_subset f (iota b) hsing hsub]
   let : Unique ↥({b} : Set B) := Set.uniqueSingleton b
-  rw [LMonoid.lsumOf_unique]
+  rw [LMonoid.lsumOf_unique (h := ⟨hsing⟩)]
   have hdef : ((default : ↥({b} : Set B)) : B) = b := rfl
   rw [term_def, hdef,
     LMonoid.lcmul_congr
@@ -293,7 +293,7 @@ theorem lift_iota_apply (x : ↥(FreeL lam B)) (b' : B) :
     have hsub : ({b'} : Set B) ⊆ csupport (x : B → LCard lam) := by rintro c rfl; exact hmem
     rw [LMonoid.lsumOf_of_subset (hS := ⟨x.2⟩) (hT := ⟨hsing⟩) hsub _ hzero]
     let : Unique ↥({b'} : Set B) := Set.uniqueSingleton b'
-    rw [LMonoid.lsumOf_unique]
+    rw [LMonoid.lsumOf_unique (h := ⟨hsing⟩)]
     apply Subtype.ext
     have hdef : ((default : ↥({b'} : Set B)) : B) = b' := rfl
     rw [val_term_iota_apply, hdef, val_iotaFun_self, mul_one]

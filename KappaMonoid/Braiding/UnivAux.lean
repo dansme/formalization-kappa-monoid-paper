@@ -206,7 +206,7 @@ theorem of_aggregation {ι : Type u} {x y : ι → X} (A : ι → Set ι)
   match n with
   | 0 =>
     let : Unique ↥(J (a, 0)) := Set.uniqueSingleton a
-    rw [lsumOf_unique (hJsmall (a, 0)) (fun i : J (a, 0) => y i)]
+    rw [lsumOf_unique (h := ⟨hJsmall (a, 0)⟩) (fun i : J (a, 0) => y i)]
     exact (hsum a).trans rfl
   | 1 =>
     have hL : ∑[lam] i ∈ I (a, 1), x i = 0 := by
@@ -239,7 +239,7 @@ theorem isBraided_extend {ι : Type u} (e : ι ↪ ι) (w : ι → X) :
   · exact Function.extend_apply' w (0 : ι → X) i
       (fun ⟨c, hc⟩ => hi (Set.mem_iUnion.mpr ⟨c, hc.symm⟩))
   · let : Unique ↥({e a} : Set ι) := Set.uniqueSingleton (e a)
-    rw [lsumOf_unique (hsmall a) (fun i : ({e a} : Set ι) => Function.extend e w 0 i)]
+    rw [lsumOf_unique (h := ⟨hsmall a⟩) (fun i : ({e a} : Set ι) => Function.extend e w 0 i)]
     show Function.extend e w 0 (e a) = w a
     exact e.injective.extend_apply w 0 a
 

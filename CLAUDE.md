@@ -107,7 +107,11 @@ unbuilt edits to the file's imports; and a new file importing another new file n
   `lam κ : Cardinal.{u}`. Declare universes at the top of the file rather than relying on
   auto-binding (see trap 5).
 - **Prove at the `λ⁻` level and specialise to `κ`.** `KMonoid κ H` *is* `LMonoid (Order.succ κ) H`
-  plus `ℵ₀ ≤ κ`, and `#ι ≤ κ ↔ #ι < Order.succ κ`.
+  plus `ℵ₀ ≤ κ`, and `#ι ≤ κ ↔ #ι < Order.succ κ`.  `LMonoid` extends `SumData` (the bare
+  summation of Definition 2.18) and `AddCommMonoid`; the raw axioms `SumData.sum_congr`,
+  `sum_unique`, `sum_sigma` and `add_eq_sum` take explicit bounds and are for *building*
+  instances.  Proofs use `LMonoid.lsumOf` (`∑[λ]`) and its API: `lsumOf_equiv`/`lsumOf_reindex`,
+  `lsumOf_unique`, `lsumOf_sigma`, `lsumOf_sumType`, `lsumOf_prod`, `lsumOf_const`.
 - **Cardinality side conditions.** Write sums as `∑[lam] i ∈ S, f i` or `∑[lam] i : ι, f i`, and
   at the `κ` level `∑[≤ κ] i, f i` (= `∑[Order.succ κ] …`); scoped notation in `KappaMonoid`,
   expanding to `lsumOf (lam := lam) (by lam_small) _`.  The `lam_small` tactic

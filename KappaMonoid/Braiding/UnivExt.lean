@@ -329,7 +329,8 @@ theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ Order.succ 
         (fun i => if i = i₀ then c else 0)
         (fun i _ hi => if_neg (fun h : i = i₀ => hi (by rw [h]; rfl)))]
     let : Unique ({i₀} : Set (Idx κ)) := Set.uniqueSingleton i₀
-    rw [lsumOf_unique hsingle (fun i : ({i₀} : Set (Idx κ)) => (if (i : Idx κ) = i₀ then c else 0))]
+    rw [lsumOf_unique (h := ⟨hsingle⟩)
+      (fun i : ({i₀} : Set (Idx κ)) => (if (i : Idx κ) = i₀ then c else 0))]
     exact if_pos rfl
   have hsum0 : ∀ (S : Set (Idx κ)) (hS : #S < lam) (c : X), i₀ ∉ S →
       ∑[lam] i ∈ S, (if (i : Idx κ) = i₀ then c else 0) = 0 :=
@@ -455,7 +456,7 @@ theorem theorem_3_12 (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (X : T
       refine isBraided_of_small_sets hsingle hrange (fun i hi => if_neg (fun hc => hi hc))
         (fun j hj => Function.extend_apply' z (0 : Idx κ → X) j (fun ⟨i, hi⟩ => hj ⟨i, hi⟩)) ?_
       let : Unique ({i₀} : Set (Idx κ)) := Set.uniqueSingleton i₀
-      rw [lsumOf_unique hsingle
+      rw [lsumOf_unique (h := ⟨hsingle⟩)
         (fun i : ({i₀} : Set (Idx κ)) => (if (i : Idx κ) = i₀ then lsumOf h z else 0))]
       have hdef : ((default : ({i₀} : Set (Idx κ))) : Idx κ) = i₀ := rfl
       rw [hdef, if_pos rfl]

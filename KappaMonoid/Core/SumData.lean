@@ -12,9 +12,15 @@ namespace KappaMonoid
 
 /-! ## Bare summation data
 
-`SumData lam X` is a `λ⁻`-monoid structure without its additive monoid: the data of
-Definition 2.18 and nothing else.  `SumData.toLMonoid` reconstructs the addition
-(Lemma 2.5), so no generality is lost by letting `LMonoid` extend `AddCommMonoid`. -/
+`SumData lam X` is the data of Definition 2.18 and nothing else: a summation operation and its
+three axioms.  A `λ⁻`-monoid *is* such data (`LMonoid` extends `SumData`), together with the
+addition it induces.  `SumData.toLMonoid` reconstructs that addition (Lemma 2.5), so no generality
+is lost by letting `LMonoid` also extend `AddCommMonoid`.
+
+The axioms are stated here with explicit bounds, `sum h x` for `h : #ι < λ`, which is the form
+convenient for *building* summation data.  For *using* them, `LMonoid.lean` restates them as
+`lsumOf_equiv`, `lsumOf_unique`, `lsumOf_sigma`, with the bounds as `CardLT` instances and the sums
+in the `∑[λ]` notation. -/
 
 /-- The data of a `λ⁻`-monoid: a summation operation for families indexed by an arbitrary
 type of cardinality `< lam`, subject to reindexing (A3), the one-point law (A1/B1) and the
@@ -74,7 +80,8 @@ theorem sum_sumType {α β : Type u} (hα : #α < lam) (hβ : #β < lam) (hαβ 
       = S.sum (mk_sigma_lt S.isRegular h2 hρ) (fun q => y q.1 q.2) :=
         S.sum_equiv _ _ (sumEquivSigma α β) (by rintro (_ | _) <;> rfl)
     _ = S.sum h2 (fun p => S.sum (hρ p) (y p)) := (S.sum_sigma h2 hρ y _).symm
-    _ = S.add (S.sum hα f) (S.sum hβ g) := S.sum_equiv _ _ (Equiv.refl _) (by rintro (_ | _) <;> rfl)
+    _ = S.add (S.sum hα f) (S.sum hβ g) :=
+        S.sum_equiv _ _ (Equiv.refl _) (by rintro (_ | _) <;> rfl)
 
 /-! Lemma 2.5: `add` is a commutative monoid operation with neutral element `zero`.  Each law is
 `sum_sumType` together with one reindexing of the three-point (or one-point) index type. -/
@@ -99,7 +106,8 @@ theorem zero_add' (a : X) : S.add S.zero a = a := by
   calc S.add S.zero a
       = S.sum (S.hsum he hu) (Sum.elim PEmpty.elim fun _ => a) := by
         rw [S.sum_sumType he hu, S.sum_punit]; rfl
-    _ = S.sum hu (fun _ => a) := S.sum_equiv _ _ (Equiv.emptySum _ _) (by rintro (e | _); exacts [e.elim, rfl])
+    _ = S.sum hu (fun _ => a) :=
+        S.sum_equiv _ _ (Equiv.emptySum _ _) (by rintro (e | _); exacts [e.elim, rfl])
     _ = a := S.sum_punit a
 
 /-- The commutative monoid determined by the summation, on a type that already carries the neutral
@@ -128,29 +136,38 @@ end SumData
 
 /-! ## `λ⁻`-monoids (Definition 2.18) and `κ`-monoids (Definition 2.1) -/
 
-/-- A `λ⁻`-monoid for a regular cardinal `λ`: a commutative monoid together with a summation
-operation for families indexed by any type of cardinality `< λ`, compatible with `+`.
+/-- A `λ⁻`-monoid for a regular cardinal `λ` (Definition 2.18): summation data (`SumData`) on a
+commutative monoid whose `+` is the two-point sum.
 
 For `λ = κ⁺` this is Definition 2.1 of a `κ`-monoid, see `KMonoid`; for `λ = ℵ₀` it is just a
 commutative monoid, see `LMonoid.ofAddCommMonoid`. -/
-class LMonoid (lam : Cardinal.{u}) (X : Type v) extends AddCommMonoid X where
-  /-- `lam` is regular. -/
-  isRegular : lam.IsRegular
-  /-- The summation operation for families indexed by a type of cardinality `< lam`. -/
-  lsumOf : ∀ {ι : Type u}, #ι < lam → (ι → X) → X
-  /-- Sums are invariant under reindexing. -/
-  lsumOf_congr : ∀ {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : ι ≃ ι') (x : ι' → X),
-      lsumOf h (x ∘ e) = lsumOf h' x
-  /-- (B1): a sum over a one-point index type is its unique entry. -/
-  lsumOf_unique : ∀ {ι : Type u} [Unique ι] (h : #ι < lam) (x : ι → X), lsumOf h x = x default
-  /-- (B2): a sum may be computed by first summing over the fibres of a partition. -/
-  lsumOf_sigma : ∀ {ι : Type u} {ρ : ι → Type u} (h : #ι < lam) (hρ : ∀ i, #(ρ i) < lam)
-      (x : ∀ i, ρ i → X) (hσ : #((i : ι) × ρ i) < lam),
-      lsumOf h (fun i => lsumOf (hρ i) (x i)) = lsumOf hσ (fun p => x p.1 p.2)
+class LMonoid (lam : Cardinal.{u}) (X : Type v) extends AddCommMonoid X, SumData lam X where
   /-- Compatibility of `+` with the summation.  This is not an extra assumption: by
   Lemma 2.5 the binary sum *is* an addition, see `SumData.toLMonoid`. -/
-  add_eq_lsumOf : ∀ (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X),
-      a + b = lsumOf h (Sum.elim (fun _ => a) (fun _ => b))
+  add_eq_sum : ∀ (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X),
+      a + b = sum h (Sum.elim (fun _ => a) (fun _ => b))
+
+namespace LMonoid
+
+/-- The sum of a family indexed by a type of cardinality `< lam`; written `∑[lam] i, x i`. -/
+abbrev lsumOf {lam : Cardinal.{u}} {X : Type v} [inst : LMonoid lam X] {ι : Type u}
+    (h : #ι < lam) (x : ι → X) : X :=
+  inst.sum h x
+
+/-- The addition is the sum over the two-point type `PUnit ⊕ PUnit`. -/
+theorem add_eq_lsumOf {lam : Cardinal.{u}} {X : Type v} [inst : LMonoid lam X]
+    (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X) :
+    a + b = lsumOf h (Sum.elim (fun _ => a) (fun _ => b)) :=
+  inst.add_eq_sum h a b
+
+/-- Reindexing, with explicit bounds: the axiom `SumData.sum_congr`.  For proofs use
+`lsumOf_equiv`. -/
+theorem lsumOf_congr {lam : Cardinal.{u}} {X : Type v} [inst : LMonoid lam X] {ι ι' : Type u}
+    (h : #ι < lam) (h' : #ι' < lam) (e : ι ≃ ι') (x : ι' → X) :
+    lsumOf h (x ∘ e) = lsumOf h' x :=
+  inst.sum_congr h h' e x
+
+end LMonoid
 
 namespace SumData
 
@@ -159,15 +176,10 @@ variable {lam : Cardinal.{u}} {X : Type v} (S : SumData lam X)
 /-- The `λ⁻`-monoid determined by summation data on a type that already carries a compatible
 commutative monoid structure. -/
 @[instance_reducible]
-noncomputable def toLMonoid' [AddCommMonoid X]
+noncomputable def toLMonoid' [inst : AddCommMonoid X]
     (hadd : ∀ (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X),
-      a + b = S.sum h (Sum.elim (fun _ => a) (fun _ => b))) : LMonoid lam X where
-  isRegular := S.isRegular
-  lsumOf := S.sum
-  lsumOf_congr := S.sum_congr
-  lsumOf_unique := S.sum_unique
-  lsumOf_sigma := S.sum_sigma
-  add_eq_lsumOf := hadd
+      a + b = S.sum h (Sum.elim (fun _ => a) (fun _ => b))) : LMonoid lam X :=
+  { toAddCommMonoid := inst, toSumData := S, add_eq_sum := hadd }
 
 /-- The `λ⁻`-monoid determined by bare summation data (Lemma 2.5). -/
 @[instance_reducible]
