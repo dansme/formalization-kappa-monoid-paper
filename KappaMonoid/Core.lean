@@ -31,6 +31,7 @@ Design notes (see also `README.md`):
   distinguished element and no `0`.
 -/
 import KappaMonoid.Core.Index
+import KappaMonoid.Core.CardLT
 import KappaMonoid.Core.SumData
 import KappaMonoid.Core.LamSmall
 import KappaMonoid.Core.LMonoid

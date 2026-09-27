@@ -16,6 +16,7 @@ The notation `∑[λ] i ∈ S, f i` (and `∑[λ] i : ι, f i`, `∑[λ] i, f i`
 `lam_small`: the paper's `Σ_{i ∈ S} f_i`, with the standing convention `|S| < λ` left implicit.
 -/
 import KappaMonoid.Core.SumData
+import KappaMonoid.Core.CardLT
 
 open Cardinal
 
@@ -37,6 +38,7 @@ set_option hygiene false in
 macro_rules
   | `(tactic| lam_small_core $reg) => `(tactic| first
       | assumption
+      | exact KappaMonoid.CardLT.lt
       | exact KappaMonoid.mk_lt_of_finite $reg _
       | exact lt_of_eq_of_lt (KappaMonoid.mk_Idx _) ‹_›
       | solve_by_elim (exfalso := false) (symm := false) (maxDepth := 3) using lam_small_rule
@@ -44,6 +46,7 @@ macro_rules
       | (refine KappaMonoid.mk_sum_lt $reg ?_ ?_ <;> lam_small_core $reg)
       | (refine KappaMonoid.mk_sigma_lt $reg ?_ fun _ => ?_ <;> lam_small_core $reg)
       | (refine KappaMonoid.mk_union_lt $reg ?_ ?_ <;> lam_small_core $reg)
+      | (haveI := Fact.mk $reg; exact KappaMonoid.CardLT.lt)
       | fail "lam_small: cannot split this goal into hypotheses and finite types")
 
 open Lean Meta Elab Tactic in
