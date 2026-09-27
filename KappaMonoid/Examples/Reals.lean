@@ -258,7 +258,9 @@ theorem sumData_zero :
 /-- **Examples 3.3(2)**: `H = ℝ≥0 ∪ ℝ̃>0 ∪ {∞}` is an `ℵ₀`-monoid. -/
 @[instance_reducible]
 noncomputable def instKMonoid : KMonoid (ℵ₀ : Cardinal.{u}) RTilde where
-  toLMonoid := sumData.toLMonoidOfZero sumData_zero
+  toLMonoid :=
+    letI := sumData.addCommMonoidOfZero sumData_zero
+    LMonoid.ofSumData' sumData fun _ _ _ => rfl
   aleph0_le := le_rfl
 
 /-- The `ℵ₀`-sum of `H` is `sigma`. -/

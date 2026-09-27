@@ -262,7 +262,7 @@ noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ �
     KMonoid κ (UnivExt lam κ X) :=
   letI hκ : ℵ₀ ≤ κ := aleph0_le_of_aleph0_le_succ (hlam.aleph0_le.trans hlk)
   letI := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
-  KMonoid.ofKsum
+  KMonoid.ofBare'
     { aleph0_le := hκ
       i₀ := (nonempty_Idx hκ).some
       ksum := ksumQ hκ
@@ -277,7 +277,7 @@ noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ �
     ksum (κ := κ) A = ksumQ (aleph0_le_of_aleph0_le_succ (hlam.aleph0_le.trans hlk)) A := by
   let hκ : ℵ₀ ≤ κ := aleph0_le_of_aleph0_le_succ (hlam.aleph0_le.trans hlk)
   let := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
-  exact KMonoid.ofKsum_ksum
+  exact KMonoid.ofBare'_ksum
     { aleph0_le := hκ
       i₀ := (nonempty_Idx hκ).some
       ksum := ksumQ hκ

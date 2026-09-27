@@ -14,7 +14,7 @@ namespace KappaMonoid
 
 `SumData lam X` is the data of Definition 2.18 and nothing else: a summation operation and its
 three axioms.  A `λ⁻`-monoid *is* such data (`LMonoid` extends `SumData`), together with the
-addition it induces.  `SumData.toLMonoid` reconstructs that addition (Lemma 2.5), so no generality
+addition it induces.  `LMonoid.ofSumData` reconstructs that addition (Lemma 2.5), so no generality
 is lost by letting `LMonoid` also extend `AddCommMonoid`.
 
 The axioms are stated here with explicit bounds, `sum h x` for `h : #ι < λ`, which is the form
@@ -143,7 +143,7 @@ For `λ = κ⁺` this is Definition 2.1 of a `κ`-monoid, see `KMonoid`; for `λ
 commutative monoid, see `LMonoid.ofAddCommMonoid`. -/
 class LMonoid (lam : Cardinal.{u}) (X : Type v) extends AddCommMonoid X, SumData lam X where
   /-- Compatibility of `+` with the summation.  This is not an extra assumption: by
-  Lemma 2.5 the binary sum *is* an addition, see `SumData.toLMonoid`. -/
+  Lemma 2.5 the binary sum *is* an addition, see `LMonoid.ofSumData`. -/
   add_eq_sum : ∀ (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X),
       a + b = sum h (Sum.elim (fun _ => a) (fun _ => b))
 
@@ -169,31 +169,27 @@ theorem lsumOf_congr {lam : Cardinal.{u}} {X : Type v} [inst : LMonoid lam X] {�
 
 end LMonoid
 
-namespace SumData
+namespace LMonoid
 
-variable {lam : Cardinal.{u}} {X : Type v} (S : SumData lam X)
+variable {lam : Cardinal.{u}} {X : Type v}
 
 /-- The `λ⁻`-monoid determined by summation data on a type that already carries a compatible
-commutative monoid structure. -/
+commutative monoid structure; the given `+` and `0` are kept, so no second addition appears in
+instance search.  A type carrying only a `0` uses `SumData.addCommMonoidOfZero` as `inst`. -/
 @[instance_reducible]
-noncomputable def toLMonoid' [inst : AddCommMonoid X]
+noncomputable def ofSumData' [inst : AddCommMonoid X] (S : SumData lam X)
     (hadd : ∀ (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam) (a b : X),
       a + b = S.sum h (Sum.elim (fun _ => a) (fun _ => b))) : LMonoid lam X :=
   { toAddCommMonoid := inst, toSumData := S, add_eq_sum := hadd }
 
-/-- The `λ⁻`-monoid determined by bare summation data (Lemma 2.5). -/
+/-- The `λ⁻`-monoid determined by bare summation data (Lemma 2.5): `+` is the two-point sum and
+`0` the empty sum. -/
 @[instance_reducible]
-noncomputable def toLMonoid : LMonoid lam X :=
+noncomputable def ofSumData (S : SumData lam X) : LMonoid lam X :=
   letI := S.addCommMonoid
-  S.toLMonoid' fun _ _ _ => rfl
+  ofSumData' S fun _ _ _ => rfl
 
-/-- Variant of `toLMonoid` for a type that already carries the neutral element. -/
-@[instance_reducible]
-noncomputable def toLMonoidOfZero [Zero X] (h0 : S.zero = 0) : LMonoid lam X :=
-  letI := S.addCommMonoidOfZero h0
-  S.toLMonoid' fun _ _ _ => rfl
-
-end SumData
+end LMonoid
 
 /-! ## Reducedness -/
 

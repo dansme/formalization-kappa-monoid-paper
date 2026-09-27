@@ -199,7 +199,7 @@ noncomputable def splitSumData {u : H} (hu : IsFaithful (κ := κ) u)
 @[instance_reducible]
 noncomputable def splitKMonoid {u : H} (hu : IsFaithful (κ := κ) u)
     (hgen : KGenerates κ ({u} : Set H)) : KMonoid κ (Split κ u) :=
-  { toLMonoid := (splitSumData hu hgen).toLMonoid
+  { toLMonoid := LMonoid.ofSumData (splitSumData hu hgen)
     aleph0_le := aleph0_le (κ := κ) (H := H) }
 
 /-- The sums of `splitKMonoid` are the obvious ones. -/

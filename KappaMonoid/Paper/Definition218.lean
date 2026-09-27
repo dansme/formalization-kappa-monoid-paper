@@ -2,10 +2,11 @@
 **Definition 2.18 verbatim.**  `PaperLMonoid` transcribes the paper's definition of a
 `λ⁻`-monoid literally - a `Zero`, a map `Σ : H^(λ) → H` on the `λ`-indexed families of support
 `< λ`, (B1) at one distinguished index, (B2) for families with fewer than `λ` nonzero rows and
-columns and every bijection `λ × λ ≃ λ` - and `toLMonoid` / `LMonoid.toPaper` show that it agrees
-with the `LMonoid` the development uses.  Nothing else depends on this file; it exists so that the
-working definition can be checked against the paper's, as `Paper/Definition21.lean` does for
-Definition 2.1.
+columns and every bijection `λ × λ ≃ λ` - and `LMonoid.ofPaper` / `LMonoid.toPaper` show that it
+agrees with the `LMonoid` the development uses.  The zero padding behind `ofPaper` is
+`IdxSumData` (`Core/IdxSum.lean`), shared with Definition 2.1.  Nothing else depends on this file;
+it exists so that the working definition can be checked against the paper's, as
+`Paper/Definition21.lean` does for Definition 2.1.
 -/
 import KappaMonoid.Core.Bare
 import KappaMonoid.Core.Compatible
@@ -122,15 +123,23 @@ noncomputable def toIdxSumData : IdxSumData lam lam H where
   tot_single := fun _ hx => P.tot_single hx
   tot_sigma := P.tot_B2
 
+end PaperLMonoid
+
 /-- **Every `λ⁻`-monoid in the sense of the paper is one in the sense of `LMonoid`.** -/
 @[instance_reducible]
-noncomputable def toLMonoid : LMonoid lam H := P.toIdxSumData.toLMonoid
+noncomputable def LMonoid.ofPaper {lam : Cardinal.{u}} {H : Type v} [Zero H]
+    (P : PaperLMonoid lam H) : LMonoid lam H :=
+  LMonoid.ofIdxSumData P.toIdxSumData
+
+namespace PaperLMonoid
+
+variable {lam : Cardinal.{u}} {H : Type v} [Zero H] (P : PaperLMonoid lam H)
 
 /-- The reconstructed sums are zero-padded `Σ`'s, along any embedding into `λ`. -/
-theorem toLMonoid_lsumOf {ι : Type u} (h : #ι < lam) (e : ι ↪ Idx lam) (x : ι → H) :
-    letI := P.toLMonoid
+theorem ofPaper_lsumOf {ι : Type u} (h : #ι < lam) (e : ι ↪ Idx lam) (x : ι → H) :
+    letI := LMonoid.ofPaper P
     LMonoid.lsumOf (lam := lam) h x = P.sigma (extend e x 0) (IdxSumData.small_extend h e x) := by
-  let := P.toLMonoid
+  let := LMonoid.ofPaper P
   exact (P.toIdxSumData.tot_extend_eq h e x).symm.trans (P.tot_eq _)
 
 end PaperLMonoid
@@ -218,8 +227,8 @@ noncomputable def toPaper (lam : Cardinal.{u}) (H : Type v) [LMonoid lam H] :
 
 /-- The round trip `toPaper` then `toLMonoid` gives back the same `λ⁻`-monoid: not only the same
 sums, but the same structure. -/
-theorem toPaper_toLMonoid (lam : Cardinal.{u}) (H : Type v) [M : LMonoid lam H] :
-    (toPaper lam H).toLMonoid = M := by
+theorem ofPaper_toPaper (lam : Cardinal.{u}) (H : Type v) [M : LMonoid lam H] :
+    LMonoid.ofPaper (toPaper lam H) = M := by
   have hsupp : ∀ {ι : Type u} (h : #ι < lam) (e : ι ↪ Idx lam) (x : ι → H)
       (hS : #(support (extend e x 0)) < lam),
       lsumOf hS (fun i : support (extend e x 0) => extend e x 0 i) = lsumOf h x := by
@@ -249,13 +258,13 @@ theorem toPaper_toLMonoid (lam : Cardinal.{u}) (H : Type v) [M : LMonoid lam H] 
 end LMonoid
 
 /-- The round trip `toLMonoid` then `toPaper` gives back the paper's `Σ`. -/
-theorem PaperLMonoid.toLMonoid_toPaper_sigma {lam : Cardinal.{u}} {H : Type v} [Zero H]
+theorem PaperLMonoid.toPaper_ofPaper_sigma {lam : Cardinal.{u}} {H : Type v} [Zero H]
     (P : PaperLMonoid lam H) (x : Idx lam → H) (hx : #(support x) < lam) :
-    letI := P.toLMonoid
+    letI := LMonoid.ofPaper P
     (LMonoid.toPaper lam H).sigma x hx = P.sigma x hx := by
-  let := P.toLMonoid
+  let := LMonoid.ofPaper P
   show LMonoid.lsumOf hx (fun i : support x => x i) = _
-  rw [P.toLMonoid_lsumOf hx (Function.Embedding.subtype _)]
+  rw [P.ofPaper_lsumOf hx (Function.Embedding.subtype _)]
   apply P.sigma_congr
   funext i
   by_cases hi : i ∈ support x

@@ -406,11 +406,14 @@ theorem sumData_zero : D.sumData.zero = 0 := by
   rw [heq]
   exact D.tot_zero
 
-/-- The `λ⁻`-monoid determined by the data (Lemma 2.5): the sums are the zero-padded ones and
-`0` is the given one. -/
-@[instance_reducible]
-noncomputable def toLMonoid : LMonoid lam H := D.sumData.toLMonoidOfZero D.sumData_zero
-
 end IdxSumData
+
+/-- The `λ⁻`-monoid determined by summation data on `Idx μ` (Lemma 2.5): the sums are the
+zero-padded ones and `0` is the given one. -/
+@[instance_reducible]
+noncomputable def LMonoid.ofIdxSumData {lam μ : Cardinal.{u}} {H : Type v} [Zero H]
+    (D : IdxSumData lam μ H) : LMonoid lam H :=
+  letI := D.sumData.addCommMonoidOfZero D.sumData_zero
+  LMonoid.ofSumData' D.sumData fun _ _ _ => rfl
 
 end KappaMonoid

@@ -94,7 +94,7 @@ Its neutral element is the cardinal `0` and its addition is addition of cardinal
 *derived* from `Σ` by Lemma 2.5, see `val_zero` and `val_add`. -/
 @[instance_reducible]
 noncomputable def instLMonoid (hlam : lam.IsRegular) : LMonoid lam (LCard lam) :=
-  (sumData hlam).toLMonoid
+  LMonoid.ofSumData (sumData hlam)
 
 /-- The `λ⁻`-sum on `F_{λ⁻}` is cardinal summation. -/
 @[simp] theorem val_lsumOf (hlam : lam.IsRegular) {ι : Type u} (h : #ι < lam) (x : ι → LCard lam) :

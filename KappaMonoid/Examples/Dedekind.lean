@@ -430,7 +430,7 @@ entry of rank `0` is `0`), and the classes add up by `finsum_sigma_eq`; otherwis
 the class. -/
 @[instance_reducible]
 noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ (dedExt κ G) where
-  toLMonoid := (sumData hκ).toLMonoid
+  toLMonoid := LMonoid.ofSumData (sumData hκ)
   aleph0_le := hκ
 
 theorem erk_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (h : #ι ≤ κ) (z : ι → dedExt κ G) :

@@ -16,7 +16,7 @@ namespace KappaMonoid
 
 `ℝ≥0∞` is an `ℵ₀`-monoid with `Σ` the sum of the series.  Since every family in `ℝ≥0∞` is
 summable, `tsum` satisfies the axioms outright; the additive monoid is the existing one, so this
-is built with `SumData.toLMonoid'` rather than `toLMonoidOfZero`. -/
+is built with `LMonoid.ofSumData'`, which keeps the existing `+`. -/
 
 namespace ENNRealExample
 
@@ -44,7 +44,7 @@ theorem sumData_add (h : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < Order.succ (ℵ₀
 /-- **Examples 2.3(2)**: `ℝ≥0∞` is an `ℵ₀`-monoid, with its usual addition. -/
 @[instance_reducible]
 noncomputable def instKMonoid : KMonoid (ℵ₀ : Cardinal.{u}) ENNReal where
-  toLMonoid := sumData.toLMonoid' sumData_add
+  toLMonoid := LMonoid.ofSumData' sumData sumData_add
   aleph0_le := le_rfl
 
 /-- The `ℵ₀`-sum on `ℝ≥0∞` is the sum of the series. -/

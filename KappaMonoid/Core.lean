@@ -24,7 +24,7 @@ Design notes (see also `README.md`):
   monoid structure with `a + b = Σ²(a, b)`.  Following Mathlib's forgetful-inheritance
   convention, `LMonoid` *extends* `AddCommMonoid` and adds the compatibility axiom
   `add_eq_lsumOf`; this prevents a second, propositionally-equal `+` from appearing on types
-  that already have one.  Nothing is lost: `SumData.toLMonoid` builds the additive structure
+  that already have one.  Nothing is lost: `LMonoid.ofSumData` builds the additive structure
   from the summation alone (Lemma 2.5).
 
 * (A1).  The paper states (A1) for the distinguished element `0 ∈ κ`.  Here it is the

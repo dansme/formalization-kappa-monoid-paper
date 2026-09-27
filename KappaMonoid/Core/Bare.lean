@@ -77,7 +77,7 @@ whose (A3) is `BareKMonoid.ksum_perm`. -/
 @[instance_reducible]
 noncomputable def KMonoid.ofBare {κ : Cardinal.{u}} {H : Type v} [Zero H]
     (B : BareKMonoid κ H) : KMonoid κ H :=
-  { toLMonoid := B.toIdxSumData.toLMonoid
+  { toLMonoid := LMonoid.ofIdxSumData B.toIdxSumData
     aleph0_le := B.aleph0_le }
 
 @[simp] theorem KMonoid.ofBare_ksum {κ : Cardinal.{u}} {H : Type v} [Zero H]
@@ -123,13 +123,13 @@ noncomputable def KMonoid.toBare (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H]
 /-- A `κ`-monoid structure from `κ`-indexed data on a type that already carries a compatible
 commutative monoid structure. -/
 @[instance_reducible]
-noncomputable def KMonoid.ofKsum {κ : Cardinal.{u}} {H : Type v} [AddCommMonoid H]
+noncomputable def KMonoid.ofBare' {κ : Cardinal.{u}} {H : Type v} [AddCommMonoid H]
     (B : BareKMonoid κ H)
     (two : ∀ (a b : H) (i₀ i₁ : Idx κ), i₀ ≠ i₁ →
       B.ksum (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b) :
     KMonoid κ H := by
   classical
-  refine { toLMonoid := B.toIdxSumData.sumData.toLMonoid' ?_, aleph0_le := B.aleph0_le }
+  refine { toLMonoid := LMonoid.ofSumData' B.toIdxSumData.sumData ?_, aleph0_le := B.aleph0_le }
   intro h a b
   set E : (PUnit.{u + 1} ⊕ PUnit.{u + 1}) ↪ Idx κ := emb (KMonoid.le_of_lt_succ h) with hEdef
   have hne : E (Sum.inl PUnit.unit) ≠ E (Sum.inr PUnit.unit) := by
@@ -154,11 +154,11 @@ noncomputable def KMonoid.ofKsum {κ : Cardinal.{u}} {H : Type v} [AddCommMonoid
   rw [← B.toIdxSumData.tot_extend_eq h E, hfun]
   exact (two a b _ _ hne).symm
 
-@[simp] theorem KMonoid.ofKsum_ksum {κ : Cardinal.{u}} {H : Type v} [AddCommMonoid H]
+@[simp] theorem KMonoid.ofBare'_ksum {κ : Cardinal.{u}} {H : Type v} [AddCommMonoid H]
     (B : BareKMonoid κ H) (two : ∀ (a b : H) (i₀ i₁ : Idx κ), i₀ ≠ i₁ →
       B.ksum (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b)
     (x : Idx κ → H) :
-    letI := KMonoid.ofKsum B two
+    letI := KMonoid.ofBare' B two
     ksum (κ := κ) x = B.ksum x := by
   show B.toIdxSumData.lsum (KMonoid.lt_succ (le_of_eq (mk_Idx κ))) x = B.ksum x
   rw [← B.toIdxSumData.tot_extend_eq (KMonoid.lt_succ (le_of_eq (mk_Idx κ)))

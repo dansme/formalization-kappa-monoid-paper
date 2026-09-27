@@ -258,7 +258,7 @@ theorem sigma_two {ι : Type u} [DecidableEq ι] (a b : WithTop M) {i₀ i₁ : 
 @[instance_reducible]
 noncomputable def instKMonoid {κ : Cardinal.{u}} (hM : IsConical M) (hκ : ℵ₀ ≤ κ) :
     KMonoid κ (WithTop M) :=
-  KMonoid.ofKsum
+  KMonoid.ofBare'
     { aleph0_le := hκ
       i₀ := (nonempty_Idx hκ).some
       ksum := sigma
@@ -274,7 +274,7 @@ noncomputable def instKMonoid {κ : Cardinal.{u}} (hM : IsConical M) (hκ : ℵ�
     (x : Idx κ → WithTop M) :
     letI := instKMonoid hM hκ
     KMonoid.ksum (κ := κ) x = sigma x :=
-  KMonoid.ofKsum_ksum _ _ _
+  KMonoid.ofBare'_ksum _ _ _
 
 /-- The inclusion `M → M ⊎ {∞}` preserves finite multiples. -/
 theorem coe_nsmul (n : ℕ) (a : M) : ((n • a : M) : WithTop M) = n • ((a : M) : WithTop M) := by

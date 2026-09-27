@@ -229,7 +229,7 @@ noncomputable def piSumData (lam : Cardinal.{u}) {B : Type w} (Y : B → Type v)
 @[instance_reducible]
 noncomputable def pi (lam : Cardinal.{u}) {B : Type w} (Y : B → Type v)
     [∀ b, LMonoid lam (Y b)] (hlam : lam.IsRegular) : LMonoid lam (∀ b, Y b) :=
-  (piSumData lam Y hlam).toLMonoid' fun h a b => funext fun i =>
+  LMonoid.ofSumData' (piSumData lam Y hlam) fun h a b => funext fun i =>
     (add_eq_lsumOf h (a i) (b i)).trans
       (congrArg (lsumOf h) (by funext p; rcases p with _ | _ <;> rfl))
 

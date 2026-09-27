@@ -243,20 +243,20 @@ partial on `H^(λ)`, (B1) at a distinguished index, (B2) for families with fewer
 rows and columns. -/
 alias definition_2_18_PaperLMonoid := KappaMonoid.PaperLMonoid
 
-/-- **Definition 2.18** ⇒ `LMonoid` — `KappaMonoid.PaperLMonoid.toLMonoid`; its sums are zero-padded
-`Σ`'s along any embedding (`PaperLMonoid.toLMonoid_lsumOf`). -/
-alias definition_2_18_toLMonoid := KappaMonoid.PaperLMonoid.toLMonoid
+/-- **Definition 2.18** ⇒ `LMonoid` — `KappaMonoid.LMonoid.ofPaper`; its sums are zero-padded
+`Σ`'s along any embedding (`PaperLMonoid.ofPaper_lsumOf`). -/
+alias definition_2_18_ofPaper := KappaMonoid.LMonoid.ofPaper
 
 /-- **Definition 2.18** ⇐ `LMonoid` — `KappaMonoid.LMonoid.toPaper`. -/
 alias definition_2_18_toPaper := KappaMonoid.LMonoid.toPaper
 
 /-- **Definition 2.18**: the round trip `LMonoid → Definition 2.18 → LMonoid` is the identity —
-`KappaMonoid.LMonoid.toPaper_toLMonoid`. -/
-alias definition_2_18_toPaper_toLMonoid := KappaMonoid.LMonoid.toPaper_toLMonoid
+`KappaMonoid.LMonoid.ofPaper_toPaper`. -/
+alias definition_2_18_ofPaper_toPaper := KappaMonoid.LMonoid.ofPaper_toPaper
 
 /-- **Definition 2.18**: the round trip `Definition 2.18 → LMonoid → Definition 2.18` recovers `Σ` —
-`KappaMonoid.PaperLMonoid.toLMonoid_toPaper_sigma`. -/
-alias definition_2_18_toLMonoid_toPaper_sigma := KappaMonoid.PaperLMonoid.toLMonoid_toPaper_sigma
+`KappaMonoid.PaperLMonoid.toPaper_ofPaper_sigma`. -/
+alias definition_2_18_toPaper_ofPaper_sigma := KappaMonoid.PaperLMonoid.toPaper_ofPaper_sigma
 
 /-- **Remark 2.19** — `KappaMonoid.LMonoid.ofLE`, in `Core/LMonoid.lean`: restriction of a `λ'⁻`-monoid
 to a `λ⁻`-monoid for regular `λ ≤ λ'`.  Both halves of the remark's first paragraph are instances:
