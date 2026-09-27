@@ -140,31 +140,6 @@ theorem lsumOf_add {ι : Type u} [h : CardLT ι lam] (f g : ι → X) :
 
 /-! ### Sums over subsets -/
 
-/-- Terms with value `0` may be discarded. -/
-theorem lsumOf_of_subset {ι : Type u} {S T : Set ι} [hS : CardLT S lam] [hT : CardLT T lam]
-    (hsub : T ⊆ S) (f : ι → X) (hzero : ∀ i ∈ S, i ∉ T → f i = 0) :
-    ∑[lam] i ∈ S, f i = ∑[lam] i ∈ T, f i := by
-  classical
-  let e : T ↪ S := ⟨Set.inclusion hsub, Set.inclusion_injective hsub⟩
-  have hfun : (fun i : S => f i) = Function.extend (⇑e) (fun i : T => f i) 0 := by
-    funext s
-    by_cases hs : (s : ι) ∈ T
-    · have hval : e ⟨(s : ι), hs⟩ = s := rfl
-      rw [← hval, e.injective.extend_apply]
-      rfl
-    · rw [Function.extend_apply' (fun i : T => f i) (0 : S → X) s ?_]
-      · exact hzero s s.2 hs
-      · rintro ⟨t, ht⟩
-        exact hs (ht ▸ t.2)
-  rw [show ∑[lam] i ∈ S, f i = ∑[lam] s, Function.extend (⇑e) (fun i : T => f i) 0 s by
-    rw [← hfun], lsumOf_extend e (fun i : T => f i)]
-
-/-- A sum of zeros over a subset vanishes. -/
-theorem lsumOf_eq_zero {ι : Type u} {T : Set ι} [hT : CardLT T lam] (f : ι → X)
-    (hzero : ∀ i ∈ T, f i = 0) :
-    ∑[lam] i ∈ T, f i = 0 :=
-  lsumOf_eq_zero_of_forall fun i => hzero i i.2
-
 /-- Additivity over a disjoint union of two small subsets. -/
 theorem lsumOf_union {ι : Type u} (S T : Set ι) (hd : Disjoint S T) [hS : CardLT S lam]
     [hT : CardLT T lam] (f : ι → X) :
@@ -175,6 +150,25 @@ theorem lsumOf_union {ι : Type u} (S T : Set ι) (hd : Disjoint S T) [hS : Card
   congr 1
   funext p
   rcases p with p | p <;> rfl
+
+/-- Terms with value `0` may be discarded: `S = T ⊔ (S \ T)`, and the sum over `S \ T` is `0`. -/
+theorem lsumOf_of_subset {ι : Type u} {S T : Set ι} [hS : CardLT S lam] [hT : CardLT T lam]
+    (hsub : T ⊆ S) (f : ι → X) (hzero : ∀ i ∈ S, i ∉ T → f i = 0) :
+    ∑[lam] i ∈ S, f i = ∑[lam] i ∈ T, f i := by
+  have := factRegular (lam := lam) (X := X)
+  calc ∑[lam] i ∈ S, f i
+      = ∑[lam] i ∈ T ∪ (S \ T), f i :=
+        lsumOf_equiv (Equiv.setCongr (Set.union_sdiff_cancel hsub)) _
+    _ = ∑[lam] i ∈ T, f i + ∑[lam] i ∈ S \ T, f i := lsumOf_union _ _ Set.disjoint_sdiff_right _
+    _ = ∑[lam] i ∈ T, f i + 0 := by
+        rw [lsumOf_eq_zero_of_forall (x := fun i : ↥(S \ T) => f i) fun i => hzero i i.2.1 i.2.2]
+    _ = ∑[lam] i ∈ T, f i := add_zero _
+
+/-- A sum of zeros over a subset vanishes. -/
+theorem lsumOf_eq_zero {ι : Type u} {T : Set ι} [hT : CardLT T lam] (f : ι → X)
+    (hzero : ∀ i ∈ T, f i = 0) :
+    ∑[lam] i ∈ T, f i = 0 :=
+  lsumOf_eq_zero_of_forall fun i => hzero i i.2
 
 /-- Regrouping a sum over a set along a disjoint indexed cover by `< λ`-sized pieces. -/
 theorem lsumOf_biUnion_subset {ι J : Type u} (S : Set ι) (I : J → Set ι)

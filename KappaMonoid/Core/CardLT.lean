@@ -51,6 +51,14 @@ instance union [hlam : Fact lam.IsRegular] {ι : Type u} (S T : Set ι) [hS : Ca
     [hT : CardLT T lam] : CardLT ↥(S ∪ T) lam :=
   ⟨mk_union_lt hlam.out hS.lt hT.lt⟩
 
+/-- A difference `S \ T` of a small set is small. -/
+instance diff {ι : Type u} (S T : Set ι) [hS : CardLT S lam] : CardLT ↥(S \ T) lam :=
+  ⟨(mk_le_mk_of_subset Set.sdiff_subset).trans_lt hS.lt⟩
+
+/-- An intersection `S ∩ T` with a small set is small. -/
+instance inter {ι : Type u} (S T : Set ι) [hS : CardLT S lam] : CardLT ↥(S ∩ T) lam :=
+  ⟨(mk_le_mk_of_subset Set.inter_subset_left).trans_lt hS.lt⟩
+
 instance image {ι κ : Type u} (f : ι → κ) (S : Set ι) [hS : CardLT S lam] :
     CardLT ↥(f '' S) lam :=
   ⟨mk_image_le.trans_lt hS.lt⟩
