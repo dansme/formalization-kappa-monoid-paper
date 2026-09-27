@@ -175,7 +175,8 @@ theorem kGenerates_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
   refine kGenerates_iff.mpr fun a => ?_
   obtain ⟨α, hα, rfl⟩ := exists_cmul_unit hκ k a
   rw [← KMonoid.cmul_congr (mk_Idx α) (le_of_eq_of_le (mk_Idx α) hα) hα, ← sumOf_const]
-  exact (isKSubmonoid_kclosure κ _).sumOf_mem _ _ fun _ => subset_kclosure rfl
+  exact (isKSubmonoid_kclosure κ _).sumOf_mem (h := CardLE.mk' (le_of_eq_of_le (mk_Idx α) hα)) _
+    fun _ => subset_kclosure rfl
 
 /-- `V^κ(𝓕^κ)` is a cyclic `κ`-monoid (Definition 2.10(2)). -/
 theorem isCyclicKMonoid (hκ : ℵ₀ ≤ κ) :

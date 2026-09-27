@@ -45,14 +45,14 @@ alias remark_2_2_1_ofBare := KappaMonoid.KMonoid.ofBare
 
 /-- **Remark 2.2(2)** — summing over an arbitrary index set of cardinality `κ`:
 `KappaMonoid.KMonoid.sumOf` takes a family indexed by any type of the right size, and
-`KappaMonoid.KMonoid.sumOf_equiv` is the independence of the chosen bijection.  See
+`KappaMonoid.KMonoid.sumOf_equiv (h := CardLE.mk' `) (h' := CardLE.mk' is) the independence of the chosen bijection.  See
 `README.md`, "Differences from the paper". -/
 alias remark_2_2_2_sumOf_equiv := KappaMonoid.KMonoid.sumOf_equiv
 
 /-- **Remark 2.2(2)**, the substance — `KappaMonoid.PaperKMonoid.toKMonoid_sumOf`, in
 `Paper/Definition21.lean`: for a `κ`-monoid given as in Definition 2.1, the sum over an arbitrary
 index type of size `≤ κ` is the `κ`-indexed `Σ` of any zero-padded transport, and so is
-well defined; this rests on (A3), `PaperKMonoid.sigma_perm`.  (`sumOf_equiv` above is, inside
+well defined; this rests on (A3), `PaperKMonoid.sigma_perm`.  (`sumOf_equiv (h := CardLE.mk' `) (h' := CardLE.mk' above) is, inside
 `KMonoid`, the reindexing field of the class.) -/
 alias remark_2_2_2_toKMonoid_sumOf := KappaMonoid.PaperKMonoid.toKMonoid_sumOf
 
@@ -128,10 +128,10 @@ alias lemma_2_7_1_first_half_cmul_zero_cardinal := KappaMonoid.KMonoid.cmul_zero
 /-- **Lemma 2.7(1), second half** — `KappaMonoid.KMonoid.cmul_one`, in `Core/KMonoid.lean`. -/
 alias lemma_2_7_1_second_half_cmul_one := KappaMonoid.KMonoid.cmul_one
 
-/-- **Lemma 2.7(3)** — `KappaMonoid.KMonoid.cmul_sumOf`, in `Core/KMonoid.lean`. -/
+/-- **Lemma 2.7(3)** — `KappaMonoid.KMonoid.cmul_sumOf (hI := CardLE.mk' `), in `Core/KMonoid.lean`. -/
 alias lemma_2_7_3_cmul_sumOf := KappaMonoid.KMonoid.cmul_sumOf
 
-/-- **Lemma 2.7(2)** — `KappaMonoid.KMonoid.cmul_sumOf_cardinal`, in `Core/KMonoid.lean`. -/
+/-- **Lemma 2.7(2)** — `KappaMonoid.KMonoid.cmul_sumOf_cardinal (hI := CardLE.mk' `), in `Core/KMonoid.lean`. -/
 alias lemma_2_7_2_cmul_sumOf_cardinal := KappaMonoid.KMonoid.cmul_sumOf_cardinal
 
 /-- **Lemma 2.7(2)** — `KappaMonoid.LMonoid.lcmul_add`, in `Core/LMonoid.lean`. -/

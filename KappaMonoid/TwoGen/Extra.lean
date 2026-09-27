@@ -152,7 +152,7 @@ theorem isBraidedOver_of_cyclic_base {X : Type v} [LMonoid (ℵ₀ : Cardinal.{u
         = f (LMonoid.lsumOf (lam := ℵ₀) hs fun i : Function.support a => a i) := by
     intro a hs
     rw [hf.2 hs]
-    refine KMonoid.sumOf_eq_sumOf_subset (le_of_eq (mk_Idx _)) _ _ fun i hi => ?_
+    refine KMonoid.sumOf_eq_sumOf_subset (hι := CardLE.mk' (le_of_eq (mk_Idx _))) _ fun i hi => ?_
     show f (a i) = 0
     rw [Function.notMem_support.mp hi]
     exact hf.1
@@ -268,7 +268,7 @@ theorem isBraidedOver_addOf_of_ne {x : H} (hgen : KGenerates (ℵ₀ : Cardinal.
     have hSeq : #S = ℵ₀ := le_antisymm hSle (Cardinal.aleph0_le_mk S)
     have hsum : (KMonoid.ksum (κ := ℵ₀) fun i => ((a i : ↥(add(x))) : H))
         = sumOf (κ := ℵ₀) hSle (fun i : S => ((a i : ↥(add(x))) : H)) :=
-      sumOf_eq_sumOf_subset (le_of_eq (mk_Idx _)) hSle _ fun i hi => by
+      sumOf_eq_sumOf_subset (hι := CardLE.mk' (le_of_eq (mk_Idx _))) (hS := CardLE.mk' hSle) _ fun i hi => by
         rw [Function.notMem_support.mp hi]; rfl
     have hge : ∀ i : S, x ≼ ((a i : ↥(add(x))) : H) := by
       rintro ⟨i, hi⟩
@@ -278,7 +278,7 @@ theorem isBraidedOver_addOf_of_ne {x : H} (hgen : KGenerates (ℵ₀ : Cardinal.
         exact hi (Subtype.ext (hm.trans (zero_nsmul x)))
       exact ⟨(m - 1) • x, by rw [hm, ← succ_nsmul', Nat.sub_add_cancel (Nat.pos_of_ne_zero hm0)]⟩
     refine AddLe.trans (AddLe.of_eq ?_)
-      (AddLe.trans (sumOf_le_sumOf hSle hge) (AddLe.of_eq hsum.symm))
+      (AddLe.trans (sumOf_le_sumOf (h := CardLE.mk' hSle) hge) (AddLe.of_eq hsum.symm))
     rw [← cmul_eq_sumOf hSle x]
     exact cmul_congr hSeq.symm _ _ x
 
@@ -334,7 +334,7 @@ theorem ne_nsmul_iff_exists_withTop {x : H}
         ⟨rfl, fun {ι} h a => ?_⟩ WithTop.coe_injective (fun h => ?_) (fun a ha => ?_)
       · have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
         have : Fintype ι := Fintype.ofFinite ι
-        rw [LMonoid.lsumOf_aleph0_eq_finsum h a, KMonoid.sumOf_eq_sum]
+        rw [LMonoid.lsumOf_aleph0_eq_finsum h a, KMonoid.sumOf_eq_sum (h := CardLE.mk' h.le)]
         simp
       · induction h using WithTop.recTopCoe with
         | top =>

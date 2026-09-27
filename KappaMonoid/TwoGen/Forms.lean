@@ -44,7 +44,7 @@ variable {H : Type u} [KMonoid (ℵ₀ : Cardinal.{u}) H]
 theorem ksum_const (c : H) :
     KMonoid.ksum (κ := ℵ₀) (fun _ : Idx (ℵ₀ : Cardinal.{u}) => c)
       = ℵ₀∙c := by
-  rw [← KMonoid.sumOf_Idx, ← KMonoid.cmul_eq_sumOf]
+  rw [← KMonoid.sumOf_Idx, ← KMonoid.cmul_eq_sumOf (le_of_eq (mk_Idx _))]
   exact KMonoid.cmul_congr (mk_Idx (ℵ₀ : Cardinal.{u})) _ le_rfl c
 
 /-- A constant family over a finite index set sums to a finite multiple of its value.  This is the
@@ -52,7 +52,7 @@ bookkeeping every block of a braiding needs: the pieces of a braiding partition 
 hence finite, so each block sum is an honest `n • c`. -/
 theorem sumOf_const_finite {ι : Type u} {T : Set ι} (hT : #T < (ℵ₀ : Cardinal.{u})) (c : H) :
     ∃ m : ℕ, #T = (m : Cardinal.{u}) ∧
-      KMonoid.sumOf (κ := ℵ₀) hT.le (fun _ : T => c) = m • c := by
+      ∑[≤ ℵ₀] _ : T, c = m • c := by
   obtain ⟨m, hm⟩ := Cardinal.lt_aleph0.mp hT
   refine ⟨m, hm, ?_⟩
   rw [← KMonoid.cmul_eq_sumOf hT.le c,
@@ -103,11 +103,11 @@ theorem IsKSubmonoid.ecmul_mem {S : Set H} (hS : KMonoid.IsKSubmonoid (ℵ₀ : 
   have hmk : #(Idx (Cardinal.ofENat a)) ≤ (ℵ₀ : Cardinal.{u}) :=
     le_of_eq_of_le (mk_Idx _) (Cardinal.ofENat_le_aleph0 a)
   have hrw : ecmul a x
-      = KMonoid.sumOf (κ := ℵ₀) hmk (fun _ : Idx (Cardinal.ofENat a) => x) := by
+      = ∑[≤ ℵ₀] _ : Idx (Cardinal.ofENat a), x := by
     rw [← KMonoid.cmul_eq_sumOf hmk x, ecmul]
     exact KMonoid.cmul_congr (mk_Idx _).symm _ _ x
   rw [hrw]
-  exact hS.sumOf_mem hmk _ fun _ => hx
+  exact hS.sumOf_mem (h := CardLE.mk' hmk) _ fun _ => hx
 
 /-- A form is *infinite* if at least one coefficient is. -/
 def Form.IsInfinite (F : Form) : Prop := F.1 = ⊤ ∨ F.2 = ⊤
@@ -151,15 +151,14 @@ theorem exists_form (x₁ x₂ : H)
         refine ⟨a, ?_⟩
         simp only [ecmul]
         rw [← KMonoid.sumOf_Idx,
-          ← KMonoid.cmul_sumOf_cardinal hidx (fun i => Cardinal.ofENat (c i))
-            (fun i => Cardinal.ofENat_le_aleph0 (c i)) (hbound c) x]
+          ← KMonoid.cmul_sumOf_cardinal (hI := CardLE.mk' hidx) (fun i => Cardinal.ofENat (c i)) (fun i => Cardinal.ofENat_le_aleph0 (c i)) (hbound c) x]
         exact KMonoid.cmul_congr ha.symm _ _ x
       obtain ⟨α, hα⟩ := hslot (fun i => (F i).1) x₁
       obtain ⟨β, hβ⟩ := hslot (fun i => (F i).2) x₂
       refine ⟨(α, β), ?_⟩
       rw [show z = fun i => ecmul (F i).1 x₁ + ecmul (F i).2 x₂ from
           funext fun i => (hF i).symm,
-        ← KMonoid.sumOf_Idx, KMonoid.sumOf_add hidx, KMonoid.sumOf_Idx, KMonoid.sumOf_Idx,
+        ← KMonoid.sumOf_Idx, KMonoid.sumOf_add (h := CardLE.mk' hidx), KMonoid.sumOf_Idx, KMonoid.sumOf_Idx,
         hα, hβ, eval]
   refine KMonoid.kclosure_le ?_ hsub (KMonoid.kGenerates_iff.mp hgen y)
   rintro w (rfl | rfl)
@@ -262,6 +261,10 @@ theorem mk_formIdx : #(FormIdx.{u}) = (ℵ₀ : Cardinal.{u}) := by
 /-- and so may index an `ℵ₀`-sum. -/
 theorem mk_formIdx_le_aleph0 : #(FormIdx.{u}) ≤ (ℵ₀ : Cardinal.{u}) := le_of_eq mk_formIdx
 
+instance cardLE_nats : CardLE Nats.{u} (ℵ₀ : Cardinal.{u}) := CardLE.mk' mk_nats_le_aleph0
+
+instance cardLE_formIdx : CardLE FormIdx.{u} (ℵ₀ : Cardinal.{u}) := CardLE.mk' mk_formIdx_le_aleph0
+
 /-- The slots a coefficient uses: `{n : ℕ | n < α}` has exactly `α` elements, `ℵ₀` when `α = ℵ₀`. -/
 theorem mk_slots (α : ℕ∞) :
     #{n : Nats.{u} | ((n.down : ℕ) : ℕ∞) < α} = Cardinal.ofENat α := by
@@ -278,14 +281,12 @@ theorem mk_slots (α : ℕ∞) :
 
 /-- The family of a form sums to the element the form represents. -/
 theorem sumOf_familyOfForm (x₁ x₂ : H) (F : Form) :
-    KMonoid.sumOf (κ := ℵ₀) mk_formIdx_le_aleph0 (familyOfForm x₁ x₂ F) = eval x₁ x₂ F := by
+    ∑[≤ ℵ₀] i, (familyOfForm x₁ x₂ F) i = eval x₁ x₂ F := by
   classical
   have hslot : ∀ (a : ℕ∞) (x : H),
-      KMonoid.sumOf (κ := ℵ₀) mk_nats_le_aleph0
-          (fun n : Nats.{u} => if ((n.down : ℕ) : ℕ∞) < a then x else 0) = ecmul a x := by
+      ∑[≤ ℵ₀] n : Nats.{u}, (if ((n.down : ℕ) : ℕ∞) < a then x else 0) = ecmul a x := by
     intro a x
-    have h1 : KMonoid.sumOf (κ := ℵ₀) mk_nats_le_aleph0
-          (fun n : Nats.{u} => if ((n.down : ℕ) : ℕ∞) < a then x else 0)
+    have h1 : ∑[≤ ℵ₀] n : Nats.{u}, (if ((n.down : ℕ) : ℕ∞) < a then x else 0)
         = KMonoid.cmul (κ := ℵ₀) #{n : Nats.{u} | ((n.down : ℕ) : ℕ∞) < a}
             (le_of_eq_of_le (mk_slots a) (Cardinal.ofENat_le_aleph0 a)) x :=
       KMonoid.sumOf_indicator mk_nats_le_aleph0
@@ -294,7 +295,7 @@ theorem sumOf_familyOfForm (x₁ x₂ : H) (F : Form) :
     rw [h1, ecmul]
     exact KMonoid.cmul_congr (mk_slots a) _ (Cardinal.ofENat_le_aleph0 a) x
   rw [familyOfForm,
-    KMonoid.sumOf_sumType mk_nats_le_aleph0 mk_nats_le_aleph0 mk_formIdx_le_aleph0,
+    KMonoid.sumOf_sumType,
     hslot F.1 x₁, hslot F.2 x₂, eval]
 
 /-! ### The slots of a form

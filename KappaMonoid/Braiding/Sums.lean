@@ -26,7 +26,7 @@ Note that the braiding is taken with respect to the `λ⁻`-monoid structure tha
 as a `κ`-monoid (`KMonoid.toLMonoid`). -/
 theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
     (h : letI := KMonoid.toLMonoidOfLE H hlam hlk; IsBraided lam x y) :
-    sumOf (κ := κ) hι x = sumOf (κ := κ) hι y := by
+    ∑[≤ κ] i, x i = ∑[≤ κ] i, y i := by
   let := KMonoid.toLMonoidOfLE H hlam hlk
   obtain ⟨d⟩ := h
   have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
@@ -34,14 +34,14 @@ theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
   have hIle : ∀ p, #(d.I p) ≤ κ := fun p => le_of_lt_of_le_succ hlk (d.I_lt p)
   have hJle : ∀ p, #(d.J p) ≤ κ := fun p => le_of_lt_of_le_succ hlk (d.J_lt p)
   -- Regroup each side along its braiding partition and use the defining equations.
-  have hxsum : sumOf (κ := κ) hι x = sumOf (κ := κ) hP (fun p => d.v p + d.u p) := by
-    rw [← sumOf_biUnion d.I d.I_disjoint d.I_cover hP hι hIle x]
+  have hxsum : ∑[≤ κ] i, x i = ∑[≤ κ] p, (d.v p + d.u p) := by
+    rw [← sumOf_biUnion (hJ := CardLE.mk' hP) (hι := CardLE.mk' hι) (hI := fun p => CardLE.mk' (hIle p)) d.I d.I_disjoint d.I_cover x]
     congr 1
     funext p
     exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk (d.I_lt p)
       (fun i : d.I p => x i)).symm.trans (d.hI p)
-  have hysum : sumOf (κ := κ) hι y = sumOf (κ := κ) hP (fun p => d.v (bsucc p) + d.u p) := by
-    rw [← sumOf_biUnion d.J d.J_disjoint d.J_cover hP hι hJle y]
+  have hysum : ∑[≤ κ] i, y i = ∑[≤ κ] p, (d.v (bsucc p) + d.u p) := by
+    rw [← sumOf_biUnion (hJ := CardLE.mk' hP) (hι := CardLE.mk' hι) (hI := fun p => CardLE.mk' (hJle p)) d.J d.J_disjoint d.J_cover y]
     congr 1
     funext p
     exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk (d.J_lt p)
@@ -61,18 +61,18 @@ theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
     | succ m =>
       have hmem : bsucc (a, m) = (a, m + 1) := rfl
       rw [← hmem, bsucc_injective.extend_apply]
-  have hvtel : sumOf (κ := κ) hP d.v = sumOf (κ := κ) hP (fun p => d.v (bsucc p)) :=
-    calc sumOf (κ := κ) hP d.v
-        = sumOf (κ := κ) hP (Function.extend (bsucc (ι := ι)) (fun p => d.v (bsucc p)) 0) := by
+  have hvtel : ∑[≤ κ] i, d.v i = ∑[≤ κ] p, d.v (bsucc p) :=
+    calc ∑[≤ κ] i, d.v i
+        = ∑[≤ κ] i, (Function.extend (bsucc (ι := ι)) (fun p => d.v (bsucc p)) 0) i := by
           rw [← hbs]
-      _ = sumOf (κ := κ) hP (fun p => d.v (bsucc p)) :=
-          KMonoid.sumOf_extend hP hP ⟨bsucc, bsucc_injective⟩ _
+      _ = ∑[≤ κ] p, d.v (bsucc p) :=
+          KMonoid.sumOf_extend (h := CardLE.mk' hP) (h' := CardLE.mk' hP) ⟨bsucc, bsucc_injective⟩ _
   refine hxsum.trans (Eq.trans ?_ hysum.symm)
-  calc sumOf (κ := κ) hP (fun p => d.v p + d.u p)
-      = sumOf (κ := κ) hP d.v + sumOf (κ := κ) hP d.u := KMonoid.sumOf_add hP d.v d.u
-    _ = sumOf (κ := κ) hP (fun p => d.v (bsucc p)) + sumOf (κ := κ) hP d.u := by rw [hvtel]
-    _ = sumOf (κ := κ) hP (fun p => d.v (bsucc p) + d.u p) :=
-        (KMonoid.sumOf_add hP (fun p => d.v (bsucc p)) d.u).symm
+  calc ∑[≤ κ] p, (d.v p + d.u p)
+      = ∑[≤ κ] i, d.v i + ∑[≤ κ] i, d.u i := KMonoid.sumOf_add (h := CardLE.mk' hP) d.v d.u
+    _ = ∑[≤ κ] p, d.v (bsucc p) + ∑[≤ κ] i, d.u i := by rw [hvtel]
+    _ = ∑[≤ κ] p, (d.v (bsucc p) + d.u p) :=
+        (KMonoid.sumOf_add (h := CardLE.mk' hP) (fun p => d.v (bsucc p)) d.u).symm
 
 end Ambient
 

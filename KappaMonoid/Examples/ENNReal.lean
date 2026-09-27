@@ -50,7 +50,7 @@ noncomputable def instKMonoid : KMonoid (ℵ₀ : Cardinal.{u}) ENNReal where
 /-- The `ℵ₀`-sum on `ℝ≥0∞` is the sum of the series. -/
 @[simp] theorem instKMonoid_sumOf {ι : Type u} (h : #ι ≤ (ℵ₀ : Cardinal.{u})) (x : ι → ENNReal) :
     letI := instKMonoid
-    KMonoid.sumOf (κ := (ℵ₀ : Cardinal.{u})) h x = ∑' i, x i := rfl
+    ∑[≤ (ℵ₀ : Cardinal.{u})] i, x i = ∑' i, x i := rfl
 
 /-- The operation differs from the trivial `ℵ₀`-extension of `ℝ≥0` (Examples 2.3(1)): a family
 with infinite support can have a finite sum. -/

@@ -65,10 +65,10 @@ namespace KMonoid
 variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
 
 /-- Sums respect `≼` termwise. -/
-theorem sumOf_le_sumOf {ι : Type u} (h : #ι ≤ κ) {x y : ι → H} (hxy : ∀ i, x i ≼ y i) :
-    sumOf (κ := κ) h x ≼ sumOf (κ := κ) h y := by
+theorem sumOf_le_sumOf {ι : Type u} [h : CardLE ι κ] {x y : ι → H} (hxy : ∀ i, x i ≼ y i) :
+    ∑[≤ κ] i, x i ≼ ∑[≤ κ] i, y i := by
   choose c hc using hxy
-  exact ⟨sumOf (κ := κ) h c, by rw [← sumOf_add h x c, funext hc]⟩
+  exact ⟨∑[≤ κ] i, c i, by rw [← sumOf_add x c, funext hc]⟩
 
 /-- Cardinal scalar multiplication is monotone in the cardinal. -/
 theorem cmul_le_cmul {γ α : Cardinal.{u}} (hγ : γ ≤ κ) (hα : α ≤ κ) (h : γ ≤ α) (u : H) :
@@ -205,17 +205,18 @@ Paper proof: if `x_i ≼ (α + n_i) u` for `i ∈ I` with `|I| ≤ α`, then `Σ
 Lemma 2.7(2), and `Σ_{i ∈ I} α = |I| · α ≤ α · α = α`. -/
 theorem sumOf_mem_part {u : H} (hu : IsOrderUnit (κ := κ) u) {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α)
     (hα : α ≤ κ) {ι : Type u} (hι : #ι ≤ α) (x : ι → H) (hx : ∀ i, x i ∈ part (κ := κ) u α) :
-    sumOf (κ := κ) (hι.trans hα) x ∈ part (κ := κ) u α := by
+    ∑[≤ κ] i, x i ∈ part (κ := κ) u α := by
+  have : CardLE ι κ := CardLE.mk' (hι.trans hα)
   have hval : (Cardinal.sum fun _ : ι => α) ≤ α := by
     rw [Cardinal.sum_const']
     exact (mul_le_mul' hι le_rfl).trans (le_of_eq (Cardinal.mul_eq_self hα0))
   have hconst : (Cardinal.sum fun _ : ι => α) ≤ κ := hval.trans hα
-  have hsum : sumOf (κ := κ) (hι.trans hα) x
-      ≼ sumOf (κ := κ) (hι.trans hα) (fun _ => cmul (κ := κ) α hα u) :=
-    sumOf_le_sumOf _ fun i => le_cmul_of_size_le hu hα0 hα (hx i)
-  have hcm : sumOf (κ := κ) (hι.trans hα) (fun _ : ι => cmul (κ := κ) α hα u)
+  have hsum : ∑[≤ κ] i, x i
+      ≼ ∑[≤ κ] _ : ι, cmul (κ := κ) α hα u :=
+    sumOf_le_sumOf fun i => le_cmul_of_size_le hu hα0 hα (hx i)
+  have hcm : ∑[≤ κ] _ : ι, cmul (κ := κ) α hα u
       = cmul (κ := κ) (Cardinal.sum fun _ : ι => α) hconst u :=
-    (cmul_sumOf_cardinal (hι.trans hα) (fun _ => α) (fun _ => hα) hconst u).symm
+    (cmul_sumOf_cardinal (fun _ => α) (fun _ => hα) hconst u).symm
   exact size_le_of_le hα
     (AddLe.trans (AddLe.trans hsum (AddLe.of_eq hcm)) (cmul_le_cmul hconst hα hval u))
 

@@ -137,7 +137,7 @@ theorem rep_nsmul (a : (projClass R κ hκ).carrier) (n : ℕ) :
   have hι : #(ULift.{u} (Fin n)) ≤ κ := (Cardinal.lt_aleph0_of_finite _).le.trans hκ
   have hcard : ((n : ℕ) : Cardinal.{u}) = #(ULift.{u} (Fin n)) := by
     rw [Cardinal.mk_fintype, Fintype.card_ulift, Fintype.card_fin]
-  have heq : n • a = KMonoid.sumOf (κ := κ) hι (fun _ : ULift.{u} (Fin n) => a) := by
+  have heq : n • a = ∑[≤ κ] _ : ULift.{u} (Fin n), a := by
     rw [← KMonoid.cmul_natCast (κ := κ) a n, ← KMonoid.cmul_eq_sumOf hι a]
     exact KMonoid.cmul_congr hcard _ _ a
   exact ⟨((projClass R κ hκ).iso_of_eq heq).some.trans

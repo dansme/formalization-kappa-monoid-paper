@@ -61,4 +61,18 @@ theorem of_equiv {ι ι' : Type u} (e : ι ≃ ι') [h : CardLT ι' lam] : CardL
 
 end CardLT
 
+/-- `ι` has at most `κ` elements: the index types of `κ`-sums, which are the `λ⁻`-sums for
+`λ = κ⁺`. -/
+abbrev CardLE (ι : Type u) (κ : Cardinal.{u}) : Prop := CardLT ι (Order.succ κ)
+
+theorem CardLE.mk' {ι : Type u} {κ : Cardinal.{u}} (h : #ι ≤ κ) : CardLE ι κ :=
+  ⟨Order.lt_succ_iff.mpr h⟩
+
+theorem CardLE.le {ι : Type u} {κ : Cardinal.{u}} [h : CardLE ι κ] : #ι ≤ κ :=
+  Order.lt_succ_iff.mp h.lt
+
+/-- `κ⁺` is regular for infinite `κ`: what the product, sum and sigma rules need at `λ = κ⁺`. -/
+instance factRegularSucc {κ : Cardinal.{u}} [h : Fact (ℵ₀ ≤ κ)] : Fact (Order.succ κ).IsRegular :=
+  ⟨isRegular_succ h.out⟩
+
 end KappaMonoid

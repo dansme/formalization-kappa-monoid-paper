@@ -330,7 +330,7 @@ theorem IsLHom.map_add (hlk : lam ≤ Order.succ κ) {f : X → H} (hf : IsLHom 
     match p with
     | ⟨true⟩ => rfl
     | ⟨false⟩ => rfl
-  rw [h1, h2, sumOf_two (f a) (f b) (le_of_lt_of_le_succ hlk hUB)]
+  rw [h1, h2, sumOf_two (f a) (f b)]
 
 /-- A `λ⁻`-homomorphism into a `κ`-monoid is a homomorphism of `λ⁻`-monoids for the induced
 structure — the two notions differ only in how the target's sums are packaged. -/
@@ -385,7 +385,7 @@ theorem IsBraided.map_lhom (hlk : lam ≤ Order.succ κ) {f : X → H} (hf : IsL
 into a `κ`-monoid takes braided families to families with equal `κ`-sums. -/
 theorem sumOf_map_eq_of_isBraided (hlk : lam ≤ Order.succ κ) {f : X → H} (hf : IsLHom hlk f)
     {ι : Type u} (hι : #ι ≤ κ) {x y : ι → X} (h : IsBraided lam x y) :
-    sumOf (κ := κ) hι (f ∘ x) = sumOf (κ := κ) hι (f ∘ y) := by
+    ∑[≤ κ] i, (f ∘ x) i = ∑[≤ κ] i, (f ∘ y) i := by
   let := KMonoid.toLMonoidOfLE H (‹LMonoid lam X›.isRegular) hlk
   exact sumOf_eq_of_isBraided (‹LMonoid lam X›.isRegular) hlk hι _ _ (h.map_lhom hlk hf)
 

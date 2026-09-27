@@ -258,7 +258,7 @@ theorem isLHom_coe_withTop_nat :
   refine ⟨rfl, fun {ι} h x => ?_⟩
   have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
   have : Fintype ι := Fintype.ofFinite ι
-  rw [LMonoid.lsumOf_aleph0_eq_finsum h x, KMonoid.sumOf_eq_sum]
+  rw [LMonoid.lsumOf_aleph0_eq_finsum h x, KMonoid.sumOf_eq_sum (h := CardLE.mk' h.le)]
   simp
 
 /-- **Examples 3.3(1)**, the characterization: two families in `ℕ₀` indexed by `ℵ₀` are
@@ -325,7 +325,7 @@ theorem isBraidedOver_withTop_nat :
   · -- `↑` is an `ℵ₀⁻`-homomorphism: both sides are the finite sum of the `x i`
     have : Finite ι := Cardinal.lt_aleph0_iff_finite.mp h
     have : Fintype ι := Fintype.ofFinite ι
-    rw [LMonoid.lsumOf_aleph0_eq_finsum h x, KMonoid.sumOf_eq_sum]
+    rw [LMonoid.lsumOf_aleph0_eq_finsum h x, KMonoid.sumOf_eq_sum (h := CardLE.mk' h.le)]
     simp
   · exact_mod_cast hab
   · -- `ℕ₀` generates `ℕ₀ ∪ {∞}`: a finite element is a one-term sum, `∞` is the sum of `1`s

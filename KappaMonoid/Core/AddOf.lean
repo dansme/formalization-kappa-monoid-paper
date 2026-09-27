@@ -49,10 +49,9 @@ theorem addOf_isLSubset (hκ : ℵ₀ ≤ κ) (x : H) :
     obtain ⟨m, hm⟩ := Cardinal.lt_aleph0.mp hlt
     have hmκ : ((m : ℕ) : Cardinal.{u}) ≤ κ :=
       le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ
-    refine ⟨sumOf (κ := κ) hidx z, m, ?_⟩
-    rw [← sumOf_add hidx y z, funext hzn,
-      ← cmul_sumOf_cardinal hidx (fun i => ((n i : ℕ) : Cardinal.{u}))
-        (fun _ => le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ) (le_trans hlt.le hκ) x]
+    refine ⟨∑[≤ κ] i, z i, m, ?_⟩
+    rw [← sumOf_add (h := CardLE.mk' hidx) y z, funext hzn,
+      ← cmul_sumOf_cardinal (hI := CardLE.mk' hidx) (fun i => ((n i : ℕ) : Cardinal.{u})) (fun _ => le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ) (le_trans hlt.le hκ) x]
     exact cmul_congr hm _ hmκ x
 
 /-- The `ℵ₀⁻`-monoid structure on `add x`, as an instance.
@@ -94,17 +93,16 @@ theorem addOfCard_isLSubset {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : l
     · -- an empty sum is `0`, which is a summand of `λ · x`
       have := hemp
       refine ⟨cmul (κ := κ) lam hlk x, ?_⟩
-      rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty (h := cardLT_succ hidx) y,
+      rw [show ∑[≤ κ] i, y i = 0 from LMonoid.lsumOf_isEmpty (h := cardLT_succ hidx) y,
         zero_add]
     · -- otherwise `#ι · λ = λ`, so the witnesses again add up to `λ · x`
       have hmk : #ι * lam = lam :=
         Cardinal.mul_eq_right hlam.aleph0_le hι.le (Cardinal.mk_ne_zero_iff.mpr hne)
       have hsum : Cardinal.sum (fun _ : ι => lam) = lam :=
         (Cardinal.sum_const' ι lam).trans hmk
-      refine ⟨sumOf (κ := κ) hidx z, ?_⟩
-      rw [← sumOf_add hidx y z, funext hz,
-        ← cmul_sumOf_cardinal hidx (fun _ : ι => lam) (fun _ => hlk)
-          (le_of_eq_of_le hsum hlk) x]
+      refine ⟨∑[≤ κ] i, z i, ?_⟩
+      rw [← sumOf_add (h := CardLE.mk' hidx) y z, funext hz,
+        ← cmul_sumOf_cardinal (hI := CardLE.mk' hidx) (fun _ : ι => lam) (fun _ => hlk) (le_of_eq_of_le hsum hlk) x]
       exact cmul_congr hsum _ hlk x
 
 /-- `add_α x` is closed under sums of size `< lam` for every `lam ≤ α⁺`, not just `lam ≤ α`:
@@ -125,16 +123,15 @@ theorem addOfCard_isLSubset_succ {alpha lam : Cardinal.{u}} (halpha : ℵ₀ ≤
     rcases isEmpty_or_nonempty ι with hemp | hne
     · have := hemp
       refine ⟨cmul (κ := κ) alpha hak x, ?_⟩
-      rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty (h := cardLT_succ hidx) y,
+      rw [show ∑[≤ κ] i, y i = 0 from LMonoid.lsumOf_isEmpty (h := cardLT_succ hidx) y,
         zero_add]
     · have hmk : #ι * alpha = alpha :=
         Cardinal.mul_eq_right halpha hια (Cardinal.mk_ne_zero_iff.mpr hne)
       have hsum : Cardinal.sum (fun _ : ι => alpha) = alpha :=
         (Cardinal.sum_const' ι alpha).trans hmk
-      refine ⟨sumOf (κ := κ) hidx z, ?_⟩
-      rw [← sumOf_add hidx y z, funext hz,
-        ← cmul_sumOf_cardinal hidx (fun _ : ι => alpha) (fun _ => hak)
-          (le_of_eq_of_le hsum hak) x]
+      refine ⟨∑[≤ κ] i, z i, ?_⟩
+      rw [← sumOf_add (h := CardLE.mk' hidx) y z, funext hz,
+        ← cmul_sumOf_cardinal (hI := CardLE.mk' hidx) (fun _ : ι => alpha) (fun _ => hak) (le_of_eq_of_le hsum hak) x]
       exact cmul_congr hsum _ hak x
 
 /-- `add_λ x` is divisor-closed. -/

@@ -315,8 +315,9 @@ theorem isKHom_multMap (hκ : ℵ₀ ≤ κ) :
   · intro x
     funext i
     apply Subtype.ext
-    have hiso := (projClass R κ hκ).rep_sumOf hκ (le_of_eq (mk_Idx κ)) x
-    rw [val_multMap, KMonoid.sumOf_Idx (κ := κ)] at *
+    have hiso : Nonempty ((projClass R κ hκ).rep (KMonoid.ksum x) ≃ₗ[R] _) :=
+      (projClass R κ hκ).rep_sumOf hκ (le_of_eq (mk_Idx κ)) x
+    rw [val_multMap]
     rw [mult_congr L hiso.some i, mult_dsum L (fun j => (projClass R κ hκ).rep (x j)) i]
     rfl
 

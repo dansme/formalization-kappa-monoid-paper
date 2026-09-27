@@ -163,7 +163,7 @@ noncomputable instance instKMonoidAleph0 :
 /-- The `κ`-sum on `F_κ` is cardinal summation. -/
 @[simp] theorem instKMonoid_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (h : #ι ≤ κ) (x : ι → Fcard κ) :
     letI := instKMonoid hκ
-    ((KMonoid.sumOf (κ := κ) h x : Fcard κ) : Cardinal.{u})
+    ((∑[≤ κ] i, x i : Fcard κ) : Cardinal.{u})
       = Cardinal.sum fun i => (x i : Cardinal.{u}) := rfl
 
 /-- The neutral element of `F_κ` is the cardinal `0`. -/

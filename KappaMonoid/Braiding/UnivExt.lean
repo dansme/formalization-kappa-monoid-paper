@@ -443,8 +443,8 @@ theorem theorem_3_12 (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (X : T
           show (0 : UnivExt lam κ X) = UnivExt.of i₀ (0 : X)
           rw [hof0]
       show UnivExt.of i₀ (lsumOf h z)
-        = sumOf (κ := κ) hg (fun i => UnivExt.of (lam := lam) i₀ (z i))
-      rw [KMonoid.sumOf_eq_extend hg g, hfam, hgen (Function.extend g z 0)]
+        = ∑[≤ κ] i, UnivExt.of (lam := lam) i₀ (z i)
+      rw [KMonoid.sumOf_eq_extend (h := CardLE.mk' hg) g, hfam, hgen (Function.extend g z 0)]
       -- both sides are classes of families with small support and equal sums
       refine UnivExt.mk_eq_mk.mpr ?_
       have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)

@@ -99,7 +99,7 @@ theorem lemma_3_14_free (hlam : lam.IsRegular) (hκ : ℵ₀ ≤ κ) (hlk : lam 
   · -- uniqueness: a `κ`-homomorphism out of `F_κ(B)` is determined on the generators
     rintro ψ' ⟨hhom', hext'⟩
     refine hom_ext (lam := Order.succ κ) (X := K) (g₁ := ψ') (g₂ := ψ)
-      (fun {ι} h x => KMonoid.IsKHom.map_sumOf hhom' (KMonoid.le_of_lt_succ h) x)
+      (fun {ι} h x => hhom'.map_sumOf (h := ⟨h⟩) x)
       (isLMonoidHom_lift _) fun b => ?_
     rw [hψiota b, ← freeIncl_iota hlam hκ hlk b, hext']
 

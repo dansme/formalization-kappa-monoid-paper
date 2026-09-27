@@ -115,10 +115,10 @@ theorem coe_lsumOf_slots {F : Form} (hF : F.IsFinite)
         ↥(add((x₁ + x₂)))) : H) = eval x₁ x₂ F := by
 
   -- the coercion of a submonoid sum *is* the sum in `H` (`IsLSubset.coe_lsumOf` is `rfl`)
-  show KMonoid.sumOf (κ := ℵ₀) ((mk_slots_lt hF).le.trans le_rfl)
-      (fun i : slots.{u} F => familyOfForm x₁ x₂ F i) = eval x₁ x₂ F
-  rw [← KMonoid.sumOf_eq_sumOf_subset mk_formIdx_le_aleph0 ((mk_slots_lt hF).le.trans le_rfl)
-    (familyOfForm x₁ x₂ F) fun i hi => familyOfForm_eq_zero_of_notMem_slots x₁ x₂ hi]
+  have : CardLE (slots.{u} F) ℵ₀ := CardLE.mk' (mk_slots_lt hF).le
+  show ∑[≤ ℵ₀] i ∈ slots.{u} F, familyOfForm x₁ x₂ F i = eval x₁ x₂ F
+  rw [← KMonoid.sumOf_eq_sumOf_subset (familyOfForm x₁ x₂ F) fun i hi =>
+    familyOfForm_eq_zero_of_notMem_slots x₁ x₂ hi]
   exact sumOf_familyOfForm x₁ x₂ F
 
 /-- **Lemma 5.2(2)**: two finite forms of the same element are braided over `add (x₁ + x₂)`.
@@ -813,10 +813,10 @@ theorem lemma_5_2_five
   obtain ⟨D⟩ := hbr.braided (fun _ => ⟨x₁ + x₂, hx12⟩) (fun _ => ⟨x₂, hx2⟩) hsum
   -- the braiding equations, read in `H` (the coercion of a `λ⁻`-sum *is* the ambient sum)
   have hIcoe : ∀ q : Idx (ℵ₀ : Cardinal.{u}) × ℕ,
-      KMonoid.sumOf (κ := ℵ₀) (D.I_lt q).le (fun _ : D.I q => x₁ + x₂)
+      ∑[≤ ℵ₀] _ ∈ D.I q, (x₁ + x₂)
         = ((D.v q : H) + (D.u q : H)) := fun q => congrArg Subtype.val (D.hI q)
   have hJcoe : ∀ (b : Idx (ℵ₀ : Cardinal.{u})) (j : ℕ),
-      KMonoid.sumOf (κ := ℵ₀) (D.J_lt (b, j)).le (fun _ : D.J (b, j) => x₂)
+      ∑[≤ ℵ₀] _ ∈ D.J (b, j), x₂
         = ((D.v (b, j + 1) : H) + (D.u (b, j) : H)) :=
     fun b j => congrArg Subtype.val (D.hJ (b, j))
   -- some block has a nonempty `I`-piece; take the least level of that block at which it does

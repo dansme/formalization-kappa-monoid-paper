@@ -390,14 +390,12 @@ theorem kGenerates_range_iota (hκ : ℵ₀ ≤ κ) :
   have hterm : ∀ (x : ↥(FreeK κ B)) (b : B),
       term (iota (lam := Order.succ κ)) (x : B → LCard (Order.succ κ)) b ∈ S := by
     intro x b
-    exact hSsub.sumOf_mem
-      (le_of_eq_of_le (mk_Idx _)
-        (Order.lt_succ_iff.mp ((x : B → LCard (Order.succ κ)) b).2))
-      (fun _ => iota (lam := Order.succ κ) b) fun _ => hiota b
+    exact hSsub.sumOf_mem (h := CardLE.mk' (le_of_eq_of_le (mk_Idx _)
+        (Order.lt_succ_iff.mp ((x : B → LCard (Order.succ κ)) b).2))) (fun _ => iota (lam := Order.succ κ) b) fun _ => hiota b
   refine Set.eq_univ_of_forall fun x => ?_
   have hx := lift_iota_eq_self (lam := Order.succ κ) x
   rw [← hx, lift_def]
-  exact hSsub.sumOf_mem (KMonoid.le_of_lt_succ x.2) _ fun b => hterm x (b : B)
+  exact hSsub.sumOf_mem (h := ⟨x.2⟩) _ fun b => hterm x (b : B)
 
 /-- **Definition 2.10(1)**, the paper's form: `H` is `α`-generated exactly when it is the image of
 a `κ`-homomorphism from a free `κ`-monoid `F_κ(B)` with `#B ≤ α`. -/

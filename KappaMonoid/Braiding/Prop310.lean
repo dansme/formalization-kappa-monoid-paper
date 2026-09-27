@@ -286,7 +286,7 @@ theorem IsBraidedOver.of_iso {X : Type v} {H₁ H₂ : Type w} [LMonoid lam X] [
   isLHom := by
     refine ⟨by rw [← hcomm 0, hbr.isLHom.1, he.1], fun {ι} h x => ?_⟩
     rw [← hcomm (lsumOf (lam := lam) h x), hbr.isLHom.2 h x,
-      he.map_sumOf (le_of_lt_of_le_succ hlk h) (f₁ ∘ x)]
+      he.map_sumOf (h := CardLE.mk' (le_of_lt_of_le_succ hlk h)) (f₁ ∘ x)]
     exact congrArg _ (funext fun i => hcomm (x i))
   injective := fun a b hab => hbr.injective (hbij.1 (by rw [hcomm a, hcomm b]; exact hab))
   generates := fun h => by
@@ -372,19 +372,19 @@ theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMo
     (fun i => ⟨e (y i : H₁), himg (y i)⟩) (by rw [← hksum x, ← hksum y, hxy])
   -- every `u`, `v` of the braiding pulls back into `T`
   have hpull : ∀ (z : Idx κ → ↥T) (p : Idx κ × ℕ) (P : Set (Idx κ)) (hP : #P < lam)
-      (a b : ↥S), KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk hP) (fun i : P => e (z i : H₁))
+      (a b : ↥S), ∑[≤ κ] i : P, e (z i : H₁)
         = ((a : H₂) + (b : H₂)) →
       einv (a : H₂) ∈ T ∧ einv (b : H₂) ∈ T ∧
-        KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk hP) (fun i : P => (z i : H₁))
+        ∑[≤ κ] i : P, (z i : H₁)
           = einv (a : H₂) + einv (b : H₂) := by
     intro z p P hP a b hab
-    have hblock : KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk hP) (fun i : P => (z i : H₁)) ∈ T :=
+    have hblock : ∑[≤ κ] i : P, (z i : H₁) ∈ T :=
       hT.sumOf_mem hP _ fun i => (z i).2
-    have hsplit : KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hlk hP) (fun i : P => (z i : H₁))
+    have hsplit : ∑[≤ κ] i : P, (z i : H₁)
         = einv (a : H₂) + einv (b : H₂) := by
       refine hbij.1 ?_
       rw [he.map_add, hri (a : H₂), hri (b : H₂), ← hab]
-      exact he.map_sumOf (le_of_lt_of_le_succ hlk hP) (fun i : P => (z i : H₁))
+      exact he.map_sumOf (h := CardLE.mk' (le_of_lt_of_le_succ hlk hP)) (fun i : P => (z i : H₁))
     exact ⟨hsat _ hblock _ _ hsplit, hsat _ hblock _ _ (hsplit.trans (add_comm _ _)), hsplit⟩
   have huv : ∀ p : Idx κ × ℕ, einv (D.v p : H₂) ∈ T ∧ einv (D.u p : H₂) ∈ T := by
     intro p

@@ -61,8 +61,7 @@ theorem ksum_familyOfForm (F : Form) :
     KMonoid.ksum (κ := ℵ₀) (fun i => familyOfForm x₁ x₂ F (formIdxEquiv.{u}.symm i))
       = eval x₁ x₂ F := by
   rw [← sumOf_familyOfForm x₁ x₂ F, ← KMonoid.sumOf_Idx]
-  exact (KMonoid.sumOf_equiv mk_formIdx_le_aleph0 (le_of_eq (mk_Idx _))
-    formIdxEquiv.{u}.symm (familyOfForm x₁ x₂ F)).symm
+  exact (KMonoid.sumOf_equiv formIdxEquiv.{u}.symm (familyOfForm x₁ x₂ F)).symm
 
 /-- **Two forms of the same element are braided**, as soon as `H` is braided over `add (x₁ + x₂)`.
 This is what turns the hypothesis of Theorem 5.3's forward direction into the input of Lemma

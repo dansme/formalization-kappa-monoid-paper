@@ -75,9 +75,9 @@ theorem IsCompatible.add_eq (hS : IsCompatible κ S) {lam lam' : Cardinal.{u}} (
     (hl : lam < κ) (h0' : ℵ₀ ≤ lam') (hl' : lam' < κ) (a b : H) :
     (letI := S lam h0 hl; a + b) = (letI := S lam' h0' hl'; a + b) := by
   have hB : #(ULift.{u} Bool) ≤ ℵ₀ := (lt_aleph0_of_finite _).le
-  exact (@KMonoid.sumOf_two lam H (S lam h0 hl) a b (hB.trans h0)).symm.trans
-    ((hS.sumOf_eq h0 hl h0' hl' _ _ _).trans
-      (@KMonoid.sumOf_two lam' H (S lam' h0' hl') a b (hB.trans h0')))
+  exact (@KMonoid.sumOf_two lam H (S lam h0 hl) a b).symm.trans
+    ((hS.sumOf_eq h0 hl h0' hl' (hB.trans h0) (hB.trans h0') _).trans
+      (@KMonoid.sumOf_two lam' H (S lam' h0' hl') a b))
 
 /-- The sum of a `< κ`-indexed family in a compatible family of structures: computed in the
 structure at `max #ι ℵ₀`, the least infinite cardinal at which it can be summed. -/
@@ -97,11 +97,11 @@ theorem IsCompatible.compatSum_congr (hS : IsCompatible κ S) (hκ0 : ℵ₀ < �
   have hι : #ι ≤ max #ι' ℵ₀ := (mk_congr e).le.trans (le_max_left _ _)
   rw [hS.compatSum_eq hκ0 (le_max_right _ _) (max_lt h' hκ0) hι]
   exact (@KMonoid.sumOf_equiv _ H (S _ (le_max_right _ _) (max_lt h' hκ0)) ι' ι
-    (le_max_left _ _) hι e x).symm
+    (CardLE.mk' (le_max_left _ _)) (CardLE.mk' hι) e x).symm
 
 theorem compatSum_unique (hκ0 : ℵ₀ < κ) {ι : Type u} [Unique ι] (h : #ι < κ) (x : ι → H) :
     compatSum S hκ0 h x = x default :=
-  @KMonoid.sumOf_unique _ H (S _ _ _) ι _ _ x
+  @KMonoid.sumOf_unique _ H (S _ _ _) ι _ (CardLE.mk' (le_max_left _ _)) x
 
 /-- (B2) for `compatSum`.  All sums involved can be computed in the single structure at
 `λ' = max (max #ι #(Σ i, ρ i)) ℵ₀ < κ`, where the sigma law of that structure applies. -/
@@ -120,7 +120,7 @@ theorem IsCompatible.compatSum_sigma (hS : IsCompatible κ S) (hκ0 : ℵ₀ < �
     show (fun i => compatSum S hκ0 (hρ i) (x i))
         = fun i => @KMonoid.sumOf L H (S L hL0 hLκ) _ (hρL i) (x i) from
       funext fun i => hS.compatSum_eq hκ0 hL0 hLκ (hρL i) (hρ i) (x i)]
-  exact @KMonoid.sumOf_sigma L H (S L hL0 hLκ) ι ρ hιL hρL hσL x
+  exact @KMonoid.sumOf_sigma L H (S L hL0 hLκ) ι ρ (CardLE.mk' hιL) (fun i => CardLE.mk' (hρL i)) x
 
 /-- The addition of the structure at `ℵ₀` is the two-element `compatSum`. -/
 theorem IsCompatible.add_eq_compatSum (hS : IsCompatible κ S) (hκ0 : ℵ₀ < κ)

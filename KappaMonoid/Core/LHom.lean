@@ -77,8 +77,8 @@ theorem lsumOf_aleph0_eq_finsum {ι : Type u} [Fintype ι] (h : #ι < ℵ₀) {X
 
 /-- A `κ`-sum over a finite index type is the ordinary finite sum. -/
 theorem _root_.KappaMonoid.KMonoid.sumOf_eq_sum {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
-    {ι : Type u} [Fintype ι] (h : #ι ≤ κ) (x : ι → H) :
-    KMonoid.sumOf (κ := κ) h x = ∑ i, x i :=
+    {ι : Type u} [Fintype ι] [h : CardLE ι κ] (x : ι → H) :
+    ∑[≤ κ] i, x i = ∑ i, x i :=
   lsumOf_eq_sum _ x
 
 /-- For `λ = ℵ₀`, a sum over a small subset is the `finsum` over that subset. -/
@@ -102,7 +102,7 @@ namespace LMonoid
 def IsLHom {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
     (hκ : lam ≤ Order.succ κ) (f : X → H) : Prop :=
   f 0 = 0 ∧ ∀ {ι : Type u} (h : #ι < lam) (x : ι → X),
-    f (lsumOf (lam := lam) h x) = KMonoid.sumOf (κ := κ) (le_of_lt_of_le_succ hκ h) (f ∘ x)
+    f (lsumOf (lam := lam) h x) = ∑[≤ κ] i, (f ∘ x) i
 
 variable {lam κ : Cardinal.{u}} {X : Type v} {H : Type w} [LMonoid lam X] [KMonoid κ H]
 

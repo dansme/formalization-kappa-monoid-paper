@@ -117,7 +117,7 @@ theorem toKMonoid_sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) :
     letI := P.toKMonoid
     KMonoid.sumOf (κ := κ) h x = P.sigma (Function.extend (emb h) x 0) := by
   let := P.toKMonoid
-  rw [KMonoid.sumOf_eq_extend h (emb h) x, P.toKMonoid_ksum]
+  exact (KMonoid.sumOf_eq_extend (h := CardLE.mk' h) (emb h) x).trans (P.toKMonoid_ksum _)
 
 /-- Nor by the addition: it is a two-term `Σ`. -/
 theorem toKMonoid_add (a b : H) {i₀ i₁ : Idx κ} (hne : i₀ ≠ i₁) :
@@ -172,6 +172,6 @@ theorem KMonoid.toPaper_toKMonoid (κ : Cardinal.{u}) (H : Type v) [inst : KMono
     exact ((KMonoid.toPaper κ H).toKMonoid_add a b hne).trans (KMonoid.ksum_two a b i₀ i₁ hne)
   · intro ι h x
     exact ((KMonoid.toPaper κ H).toKMonoid_sumOf h x).trans
-      (KMonoid.sumOf_eq_extend h (emb h) x).symm
+      (KMonoid.sumOf_eq_extend (h := CardLE.mk' h) (emb h) x).symm
 
 end KappaMonoid

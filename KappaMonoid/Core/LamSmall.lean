@@ -40,13 +40,17 @@ macro_rules
       | assumption
       | exact KappaMonoid.CardLT.lt
       | exact KappaMonoid.mk_lt_of_finite $reg _
-      | exact lt_of_eq_of_lt (KappaMonoid.mk_Idx _) ‹_›
+      | (refine lt_of_eq_of_lt (KappaMonoid.mk_Idx _) ?_; lam_small_core $reg)
+      | exact Order.lt_succ_of_le ‹_›
+      | exact lt_of_lt_of_le ‹_› ‹_›
+      | exact Order.lt_succ_of_le (le_trans ‹_› ‹_›)
       | solve_by_elim (exfalso := false) (symm := false) (maxDepth := 3) using lam_small_rule
       | (refine KappaMonoid.mk_prod_lt $reg ?_ ?_ <;> lam_small_core $reg)
       | (refine KappaMonoid.mk_sum_lt $reg ?_ ?_ <;> lam_small_core $reg)
       | (refine KappaMonoid.mk_sigma_lt $reg ?_ fun _ => ?_ <;> lam_small_core $reg)
       | (refine KappaMonoid.mk_union_lt $reg ?_ ?_ <;> lam_small_core $reg)
       | (haveI := Fact.mk $reg; exact KappaMonoid.CardLT.lt)
+      | (refine lt_trans ?_ (Order.lt_succ _); lam_small_core $reg)
       | fail "lam_small: cannot split this goal into hypotheses and finite types")
 
 open Lean Meta Elab Tactic in
@@ -55,8 +59,10 @@ sets, from finite types, from hypotheses in the context (also of the form `∀ p
 from facts registered with `@[lam_small_rule]`.
 
 The regularity of `lam`, which the product, sum and sigma rules need, is taken from a hypothesis
-`lam.IsRegular` or from a `λ⁻`-monoid structure `[LMonoid lam X]` in the context. -/
-elab "lam_small" : tactic => do
+`lam.IsRegular`, from a `λ⁻`-monoid structure `[LMonoid lam X]` or a `κ`-monoid structure
+`[KMonoid κ H]` with `λ = κ⁺` in the context, or, failing these, from `λ = ℵ₀` or `λ = κ⁺` with
+`ℵ₀ ≤ κ` in the context. -/
+elab "lam_small" : tactic => withMainContext do
   let goal ← getMainGoal
   let ty ← whnfR (← instantiateMVars (← goal.getType))
   let some (_, _, _, lam) := ty.app4? ``LT.lt
@@ -73,8 +79,26 @@ elab "lam_small" : tactic => do
       if ← isDefEq t.appFn!.appArg! lam then
         proof? := some (← mkAppOptM ``KappaMonoid.LMonoid.isRegular #[lam, t.appArg!, d.toExpr])
         break
-  let some proof := proof?
-    | throwError "lam_small: no proof of `{lam}.IsRegular` and no `LMonoid {lam} _` in the context"
+    -- a `κ`-monoid is a `λ⁻`-monoid for `λ = κ⁺`
+    if t.isAppOfArity `KappaMonoid.KMonoid 2 then
+      let κ := t.appFn!.appArg!
+      if ← isDefEq (← mkAppM ``Order.succ #[κ]) lam then
+        proof? := some (← mkAppOptM `KappaMonoid.KMonoid.isRegular_succ' #[κ, t.appArg!, d.toExpr])
+        break
+  -- otherwise `lam` should be `ℵ₀`, or `κ⁺` for an infinite `κ`
+  let proof ← match proof? with
+    | some p => pure p
+    | none =>
+      let m ← mkFreshExprMVar reg
+      let gs ← try
+          Tactic.run m.mvarId! (evalTactic (← `(tactic| first
+            | exact Cardinal.isRegular_aleph0
+            | exact Cardinal.isRegular_succ (by first | assumption | exact le_rfl | exact Fact.out)
+            | exact Fact.out)))
+        catch _ => pure [m.mvarId!]
+      unless gs.isEmpty do
+        throwError "lam_small: no proof of `{lam}.IsRegular` and no `LMonoid {lam} _` in the context"
+      instantiateMVars m
   let p ← Term.exprToSyntax proof
   evalTactic (← `(tactic| lam_small_core $p))
 
@@ -89,6 +113,20 @@ scoped syntax (name := lsumType) "∑[" term "] " Lean.binderIdent " : " term ",
 /-- `∑[lam] i, f i` is the `λ⁻`-sum of `f` over the index type determined by `f`, its bound found
 by `lam_small`. -/
 scoped syntax (name := lsum) "∑[" term "] " Lean.binderIdent ", " term:67 : term
+
+/-- `∑[≤ κ] i ∈ S, f i`: the `κ`-sum over a set of at most `κ` elements, the `λ⁻`-sum for `λ = κ⁺`. -/
+scoped syntax (name := ksumMem) "∑[≤ " term "] " Lean.binderIdent " ∈ " term ", " term:67 : term
+
+/-- `∑[≤ κ] i : ι, f i`: the `κ`-sum over a type of at most `κ` elements. -/
+scoped syntax (name := ksumType) "∑[≤ " term "] " Lean.binderIdent " : " term ", " term:67 : term
+
+/-- `∑[≤ κ] i, f i`: the `κ`-sum over the index type determined by `f`. -/
+scoped syntax (name := ksum') "∑[≤ " term "] " Lean.binderIdent ", " term:67 : term
+
+macro_rules
+  | `(∑[≤ $κ] $i ∈ $S, $f) => `(∑[Order.succ $κ] $i ∈ $S, $f)
+  | `(∑[≤ $κ] $i : $ι, $f) => `(∑[Order.succ $κ] $i : $ι, $f)
+  | `(∑[≤ $κ] $i, $f) => `(∑[Order.succ $κ] $i, $f)
 
 macro_rules
   | `(∑[$lam] $i:ident ∈ $S, $f) =>

@@ -63,134 +63,124 @@ theorem mk_sum_le {H : Type v} [KMonoid κ H] {α β : Type u} (hα : #α ≤ κ
 /-- A bound `#ι ≤ κ` as the instance the `λ⁻`-sums of `κ⁺` look for. -/
 theorem cardLT_succ {ι : Type u} (h : #ι ≤ κ) : CardLT ι (Order.succ κ) := ⟨lt_succ h⟩
 
-/-- The sum of a family indexed by an arbitrary type of cardinality `≤ κ`. -/
+/-- The sum of a family indexed by an arbitrary type of cardinality `≤ κ`: `∑[≤ κ] i, x i` with the
+bound given explicitly. -/
 noncomputable def sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) : H :=
   LMonoid.lsumOf (lam := Order.succ κ) (lt_succ h) x
 
-theorem sumOf_equiv {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι' ≃ ι) (x : ι → H) :
-    sumOf (κ := κ) h x = sumOf (κ := κ) h' (x ∘ e) :=
-  haveI := cardLT_succ h; haveI := cardLT_succ h'
+theorem sumOf_eq_lsum {ι : Type u} (h : #ι ≤ κ) (x : ι → H) :
+    sumOf (κ := κ) h x = ∑[≤ κ] i, x i := rfl
+
+/-! The `κ`-sum laws are the `λ⁻`-sum laws of `LMonoid` at `λ = κ⁺`, with `CardLE ι κ` for
+`CardLT ι κ⁺`. -/
+
+theorem sumOf_equiv {ι ι' : Type u} [h : CardLE ι κ] [h' : CardLE ι' κ] (e : ι' ≃ ι) (x : ι → H) :
+    ∑[≤ κ] i, x i = ∑[≤ κ] i', x (e i') :=
   LMonoid.lsumOf_equiv e x
 
-@[simp] theorem sumOf_unique {ι : Type u} [Unique ι] (h : #ι ≤ κ) (x : ι → H) :
-    sumOf (κ := κ) h x = x default :=
+@[simp] theorem sumOf_unique {ι : Type u} [Unique ι] [h : CardLE ι κ] (x : ι → H) :
+    ∑[≤ κ] i, x i = x default :=
   LMonoid.lsumOf_unique _ x
 
-@[simp] theorem sumOf_of_isEmpty {ι : Type u} [IsEmpty ι] (h : #ι ≤ κ) (x : ι → H) :
-    sumOf (κ := κ) h x = 0 :=
-  haveI := cardLT_succ h
+@[simp] theorem sumOf_of_isEmpty {ι : Type u} [IsEmpty ι] [h : CardLE ι κ] (x : ι → H) :
+    ∑[≤ κ] i, x i = 0 :=
   LMonoid.lsumOf_isEmpty x
 
-@[simp] theorem sumOf_zero {ι : Type u} (h : #ι ≤ κ) :
-    sumOf (κ := κ) (H := H) h (fun _ => 0) = 0 :=
-  haveI := cardLT_succ h
+@[simp] theorem sumOf_zero {ι : Type u} [h : CardLE ι κ] : ∑[≤ κ] _ : ι, (0 : H) = 0 :=
   LMonoid.lsumOf_zero
 
 /-- The general associativity law: a `κ`-sum may be computed by first summing over the fibres
 of a partition. -/
-theorem sumOf_sigma {ι : Type u} {ρ : ι → Type u} (h : #ι ≤ κ) (hρ : ∀ i, #(ρ i) ≤ κ)
-    (hσ : #((i : ι) × ρ i) ≤ κ) (x : ∀ i, ρ i → H) :
-    sumOf (κ := κ) h (fun i => sumOf (κ := κ) (hρ i) (x i))
-      = sumOf (κ := κ) hσ (fun p => x p.1 p.2) :=
-  LMonoid.lsumOf_sigma _ (fun i => lt_succ (hρ i)) x _
+theorem sumOf_sigma {ι : Type u} {ρ : ι → Type u} [h : CardLE ι κ] [hρ : ∀ i, CardLE (ρ i) κ]
+    (x : ∀ i, ρ i → H) :
+    ∑[≤ κ] i, ∑[≤ κ] j, x i j = ∑[≤ κ] p : (i : ι) × ρ i, x p.1 p.2 :=
+  LMonoid.lsumOf_sigma _ (fun i => (hρ i).lt) x _
 
 /-- Zero-padding along an embedding does not change a `κ`-sum. -/
-theorem sumOf_extend {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι ↪ ι') (x : ι → H) :
-    sumOf (κ := κ) h' (Function.extend e x 0) = sumOf (κ := κ) h x :=
-  haveI := cardLT_succ h; haveI := cardLT_succ h'
+theorem sumOf_extend {ι ι' : Type u} [h : CardLE ι κ] [h' : CardLE ι' κ] (e : ι ↪ ι')
+    (x : ι → H) :
+    ∑[≤ κ] j, Function.extend e x 0 j = ∑[≤ κ] i, x i :=
   LMonoid.lsumOf_extend e x
 
 /-- A `κ`-sum indexed by (a universe-lifted) `Bool` recovers the binary operation `+`. -/
-theorem sumOf_two (a b : H) (hUB : #(ULift.{u} Bool) ≤ κ) :
-    sumOf (κ := κ) hUB (fun p : ULift.{u} Bool => if p.down then a else b) = a + b :=
+theorem sumOf_two (a b : H) :
+    ∑[≤ κ] p : ULift.{u} Bool, (if p.down then a else b) = a + b :=
   LMonoid.lsumOf_two a b
 
 /-- `κ`-sums are additive. -/
-theorem sumOf_add {ι : Type u} (h : #ι ≤ κ) (f g : ι → H) :
-    sumOf (κ := κ) h (fun i => f i + g i) = sumOf (κ := κ) h f + sumOf (κ := κ) h g :=
-  haveI := cardLT_succ h
+theorem sumOf_add {ι : Type u} [h : CardLE ι κ] (f g : ι → H) :
+    ∑[≤ κ] i, (f i + g i) = ∑[≤ κ] i, f i + ∑[≤ κ] i, g i :=
   LMonoid.lsumOf_add f g
 
 /-- Indices outside a subset off which the family vanishes may be dropped from a sum. -/
-theorem sumOf_eq_sumOf_subset {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (f : ι → H)
-    (hout : ∀ i ∉ S, f i = 0) :
-    sumOf (κ := κ) hι f = sumOf (κ := κ) hS (fun i : S => f i) := by
-  have huniv : #(Set.univ : Set ι) ≤ κ := (Cardinal.mk_congr (Equiv.Set.univ ι)).trans_le hι
-  calc sumOf (κ := κ) hι f = sumOf (κ := κ) huniv (fun i : (Set.univ : Set ι) => f i) :=
-        sumOf_equiv hι huniv (Equiv.Set.univ ι) f
-    _ = sumOf (κ := κ) hS (fun i : S => f i) := by
-        have := cardLT_succ huniv; have := cardLT_succ hS
-        exact LMonoid.lsumOf_of_subset (Set.subset_univ S) f fun i _ hi => hout i hi
+theorem sumOf_eq_sumOf_subset {ι : Type u} [hι : CardLE ι κ] {S : Set ι} [hS : CardLE S κ]
+    (f : ι → H) (hout : ∀ i ∉ S, f i = 0) :
+    ∑[≤ κ] i, f i = ∑[≤ κ] i ∈ S, f i := by
+  have : CardLE (Set.univ : Set ι) κ := CardLT.of_equiv (Equiv.Set.univ ι)
+  calc ∑[≤ κ] i, f i = ∑[≤ κ] i ∈ (Set.univ : Set ι), f i := sumOf_equiv (Equiv.Set.univ ι) f
+    _ = ∑[≤ κ] i ∈ S, f i := LMonoid.lsumOf_of_subset (Set.subset_univ S) f fun i _ hi => hout i hi
 
 /-- Terms with value `0` may be discarded. -/
-theorem sumOf_subtype_support {ι : Type u} (h : #ι ≤ κ) (x : ι → H)
-    (h' : #(Function.support x) ≤ κ) :
-    sumOf (κ := κ) h x = sumOf (κ := κ) h' (fun i : Function.support x => x i) :=
-  sumOf_eq_sumOf_subset h h' x fun _ => Function.notMem_support.mp
+theorem sumOf_subtype_support {ι : Type u} [h : CardLE ι κ] (x : ι → H) :
+    ∑[≤ κ] i, x i = ∑[≤ κ] i ∈ Function.support x, x i :=
+  sumOf_eq_sumOf_subset x fun _ => Function.notMem_support.mp
 
 /-- A sum over `α ⊕ β` splits as a binary sum. -/
-theorem sumOf_sumType {α β : Type u} (hα : #α ≤ κ) (hβ : #β ≤ κ) (hαβ : #(α ⊕ β) ≤ κ)
-    (f : α → H) (g : β → H) :
-    sumOf (κ := κ) hαβ (Sum.elim f g) = sumOf (κ := κ) hα f + sumOf (κ := κ) hβ g :=
-  haveI := cardLT_succ hα; haveI := cardLT_succ hβ; haveI := cardLT_succ hαβ
+theorem sumOf_sumType {α β : Type u} [hα : CardLE α κ] [hβ : CardLE β κ] (f : α → H) (g : β → H) :
+    ∑[≤ κ] p : α ⊕ β, Sum.elim f g p = ∑[≤ κ] a, f a + ∑[≤ κ] b, g b :=
   LMonoid.lsumOf_sumType f g
 
 /-- The special case of `sumOf_sigma` for a partition of the index set into subsets. -/
 theorem sumOf_biUnion {ι J : Type u} (I : J → Set ι) (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
-    (hcover : (⋃ p, I p) = Set.univ) (hJ : #J ≤ κ) (hι : #ι ≤ κ) (hI : ∀ p, #(I p) ≤ κ)
-    (x : ι → H) :
-    sumOf (κ := κ) hJ (fun p => sumOf (κ := κ) (hI p) (fun i : I p => x i))
-      = sumOf (κ := κ) hι x := by
-  have huniv : #(↥(Set.univ : Set ι)) ≤ κ := (Cardinal.mk_congr (Equiv.Set.univ ι)).trans_le hι
-  have := cardLT_succ hJ
-  have := cardLT_succ huniv
-  have : ∀ p, CardLT (I p) (Order.succ κ) := fun p => cardLT_succ (hI p)
-  have hkey := LMonoid.lsumOf_biUnion_subset (lam := Order.succ κ) (X := H) (Set.univ : Set ι) I
-    hdisj hcover x
-  calc sumOf (κ := κ) hJ (fun p => sumOf (κ := κ) (hI p) (fun i : I p => x i))
-      = sumOf (κ := κ) huniv (fun i : (Set.univ : Set ι) => x i) := hkey
-    _ = sumOf (κ := κ) hι x := (sumOf_equiv hι huniv (Equiv.Set.univ ι) x).symm
+    (hcover : (⋃ p, I p) = Set.univ) [hJ : CardLE J κ] [hι : CardLE ι κ]
+    [hI : ∀ p, CardLE (I p) κ] (x : ι → H) :
+    ∑[≤ κ] p, ∑[≤ κ] i ∈ I p, x i = ∑[≤ κ] i, x i := by
+  have : CardLE (Set.univ : Set ι) κ := CardLT.of_equiv (Equiv.Set.univ ι)
+  calc ∑[≤ κ] p, ∑[≤ κ] i ∈ I p, x i
+      = ∑[≤ κ] i ∈ (Set.univ : Set ι), x i :=
+        LMonoid.lsumOf_biUnion_subset (lam := Order.succ κ) (X := H) Set.univ I hdisj hcover x
+    _ = ∑[≤ κ] i, x i := (sumOf_equiv (Equiv.Set.univ ι) x).symm
 
 /-! ### Summation over the canonical index type `Idx κ` -/
 
-/-- The `κ`-indexed summation `Σ : H^κ → H` of the paper. -/
-noncomputable def ksum (x : Idx κ → H) : H := sumOf (κ := κ) (le_of_eq (mk_Idx κ)) x
+/-- `Idx κ`, the paper's index set `κ`, may index a `κ`-sum. -/
+instance cardLE_Idx (κ : Cardinal.{u}) : CardLE (Idx κ) κ := CardLE.mk' (le_of_eq (mk_Idx κ))
 
-theorem sumOf_Idx (x : Idx κ → H) : sumOf (κ := κ) (le_of_eq (mk_Idx κ)) x = ksum (κ := κ) x := rfl
+/-- The `κ`-indexed summation `Σ : H^κ → H` of the paper. -/
+noncomputable def ksum (x : Idx κ → H) : H := ∑[≤ κ] i, x i
+
+theorem sumOf_Idx (x : Idx κ → H) : ∑[≤ κ] i, x i = ksum (κ := κ) x := rfl
 
 /-- A `κ`-sum may be computed by padding with zeros along *any* embedding into `Idx κ`. -/
-theorem sumOf_eq_extend {ι : Type u} (h : #ι ≤ κ) (e : ι ↪ Idx κ) (x : ι → H) :
-    sumOf (κ := κ) h x = ksum (κ := κ) (Function.extend e x 0) :=
-  (sumOf_extend h (le_of_eq (mk_Idx κ)) e x).symm
+theorem sumOf_eq_extend {ι : Type u} [h : CardLE ι κ] (e : ι ↪ Idx κ) (x : ι → H) :
+    ∑[≤ κ] i, x i = ksum (κ := κ) (Function.extend e x 0) :=
+  (sumOf_extend e x).symm
 
-@[simp] theorem ksum_zero : ksum (κ := κ) (fun _ : Idx κ => (0 : H)) = 0 := sumOf_zero _
+@[simp] theorem ksum_zero : ksum (κ := κ) (fun _ : Idx κ => (0 : H)) = 0 := sumOf_zero
 
 /-- (A1): a family concentrated in one index sums to its unique possibly nonzero entry. -/
 theorem ksum_single (i₀ : Idx κ) (x : Idx κ → H) (hx : ∀ i, i ≠ i₀ → x i = 0) :
-    ksum (κ := κ) x = x i₀ :=
-  (sumOf_eq_sumOf_subset (S := {i₀}) _ (mk_le_of_finite (H := H) _) x hx).trans
-    (LMonoid.lsumOf_unique _ _)
+    ksum (κ := κ) x = x i₀ := by
+  have := LMonoid.factRegular (lam := Order.succ κ) (X := H)
+  exact (sumOf_eq_sumOf_subset (S := {i₀}) x hx).trans (LMonoid.lsumOf_unique _ _)
 
 /-- (A2): the associativity law modelled on `⨁ᵢ ⨁ⱼ Mᵢⱼ ≅ ⨁_{(i,j)} Mᵢⱼ`. -/
 theorem ksum_sigma (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx κ) :
     ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
       = ksum (κ := κ) fun k => x (π.symm k).1 (π.symm k).2 := by
-  have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
-  have hprod : #(Idx κ × Idx κ) ≤ κ := mk_prod_le (H := H) hidx hidx
+  have := LMonoid.factRegular (lam := Order.succ κ) (X := H)
   calc ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
-      = sumOf (κ := κ) hprod (fun p => x p.1 p.2) :=
-        haveI : CardLT (Idx κ) (Order.succ κ) := ⟨lt_succ hidx⟩
-        LMonoid.lsumOf_prod x
-    _ = ksum (κ := κ) fun k => x (π.symm k).1 (π.symm k).2 := sumOf_equiv hprod hidx π.symm _
+      = ∑[≤ κ] p : Idx κ × Idx κ, x p.1 p.2 := LMonoid.lsumOf_prod x
+    _ = ksum (κ := κ) fun k => x (π.symm k).1 (π.symm k).2 := sumOf_equiv π.symm _
 
 /-- Compatibility of `+` with `Σ`. -/
 theorem ksum_two (a b : H) (i₀ i₁ : Idx κ) (hne : i₀ ≠ i₁) :
     ksum (κ := κ) (fun i => if i = i₀ then a else if i = i₁ then b else 0) = a + b := by
+  have := LMonoid.factRegular (lam := Order.succ κ) (X := H)
   let f : Idx κ → H := fun i => if i = i₀ then a else if i = i₁ then b else 0
-  have hp : #(↥({i₀, i₁} : Set (Idx κ))) ≤ κ := mk_le_of_finite (H := H) _
   calc ksum (κ := κ) f
-      = sumOf (κ := κ) hp (fun i : ({i₀, i₁} : Set (Idx κ)) => f i) :=
-        sumOf_eq_sumOf_subset _ hp f fun i hi => by
+      = ∑[≤ κ] i ∈ ({i₀, i₁} : Set (Idx κ)), f i :=
+        sumOf_eq_sumOf_subset f fun i hi => by
           simp only [Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at hi
           simp [f, hi.1, hi.2]
     _ = f i₀ + f i₁ := LMonoid.lsumOf_pair hne f
@@ -199,19 +189,18 @@ theorem ksum_two (a b : H) (i₀ i₁ : Idx κ) (hne : i₀ ≠ i₁) :
 /-- (A3), Lemma 2.5: `Σ` is invariant under permutations of the index set. -/
 theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) :
     ksum (κ := κ) x = ksum (κ := κ) (x ∘ π) :=
-  sumOf_equiv _ _ π x
+  sumOf_equiv π x
 
 /-- (A4), Lemma 2.5: iterated sums may be interchanged. -/
 theorem ksum_comm (x : Idx κ → Idx κ → H) :
     ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
       = ksum (κ := κ) (fun j => ksum (κ := κ) fun i => x i j) :=
-  haveI : CardLT (Idx κ) (Order.succ κ) := ⟨lt_succ (le_of_eq (mk_Idx κ))⟩
   LMonoid.lsumOf_comm x
 
 /-- Zero-padding along a self-embedding of `Idx κ` does not change a `κ`-sum. -/
 theorem ksum_extend (g : Idx κ ↪ Idx κ) (x : Idx κ → H) :
     ksum (κ := κ) (Function.extend g x 0) = ksum (κ := κ) x :=
-  sumOf_extend _ _ g x
+  sumOf_extend g x
 
 end KMonoid
 
@@ -252,19 +241,15 @@ theorem cmul_congr {α β : Cardinal.{u}} (h : α = β) (hα : α ≤ κ) (hβ :
   LMonoid.lcmul_congr (lam := Order.succ κ) h _ _ x
 
 /-- Lemma 2.7(2). -/
-theorem cmul_sumOf_cardinal {I : Type u} (hI : #I ≤ κ) (l : I → Cardinal.{u})
+theorem cmul_sumOf_cardinal {I : Type u} [hI : CardLE I κ] (l : I → Cardinal.{u})
     (hl : ∀ i, l i ≤ κ) (hsum : Cardinal.sum l ≤ κ) (x : H) :
-    cmul (κ := κ) (Cardinal.sum l) hsum x
-      = sumOf (κ := κ) hI fun i => cmul (κ := κ) (l i) (hl i) x :=
-  haveI := cardLT_succ hI
+    cmul (κ := κ) (Cardinal.sum l) hsum x = ∑[≤ κ] i, cmul (κ := κ) (l i) (hl i) x :=
   LMonoid.lcmul_lsumOf_cardinal (lam := Order.succ κ) l
     (fun i => lt_succ_of_le (hl i)) (lt_succ_of_le hsum) x
 
 /-- Lemma 2.7(3). -/
-theorem cmul_sumOf {I : Type u} (hI : #I ≤ κ) (α : Cardinal.{u}) (hα : α ≤ κ) (x : I → H) :
-    cmul (κ := κ) α hα (sumOf (κ := κ) hI x)
-      = sumOf (κ := κ) hI fun i => cmul (κ := κ) α hα (x i) :=
-  haveI := cardLT_succ hI
+theorem cmul_sumOf {I : Type u} [hI : CardLE I κ] (α : Cardinal.{u}) (hα : α ≤ κ) (x : I → H) :
+    cmul (κ := κ) α hα (∑[≤ κ] i, x i) = ∑[≤ κ] i, cmul (κ := κ) α hα (x i) :=
   LMonoid.lcmul_lsumOf (lam := Order.succ κ) α (lt_succ_of_le hα) x
 
 /-- Lemma 2.7(2) for a two-term sum of cardinals. -/
@@ -287,15 +272,19 @@ theorem cmul_cmul {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (h�
 
 /-- `#ι` copies of `x` are the sum of the family constantly equal to `x`, indexed by `ι`. -/
 theorem cmul_eq_sumOf {ι : Type u} (hι : #ι ≤ κ) (x : H) :
-    cmul (κ := κ) #ι hι x = sumOf (κ := κ) hι (fun _ : ι => x) := by
+    cmul (κ := κ) #ι hι x = ∑[≤ κ] _ : ι, x := by
   obtain ⟨e⟩ := Cardinal.eq.mp (mk_Idx (#ι))
-  exact (sumOf_equiv hι (le_of_eq_of_le (mk_Idx (#ι)) hι) e (fun _ : ι => x)).symm
+  have := CardLE.mk' hι
+  have := CardLE.mk' (le_of_eq_of_le (mk_Idx (#ι)) hι)
+  exact (sumOf_equiv e (fun _ : ι => x)).symm
 
 /-- A family taking the value `x` on `S` and `0` off it sums to `#S · x`. -/
 theorem sumOf_indicator {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (x : H) (f : ι → H)
     (hin : ∀ i ∈ S, f i = x) (hout : ∀ i ∉ S, f i = 0) :
-    sumOf (κ := κ) hι f = cmul (κ := κ) #S hS x := by
-  rw [sumOf_eq_sumOf_subset hι hS f hout, cmul_eq_sumOf]
+    ∑[≤ κ] i, f i = cmul (κ := κ) #S hS x := by
+  have := CardLE.mk' hι
+  have := CardLE.mk' hS
+  rw [sumOf_eq_sumOf_subset f hout, cmul_eq_sumOf]
   exact congrArg _ (funext fun i => hin i i.2)
 
 /-- Cardinal scalar multiplication by a natural number is the `nsmul` of the additive monoid. -/
@@ -383,27 +372,27 @@ theorem IsKHom.id' : IsKHom κ (fun a : H => a) := ⟨rfl, fun _ => rfl⟩
 /-- A `κ`-homomorphism commutes with sums over arbitrary small index types, not just `Idx κ`:
 pad along an embedding into `Idx κ` and use that `f 0 = 0`. -/
 theorem IsKHom.map_sumOf {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom κ f)
-    {ι : Type u} (h : #ι ≤ κ) (x : ι → H) :
-    f (sumOf (κ := κ) h x) = sumOf (κ := κ) h (f ∘ x) := by
+    {ι : Type u} [h : CardLE ι κ] (x : ι → H) :
+    f (∑[≤ κ] i, x i) = ∑[≤ κ] i, f (x i) := by
   classical
-  have hext : f ∘ Function.extend (emb h) x 0 = Function.extend (emb h) (f ∘ x) 0 := by
+  let e := emb (CardLE.le (ι := ι) (κ := κ))
+  have hext : f ∘ Function.extend e x 0 = Function.extend e (f ∘ x) 0 := by
     funext k
-    by_cases hk : ∃ i, emb h i = k
+    by_cases hk : ∃ i, e i = k
     · obtain ⟨i, rfl⟩ := hk
-      rw [Function.comp_apply, (emb h).injective.extend_apply, (emb h).injective.extend_apply]
+      rw [Function.comp_apply, e.injective.extend_apply, e.injective.extend_apply]
       rfl
     · rw [Function.comp_apply, Function.extend_apply' _ _ _ hk,
         Function.extend_apply' _ _ _ hk]
       exact hf.1
-  rw [sumOf_eq_extend h (emb h) x, hf.2, hext, ← sumOf_eq_extend h (emb h) (f ∘ x)]
+  rw [sumOf_eq_extend e x, hf.2, hext, ← sumOf_eq_extend e (f ∘ x)]
+  rfl
 
 /-- A `κ`-homomorphism is additive: `a + b` is a `κ`-sum indexed by `Bool`. -/
 theorem IsKHom.map_add {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom κ f) (a b : H) :
     f (a + b) = f a + f b := by
-  have hUB : #(ULift.{u} Bool) ≤ κ :=
-    le_trans (le_of_lt (Cardinal.lt_aleph0_iff_finite.mpr inferInstance))
-      (aleph0_le (κ := κ) (H := H))
-  rw [← sumOf_two a b hUB, hf.map_sumOf hUB, ← sumOf_two (f a) (f b) hUB]
+  have := LMonoid.factRegular (lam := Order.succ κ) (X := H)
+  rw [← sumOf_two a b, hf.map_sumOf, ← sumOf_two (f a) (f b)]
   exact congrArg _ (funext fun p => by rcases p with ⟨(_ | _)⟩ <;> rfl)
 
 /-- The inverse of a bijective `κ`-homomorphism is again a `κ`-homomorphism. -/
@@ -420,12 +409,12 @@ theorem IsKHom.map_cmul {K : Type w} [KMonoid κ K] {f : H → K} (hf : IsKHom �
     {α : Cardinal.{u}} (hα : α ≤ κ) (x : H) :
     f (cmul (κ := κ) α hα x) = cmul (κ := κ) α hα (f x) := by
   have hmk : #(Idx α) ≤ κ := le_of_eq_of_le (mk_Idx α) hα
-  have h1 : cmul (κ := κ) α hα x = sumOf (κ := κ) hmk (fun _ : Idx α => x) :=
+  have := CardLE.mk' hmk
+  have h1 : cmul (κ := κ) α hα x = ∑[≤ κ] _ : Idx α, x :=
     (cmul_congr (mk_Idx α).symm hα hmk x).trans (cmul_eq_sumOf hmk x)
-  have h2 : cmul (κ := κ) α hα (f x) = sumOf (κ := κ) hmk (fun _ : Idx α => f x) :=
+  have h2 : cmul (κ := κ) α hα (f x) = ∑[≤ κ] _ : Idx α, f x :=
     (cmul_congr (mk_Idx α).symm hα hmk (f x)).trans (cmul_eq_sumOf hmk (f x))
-  rw [h1, h2, hf.map_sumOf hmk (fun _ : Idx α => x)]
-  rfl
+  rw [h1, h2, hf.map_sumOf (fun _ : Idx α => x)]
 
 /-- A `κ`-submonoid of a `κ`-monoid. -/
 structure IsKSubmonoid (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Prop where
@@ -433,14 +422,15 @@ structure IsKSubmonoid (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set 
   ksum_mem : ∀ x : Idx κ → H, (∀ i, x i ∈ S) → ksum (κ := κ) x ∈ S
 
 /-- A `κ`-submonoid is closed under sums over arbitrary small index types. -/
-theorem IsKSubmonoid.sumOf_mem {S : Set H} (hS : IsKSubmonoid κ S) {ι : Type u} (h : #ι ≤ κ)
-    (x : ι → H) (hx : ∀ i, x i ∈ S) : sumOf (κ := κ) h x ∈ S := by
+theorem IsKSubmonoid.sumOf_mem {S : Set H} (hS : IsKSubmonoid κ S) {ι : Type u}
+    [h : CardLE ι κ] (x : ι → H) (hx : ∀ i, x i ∈ S) : ∑[≤ κ] i, x i ∈ S := by
   classical
-  rw [← sumOf_extend h (le_of_eq (mk_Idx κ)) (emb h) x]
+  let e := emb (CardLE.le (ι := ι) (κ := κ))
+  rw [← sumOf_extend e x]
   refine hS.ksum_mem _ fun k => ?_
-  by_cases hk : ∃ i, emb h i = k
+  by_cases hk : ∃ i, e i = k
   · obtain ⟨i, rfl⟩ := hk
-    rw [(emb h).injective.extend_apply]
+    rw [e.injective.extend_apply]
     exact hx i
   · rw [Function.extend_apply' _ _ _ hk]
     exact hS.zero_mem
@@ -448,9 +438,9 @@ theorem IsKSubmonoid.sumOf_mem {S : Set H} (hS : IsKSubmonoid κ S) {ι : Type u
 /-- A `κ`-submonoid is closed under `+`. -/
 theorem IsKSubmonoid.add_mem {S : Set H} (hS : IsKSubmonoid κ S) {a b : H} (ha : a ∈ S)
     (hb : b ∈ S) : a + b ∈ S := by
-  have hUB := mk_uLift_bool_le κ H
-  rw [← sumOf_two a b hUB]
-  exact hS.sumOf_mem hUB _ (by rintro ⟨(_ | _)⟩ <;> simpa)
+  have := LMonoid.factRegular (lam := Order.succ κ) (X := H)
+  rw [← sumOf_two a b]
+  exact hS.sumOf_mem _ (by rintro ⟨(_ | _)⟩ <;> simpa)
 
 /-- The `κ`-submonoid `⟨S⟩_κ` generated by a subset. -/
 def kclosure (κ : Cardinal.{u}) {H : Type v} [KMonoid κ H] (S : Set H) : Set H :=

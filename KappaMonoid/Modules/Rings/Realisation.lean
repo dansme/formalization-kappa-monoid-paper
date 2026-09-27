@@ -194,7 +194,7 @@ theorem isKHom_toH :
         (Cardinal.mk_sigma _)
     have hsum : (Cardinal.sum fun i => #(basis (x i))) ≤ κ := hcard ▸ mk_le_kappa _
     rw [hks, toH_mkC hκ hu hmatch, KMonoid.cmul_congr hcard _ hsum,
-      KMonoid.cmul_sumOf_cardinal (le_of_eq (mk_Idx κ)) _ (fun i => mk_le_kappa _) hsum u]
+      KMonoid.cmul_sumOf_cardinal (hI := CardLE.mk' (le_of_eq (mk_Idx κ))) _ (fun i => mk_le_kappa _) hsum u]
     rfl
 
 /-! ## Proposition 2.16 -/

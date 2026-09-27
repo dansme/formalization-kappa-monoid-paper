@@ -923,7 +923,7 @@ theorem krsa_ascent_free (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ�
   have hcomp0 : LMonoid.IsLHom hlk (fun y : ↥(FreeL lam B) => ψ' (f y)) := by
     refine ⟨by show ψ' (f 0) = 0; rw [huniv.isLHom.1, hψ'hom.1], fun {ι} hι y => ?_⟩
     show ψ' (f (LMonoid.lsumOf hι y)) = _
-    rw [huniv.isLHom.2 hι y, hψ'hom.map_sumOf (le_of_lt_of_le_succ hlk hι) (f ∘ y)]
+    rw [huniv.isLHom.2 hι y, hψ'hom.map_sumOf (h := CardLE.mk' (le_of_lt_of_le_succ hlk hι)) (f ∘ y)]
     rfl
   have hcomp : IsLMonoidHom lam (fun y : ↥(FreeL lam B) => ψ' (f y)) :=
     isLMonoidHom_of_isLHom hlam hlk hcomp0

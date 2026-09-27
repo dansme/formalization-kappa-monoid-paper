@@ -26,9 +26,9 @@ variable {κ : Cardinal.{u}} {H : Type v} [KMonoid κ H]
 
 /-- A sum of copies of `z` indexed by `ι` is `#ι · z`. -/
 theorem sumOf_const {ι : Type u} (hι : #ι ≤ κ) (z : H) :
-    sumOf (κ := κ) hι (fun _ : ι => z) = cmul (κ := κ) (#ι) hι z := by
+    ∑[≤ κ] _ : ι, z = cmul (κ := κ) (#ι) hι z := by
   obtain ⟨Ψ⟩ := Cardinal.eq.mp (mk_Idx (#ι))
-  exact sumOf_equiv hι (le_of_eq_of_le (mk_Idx (#ι)) hι) Ψ (fun _ : ι => z)
+  exact sumOf_equiv (h := CardLE.mk' hι) (h' := CardLE.mk' (le_of_eq_of_le (mk_Idx (#ι)) hι)) Ψ (fun _ : ι => z)
 
 /-! ## Every element of a cyclic `κ`-monoid is a multiple of the generator -/
 
@@ -54,7 +54,7 @@ theorem exists_cmul_of_kGenerates {u : H} (hgen : KGenerates κ ({u} : Set H)) (
     le_of_le_of_eq (Cardinal.mk_le_mk_of_subset (Set.subset_univ _))
       (by rw [Cardinal.mk_univ, mk_Idx])
   refine ⟨#(Function.support y), hmk, ?_⟩
-  rw [hxy, ← sumOf_Idx y, sumOf_subtype_support (le_of_eq (mk_Idx κ)) y hmk,
+  rw [hxy, ← sumOf_Idx y, sumOf_subtype_support (h := CardLE.mk' (le_of_eq (mk_Idx κ))) y,
     show (fun i : Function.support y => y (i : Idx κ)) = fun _ : Function.support y => u from
       funext hsupp,
     sumOf_const hmk u]

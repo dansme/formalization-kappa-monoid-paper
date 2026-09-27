@@ -133,7 +133,7 @@ theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι
     rw [hg0 k hk]
     exact C.instKMonoid_zero hκ
   have hsum : sumOf (κ := κ) hι a = C.dsum g :=
-    (KMonoid.sumOf_eq_extend hι (emb hι) a).trans (C.instKMonoid_ksum hκ g)
+    (KMonoid.sumOf_eq_extend (h := CardLE.mk' hι) (emb hι) a).trans (C.instKMonoid_ksum hκ g)
   rw [hsum]
   obtain ⟨e1⟩ := C.dsum_iso g
   obtain ⟨e2⟩ := C.restrict_iso g (emb hι) hsub
@@ -147,7 +147,7 @@ theorem rep_add (hκ : ℵ₀ ≤ κ) (b b' : C.carrier) :
     Nonempty (C.rep (b + b') ≃ₗ[R] C.rep b × C.rep b') := by
   let := C.instKMonoid hκ
   have hUB : #(ULift.{u} Bool) ≤ κ := KMonoid.mk_uLift_bool_le κ C.carrier
-  rw [← sumOf_two b b' hUB]
+  rw [← sumOf_two b b']
   obtain ⟨e1⟩ := C.rep_sumOf hκ hUB fun p : ULift.{u} Bool => if p.down then b else b'
   exact ⟨e1.trans (dsumUliftBoolProdIso R)⟩
 
@@ -777,7 +777,7 @@ theorem a₂_eq_zero_of_not_mem {j : Idx κ} (hj : j ∉ ⋃ ν, (B.fam ν).Jset
     exact one_le_aleph0.trans B.hκ
   have hclass := (B.D₂.P_class B.hκ {j} hone).some
   have hsum : sumOf (κ := κ) hone (fun i : ({j} : Set (Idx κ)) => B.a₂ i.1) = B.a₂ j := by
-    rw [sumOf_unique hone (fun i : ({j} : Set (Idx κ)) => B.a₂ i.1)]
+    refine (sumOf_unique (h := CardLE.mk' hone) (fun i : ({j} : Set (Idx κ)) => B.a₂ i.1)).trans ?_
     rw [Set.mem_singleton_iff.mp (default : ↥({j} : Set (Idx κ))).2]
   rw [hsum] at hclass
   have hsubs : Subsingleton ↥(B.D₂.P ({j} : Set (Idx κ))) := by
