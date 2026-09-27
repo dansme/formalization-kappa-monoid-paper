@@ -113,6 +113,10 @@ unbuilt edits to the file's imports; and a new file importing another new file n
   `lam_small` tactic (`Core/LamSmall.lean`).  Take such a hypothesis *last*, with the default
   `(h : #(ι × J) < lam := by lam_small)`, so callers can omit it: an auto-param can only be left
   out after the last explicit argument.  Proof irrelevance makes the choice of proof harmless.
+  Write sums as `∑[lam] i ∈ S, f i` or `∑[lam] i : ι, f i` (scoped notation in `KappaMonoid`),
+  which expands to `lsumOf (lam := lam) (by lam_small) _`.  A fact that the pieces of a
+  construction are small is registered with `@[lam_small_rule]` (`BraidingData.I_small`, …) so
+  that sums over the pieces need no bound; the smallness itself stays an explicit field.
 - **Notation for the three ubiquitous idioms.** `ℵ₀∙x` is `KMonoid.cmul ℵ₀ le_rfl x` (the paper's
   `ℵ₀x`), `add(x)` is `KMonoid.addOf` at `κ = ℵ₀`, and `V(R)` is `projClass R ℵ₀ le_rfl`. All three
   are scoped `notation` in namespace `KappaMonoid`, not definitions: they expand to exactly the term

@@ -35,8 +35,10 @@ structure BraidingData (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι : T
   v : ι × ℕ → X
   /-- `v` vanishes at the limit elements of the well-order. -/
   v_limit : ∀ a : ι, v (a, 0) = 0
-  hI : ∀ p, lsumOf (lam := lam) (I_small p) (fun i : I p => x i) = v p + u p
-  hJ : ∀ p, lsumOf (lam := lam) (J_small p) (fun j : J p => y j) = v (bsucc p) + u p
+  hI : ∀ p, ∑[lam] i ∈ I p, x i = v p + u p
+  hJ : ∀ p, ∑[lam] j ∈ J p, y j = v (bsucc p) + u p
+
+attribute [lam_small_rule] BraidingData.I_small BraidingData.J_small
 
 /-- Definition 3.1(1): `x` and `y` are `λ⁻`-braided. -/
 def IsBraided (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι : Type u} (x y : ι → X) :

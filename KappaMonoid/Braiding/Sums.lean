@@ -225,10 +225,10 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
     hJdisj' rfl hNlt hJ (fun n => d.J_small (a, n.down)) y).symm
   rw [step1, step2]
   have hIeq : (fun n : N =>
-      lsumOf (lam := lam) (d.I_small (a, n.down)) (fun i : d.I (a, n.down) => x i))
+      ∑[lam] i ∈ d.I (a, n.down), x i)
       = fun n : N => d.v (a, n.down) + d.u (a, n.down) := funext fun n => d.hI (a, n.down)
   have hJeq : (fun n : N =>
-      lsumOf (lam := lam) (d.J_small (a, n.down)) (fun j : d.J (a, n.down) => y j))
+      ∑[lam] j ∈ d.J (a, n.down), y j)
       = fun n : N => d.v (a, n.down + 1) + d.u (a, n.down) := funext fun n => d.hJ (a, n.down)
   rw [hIeq, hJeq, LMonoid.lsumOf_add hNlt (fun n => d.v (a, n.down)) (fun n => d.u (a, n.down)),
     LMonoid.lsumOf_add hNlt (fun n => d.v (a, n.down + 1)) (fun n => d.u (a, n.down))]
@@ -273,20 +273,20 @@ slots that carry the generator being tracked. -/
 theorem BraidingData.telescope {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X]
     {ι : Type u} {x y : ι → X} (d : BraidingData lam x y) {A : Set ι} (hA : A.Finite) (K : ℕ) :
     (∑ᶠ a ∈ A, ∑ k ∈ Finset.range (K + 1),
-        lsumOf (lam := lam) (d.J_small (a, k)) (fun j : d.J (a, k) => y j))
+        ∑[lam] j ∈ d.J (a, k), y j)
       = (∑ᶠ a ∈ A, ∑ k ∈ Finset.range (K + 1),
-          lsumOf (lam := lam) (d.I_small (a, k)) (fun i : d.I (a, k) => x i))
+          ∑[lam] i ∈ d.I (a, k), x i)
         + ∑ᶠ a ∈ A, d.v (a, K + 1) := by
   have hchain : ∀ a : ι,
       (∑ k ∈ Finset.range (K + 1),
-          lsumOf (lam := lam) (d.J_small (a, k)) (fun j : d.J (a, k) => y j))
+          ∑[lam] j ∈ d.J (a, k), y j)
         = (∑ k ∈ Finset.range (K + 1),
-            lsumOf (lam := lam) (d.I_small (a, k)) (fun i : d.I (a, k) => x i))
+            ∑[lam] i ∈ d.I (a, k), x i)
           + d.v (a, K + 1) := by
     intro a
-    have hI' : ∀ k : ℕ, lsumOf (lam := lam) (d.I_small (a, k)) (fun i : d.I (a, k) => x i)
+    have hI' : ∀ k : ℕ, ∑[lam] i ∈ d.I (a, k), x i
         = d.v (a, k) + d.u (a, k) := fun k => d.hI (a, k)
-    have hJ' : ∀ k : ℕ, lsumOf (lam := lam) (d.J_small (a, k)) (fun j : d.J (a, k) => y j)
+    have hJ' : ∀ k : ℕ, ∑[lam] j ∈ d.J (a, k), y j
         = d.v (a, k + 1) + d.u (a, k) := fun k => d.hJ (a, k)
     -- the shift of the `v`-range, by induction on `K`
     have hv : ∀ N : ℕ, (∑ k ∈ Finset.range (N + 1), d.v (a, k + 1))
@@ -560,8 +560,7 @@ theorem IsBraided.mk_support_lt (hcon : IsConical X) {x y : ι → X} (h : IsBra
   -- outside `Low`, the `y`-pieces carry nothing
   have hzero : ∀ p : ι × ℕ, p ∉ Low → ∀ j ∈ d.J p, y j = 0 := by
     intro p hp j hj
-    have hIzero : ∀ m, p.2 ≤ m → lsumOf (lam := lam) (d.I_small (p.1, m))
-        (fun i : d.I (p.1, m) => x i) = 0 := by
+    have hIzero : ∀ m, p.2 ≤ m → ∑[lam] i ∈ d.I (p.1, m), x i = 0 := by
       intro m hm
       refine LMonoid.lsumOf_eq_zero _ x fun i hi => ?_
       by_contra hne
@@ -570,7 +569,7 @@ theorem IsBraided.mk_support_lt (hcon : IsConical X) {x y : ι → X} (h : IsBra
       intro m hm
       have := (d.hI (p.1, m)).symm.trans (hIzero m hm)
       exact hcon _ _ this
-    have hJsum : lsumOf (lam := lam) (d.J_small p) (fun j : d.J p => y j) = 0 := by
+    have hJsum : ∑[lam] j ∈ d.J p, y j = 0 := by
       rw [d.hJ p]
       show d.v (p.1, p.2 + 1) + d.u p = 0
       rw [(huv (p.2 + 1) (Nat.le_succ p.2)).1, (huv p.2 le_rfl).2, add_zero]

@@ -235,8 +235,10 @@ structure BraidingDataOn (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι :
   v : M → X
   /-- `v` vanishes at the limit elements of the well-order. -/
   v_limit : ∀ p, W.IsLimit p → v p = 0
-  hI : ∀ p, lsumOf (lam := lam) (I_small p) (fun i : I p => x i) = v p + u p
-  hJ : ∀ p, lsumOf (lam := lam) (J_small p) (fun j : J p => y j) = v (W.succ p) + u p
+  hI : ∀ p, ∑[lam] i ∈ I p, x i = v p + u p
+  hJ : ∀ p, ∑[lam] j ∈ J p, y j = v (W.succ p) + u p
+
+attribute [lam_small_rule] BraidingDataOn.I_small BraidingDataOn.J_small
 
 /-- `x` and `y` are `λ⁻`-braided with respect to the index structure `W`. -/
 def IsBraidedOn (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι : Type u}
@@ -354,7 +356,7 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
     calc lsumOf (lam := lam) (hIsmall q)
             (fun i : (⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)) => x i)
         = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) =>
-            lsumOf (lam := lam) (d.I_small (p : M)) (fun i : d.I (p : M) => x i)) :=
+            ∑[lam] i ∈ d.I (p : M), x i) :=
           (LMonoid.lsumOf_biUnion_subset _ _
             (fun p p' hpp' => d.I_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl
             (hFlt q) (hIsmall q) (fun p => d.I_small (p : M)) x).symm
@@ -408,7 +410,7 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
     calc lsumOf (lam := lam) (hJsmall q)
             (fun j : (⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)) => y j)
         = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) =>
-            lsumOf (lam := lam) (d.J_small (p : M)) (fun j : d.J (p : M) => y j)) :=
+            ∑[lam] j ∈ d.J (p : M), y j) :=
           (LMonoid.lsumOf_biUnion_subset _ _
             (fun p p' hpp' => d.J_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl
             (hFlt q) (hJsmall q) (fun p => d.J_small (p : M)) y).symm
