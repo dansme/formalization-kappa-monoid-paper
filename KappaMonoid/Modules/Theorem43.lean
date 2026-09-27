@@ -883,7 +883,9 @@ theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B
       refine hzeroS _ ?_
       rw [hy j]
       exact B.a₂_eq_zero_of_not_mem (hE4 p hjE)
-    rw [LMonoid.lsumOf_of_subset (hJsmall p) (B.fam p).Jsmall Set.subset_union_left y hzero]
+    rw [LMonoid.lsumOf_of_subset (hS := ⟨hJsmall p⟩) (hT := ⟨(B.fam p).Jsmall⟩)
+        Set.subset_union_left y
+      hzero]
     apply Subtype.ext
     rw [B.hSsub.coe_lsumOf B.hlam (B.fam p).Jsmall (fun j : (B.fam p).Jset => y j.1)]
     have hfun : (fun j : ↥((B.fam p).Jset) => ((y j.1 : C.carrier)))

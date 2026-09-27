@@ -349,7 +349,8 @@ theorem paper_B1 (a : Idx lam) (x : Idx lam → H) (hx : #(support x) < lam)
   have hsing : #(↥({a} : Set (Idx lam))) < lam := by
     rw [Cardinal.mk_singleton]
     exact Cardinal.one_lt_aleph0.trans_le (aleph0_le (lam := lam) (X := H))
-  rw [← lsumOf_of_subset hsing hx hsub x fun i _ hi => Function.notMem_support.mp hi]
+  rw [← lsumOf_of_subset (hS := ⟨hsing⟩) (hT := ⟨hx⟩) hsub x
+    fun i _ hi => Function.notMem_support.mp hi]
   exact lsumOf_unique hsing _
 
 /-- (B2) for the sum over the support. -/
@@ -367,13 +368,13 @@ theorem paper_B2 (x : Idx lam → Idx lam → H) (hrows : #{i | ∃ j, x i j ≠
   set C : Set (Idx lam) := {j | ∃ i, x i j ≠ 0} with hC
   set F : Idx lam → H := fun i => lsumOf (hin i) fun j : support (x i) => x i j with hFdef
   have hF : ∀ i, F i = lsumOf hcols (fun j : C => x i j) := fun i =>
-    (lsumOf_of_subset hcols (hin i) (fun j hj => ⟨i, hj⟩) (x i)
+    (lsumOf_of_subset (hS := ⟨hcols⟩) (hT := ⟨hin i⟩) (fun j hj => ⟨i, hj⟩) (x i)
       fun j _ hj => Function.notMem_support.mp hj).symm
   have hsuppF : support F ⊆ R := fun i hi => by
     by_contra hni
     apply hi
     rw [hF i]
-    exact lsumOf_eq_zero hcols (x i) fun j _ => by_contra fun hj => hni ⟨j, hj⟩
+    exact lsumOf_eq_zero (hT := ⟨hcols⟩) (x i) fun j _ => by_contra fun hj => hni ⟨j, hj⟩
   have hprod : #(R × C) < lam := mk_prod_lt hreg hrows hcols
   have hsig : #((_ : R) × C) < lam := mk_sigma_lt hreg hrows fun _ => hcols
   set G : Idx lam → H := fun k => x (π.symm k).1 (π.symm k).2 with hGdef
@@ -386,18 +387,22 @@ theorem paper_B2 (x : Idx lam → Idx lam → H) (hrows : #{i | ∃ j, x i j ≠
     ⟨(⟨(π.symm k).1, (π.symm k).2, hk⟩, ⟨(π.symm k).2, (π.symm k).1, hk⟩), by simp [hφdef]⟩
   calc lsumOf hout (fun i : support F => F i)
       = lsumOf hrows (fun i : R => F i) :=
-        (lsumOf_of_subset hrows hout hsuppF F fun i _ hi => Function.notMem_support.mp hi).symm
+        (lsumOf_of_subset (hS := ⟨hrows⟩) (hT := ⟨hout⟩) hsuppF F fun i _ hi =>
+            Function.notMem_support.mp hi).symm
     _ = lsumOf hrows (fun i : R => lsumOf hcols (fun j : C => x i j)) := by
         congr 1; funext i; exact hF i
     _ = lsumOf hsig (fun p : (_ : R) × C => x p.1 p.2) :=
         lsumOf_sigma hrows (fun _ => hcols) (fun (i : R) (j : C) => x i j) hsig
     _ = lsumOf hprod (fun p : R × C => x p.1 p.2) :=
-        lsumOf_equiv (Equiv.sigmaEquivProd R C).symm _ hsig
+        lsumOf_equiv (h := ⟨hsig⟩) (h' := ⟨hprod⟩) (Equiv.sigmaEquivProd R C).symm _
     _ = lsumOf hprod ((fun k : range φ => G k) ∘ Equiv.ofInjective φ hφ) := by
         congr 1; funext p; simp [hGdef, hφdef]
-    _ = lsumOf hT (fun k : range φ => G k) := (lsumOf_equiv _ _ hT).symm
+    _ = lsumOf hT (fun k : range φ => G k) := by
+        rw [lsumOf_equiv (h := ⟨hT⟩) (h' := ⟨hprod⟩) (Equiv.ofInjective φ hφ)]
+        rfl
     _ = lsumOf hπ (fun k : support G => G k) :=
-        lsumOf_of_subset hT hπ hsuppG G fun k _ hk => Function.notMem_support.mp hk
+        lsumOf_of_subset (hS := ⟨hT⟩) (hT := ⟨hπ⟩) hsuppG G fun k _ hk =>
+            Function.notMem_support.mp hk
 
 /-- **Conversely, every `LMonoid` is a `λ⁻`-monoid in the sense of the paper**: `Σ` sums a
 family of `H^(λ)` over its support.  Any index may be taken as the distinguished one. -/
@@ -421,10 +426,10 @@ theorem toPaper_toLMonoid (lam : Cardinal.{u}) (H : Type v) [M : LMonoid lam H] 
       lsumOf hS (fun i : support (extend e x 0) => extend e x 0 i) = lsumOf h x := by
     intro ι h e x hS
     have hR : #(range e) < lam := Cardinal.mk_range_le.trans_lt h
-    rw [← lsumOf_of_subset hR hS
+    rw [← lsumOf_of_subset (hS := ⟨hR⟩) (hT := ⟨hS⟩)
       (fun k hk => by_contra fun hk' => hk (extend_apply' _ _ _ fun ⟨i, hi⟩ => hk' ⟨i, hi⟩))
       (extend e x 0) fun k _ hk => Function.notMem_support.mp hk,
-      lsumOf_equiv (Equiv.ofInjective e e.injective) _ hR]
+      lsumOf_equiv (h := ⟨hR⟩) (h' := ⟨h⟩) (Equiv.ofInjective e e.injective) _]
     congr 1
     funext i
     exact e.injective.extend_apply x 0 i

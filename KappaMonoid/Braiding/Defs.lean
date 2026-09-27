@@ -169,7 +169,7 @@ theorem lsumOf_slot0 (hlam0 : ℵ₀ ≤ lam) (f : ι → ι) (x : ι → X) (p 
     rw [lsumOf_unique (slot0_small hlam0 f (a, 0)) (fun i : slot0 f (a, 0) => x i), if_pos rfl]
     rfl
   · let : IsEmpty ↥(slot0 f (a, n + 1)) := inferInstanceAs (IsEmpty (↥(∅ : Set ι)))
-    rw [lsumOf_isEmpty (slot0_small hlam0 f (a, n + 1)) (fun i => x i),
+    rw [lsumOf_isEmpty (h := ⟨slot0_small hlam0 f (a, n + 1)⟩) (fun i => x i),
       if_neg (Nat.succ_ne_zero n)]
 
 /-- The basic way of producing a braiding: if the two families admit indexed partitions of
@@ -351,7 +351,8 @@ theorem comp_equiv {ι' : Type u} (E : ι ≃ ι') {x y : ι' → X} (h : IsBrai
     intro P hs p f
     let e : ↥(E ⁻¹' P (E p.1, p.2)) ≃ ↥(P (E p.1, p.2)) :=
       ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simp⟩, fun i => by simp, fun j => by simp⟩
-    exact (lsumOf_equiv (lam := lam) e (fun j : P (E p.1, p.2) => f j) (hs (E p.1, p.2))).symm
+    exact (lsumOf_equiv (lam := lam) (h := ⟨hs (E p.1, p.2)⟩)
+      (h' := ⟨lt_of_eq_of_lt (hpre _) (hs (E p.1, p.2))⟩) e (fun j : P (E p.1, p.2) => f j)).symm
   exact ⟨{ I := fun p => E ⁻¹' d.I (E p.1, p.2)
            J := fun p => E ⁻¹' d.J (E p.1, p.2)
            I_disjoint := hdisj d.I d.I_disjoint
@@ -456,7 +457,7 @@ implicit, is `regroup` along the fibres of `(a, n) ↦ (a, n - 1)`. -/
     · -- limit: `Σ_{I_μ ∪ I_{μ+1}} x = (v_μ + u_μ) + (v_{μ+1} + u_{μ+1})`, and `v_μ = 0`
       have hdisj : Disjoint (d.I (a, 0)) (d.I (bsucc (a, 0))) :=
         d.I_disjoint _ _ fun h => by simp [bsucc] at h
-      refine (lsumOf_union _ _ hdisj (d.I_lt _) (d.I_lt _) x (J'_small (a, 0))).trans ?_
+      refine (lsumOf_union _ _ hdisj x).trans ?_
       rw [d.hI, d.hI, d.v_limit]
       simp only [v', u', bsucc]
       simp

@@ -356,7 +356,7 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
   have hvlim : ∀ q : M', W'.IsLimit q →
       ∑[lam] p ∈ (Φ ⁻¹' {q} : Set M), d.v (p : M) = 0 := by
     intro q hq
-    refine LMonoid.lsumOf_eq_zero_of_forall _ fun p => ?_
+    refine LMonoid.lsumOf_eq_zero_of_forall (h := ⟨hFlt q⟩) fun p => ?_
     exact d.v_limit (p : M) (hlim _ (by rw [p.2]; exact hq))
   have hIeq : ∀ q : M',
       ∑[lam] i ∈ (⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)), x i
@@ -366,9 +366,9 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
     calc ∑[lam] i ∈ (⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)), x i
         = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) =>
             ∑[lam] i ∈ d.I (p : M), x i) :=
-          (LMonoid.lsumOf_biUnion_subset _ _
-            (fun p p' hpp' => d.I_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl
-            (hFlt q) (hIsmall q) (fun p => d.I_lt (p : M)) x).symm
+          (LMonoid.lsumOf_biUnion_subset (hJ := ⟨hFlt q⟩) (hS := ⟨hIsmall q⟩)
+              _ _
+              (fun p p' hpp' => d.I_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl x).symm
       _ = ∑[lam] p ∈ (Φ ⁻¹' {q} : Set M), (d.v (p : M) + d.u (p : M)) := by
           exact congrArg _ (funext fun p => d.hI (p : M))
       _ = _ := by have := CardLT.mk (hFlt q); exact LMonoid.lsumOf_add _ _
@@ -410,13 +410,13 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
     have hkey : ∑[lam] r ∈ (Φ ⁻¹' {W'.succ q} : Set M), d.v (r : M)
         = ∑[lam] p ∈ (Φ ⁻¹' {q} : Set M), d.v (W.succ (p : M)) := by
       rw [← hext]
-      exact LMonoid.lsumOf_extend (hFlt q) (hFlt (W'.succ q)) e _
+      exact LMonoid.lsumOf_extend (h := ⟨hFlt q⟩) (h' := ⟨hFlt (W'.succ q)⟩) e _
     calc ∑[lam] j ∈ (⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)), y j
         = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) =>
             ∑[lam] j ∈ d.J (p : M), y j) :=
-          (LMonoid.lsumOf_biUnion_subset _ _
-            (fun p p' hpp' => d.J_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl
-            (hFlt q) (hJsmall q) (fun p => d.J_lt (p : M)) y).symm
+          (LMonoid.lsumOf_biUnion_subset (hJ := ⟨hFlt q⟩) (hS := ⟨hJsmall q⟩)
+              _ _
+              (fun p p' hpp' => d.J_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl y).symm
       _ = ∑[lam] p ∈ (Φ ⁻¹' {q} : Set M), (d.v (W.succ (p : M)) + d.u (p : M)) := by
           exact congrArg _ (funext fun p => d.hJ (p : M))
       _ = ∑[lam] p ∈ (Φ ⁻¹' {q} : Set M), d.v (W.succ (p : M))
@@ -517,8 +517,8 @@ theorem BraidingData.isBraided_block (d : BraidingData lam x y) (a : ι) :
       rw [show (fun i : d.I p => Set.indicator (d.blockI a) x (i : ι))
           = (fun i : d.I p => x (i : ι)) from funext hx, if_pos hp, if_pos hp]
       exact d.hI p
-    · rw [LMonoid.lsumOf_eq_zero_of_forall (d.I_lt p)
-        (fun i => Set.indicator_of_notMem (d.notMem_blockI hp i.2) x), if_neg hp, if_neg hp,
+    · rw [LMonoid.lsumOf_eq_zero_of_forall
+          (fun i => Set.indicator_of_notMem (d.notMem_blockI hp i.2) x), if_neg hp, if_neg hp,
         add_zero]
   · intro p
     by_cases hp : p.1 = a
@@ -529,8 +529,8 @@ theorem BraidingData.isBraided_block (d : BraidingData lam x y) (a : ι) :
           = (fun j : d.J p => y (j : ι)) from funext hy, if_pos hbs, if_pos hp]
       exact d.hJ p
     · have hbs : ¬ ((bsucc p).1 = a) := hp
-      rw [LMonoid.lsumOf_eq_zero_of_forall (d.J_lt p)
-        (fun j => Set.indicator_of_notMem (d.notMem_blockJ hp j.2) y), if_neg hbs, if_neg hp,
+      rw [LMonoid.lsumOf_eq_zero_of_forall
+          (fun j => Set.indicator_of_notMem (d.notMem_blockJ hp j.2) y), if_neg hbs, if_neg hp,
         add_zero]
 
 /-- **Lemma 3.4(3)**, the converse: a family of block braidings assembles into one braiding.
@@ -569,9 +569,9 @@ theorem isBraided_of_blocks [Infinite ι] {A B : ι → Set ι}
     rw [show (fun i : ((d l).I (b, m) ∩ A l : Set ι) => x (i : ι))
         = (fun i : ((d l).I (b, m) ∩ A l : Set ι) => Set.indicator (A l) x (i : ι)) from
       funext fun i => (Set.indicator_of_mem i.2.2 x).symm,
-      ← LMonoid.lsumOf_of_subset ((d l).I_lt (b, m)) (hIsmall ⟨(l, b), m⟩)
-        Set.inter_subset_left _
-        (fun i hi hni => Set.indicator_of_notMem (fun hA => hni ⟨hi, hA⟩) x)]
+      ← LMonoid.lsumOf_of_subset (hS := ⟨((d l).I_lt (b, m))⟩) (hT := ⟨(hIsmall ⟨(l, b), m⟩)⟩)
+          Set.inter_subset_left _
+          (fun i hi hni => Set.indicator_of_notMem (fun hA => hni ⟨hi, hA⟩) x)]
     exact (d l).hI (b, m)
   have hJsum : ∀ p : (ι × ι) × ℕ,
       ∑[lam] j ∈ ((d p.1.1).J (p.1.2, p.2) ∩ B p.1.1 : Set ι), y (j : ι)
@@ -580,9 +580,9 @@ theorem isBraided_of_blocks [Infinite ι] {A B : ι → Set ι}
     rw [show (fun j : ((d l).J (b, m) ∩ B l : Set ι) => y (j : ι))
         = (fun j : ((d l).J (b, m) ∩ B l : Set ι) => Set.indicator (B l) y (j : ι)) from
       funext fun j => (Set.indicator_of_mem j.2.2 y).symm,
-      ← LMonoid.lsumOf_of_subset ((d l).J_lt (b, m)) (hJsmall ⟨(l, b), m⟩)
-        Set.inter_subset_left _
-        (fun j hj hnj => Set.indicator_of_notMem (fun hB => hnj ⟨hj, hB⟩) y)]
+      ← LMonoid.lsumOf_of_subset (hS := ⟨((d l).J_lt (b, m))⟩) (hT := ⟨(hJsmall ⟨(l, b), m⟩)⟩)
+          Set.inter_subset_left _
+          (fun j hj hnj => Set.indicator_of_notMem (fun hB => hnj ⟨hj, hB⟩) y)]
     exact (d l).hJ (b, m)
   have hdisj : ∀ {S : ι → ι × ℕ → Set ι} {C : ι → Set ι},
       (∀ l, ∀ p q : ι × ℕ, p ≠ q → Disjoint (S l p) (S l q)) →

@@ -53,19 +53,20 @@ theorem lsumOf_eq_sum {lam : Cardinal.{u}} {X : Type v} [LMonoid lam X] {ι : Ty
   · intro α β _ e ih h x
     let _ : Fintype α := Fintype.ofEquiv β e.symm
     have hα : #α < lam := by rw [Cardinal.mk_congr e]; exact h
-    rw [lsumOf_equiv e x h, ih hα (x ∘ e)]
+    rw [lsumOf_equiv (h := ⟨h⟩) (h' := ⟨hα⟩) e x, ih hα fun a => x (e a)]
     exact Equiv.sum_comp e x
   · intro h x
+    rw [lsumOf_isEmpty (h := ⟨h⟩)]
     simp
   · intro α _ ih h x
     have hα : #α < lam := lt_of_le_of_lt (Cardinal.mk_le_of_injective (Option.some_injective α)) h
     have hu : #PUnit.{u + 1} < lam := by lam_small
     have hsum : #(α ⊕ PUnit.{u + 1}) < lam := by lam_small
-    rw [lsumOf_equiv (Equiv.optionEquivSumPUnit α).symm x h,
-      show x ∘ (Equiv.optionEquivSumPUnit α).symm
+    rw [lsumOf_equiv (h := ⟨h⟩) (h' := ⟨hsum⟩) (Equiv.optionEquivSumPUnit α).symm x,
+      show (fun p => x ((Equiv.optionEquivSumPUnit α).symm p))
         = Sum.elim (fun a => x (some a)) (fun _ => x none) by
         funext p; rcases p with p | p <;> rfl,
-      lsumOf_sumType hα hu, ih hα (fun a => x (some a)), lsumOf_unique,
+      lsumOf_sumType (hα := ⟨hα⟩) (hβ := ⟨hu⟩), ih hα (fun a => x (some a)), lsumOf_unique,
       Fintype.sum_option]
     exact add_comm _ _
 

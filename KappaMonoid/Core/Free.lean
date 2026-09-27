@@ -201,7 +201,8 @@ theorem lift_def (f : B → X) (x : ↥(FreeL lam B)) :
 theorem lift_eq_of_subset (f : B → X) (x : ↥(FreeL lam B)) {S : Set B} (hS : #S < lam)
     (hsub : csupport (x : B → LCard lam) ⊆ S) :
     lift f x = LMonoid.lsumOf (lam := lam) hS fun b : S => term f (x : B → LCard lam) (b : B) :=
-  (LMonoid.lsumOf_of_subset hS x.2 hsub (term f (x : B → LCard lam)) fun _b _ hb =>
+  (LMonoid.lsumOf_of_subset (hS := ⟨hS⟩) (hT := ⟨x.2⟩) hsub (term f (x : B → LCard lam)) fun _b _
+      hb =>
     term_eq_zero (notMem_csupport.mp hb)).symm
 
 /-- **Proposition 2.9(2)**, existence: `lift f` extends `f` along `ι`. -/
@@ -223,8 +224,8 @@ theorem lift_eq_of_subset (f : B → X) (x : ↥(FreeL lam B)) {S : Set B} (hS :
 theorem term_lsumOf {ι : Type u} (h : #ι < lam) (f : B → X) (z : ι → B → LCard lam) (b : B) :
     term f (LMonoid.lsumOf (lam := lam) h z) b
       = LMonoid.lsumOf (lam := lam) h fun i => term f (z i) b :=
-  LMonoid.lcmul_lsumOf_cardinal h (fun i => ((z i b : LCard lam) : Cardinal.{u}))
-    (fun i => (z i b).2) _ (f b)
+  LMonoid.lcmul_lsumOf_cardinal (hI := ⟨h⟩) (fun i => ((z i b : LCard lam) : Cardinal.{u}))
+      (fun i => (z i b).2) _ (f b)
 
 /-- **Proposition 2.9(2)**, existence: `lift f` is a homomorphism of `λ⁻`-monoids.
 
@@ -290,7 +291,7 @@ theorem lift_iota_apply (x : ↥(FreeL lam B)) (b' : B) :
   · -- restrict the sum to the singleton `{b'}` inside the support
     have hsing : #({b'} : Set B) < lam := by rw [Cardinal.mk_singleton]; exact one_lt
     have hsub : ({b'} : Set B) ⊆ csupport (x : B → LCard lam) := by rintro c rfl; exact hmem
-    rw [LMonoid.lsumOf_of_subset x.2 hsing hsub _ hzero]
+    rw [LMonoid.lsumOf_of_subset (hS := ⟨x.2⟩) (hT := ⟨hsing⟩) hsub _ hzero]
     let : Unique ↥({b'} : Set B) := Set.uniqueSingleton b'
     rw [LMonoid.lsumOf_unique]
     apply Subtype.ext
@@ -298,8 +299,8 @@ theorem lift_iota_apply (x : ↥(FreeL lam B)) (b' : B) :
     rw [val_term_iota_apply, hdef, val_iotaFun_self, mul_one]
   · -- every term vanishes at `b'`
     apply Subtype.ext
-    rw [LMonoid.lsumOf_eq_zero_of_forall x.2
-      (fun b => hzero (b : B) b.2 fun hc => hmem (hc ▸ b.2)), LCard.val_zero hfact.out,
+    rw [LMonoid.lsumOf_eq_zero_of_forall (h := ⟨x.2⟩)
+        (fun b => hzero (b : B) b.2 fun hc => hmem (hc ▸ b.2)), LCard.val_zero hfact.out,
       notMem_csupport.mp hmem]
 
 /-- Every element of `F_{λ⁻}(B)` is the sum of its coordinates times the generators. -/

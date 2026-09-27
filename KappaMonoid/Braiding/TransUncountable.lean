@@ -474,8 +474,8 @@ theorem lsumOf_regroup {P : ι × ℕ → Set ι} {G : ι × ℕ → Set (ι × 
     {μ : ι × ℕ} (hG : #(G μ) < lam) (hR : #(regroup P G μ) < lam) (f : ι → X) :
     ∑[lam] p ∈ G μ, ∑[lam] i ∈ P (p : ι × ℕ), f i
       = lsumOf (lam := lam) hR (fun i : regroup P G μ => f i) := by
-  refine LMonoid.lsumOf_biUnion_subset (regroup P G μ) (fun p : G μ => P (p : ι × ℕ))
-    ?_ ?_ hG hR (fun p => hPsm _) f
+  refine LMonoid.lsumOf_biUnion_subset (hJ := ⟨hG⟩) (hS := ⟨hR⟩)
+      (hI := fun _ => ⟨hPsm _⟩) (regroup P G μ) (fun p : G μ => P (p : ι × ℕ)) ?_ ?_ f
   · intro p q hpq
     exact hPdisj _ _ fun h => hpq (Subtype.ext h)
   · rw [regroup, Set.biUnion_eq_iUnion]

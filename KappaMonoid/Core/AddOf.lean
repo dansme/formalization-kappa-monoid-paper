@@ -94,7 +94,8 @@ theorem addOfCard_isLSubset {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : l
     · -- an empty sum is `0`, which is a summand of `λ · x`
       have := hemp
       refine ⟨cmul (κ := κ) lam hlk x, ?_⟩
-      rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty _ y, zero_add]
+      rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty (h := cardLT_succ hidx) y,
+        zero_add]
     · -- otherwise `#ι · λ = λ`, so the witnesses again add up to `λ · x`
       have hmk : #ι * lam = lam :=
         Cardinal.mul_eq_right hlam.aleph0_le hι.le (Cardinal.mk_ne_zero_iff.mpr hne)
@@ -124,7 +125,8 @@ theorem addOfCard_isLSubset_succ {alpha lam : Cardinal.{u}} (halpha : ℵ₀ ≤
     rcases isEmpty_or_nonempty ι with hemp | hne
     · have := hemp
       refine ⟨cmul (κ := κ) alpha hak x, ?_⟩
-      rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty _ y, zero_add]
+      rw [show sumOf (κ := κ) hidx y = 0 from LMonoid.lsumOf_isEmpty (h := cardLT_succ hidx) y,
+        zero_add]
     · have hmk : #ι * alpha = alpha :=
         Cardinal.mul_eq_right halpha hια (Cardinal.mk_ne_zero_iff.mpr hne)
       have hsum : Cardinal.sum (fun _ : ι => alpha) = alpha :=

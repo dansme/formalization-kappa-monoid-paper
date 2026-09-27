@@ -35,19 +35,19 @@ variable {lam : Cardinal.{u}} {X : Type v} {Y : Type w} [LMonoid lam X] [LMonoid
 
 /-- A homomorphism preserves `0`, being the empty sum. -/
 theorem map_zero (hf : IsLMonoidHom lam f) : f 0 = 0 := by
-  have hE : #PEmpty.{u + 1} < lam := LMonoid.mk_lt_finite (X := X) _
-  have h := hf hE (PEmpty.elim : PEmpty.{u + 1} → X)
-  rwa [LMonoid.lsumOf_isEmpty hE, LMonoid.lsumOf_isEmpty hE] at h
+  have := LMonoid.factRegular (lam := lam) (X := X)
+  have h := hf CardLT.lt (PEmpty.elim : PEmpty.{u + 1} → X)
+  rwa [LMonoid.lsumOf_isEmpty, LMonoid.lsumOf_isEmpty] at h
 
 /-- A homomorphism preserves `+`, a two-term sum. -/
 theorem map_add (hf : IsLMonoidHom lam f) (a b : X) : f (a + b) = f a + f b := by
   have hUB : #(ULift.{u} Bool) < lam := LMonoid.mk_uLift_bool_lt (X := X)
   have h := hf hUB (fun p : ULift.{u} Bool => if p.down then a else b)
-  rw [LMonoid.lsumOf_two a b hUB] at h
+  rw [LMonoid.lsumOf_two a b] at h
   rw [h, show (f ∘ fun p : ULift.{u} Bool => if p.down then a else b)
       = fun p : ULift.{u} Bool => if p.down then f a else f b from
     funext fun p => by obtain ⟨(_ | _)⟩ := p <;> rfl]
-  exact LMonoid.lsumOf_two (f a) (f b) hUB
+  exact LMonoid.lsumOf_two (f a) (f b)
 
 /-- The inverse of a bijective homomorphism is a homomorphism: apply the original one to both
 sides and use its injectivity. -/
@@ -83,7 +83,7 @@ theorem add_mem (hS : IsLSubmonoid lam S) {a b : X} (ha : a ∈ S) (hb : b ∈ S
   have hUB : #(ULift.{u} Bool) < lam := LMonoid.mk_uLift_bool_lt (X := X)
   have hmem := hS.lsumOf_mem hUB (fun p : ULift.{u} Bool => if p.down then a else b)
     (by rintro ⟨(_ | _)⟩ <;> simpa)
-  rwa [LMonoid.lsumOf_two a b hUB] at hmem
+  rwa [LMonoid.lsumOf_two a b] at hmem
 
 /-- A `λ⁻`-submonoid of a `λ⁻`-monoid is itself a `λ⁻`-monoid. -/
 @[instance_reducible]

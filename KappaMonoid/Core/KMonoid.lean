@@ -60,13 +60,17 @@ theorem mk_sum_le {H : Type v} [KMonoid κ H] {α β : Type u} (hα : #α ≤ κ
 
 /-! ### Summation -/
 
+/-- A bound `#ι ≤ κ` as the instance the `λ⁻`-sums of `κ⁺` look for. -/
+theorem cardLT_succ {ι : Type u} (h : #ι ≤ κ) : CardLT ι (Order.succ κ) := ⟨lt_succ h⟩
+
 /-- The sum of a family indexed by an arbitrary type of cardinality `≤ κ`. -/
 noncomputable def sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) : H :=
   LMonoid.lsumOf (lam := Order.succ κ) (lt_succ h) x
 
 theorem sumOf_equiv {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι' ≃ ι) (x : ι → H) :
     sumOf (κ := κ) h x = sumOf (κ := κ) h' (x ∘ e) :=
-  LMonoid.lsumOf_equiv e x _
+  haveI := cardLT_succ h; haveI := cardLT_succ h'
+  LMonoid.lsumOf_equiv e x
 
 @[simp] theorem sumOf_unique {ι : Type u} [Unique ι] (h : #ι ≤ κ) (x : ι → H) :
     sumOf (κ := κ) h x = x default :=
@@ -74,11 +78,13 @@ theorem sumOf_equiv {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : �
 
 @[simp] theorem sumOf_of_isEmpty {ι : Type u} [IsEmpty ι] (h : #ι ≤ κ) (x : ι → H) :
     sumOf (κ := κ) h x = 0 :=
-  LMonoid.lsumOf_isEmpty _ x
+  haveI := cardLT_succ h
+  LMonoid.lsumOf_isEmpty x
 
 @[simp] theorem sumOf_zero {ι : Type u} (h : #ι ≤ κ) :
     sumOf (κ := κ) (H := H) h (fun _ => 0) = 0 :=
-  LMonoid.lsumOf_zero _
+  haveI := cardLT_succ h
+  LMonoid.lsumOf_zero
 
 /-- The general associativity law: a `κ`-sum may be computed by first summing over the fibres
 of a partition. -/
@@ -91,17 +97,18 @@ theorem sumOf_sigma {ι : Type u} {ρ : ι → Type u} (h : #ι ≤ κ) (hρ : �
 /-- Zero-padding along an embedding does not change a `κ`-sum. -/
 theorem sumOf_extend {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι ↪ ι') (x : ι → H) :
     sumOf (κ := κ) h' (Function.extend e x 0) = sumOf (κ := κ) h x :=
-  LMonoid.lsumOf_extend _ _ e x
+  haveI := cardLT_succ h; haveI := cardLT_succ h'
+  LMonoid.lsumOf_extend e x
 
 /-- A `κ`-sum indexed by (a universe-lifted) `Bool` recovers the binary operation `+`. -/
 theorem sumOf_two (a b : H) (hUB : #(ULift.{u} Bool) ≤ κ) :
     sumOf (κ := κ) hUB (fun p : ULift.{u} Bool => if p.down then a else b) = a + b :=
-  LMonoid.lsumOf_two a b _
+  LMonoid.lsumOf_two a b
 
 /-- `κ`-sums are additive. -/
 theorem sumOf_add {ι : Type u} (h : #ι ≤ κ) (f g : ι → H) :
     sumOf (κ := κ) h (fun i => f i + g i) = sumOf (κ := κ) h f + sumOf (κ := κ) h g :=
-  haveI : CardLT ι (Order.succ κ) := ⟨lt_succ h⟩
+  haveI := cardLT_succ h
   LMonoid.lsumOf_add f g
 
 /-- Indices outside a subset off which the family vanishes may be dropped from a sum. -/
@@ -111,8 +118,9 @@ theorem sumOf_eq_sumOf_subset {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS 
   have huniv : #(Set.univ : Set ι) ≤ κ := (Cardinal.mk_congr (Equiv.Set.univ ι)).trans_le hι
   calc sumOf (κ := κ) hι f = sumOf (κ := κ) huniv (fun i : (Set.univ : Set ι) => f i) :=
         sumOf_equiv hι huniv (Equiv.Set.univ ι) f
-    _ = sumOf (κ := κ) hS (fun i : S => f i) :=
-        LMonoid.lsumOf_of_subset _ _ (Set.subset_univ S) f fun i _ hi => hout i hi
+    _ = sumOf (κ := κ) hS (fun i : S => f i) := by
+        have := cardLT_succ huniv; have := cardLT_succ hS
+        exact LMonoid.lsumOf_of_subset (Set.subset_univ S) f fun i _ hi => hout i hi
 
 /-- Terms with value `0` may be discarded. -/
 theorem sumOf_subtype_support {ι : Type u} (h : #ι ≤ κ) (x : ι → H)
@@ -124,7 +132,8 @@ theorem sumOf_subtype_support {ι : Type u} (h : #ι ≤ κ) (x : ι → H)
 theorem sumOf_sumType {α β : Type u} (hα : #α ≤ κ) (hβ : #β ≤ κ) (hαβ : #(α ⊕ β) ≤ κ)
     (f : α → H) (g : β → H) :
     sumOf (κ := κ) hαβ (Sum.elim f g) = sumOf (κ := κ) hα f + sumOf (κ := κ) hβ g :=
-  LMonoid.lsumOf_sumType (lt_succ hα) (lt_succ hβ) f g (lt_succ hαβ)
+  haveI := cardLT_succ hα; haveI := cardLT_succ hβ; haveI := cardLT_succ hαβ
+  LMonoid.lsumOf_sumType f g
 
 /-- The special case of `sumOf_sigma` for a partition of the index set into subsets. -/
 theorem sumOf_biUnion {ι J : Type u} (I : J → Set ι) (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
@@ -133,9 +142,11 @@ theorem sumOf_biUnion {ι J : Type u} (I : J → Set ι) (hdisj : ∀ p q, p ≠
     sumOf (κ := κ) hJ (fun p => sumOf (κ := κ) (hI p) (fun i : I p => x i))
       = sumOf (κ := κ) hι x := by
   have huniv : #(↥(Set.univ : Set ι)) ≤ κ := (Cardinal.mk_congr (Equiv.Set.univ ι)).trans_le hι
-  have hkey := LMonoid.lsumOf_biUnion_subset (X := H) (Set.univ : Set ι) I
-    hdisj hcover (lt_succ hJ) (lt_succ huniv)
-    (fun p => lt_succ (hI p)) x
+  have := cardLT_succ hJ
+  have := cardLT_succ huniv
+  have : ∀ p, CardLT (I p) (Order.succ κ) := fun p => cardLT_succ (hI p)
+  have hkey := LMonoid.lsumOf_biUnion_subset (lam := Order.succ κ) (X := H) (Set.univ : Set ι) I
+    hdisj hcover x
   calc sumOf (κ := κ) hJ (fun p => sumOf (κ := κ) (hI p) (fun i : I p => x i))
       = sumOf (κ := κ) huniv (fun i : (Set.univ : Set ι) => x i) := hkey
     _ = sumOf (κ := κ) hι x := (sumOf_equiv hι huniv (Equiv.Set.univ ι) x).symm
@@ -182,7 +193,7 @@ theorem ksum_two (a b : H) (i₀ i₁ : Idx κ) (hne : i₀ ≠ i₁) :
         sumOf_eq_sumOf_subset _ hp f fun i hi => by
           simp only [Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at hi
           simp [f, hi.1, hi.2]
-    _ = f i₀ + f i₁ := LMonoid.lsumOf_pair hne f _
+    _ = f i₀ + f i₁ := LMonoid.lsumOf_pair hne f
     _ = a + b := by simp [f, hne.symm]
 
 /-- (A3), Lemma 2.5: `Σ` is invariant under permutations of the index set. -/
@@ -245,14 +256,16 @@ theorem cmul_sumOf_cardinal {I : Type u} (hI : #I ≤ κ) (l : I → Cardinal.{u
     (hl : ∀ i, l i ≤ κ) (hsum : Cardinal.sum l ≤ κ) (x : H) :
     cmul (κ := κ) (Cardinal.sum l) hsum x
       = sumOf (κ := κ) hI fun i => cmul (κ := κ) (l i) (hl i) x :=
-  LMonoid.lcmul_lsumOf_cardinal (lam := Order.succ κ) (lt_succ hI) l
+  haveI := cardLT_succ hI
+  LMonoid.lcmul_lsumOf_cardinal (lam := Order.succ κ) l
     (fun i => lt_succ_of_le (hl i)) (lt_succ_of_le hsum) x
 
 /-- Lemma 2.7(3). -/
 theorem cmul_sumOf {I : Type u} (hI : #I ≤ κ) (α : Cardinal.{u}) (hα : α ≤ κ) (x : I → H) :
     cmul (κ := κ) α hα (sumOf (κ := κ) hI x)
       = sumOf (κ := κ) hI fun i => cmul (κ := κ) α hα (x i) :=
-  LMonoid.lcmul_lsumOf (lam := Order.succ κ) (lt_succ hI) α (lt_succ_of_le hα) x
+  haveI := cardLT_succ hI
+  LMonoid.lcmul_lsumOf (lam := Order.succ κ) α (lt_succ_of_le hα) x
 
 /-- Lemma 2.7(2) for a two-term sum of cardinals. -/
 theorem cmul_add {α β : Cardinal.{u}} (hα : α ≤ κ) (hβ : β ≤ κ) (hαβ : α + β ≤ κ) (x : H) :

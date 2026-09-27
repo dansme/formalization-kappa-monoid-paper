@@ -168,13 +168,13 @@ theorem isBraided_of_small_support (x y : ι → X)
   intro p
   by_cases hp : p = (a₀, 0)
   · subst hp
-    rw [LMonoid.lsumOf_of_subset (hIsmall (a₀, 0)) hx (by rw [hIa₀]; exact hxS) x
+    rw [LMonoid.lsumOf_of_subset (hS := ⟨hIsmall (a₀, 0)⟩) (hT := ⟨hx⟩) (by rw [hIa₀]; exact hxS) x
         (fun i _ hi => by by_contra hc; exact hi hc),
-      LMonoid.lsumOf_of_subset (hIsmall (a₀, 0)) hy (by rw [hIa₀]; exact hyS) y
-        (fun i _ hi => by by_contra hc; exact hi hc)]
+      LMonoid.lsumOf_of_subset (hS := ⟨hIsmall (a₀, 0)⟩) (hT := ⟨hy⟩) (by rw [hIa₀]; exact hyS) y
+          (fun i _ hi => by by_contra hc; exact hi hc)]
     exact h
-  · rw [LMonoid.lsumOf_eq_zero (hIsmall p) x (fun i hi => hx0 i (hout p hp i hi)),
-      LMonoid.lsumOf_eq_zero (hIsmall p) y (fun i hi => hy0 i (hout p hp i hi))]
+  · rw [LMonoid.lsumOf_eq_zero (hT := ⟨hIsmall p⟩) x (fun i hi => hx0 i (hout p hp i hi)),
+      LMonoid.lsumOf_eq_zero (hT := ⟨hIsmall p⟩) y (fun i hi => hy0 i (hout p hp i hi))]
 
 /-- Within a single `ω`-block `a` of a braiding, the parts telescope so that the two
 `λ⁻`-sums over the whole block already agree.  This is the content of Lemma 3.4(4) that
@@ -217,12 +217,14 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
     calc p = ULift.up p.down := rfl
       _ = ULift.up q.down := by rw [hd]
       _ = q := rfl
-  have step1 := (LMonoid.lsumOf_biUnion_subset (⋃ n : N, d.I (a, n.down))
-    (fun n : N => d.I (a, n.down))
-    hIdisj' rfl hNlt hI (fun n => d.I_lt (a, n.down)) x).symm
-  have step2 := (LMonoid.lsumOf_biUnion_subset (⋃ n : N, d.J (a, n.down))
-    (fun n : N => d.J (a, n.down))
-    hJdisj' rfl hNlt hJ (fun n => d.J_lt (a, n.down)) y).symm
+  have step1 :=
+      (LMonoid.lsumOf_biUnion_subset (hJ := ⟨hNlt⟩) (hS := ⟨hI⟩)
+      (hI := fun p => ⟨(fun n => d.I_lt (a, n.down)) p⟩) (⋃ n : N, d.I (a, n.down))
+      (fun n : N => d.I (a, n.down)) hIdisj' rfl x).symm
+  have step2 :=
+      (LMonoid.lsumOf_biUnion_subset (hJ := ⟨hNlt⟩) (hS := ⟨hJ⟩)
+      (hI := fun p => ⟨(fun n => d.J_lt (a, n.down)) p⟩) (⋃ n : N, d.J (a, n.down))
+      (fun n : N => d.J (a, n.down)) hJdisj' rfl y).symm
   rw [step1, step2]
   have hIeq : (fun n : N =>
       ∑[lam] i ∈ d.I (a, n.down), x i)
@@ -257,7 +259,8 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
   have hvtel : ∑[lam] n : N, d.v (a, n.down)
       = ∑[lam] n : N, d.v (a, n.down + 1) := by
     rw [hbs]
-    exact LMonoid.lsumOf_extend hNlt hNlt ⟨bsuccU, bsuccU_inj⟩ (fun n => d.v (a, n.down + 1))
+    exact LMonoid.lsumOf_extend (h := ⟨hNlt⟩) (h' := ⟨hNlt⟩) ⟨bsuccU, bsuccU_inj⟩
+        (fun n => d.v (a, n.down + 1))
   rw [hvtel]
 
 /-- **Finite telescoping across a rectangle of blocks.**
@@ -423,10 +426,10 @@ theorem exists_partition_of_isBraided_of_ne_aleph0 {lam : Cardinal.{u}} {X : Typ
   rintro ⟨a, n⟩
   rcases n with _ | m
   · exact d.block_lsumOf_eq hlam0 a (hIsmall (a, 0)) (hJsmall (a, 0))
-  · rw [LMonoid.lsumOf_eq_zero (hIsmall (a, m + 1)) x
+  · rw [LMonoid.lsumOf_eq_zero (hT := ⟨hIsmall (a, m + 1)⟩) x
         (fun i hi => by rw [hInz a m] at hi; exact hi.elim),
-      LMonoid.lsumOf_eq_zero (hJsmall (a, m + 1)) y
-        (fun j hj => by rw [hJnz a m] at hj; exact hj.elim)]
+      LMonoid.lsumOf_eq_zero (hT := ⟨hJsmall (a, m + 1)⟩) y
+          (fun j hj => by rw [hJnz a m] at hj; exact hj.elim)]
 
 /-- Lemma 3.4(4): for uncountable `λ` the braiding relation collapses to the much simpler
 condition that the two families admit partitions into pieces of size `< λ` with equal
@@ -501,10 +504,10 @@ theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < l
   have hST : #(↥(({i} : Set ι) ∪ (S \ {i}))) < lam := by rw [hset]; exact hS
   have hcollapse : ∑[lam] j ∈ ({i} : Set ι) ∪ (S \ {i}), f j
       = ∑[lam] j ∈ S, f j :=
-    LMonoid.lsumOf_of_subset hST hS (le_of_eq hset.symm) f fun j hj hnj =>
+    LMonoid.lsumOf_of_subset (hS := ⟨hST⟩) (hT := ⟨hS⟩) (le_of_eq hset.symm) f fun j hj hnj =>
       absurd (hset ▸ hj) hnj
-  have hsplit := LMonoid.lsumOf_union ({i} : Set ι) (S \ {i})
-    (Set.disjoint_iff_inter_eq_empty.mpr (by simp)) h1 hT f hST
+  have hsplit := LMonoid.lsumOf_union (hS := ⟨h1⟩) (hT := ⟨hT⟩) ({i} : Set ι) (S \ {i})
+      (Set.disjoint_iff_inter_eq_empty.mpr (by simp)) f
   rw [hcollapse, h] at hsplit
   have : Unique ({i} : Set ι) := ⟨⟨⟨i, rfl⟩⟩, fun j => Subtype.ext j.2⟩
   have hdef : ((default : ({i} : Set ι)) : ι) = i := (default : ({i} : Set ι)).2
@@ -563,7 +566,7 @@ theorem IsBraided.mk_support_lt (hcon : IsConical X) {x y : ι → X} (h : IsBra
     intro p hp j hj
     have hIzero : ∀ m, p.2 ≤ m → ∑[lam] i ∈ d.I (p.1, m), x i = 0 := by
       intro m hm
-      refine LMonoid.lsumOf_eq_zero _ x fun i hi => ?_
+      refine LMonoid.lsumOf_eq_zero x fun i hi => ?_
       by_contra hne
       exact hp ⟨m, hm, i, hi, hne⟩
     have huv : ∀ m, p.2 ≤ m → d.v (p.1, m) = 0 ∧ d.u (p.1, m) = 0 := by
