@@ -252,7 +252,7 @@ noncomputable def ofLE (H : Type v) [KMonoid κ H] {α : Cardinal.{u}} (hα0 : �
 @[simp] theorem ofLE_sumOf (H : Type v) [KMonoid κ H] {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α)
     (hακ : α ≤ κ) {ι : Type u} (h : #ι ≤ α) (x : ι → H) :
     letI := ofLE H hα0 hακ
-    sumOf (κ := α) h x = sumOf (κ := κ) (h.trans hακ) x := rfl
+    ∑[≤ α] i, x i = ∑[≤ κ] i, x i := rfl
 
 /-- A product of `κ`-monoids is a `κ`-monoid, with coordinatewise summation.  This is the
 `κ`-monoid `F_κ^B` of §2.1 when each factor is `F_κ`. -/

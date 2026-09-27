@@ -108,15 +108,19 @@ unbuilt edits to the file's imports; and a new file importing another new file n
   auto-binding (see trap 5).
 - **Prove at the `λ⁻` level and specialise to `κ`.** `KMonoid κ H` *is* `LMonoid (Order.succ κ) H`
   plus `ℵ₀ ≤ κ`, and `#ι ≤ κ ↔ #ι < Order.succ κ`.
-- **Cardinality side conditions.** A bound `#ι < λ` that follows from the pieces of `ι` (finite
-  types, products, sums, sigma types, unions of sets, hypotheses in context) is proved by the
-  `lam_small` tactic (`Core/LamSmall.lean`).  Take such a hypothesis *last*, with the default
-  `(h : #(ι × J) < lam := by lam_small)`, so callers can omit it: an auto-param can only be left
-  out after the last explicit argument.  Proof irrelevance makes the choice of proof harmless.
-  Write sums as `∑[lam] i ∈ S, f i` or `∑[lam] i : ι, f i` (scoped notation in `KappaMonoid`),
-  which expands to `lsumOf (lam := lam) (by lam_small) _`.  A fact that the pieces of a
-  construction are small is registered with `@[lam_small_rule]` (`BraidingData.I_small`, …) so
-  that sums over the pieces need no bound; the smallness itself stays an explicit field.
+- **Cardinality side conditions.** Write sums as `∑[lam] i ∈ S, f i` or `∑[lam] i : ι, f i`, and
+  at the `κ` level `∑[≤ κ] i, f i` (= `∑[Order.succ κ] …`); scoped notation in `KappaMonoid`,
+  expanding to `lsumOf (lam := lam) (by lam_small) _`.  The `lam_small` tactic
+  (`Core/LamSmall.lean`) proves the bound `#ι < λ` from instances, hypotheses in context (also
+  `#ι ≤ κ`, and chains `#ι ≤ α ≤ κ`), finiteness, products, sums, sigma types and unions.
+  Lemmas take the bound as an instance `[h : CardLT ι lam]`, or `[h : CardLE ι κ]` at the `κ`
+  level (`Core/CardLT.lean`); a caller holding only a hypothesis passes it by name,
+  `(h := ⟨h⟩)` or `(h := CardLE.mk' h)`.  Structures carry smallness as instance fields
+  (`[I_small : ∀ p, CardLT (I p) lam]` in `BraidingData`), so sums over the pieces need no bound.
+  Where a bound needs a structure field `lam_small` cannot see (`B.hlk` in `Theorem43`), write
+  `lsumOf (lam := …) h f` with the bound explicit.  The finite, product, sum and sigma instances
+  need `[Fact lam.IsRegular]`, which instance search cannot get from an `LMonoid`: supply it with
+  `have := LMonoid.factRegular (lam := lam) (X := X)` (`lam_small` finds regularity by itself).
 - **Notation for the three ubiquitous idioms.** `ℵ₀∙x` is `KMonoid.cmul ℵ₀ le_rfl x` (the paper's
   `ℵ₀x`), `add(x)` is `KMonoid.addOf` at `κ = ℵ₀`, and `V(R)` is `projClass R ℵ₀ le_rfl`. All three
   are scoped `notation` in namespace `KappaMonoid`, not definitions: they expand to exactly the term
@@ -164,7 +168,7 @@ re-deriving them.
    variable and transport.
 3. **`letI`-in-statement instance arguments often cannot be inferred** from the goal — pass them
    explicitly: `Fcard.instKMonoid_add (le_refl (ℵ₀ : Cardinal.{u}))`.
-4. **Defeq is not syntactic.** `rw` will not turn `KMonoid.ksum` into `KMonoid.sumOf`, or
+4. **Defeq is not syntactic.** `rw` will not turn `KMonoid.ksum` into `∑[≤ κ] i, x i`, or
    `RTilde.sigma` into `ksum`; convert first with `show _ = _ from rfl`, a typed `have`, or
    `KMonoid.sumOf_Idx`.
 5. **Pin universes in statements that do not mention them.** A hypothesis like
@@ -244,7 +248,7 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 |---|---|
 | `ForMathlib/` | no `κ`-monoid content, no repo dependencies, never rebuilt: `TraceIdeal.lean`, `NatBlocks.lean`, `Finprod.lean`, `Hereditary.lean` (`IsLeftHereditary`/`IsRightHereditary`/`IsHereditary`), `FreeRank.lean` (invariance of infinite rank), `HomDirectSum.lean` + `SimpleMultiplicity.lean` (multiplicities of simple modules), `CyclicMonoid.lean` (the classification, and `C_{m,n}` as a monoid), `Kaplansky.lean`, `Albrecht.lean`, `ProjectiveSplit.lean` (a surjection onto a projective splits; a one-sided inverse gives an idempotent), `CardinalSum.lean` (cardinal sums over a support, sums of naturals).  Mathlib has none of them |
 | `Bergman/` | the Bergman–Dicks realisation theorem, ring theory with no `κ`-monoids; imports only Mathlib and `ForMathlib/`.  `Index.lean` (Bergman's numbered results → declarations, like the `Paper/` indices), `Realization.lean` (the statement, `bergmanDicksData`, and the route), `MainRing` (the presented ring), `QuasiFree` (heredity), `Steps`/`Stages` (`V` one relation at a time), `Morita`, `Coprod`, and `Core/` for Bergman's coproduct theorem (§§4–9 of *Modules over coproducts of rings*: `Std`, `Support`, `Pure`, `Moves`, `Prop62`, `Prop82`, `Prop8`, `Main`) |
-| `Core/` | the monoid theory: `Index`, `SumData`, `LamSmall` (the `lam_small` tactic for side conditions `#ι < λ`), `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf`, `OrderUnitTransfer`, `OrderUnitIso`, `CyclicExtra` (Lemma 2.15 as a `κ`-iso), `Compatible` (Remark 2.19) |
+| `Core/` | the monoid theory: `Index`, `SumData`, `CardLT` (the bounds `#ι < λ`, `#ι ≤ κ` as instances), `LamSmall` (the `lam_small` tactic and the `∑[λ]` notation), `LMonoid`, `KMonoid`, `Subobject` (homs, `⟨S⟩_κ`, `IsLSubset`), `Bare`, `LHom`, `Cardinal` (`F_κ`), `Free`, `OrderUnit`, `Cyclic`, `AddOf`, `OrderUnitTransfer`, `OrderUnitIso`, `CyclicExtra` (Lemma 2.15 as a `κ`-iso), `Compatible` (Remark 2.19) |
 | `Braiding/` | `Defs` (`BraidingData`, `IsBraided`, Lemma 3.6), `TransAleph0` (3.7, 3.8 at `λ = ℵ₀`), `Sums` (3.2, 3.4, `mk_support_lt`, `telescope` and `rect`, the cut `μ ≤ α` for the `ι × ℕ` normal form), `TransUncountable` (3.7, 3.8 at `λ > ℵ₀`, and the uniform statements), `Over`, `WellOrder` (Lemmas 3.4(2)(3) and 3.5: the `ι × ℕ` normal form *is* Definition 3.1(1) over any limit well-order), `UnivAux`, `Prop310`, `UnivExt` (Thm 3.12), `Saturated` (Lemma 3.14), `Components` (Remark 3.9), `BaseIso` (isomorphic bases, isomorphic extensions) |
 | `Modules/` | `Small`, `DirectSum`, `Class`, `Theorem43`, `SmallPart`, `Projective` (Cor. 4.5, Kaplansky), `Corollary47`, `Transport` (Example 4.2, "`V^{ℵ₀}(R)` determines `V^κ(R)`", Cor. 4.6 hereditary), and `Rings/` for §2.2–2.3 (incl. `Progenerator`, `CyclicRealisable`) |
 | `Examples/` | `TrivExt`, `ENNReal`, `NatBraiding` (Examples 3.3(1), `ℕ₀ ∪ {∞}`), `Diophantine` (§3.2, Examples 3.16 and 3.17), `NNReal` (braiding in `ℝ≥0`), `Reals` (`ℝ≥0 ∪ ℝ̃>0 ∪ {∞}`, and `ℚ≥0`), `RealsExtra`, `DiophantineExtra` (Examples 3.16, 3.17 in full, slack variables), `Dedekind` (Examples 4.8(4)) |

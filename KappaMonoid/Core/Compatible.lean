@@ -34,7 +34,7 @@ theorem LMonoid.ext_of_lsumOf {lam : Cardinal.{u}} {X : Type v} {A B : LMonoid l
 theorem KMonoid.ext_of_sumOf {κ : Cardinal.{u}} {H : Type v} {A B : KMonoid κ H}
     (hadd : (letI := A; HAdd.hAdd : H → H → H) = (letI := B; HAdd.hAdd : H → H → H))
     (hsum : ∀ {ι : Type u} (h : #ι ≤ κ) (x : ι → H),
-      @KMonoid.sumOf κ H A ι h x = @KMonoid.sumOf κ H B ι h x) : A = B := by
+      (letI := A; ∑[≤ κ] i, x i) = (letI := B; ∑[≤ κ] i, x i)) : A = B := by
   obtain @⟨LA, _⟩ := A
   obtain @⟨LB, _⟩ := B
   obtain rfl : LA = LB :=
@@ -54,8 +54,7 @@ def IsCompatible (κ : Cardinal.{u}) {H : Type v}
     (S : ∀ lam : Cardinal.{u}, ℵ₀ ≤ lam → lam < κ → KMonoid lam H) : Prop :=
   ∀ (lam₁ lam₂ : Cardinal.{u}) (h₁ : ℵ₀ ≤ lam₁) (h₁' : lam₁ < κ) (h₂ : ℵ₀ ≤ lam₂)
     (h₂' : lam₂ < κ) (hle : lam₁ ≤ lam₂) {ι : Type u} (hι : #ι ≤ lam₁) (x : ι → H),
-    @KMonoid.sumOf lam₁ H (S lam₁ h₁ h₁') ι hι x
-      = @KMonoid.sumOf lam₂ H (S lam₂ h₂ h₂') ι (hι.trans hle) x
+    (letI := S lam₁ h₁ h₁'; ∑[≤ lam₁] i, x i) = (letI := S lam₂ h₂ h₂'; ∑[≤ lam₂] i, x i)
 
 variable {S : ∀ lam : Cardinal.{u}, ℵ₀ ≤ lam → lam < κ → KMonoid lam H}
 
@@ -64,7 +63,7 @@ summed, comparable or not: compare both with the structure at `max λ λ'`. -/
 theorem IsCompatible.sumOf_eq (hS : IsCompatible κ S) {lam lam' : Cardinal.{u}} (h0 : ℵ₀ ≤ lam)
     (hl : lam < κ) (h0' : ℵ₀ ≤ lam') (hl' : lam' < κ) {ι : Type u} (hι : #ι ≤ lam)
     (hι' : #ι ≤ lam') (x : ι → H) :
-    @KMonoid.sumOf lam H (S lam h0 hl) ι hι x = @KMonoid.sumOf lam' H (S lam' h0' hl') ι hι' x :=
+    (letI := S lam h0 hl; ∑[≤ lam] i, x i) = (letI := S lam' h0' hl'; ∑[≤ lam'] i, x i) :=
   (hS lam (max lam lam') h0 hl (le_max_of_le_left h0) (max_lt hl hl') (le_max_left _ _) hι x).trans
     (hS lam' (max lam lam') h0' hl' (le_max_of_le_left h0) (max_lt hl hl') (le_max_right _ _)
       hι' x).symm
@@ -83,13 +82,14 @@ theorem IsCompatible.add_eq (hS : IsCompatible κ S) {lam lam' : Cardinal.{u}} (
 structure at `max #ι ℵ₀`, the least infinite cardinal at which it can be summed. -/
 noncomputable def compatSum (S : ∀ lam : Cardinal.{u}, ℵ₀ ≤ lam → lam < κ → KMonoid lam H)
     (hκ0 : ℵ₀ < κ) {ι : Type u} (h : #ι < κ) (x : ι → H) : H :=
-  @KMonoid.sumOf (max #ι ℵ₀) H (S _ (le_max_right _ _) (max_lt h hκ0)) ι (le_max_left _ _) x
+  letI := S _ (le_max_right _ _) (max_lt h hκ0)
+  LMonoid.lsumOf (lam := Order.succ (max #ι ℵ₀)) (KMonoid.lt_succ (le_max_left _ _)) x
 
 /-- `compatSum` agrees with the sum in any structure of the family that can compute it. -/
 theorem IsCompatible.compatSum_eq (hS : IsCompatible κ S) (hκ0 : ℵ₀ < κ) {lam : Cardinal.{u}}
     (h0 : ℵ₀ ≤ lam) (hl : lam < κ) {ι : Type u} (hι : #ι ≤ lam) (h : #ι < κ) (x : ι → H) :
-    compatSum S hκ0 h x = @KMonoid.sumOf lam H (S lam h0 hl) ι hι x :=
-  hS.sumOf_eq _ _ h0 hl _ hι x
+    compatSum S hκ0 h x = (letI := S lam h0 hl; ∑[≤ lam] i, x i) :=
+  hS.sumOf_eq _ _ h0 hl (le_max_left _ _) hι x
 
 theorem IsCompatible.compatSum_congr (hS : IsCompatible κ S) (hκ0 : ℵ₀ < κ) {ι ι' : Type u}
     (h : #ι < κ) (h' : #ι' < κ) (e : ι ≃ ι') (x : ι' → H) :
@@ -118,7 +118,8 @@ theorem IsCompatible.compatSum_sigma (hS : IsCompatible κ S) (hκ0 : ℵ₀ < �
     (mk_le_of_injective (f := Sigma.mk (β := ρ) i) sigma_mk_injective).trans hσL
   rw [hS.compatSum_eq hκ0 hL0 hLκ hιL, hS.compatSum_eq hκ0 hL0 hLκ hσL,
     show (fun i => compatSum S hκ0 (hρ i) (x i))
-        = fun i => @KMonoid.sumOf L H (S L hL0 hLκ) _ (hρL i) (x i) from
+        = fun i => (letI := S L hL0 hLκ
+          lsumOf (lam := Order.succ L) (KMonoid.lt_succ (hρL i)) (x i)) from
       funext fun i => hS.compatSum_eq hκ0 hL0 hLκ (hρL i) (hρ i) (x i)]
   exact @KMonoid.sumOf_sigma L H (S L hL0 hLκ) ι ρ (CardLE.mk' hιL) (fun i => CardLE.mk' (hρL i)) x
 
@@ -166,7 +167,7 @@ theorem ofCompatible_lsumOf (hκ : κ.IsRegular) (hκ0 : ℵ₀ < κ) (hS : IsCo
     {lam : Cardinal.{u}} (h0 : ℵ₀ ≤ lam) (hl : lam < κ) {ι : Type u} (hι : #ι ≤ lam)
     (x : ι → H) :
     letI := ofCompatible hκ hκ0 S hS
-    lsumOf (lam := κ) (hι.trans_lt hl) x = @KMonoid.sumOf lam H (S lam h0 hl) ι hι x := by
+    lsumOf (lam := κ) (hι.trans_lt hl) x = (letI := S lam h0 hl; ∑[≤ lam] i, x i) := by
   let := ofCompatible hκ hκ0 S hS
   exact hS.compatSum_eq hκ0 h0 hl hι _ x
 

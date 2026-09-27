@@ -264,7 +264,7 @@ noncomputable def instKMonoid : KMonoid (ℵ₀ : Cardinal.{u}) RTilde where
 /-- The `ℵ₀`-sum of `H` is `sigma`. -/
 @[simp] theorem instKMonoid_sumOf {ι : Type u} (h : #ι ≤ (ℵ₀ : Cardinal.{u})) (x : ι → RTilde) :
     letI := instKMonoid
-    KMonoid.sumOf (κ := (ℵ₀ : Cardinal.{u})) h x = sigma x := rfl
+    ∑[≤ (ℵ₀ : Cardinal.{u})] i, x i = sigma x := rfl
 
 /-- Addition on `H` adds the values. -/
 theorem val_add (a b : RTilde) :

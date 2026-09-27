@@ -115,7 +115,7 @@ construction, the paper's `0` as its zero). -/
 `Σ`'s. -/
 theorem toKMonoid_sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) :
     letI := P.toKMonoid
-    KMonoid.sumOf (κ := κ) h x = P.sigma (Function.extend (emb h) x 0) := by
+    ∑[≤ κ] i, x i = P.sigma (Function.extend (emb h) x 0) := by
   let := P.toKMonoid
   exact (KMonoid.sumOf_eq_extend (h := CardLE.mk' h) (emb h) x).trans (P.toKMonoid_ksum _)
 

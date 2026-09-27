@@ -435,11 +435,11 @@ noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ (dedExt κ G) w
 
 theorem erk_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (h : #ι ≤ κ) (z : ι → dedExt κ G) :
     letI := instKMonoid (G := G) hκ
-    erk (KMonoid.sumOf (κ := κ) h z) = Cardinal.sum fun i => erk (z i) := rfl
+    erk (∑[≤ κ] i, z i) = Cardinal.sum fun i => erk (z i) := rfl
 
 theorem egp_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (h : #ι ≤ κ) (z : ι → dedExt κ G) :
     letI := instKMonoid (G := G) hκ
-    egp (KMonoid.sumOf (κ := κ) h z) =
+    egp (∑[≤ κ] i, z i) =
       if (Cardinal.sum fun i => erk (z i)) < ℵ₀ then ∑ᶠ i, egp (z i) else 0 := rfl
 
 theorem erk_zero (hκ : ℵ₀ ≤ κ) :
@@ -519,8 +519,8 @@ theorem incl_injective (hκ : ℵ₀ ≤ κ) : Function.Injective (incl (G := G)
 rank sums. -/
 theorem cond_of_sumOf_eq (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (x y : ι → dedMonoid G)
     (h : letI := instKMonoid (G := G) hκ
-      KMonoid.sumOf (κ := κ) hι (fun i => incl hκ (x i))
-        = KMonoid.sumOf (κ := κ) hι (fun i => incl hκ (y i))) :
+      ∑[≤ κ] i, incl hκ (x i)
+        = ∑[≤ κ] i, incl hκ (y i)) :
     ((support x).Finite ∧ (support y).Finite ∧ ∑ᶠ i, x i = ∑ᶠ i, y i) ∨
       ((support x).Infinite ∧ (support y).Infinite ∧
         Cardinal.sum (fun i => ((rk (x i) : ℕ) : Cardinal.{u}))

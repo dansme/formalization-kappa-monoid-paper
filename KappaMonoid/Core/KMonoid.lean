@@ -63,14 +63,6 @@ theorem mk_sum_le {H : Type v} [KMonoid κ H] {α β : Type u} (hα : #α ≤ κ
 /-- A bound `#ι ≤ κ` as the instance the `λ⁻`-sums of `κ⁺` look for. -/
 theorem cardLT_succ {ι : Type u} (h : #ι ≤ κ) : CardLT ι (Order.succ κ) := ⟨lt_succ h⟩
 
-/-- The sum of a family indexed by an arbitrary type of cardinality `≤ κ`: `∑[≤ κ] i, x i` with the
-bound given explicitly. -/
-noncomputable def sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) : H :=
-  LMonoid.lsumOf (lam := Order.succ κ) (lt_succ h) x
-
-theorem sumOf_eq_lsum {ι : Type u} (h : #ι ≤ κ) (x : ι → H) :
-    sumOf (κ := κ) h x = ∑[≤ κ] i, x i := rfl
-
 /-! The `κ`-sum laws are the `λ⁻`-sum laws of `LMonoid` at `λ = κ⁺`, with `CardLE ι κ` for
 `CardLT ι κ⁺`. -/
 

@@ -119,7 +119,7 @@ theorem restrict_iso {ι : Type u} (g : Idx κ → C.carrier) (e : ι ↪ Idx κ
 /-- The representative of a `κ`-sum of classes is the direct sum of the representatives. -/
 theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι → C.carrier) :
     letI := C.instKMonoid hκ
-    Nonempty (C.rep (sumOf (κ := κ) hι a) ≃ₗ[R] ⨁ i, C.rep (a i)) := by
+    Nonempty (C.rep (∑[≤ κ] i, a i) ≃ₗ[R] ⨁ i, C.rep (a i)) := by
   let := C.instKMonoid hκ
   set g : Idx κ → C.carrier := Function.extend (emb hι) a (0 : Idx κ → C.carrier) with hgdef
   have hge : ∀ i, g (emb hι i) = a i :=
@@ -132,7 +132,7 @@ theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι
     refine C.subsingleton_rep_of_eq_zero ?_
     rw [hg0 k hk]
     exact C.instKMonoid_zero hκ
-  have hsum : sumOf (κ := κ) hι a = C.dsum g :=
+  have hsum : ∑[≤ κ] i, a i = C.dsum g :=
     (KMonoid.sumOf_eq_extend (h := CardLE.mk' hι) (emb hι) a).trans (C.instKMonoid_ksum hκ g)
   rw [hsum]
   obtain ⟨e1⟩ := C.dsum_iso g
@@ -246,7 +246,7 @@ theorem P_iso (s : Set (Idx κ)) :
 /-- `⨁_{i ∈ s} rep (a i)` represents the class `Σ_{i ∈ s} a i`. -/
 theorem P_class (hκ : ℵ₀ ≤ κ) (s : Set (Idx κ)) (hs : #s ≤ κ) :
     letI := C.instKMonoid hκ
-    Nonempty (C.rep (sumOf (κ := κ) hs (fun i : s => a i.1)) ≃ₗ[R] ↥(D.P s)) := by
+    Nonempty (C.rep (∑[≤ κ] i : s, a i.1) ≃ₗ[R] ↥(D.P s)) := by
   let := C.instKMonoid hκ
   exact ⟨(C.rep_sumOf hκ hs (fun i : s => a i.1)).some.trans (D.P_iso s).some.symm⟩
 
@@ -401,9 +401,11 @@ structure StepProps (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
   Tdisj : Disjoint st.Tsub (B.D₁.P (Uidx ∪ st.Iset))
   Teq : st.Tsub ⊔ B.D₁.P (Uidx ∪ st.Iset) = B.D₂.P (Jidx ∪ st.Jset)
   hI : letI := C.instKMonoid B.hκ
-    sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk st.Ismall) (fun i : st.Iset => B.a₁ i.1) = vc + st.uc
+    lsumOf (lam := Order.succ κ) (st.Ismall.trans_le B.hlk) (fun i : st.Iset => B.a₁ i.1)
+      = vc + st.uc
   hJ : letI := C.instKMonoid B.hκ
-    sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk st.Jsmall) (fun j : st.Jset => B.a₂ j.1) = st.tc + st.uc
+    lsumOf (lam := Order.succ κ) (st.Jsmall.trans_le B.hlk) (fun j : st.Jset => B.a₂ j.1)
+      = st.tc + st.uc
 
 /-! From here on the class must be closed under direct summands: the recursion splits off
 complements at every step.  See `ModuleClass.IsSummandClosed`. -/
@@ -433,7 +435,7 @@ theorem exists_halfStep {a : Idx κ → C.carrier} (ha : ∀ i, a i ∈ B.S) (E 
     ∃ (I : Set (Idx κ)) (hI : #I < lam) (y : C.carrier),
       I₀ ⊆ I ∧ I ⊆ Uᶜ ∧ X ≤ E.P (U ∪ I) ∧ y ∈ B.S ∧ IsRep C y (Qc ⊓ E.P (U ∪ I)) ∧
       Disjoint Q (Qc ⊓ E.P (U ∪ I)) ∧ Q ⊔ (Qc ⊓ E.P (U ∪ I)) = E.P (U ∪ I) ∧
-      x + y = sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk hI) fun i : I => a i.1 := by
+      x + y = lsumOf (lam := Order.succ κ) (hI.trans_le B.hlk) fun i : I => a i.1 := by
   let := C.instKMonoid B.hκ
   -- `X` is `λ⁻`-small, so it lies in a sub-sum over `< λ` fresh indices; add `I₀`
   obtain ⟨t, ht, htU, hXt⟩ :=
@@ -455,9 +457,9 @@ theorem exists_halfStep {a : Idx κ → C.carrier} (ha : ∀ i, a i ∈ B.S) (E 
   obtain ⟨e⟩ := iso_of_relCompl hU_XY hsU_XY
     (E.P_disjoint (Set.disjoint_left.mpr fun i hi hi' => hIU hi' hi)) (E.P_union _ _).symm
   -- so `Y` is represented by a class `y` with `x + y = Σ_{i ∈ I} a i`, and `y ∈ S`
-  have hA : Nonempty (C.rep (sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk hI)
+  have hA : Nonempty (C.rep (lsumOf (lam := Order.succ κ) (hI.trans_le B.hlk)
       fun i : (t ∪ I₀ : Set (Idx κ)) => a i.1) ≃ₗ[R] ↥(X ⊔ (Qc ⊓ E.P (U ∪ (t ∪ I₀))))) :=
-    ⟨(E.P_class B.hκ _ _).some.trans e.symm⟩
+    ⟨(E.P_class B.hκ _ (le_of_lt_of_le_succ B.hlk hI)).some.trans e.symm⟩
   obtain ⟨y, hy⟩ := C.exists_class_of_relCompl _ hXY.symm (sup_comm _ _) hA.some
   have hsum := C.add_eq_of_relCompl B.hκ hXY rfl hx hy hA
   have hyS : y ∈ B.S := B.hSsummand _ (B.hSsub.sumOf_mem hI _ fun i => ha i.1) y
@@ -776,7 +778,7 @@ theorem a₂_eq_zero_of_not_mem {j : Idx κ} (hj : j ∉ ⋃ ν, (B.fam ν).Jset
     rw [Cardinal.mk_singleton]
     exact one_le_aleph0.trans B.hκ
   have hclass := (B.D₂.P_class B.hκ {j} hone).some
-  have hsum : sumOf (κ := κ) hone (fun i : ({j} : Set (Idx κ)) => B.a₂ i.1) = B.a₂ j := by
+  have hsum : ∑[≤ κ] i : ({j} : Set (Idx κ)), B.a₂ i.1 = B.a₂ j := by
     refine (sumOf_unique (h := CardLE.mk' hone) (fun i : ({j} : Set (Idx κ)) => B.a₂ i.1)).trans ?_
     rw [Set.mem_singleton_iff.mp (default : ↥({j} : Set (Idx κ))).2]
   rw [hsum] at hclass
@@ -891,7 +893,7 @@ theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B
     have hfun : (fun j : ↥((B.fam p).Jset) => ((y j.1 : C.carrier)))
         = fun j : ↥((B.fam p).Jset) => B.a₂ j.1 := funext fun j => hy j.1
     rw [hfun]
-    show sumOf (κ := κ) (le_of_lt_of_le_succ B.hlk (B.fam p).Jsmall)
+    show lsumOf (lam := Order.succ κ) ((B.fam p).Jsmall.trans_le B.hlk)
         (fun j : (B.fam p).Jset => B.a₂ j.1) = B.vcm (bsucc p) + (B.fam p).uc
     rw [B.vcm_bsucc p]
     exact (B.spec p).hJ

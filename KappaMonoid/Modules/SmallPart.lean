@@ -134,7 +134,7 @@ theorem ModuleClass.exists_sumOf_of_dsum_iso (C : ModuleClass R κ) [C.IsSummand
     (hκ : ℵ₀ ≤ κ) (a : C.carrier) {ι : Type u} (hι : #ι ≤ κ) (Q : ι → Type u)
     [∀ i, AddCommGroup (Q i)] [∀ i, Module R (Q i)] (e : C.rep a ≃ₗ[R] ⨁ i, Q i) :
     letI := C.instKMonoid hκ
-    ∃ b : ι → C.carrier, (∀ i, Nonempty (C.rep (b i) ≃ₗ[R] Q i)) ∧ a = sumOf (κ := κ) hι b := by
+    ∃ b : ι → C.carrier, (∀ i, Nonempty (C.rep (b i) ≃ₗ[R] Q i)) ∧ a = ∑[≤ κ] i, b i := by
   classical
   let := C.instKMonoid hκ
   have hb : ∀ i : ι, ∃ b : C.carrier, Nonempty (C.rep b ≃ₗ[R] Q i) := by

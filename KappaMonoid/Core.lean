@@ -17,7 +17,8 @@ Design notes (see also `README.md`):
 
 * One theory, not two.  A `κ`-monoid is exactly a `λ⁻`-monoid for `λ = κ⁺` (Remark 2.19;
   `#ι ≤ κ ↔ #ι < κ⁺`, and `κ⁺` is regular).  So `LMonoid` is developed once and `KMonoid`
-  extends it; the `κ`-level names (`sumOf`, `ksum`, …) are a thin layer on top.
+  extends it; the `κ`-level sum `∑[≤ κ] i, x i` is notation for the `λ⁻`-sum at `λ = κ⁺`, and
+  the `κ`-level names (`sumOf_*`, `ksum`, …) are a thin layer on top.
 
 * Underlying additive monoid.  By Lemma 2.5 a `λ⁻`-monoid carries a canonical commutative
   monoid structure with `a + b = Σ²(a, b)`.  Following Mathlib's forgetful-inheritance

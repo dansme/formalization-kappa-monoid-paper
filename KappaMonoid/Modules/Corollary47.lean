@@ -980,8 +980,7 @@ theorem rep_cmul_top_dsum (p : V(R).carrier) :
     Nonempty (V(R).rep (ℵ₀∙p)
       ≃ₗ[R] DirectSum (Idx (ℵ₀ : Cardinal.{u})) (fun _ => V(R).rep p)) := by
   rw [show ℵ₀∙p
-      = KMonoid.sumOf (κ := ℵ₀) (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u})))
-        (fun _ : Idx (ℵ₀ : Cardinal.{u}) => p) from
+      = ∑[≤ ℵ₀] _ : Idx (ℵ₀ : Cardinal.{u}), p from
     (KMonoid.cmul_congr (mk_Idx (ℵ₀ : Cardinal.{u})).symm le_rfl
         (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) p).trans
       (KMonoid.cmul_eq_sumOf (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) p)]

@@ -86,7 +86,7 @@ theorem addLe_cmul_of_traceIdeal_eq_top (p₁ : V(R).carrier)
   have hle : #(ULift.{u} (Fin n)) ≤ (ℵ₀ : Cardinal.{u}) :=
     le_of_eq_of_le hcard (le_of_lt Cardinal.natCast_lt_aleph0)
   have hAeq : KMonoid.cmul (κ := ℵ₀) #(ULift.{u} (Fin n)) hle p₁
-      = KMonoid.sumOf (κ := ℵ₀) hle (fun _ : ULift.{u} (Fin n) => p₁) :=
+      = ∑[≤ ℵ₀] _ : ULift.{u} (Fin n), p₁ :=
     KMonoid.cmul_eq_sumOf hle p₁
   have e : V(R).rep (KMonoid.cmul (κ := ℵ₀) #(ULift.{u} (Fin n)) hle p₁)
       ≃ₗ[R] DirectSum (ULift.{u} (Fin n)) (fun _ => P) := by
@@ -132,7 +132,7 @@ theorem eq_top_of_traceIdeal_generators (p₁ p₂ : V(R).carrier)
       exact Submodule.zero_mem I
     · intro z hz
       show traceIdeal R (V(R).rep
-        (KMonoid.sumOf (κ := ℵ₀) (le_of_eq (mk_Idx (ℵ₀ : Cardinal.{u}))) z)) ≤ I
+        (∑[≤ ℵ₀] i, z i)) ≤ I
       rw [traceIdeal_of_iso R
         (V(R).rep_sumOf le_rfl (le_of_eq (mk_Idx _)) z).some]
       exact le_trans (traceIdeal_dsum_le R _) (iSup_le fun i => hz i)

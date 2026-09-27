@@ -267,7 +267,7 @@ theorem isBraidedOver_addOf_of_ne {x : H} (hgen : KGenerates (ℵ₀ : Cardinal.
     have : Infinite S := ha.to_subtype
     have hSeq : #S = ℵ₀ := le_antisymm hSle (Cardinal.aleph0_le_mk S)
     have hsum : (KMonoid.ksum (κ := ℵ₀) fun i => ((a i : ↥(add(x))) : H))
-        = sumOf (κ := ℵ₀) hSle (fun i : S => ((a i : ↥(add(x))) : H)) :=
+        = ∑[≤ ℵ₀] i : S, ((a i : ↥(add(x))) : H) :=
       sumOf_eq_sumOf_subset (hι := CardLE.mk' (le_of_eq (mk_Idx _))) (hS := CardLE.mk' hSle) _ fun i hi => by
         rw [Function.notMem_support.mp hi]; rfl
     have hge : ∀ i : S, x ≼ ((a i : ↥(add(x))) : H) := by
