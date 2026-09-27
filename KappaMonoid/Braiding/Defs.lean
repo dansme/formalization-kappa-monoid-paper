@@ -338,10 +338,9 @@ theorem comp_equiv {ι' : Type u} (E : ι ≃ ι') {x y : ι' → X} (h : IsBrai
           (fun i : E ⁻¹' P (E p.1, p.2) => f (E i))
         = lsumOf (lam := lam) (hs (E p.1, p.2)) (fun j : P (E p.1, p.2) => f j) := by
     intro P hs p f
-    refine (lsumOf_equiv (lam := lam) (hs (E p.1, p.2))
-      (lt_of_eq_of_lt (hpre _) (hs (E p.1, p.2)))
-      ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simp⟩, fun i => by simp,
-        fun j => by simp⟩ (fun j : P (E p.1, p.2) => f j)).symm
+    let e : ↥(E ⁻¹' P (E p.1, p.2)) ≃ ↥(P (E p.1, p.2)) :=
+      ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simp⟩, fun i => by simp, fun j => by simp⟩
+    exact (lsumOf_equiv (lam := lam) e (fun j : P (E p.1, p.2) => f j) (hs (E p.1, p.2))).symm
   exact ⟨{ I := fun p => E ⁻¹' d.I (E p.1, p.2)
            J := fun p => E ⁻¹' d.J (E p.1, p.2)
            I_disjoint := hdisj d.I d.I_disjoint

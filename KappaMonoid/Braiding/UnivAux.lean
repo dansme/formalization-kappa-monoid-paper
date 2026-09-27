@@ -30,7 +30,7 @@ theorem IsBraided.reindex {ι ι' : Type u} {x y : ι → X} (e : ι' ≃ ι)
       lsumOf (lam := lam) hS' (fun i : ↥(e ⁻¹' S) => (g ∘ e) i)
         = lsumOf (lam := lam) hS (fun i : S => g i) := by
     intro S hS hS' g
-    exact (lsumOf_equiv hS hS' (e.subtypeEquiv (fun _ => Iff.rfl)) (fun i : S => g i)).symm
+    exact (lsumOf_equiv (e.subtypeEquiv (fun _ => Iff.rfl)) (fun i : S => g i) hS).symm
   have hcover : ∀ (K : ι × ℕ → Set ι), (⋃ p, K p) = Set.univ →
       (⋃ p : ι' × ℕ, e ⁻¹' K (e p.1, p.2)) = Set.univ := by
     intro K hK
@@ -102,8 +102,8 @@ theorem IsBraided.prod {A B : Type u} {x y : A → B → X} (h : ∀ a, IsBraide
       lsumOf (lam := lam) hS' (fun p : ↥(Prod.mk a '' S) => g (p : A × B).1 (p : A × B).2)
         = lsumOf (lam := lam) hS (fun i : S => g a i) := by
     intro a S hS hS' g
-    exact lsumOf_equiv hS' hS (Equiv.Set.image (Prod.mk a) S (hinj a))
-      (fun p : ↥(Prod.mk a '' S) => g (p : A × B).1 (p : A × B).2)
+    exact lsumOf_equiv (Equiv.Set.image (Prod.mk a) S (hinj a))
+      (fun p : ↥(Prod.mk a '' S) => g (p : A × B).1 (p : A × B).2) hS'
   exact ⟨{ I := fun p => Prod.mk p.1.1 '' (d p.1.1).I (p.1.2, p.2)
            J := fun p => Prod.mk p.1.1 '' (d p.1.1).J (p.1.2, p.2)
            I_disjoint := hdisj (fun a => (d a).I) (fun a => (d a).I_disjoint)
@@ -494,7 +494,7 @@ theorem isBraided_of_subtype {ι : Type u} (C : Set ι) {x y : ι → X}
     have himg : #(Subtype.val '' P (⟨p.1, hp⟩, p.2)) < lam :=
       lt_of_le_of_lt Cardinal.mk_image_le (hP _)
     rw [hcongr _ _ (hpos P p hp) (hsmall P hP p) himg,
-      lsumOf_equiv himg (hP _) (Equiv.Set.image Subtype.val _ Subtype.val_injective)]
+      lsumOf_equiv (Equiv.Set.image Subtype.val _ Subtype.val_injective) _ himg]
     rfl
   have hsumneg : ∀ (P : C × ℕ → Set C) (hP : ∀ p, #(P p) < lam) (z : ι → X)
       (hz : ∀ i ∉ C, z i = 0) (p : ι × ℕ) (hp : p.1 ∉ C),

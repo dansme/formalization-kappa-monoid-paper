@@ -26,10 +26,11 @@ theorem mk_uLift_bool_lt {X : Type v} [LMonoid lam X] : #(ULift.{u} Bool) < lam 
 
 /-! ### Basic laws -/
 
-/-- Reindexing along an equivalence. -/
-theorem lsumOf_equiv {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : ι' ≃ ι) (x : ι → X) :
-    lsumOf (lam := lam) h x = lsumOf (lam := lam) h' (x ∘ e) :=
-  (lsumOf_congr h' h e x).symm
+/-- Reindexing along an equivalence.  The bound on the reindexed side follows from `h`, since
+`e` is a bijection. -/
+theorem lsumOf_equiv {ι ι' : Type u} (e : ι' ≃ ι) (x : ι → X) (h : #ι < lam := by lam_small) :
+    lsumOf (lam := lam) h x = lsumOf (lam := lam) ((Cardinal.mk_congr e).trans_lt h) (x ∘ e) :=
+  (lsumOf_congr _ h e x).symm
 
 /-- A sum over `α ⊕ β` splits as a binary sum. -/
 theorem lsumOf_sumType {α β : Type u} (hα : #α < lam) (hβ : #β < lam) (f : α → X) (g : β → X)
@@ -43,14 +44,14 @@ theorem lsumOf_sumType {α β : Type u} (hα : #α < lam) (hβ : #β < lam) (f :
   have hPP : #(PUnit.{u + 1} ⊕ PUnit.{u + 1}) < lam := by lam_small
   calc lsumOf (lam := lam) hαβ (Sum.elim f g)
       = lsumOf (lam := lam) hσ (Sum.elim f g ∘ sigmaBoolEquiv α β) :=
-        lsumOf_equiv hαβ hσ (sigmaBoolEquiv α β) _
+        lsumOf_equiv (sigmaBoolEquiv α β) _ hαβ
     _ = lsumOf (lam := lam) hσ (fun p => boolFam f g p.1 p.2) := by
         congr 1; funext p; obtain ⟨⟨(_ | _)⟩, y⟩ := p <;> rfl
     _ = lsumOf (lam := lam) hUB (fun p => lsumOf (lam := lam) (hρ p) (boolFam f g p)) :=
         (lsumOf_sigma hUB hρ (boolFam f g) hσ).symm
     _ = lsumOf (lam := lam) hPP
           (Sum.elim (fun _ => lsumOf (lam := lam) hα f) (fun _ => lsumOf (lam := lam) hβ g)) := by
-        rw [lsumOf_equiv hPP hUB uliftBoolEquiv]
+        rw [lsumOf_equiv uliftBoolEquiv _ hPP]
         congr 1; funext p; obtain ⟨(_ | _)⟩ := p <;> rfl
     _ = lsumOf (lam := lam) hα f + lsumOf (lam := lam) hβ g := (add_eq_lsumOf _ _ _).symm
 
@@ -63,7 +64,7 @@ theorem lsumOf_sumType {α β : Type u} (hα : #α < lam) (hβ : #β < lam) (f :
         rw [lsumOf_unique hu, zero_add]
     _ = lsumOf (lam := lam) hsum (Sum.elim (fun _ => 0) x) := (lsumOf_sumType hu h _ _).symm
     _ = lsumOf (lam := lam) hu (fun _ => 0) :=
-        lsumOf_equiv hsum hu (Equiv.sumEmpty PUnit.{u + 1} ι).symm _
+        lsumOf_equiv (Equiv.sumEmpty PUnit.{u + 1} ι).symm _ hsum
     _ = 0 := lsumOf_unique hu _
 
 @[simp] theorem lsumOf_zero {ι : Type u} (h : #ι < lam) :
@@ -102,13 +103,13 @@ theorem lsumOf_extend {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : �
       = lsumOf (lam := lam) h' (fun j => lsumOf (lam := lam) (hρ j) (fun p => x p.1)) := by
         congr 1; funext j; exact (hfib j).symm
     _ = lsumOf (lam := lam) hσ (fun p => x p.2.1) := lsumOf_sigma h' hρ _ hσ
-    _ = lsumOf (lam := lam) h x := (lsumOf_equiv h hσ (Equiv.sigmaFiberEquiv (fun i => e i)) x).symm
+    _ = lsumOf (lam := lam) h x := (lsumOf_equiv (Equiv.sigmaFiberEquiv (fun i => e i)) x h).symm
 
 /-- The binary sum, in the `Bool`-indexed form used throughout Sections 3 and 4. -/
 theorem lsumOf_two (a b : X) (hUB : #(ULift.{u} Bool) < lam := by lam_small) :
     lsumOf (lam := lam) hUB (fun p : ULift.{u} Bool => if p.down then a else b) = a + b := by
   have hu : #PUnit.{u + 1} < lam := by lam_small
-  rw [lsumOf_equiv hUB (by lam_small) uliftBoolEquiv.symm,
+  rw [lsumOf_equiv uliftBoolEquiv.symm _ hUB,
     show (fun p : ULift.{u} Bool => if p.down then a else b) ∘ uliftBoolEquiv.symm
       = Sum.elim (fun _ => b) (fun _ => a) by funext p; rcases p with p | p <;> rfl,
     lsumOf_sumType hu hu, lsumOf_unique, lsumOf_unique]
@@ -120,7 +121,7 @@ theorem lsumOf_prod {ι J : Type u} (hι : #ι < lam) (hJ : #J < lam) (x : ι �
     lsumOf (lam := lam) hι (fun i => lsumOf (lam := lam) hJ (x i))
       = lsumOf (lam := lam) hιJ (fun p => x p.1 p.2) := by
   rw [lsumOf_sigma hι (fun _ => hJ) x (by lam_small)]
-  exact lsumOf_equiv _ hιJ (Equiv.sigmaEquivProd ι J).symm _
+  exact lsumOf_equiv (Equiv.sigmaEquivProd ι J).symm _ _
 
 /-- Iterated sums may be interchanged: the `λ⁻` form of (A4).
 
@@ -128,8 +129,7 @@ Both sides are the sum over `ι × J`, indexed once as `(i, j)` and once as `(j,
 theorem lsumOf_comm {ι J : Type u} (hι : #ι < lam) (hJ : #J < lam) (x : ι → J → X) :
     lsumOf (lam := lam) hι (fun i => lsumOf (lam := lam) hJ (x i))
       = lsumOf (lam := lam) hJ fun j => lsumOf (lam := lam) hι fun i => x i j := by
-  rw [lsumOf_prod hι hJ, lsumOf_prod hJ hι,
-    lsumOf_equiv (by lam_small) (by lam_small) (Equiv.prodComm J ι)]
+  rw [lsumOf_prod hι hJ, lsumOf_prod hJ hι, lsumOf_equiv (Equiv.prodComm J ι)]
   rfl
 
 /-- Sums are additive.
@@ -180,7 +180,7 @@ theorem lsumOf_union {ι : Type u} (S T : Set ι) (hd : Disjoint S T) (hS : #S <
     lsumOf (lam := lam) hST (fun i : ↥(S ∪ T) => f i)
       = lsumOf (lam := lam) hS (fun i : S => f i) + lsumOf (lam := lam) hT (fun i : T => f i) := by
   classical
-  rw [lsumOf_equiv hST (by lam_small) (Equiv.Set.union hd).symm, ← lsumOf_sumType hS hT]
+  rw [lsumOf_equiv (Equiv.Set.union hd).symm _ hST, ← lsumOf_sumType hS hT]
   congr 1
   funext p
   rcases p with p | p <;> rfl
@@ -194,7 +194,7 @@ theorem lsumOf_biUnion_subset {ι J : Type u} (S : Set ι) (I : J → Set ι)
   let e : S ≃ (p : J) × I p :=
     (Equiv.setCongr hcover.symm).trans (Set.unionEqSigmaOfDisjoint fun p q h => hdisj p q h)
   have hσ : #((p : J) × I p) < lam := by rwa [← Cardinal.mk_congr e]
-  rw [lsumOf_sigma hJ hI _ hσ, lsumOf_equiv hS hσ e.symm]
+  rw [lsumOf_sigma hJ hI _ hσ, lsumOf_equiv e.symm _ hS]
   congr 1
 
 /-- A sum over a two-element subset. -/
@@ -205,7 +205,7 @@ theorem lsumOf_pair {ι : Type u} {a b : ι} (hab : a ≠ b) (f : ι → X)
   have hb : #(↥({b} : Set ι)) < lam := by lam_small
   calc lsumOf (lam := lam) hp (fun i : ({a, b} : Set ι) => f i)
       = lsumOf (lam := lam) (by lam_small) (fun i : ↥(({a} : Set ι) ∪ {b}) => f i) :=
-        lsumOf_equiv hp _ (Equiv.setCongr (Set.insert_eq a {b})).symm _
+        lsumOf_equiv (Equiv.setCongr (Set.insert_eq a {b})).symm _ hp
     _ = f a + f b := by
         rw [lsumOf_union _ _ (Set.disjoint_singleton.mpr hab) ha hb f, lsumOf_unique,
           lsumOf_unique]
@@ -307,7 +307,7 @@ theorem lcmul_lsumOf_cardinal {I : Type u} (hI : #I < lam) (l : I → Cardinal.{
   obtain ⟨Ψ⟩ := Cardinal.eq.mp (hmk.trans (mk_Idx (Cardinal.sum l)).symm)
   calc lcmul (lam := lam) (Cardinal.sum l) hsum x
       = lsumOf (lam := lam) hσ (fun _ : (i : I) × Idx (l i) => x) :=
-        lsumOf_equiv (lt_of_eq_of_lt (mk_Idx (Cardinal.sum l)) hsum) hσ Ψ (fun _ => x)
+        lsumOf_equiv Ψ (fun _ => x) (lt_of_eq_of_lt (mk_Idx (Cardinal.sum l)) hsum)
     _ = lsumOf (lam := lam) hI (fun i => lcmul (lam := lam) (l i) (hl i) x) :=
         (lsumOf_sigma hI hρ (fun i (_ : Idx (l i)) => x) hσ).symm
 
@@ -327,7 +327,7 @@ theorem lcmul_add {α β : Cardinal.{u}} (hα : α < lam) (hβ : β < lam) (hα�
   obtain ⟨e⟩ : Nonempty (Idx α ⊕ Idx β ≃ Idx (α + β)) := Cardinal.eq.mp (by simp)
   calc lcmul (lam := lam) (α + β) hαβ x
       = lsumOf (lam := lam) hsum (Sum.elim (fun _ : Idx α => x) fun _ : Idx β => x) := by
-        rw [lcmul, lsumOf_equiv _ hsum e]
+        rw [lcmul, lsumOf_equiv e _ (lt_of_eq_of_lt (mk_Idx (α + β)) hαβ)]
         congr 1; funext p; rcases p with p | p <;> rfl
     _ = lcmul (lam := lam) α hα x + lcmul (lam := lam) β hβ x := lsumOf_sumType hα' hβ' _ _
 
@@ -346,7 +346,7 @@ theorem lcmul_lcmul {α β : Cardinal.{u}} (hα : α < lam) (hβ : β < lam) (h�
       = lsumOf (lam := lam) hσ (fun _ : (_ : Idx α) × Idx β => x) :=
         lsumOf_sigma hα' (fun _ => hβ') (fun (_ : Idx α) (_ : Idx β) => x) hσ
     _ = lcmul (lam := lam) (α * β) hαβ x :=
-        (lsumOf_equiv (lt_of_eq_of_lt (mk_Idx (α * β)) hαβ) hσ Ψ fun _ => x).symm
+        (lsumOf_equiv Ψ (fun _ => x) (lt_of_eq_of_lt (mk_Idx (α * β)) hαβ)).symm
 
 /-- The remark after **Definition 2.6**: for an infinite `α < λ`, adding one more copy of `x` to
 `α` many copies of `x` does not change the value.  Immediate from `lcmul_add` and `1 + α = α`. -/

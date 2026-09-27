@@ -392,10 +392,10 @@ theorem paper_B2 (x : Idx lam → Idx lam → H) (hrows : #{i | ∃ j, x i j ≠
     _ = lsumOf hsig (fun p : (_ : R) × C => x p.1 p.2) :=
         lsumOf_sigma hrows (fun _ => hcols) (fun (i : R) (j : C) => x i j) hsig
     _ = lsumOf hprod (fun p : R × C => x p.1 p.2) :=
-        lsumOf_equiv hsig hprod (Equiv.sigmaEquivProd R C).symm _
+        lsumOf_equiv (Equiv.sigmaEquivProd R C).symm _ hsig
     _ = lsumOf hprod ((fun k : range φ => G k) ∘ Equiv.ofInjective φ hφ) := by
         congr 1; funext p; simp [hGdef, hφdef]
-    _ = lsumOf hT (fun k : range φ => G k) := (lsumOf_equiv hT hprod _ _).symm
+    _ = lsumOf hT (fun k : range φ => G k) := (lsumOf_equiv _ _ hT).symm
     _ = lsumOf hπ (fun k : support G => G k) :=
         lsumOf_of_subset hT hπ hsuppG G fun k _ hk => Function.notMem_support.mp hk
 
@@ -424,7 +424,7 @@ theorem toPaper_toLMonoid (lam : Cardinal.{u}) (H : Type v) [M : LMonoid lam H] 
     rw [← lsumOf_of_subset hR hS
       (fun k hk => by_contra fun hk' => hk (extend_apply' _ _ _ fun ⟨i, hi⟩ => hk' ⟨i, hi⟩))
       (extend e x 0) fun k _ hk => Function.notMem_support.mp hk,
-      lsumOf_equiv hR h (Equiv.ofInjective e e.injective)]
+      lsumOf_equiv (Equiv.ofInjective e e.injective) _ hR]
     congr 1
     funext i
     exact e.injective.extend_apply x 0 i

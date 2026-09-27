@@ -66,7 +66,7 @@ noncomputable def sumOf {ι : Type u} (h : #ι ≤ κ) (x : ι → H) : H :=
 
 theorem sumOf_equiv {ι ι' : Type u} (h : #ι ≤ κ) (h' : #ι' ≤ κ) (e : ι' ≃ ι) (x : ι → H) :
     sumOf (κ := κ) h x = sumOf (κ := κ) h' (x ∘ e) :=
-  LMonoid.lsumOf_equiv _ _ e x
+  LMonoid.lsumOf_equiv e x _
 
 @[simp] theorem sumOf_unique {ι : Type u} [Unique ι] (h : #ι ≤ κ) (x : ι → H) :
     sumOf (κ := κ) h x = x default :=
