@@ -841,8 +841,8 @@ theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B
             J_disjoint := ?_
             I_cover := B.Iset_cover
             J_cover := ?_
-            I_small := fun p => (B.fam p).Ismall
-            J_small := hJsmall
+            I_small := fun p => ⟨(B.fam p).Ismall⟩
+            J_small := fun p => ⟨hJsmall p⟩
             u := fun p => ⟨(B.fam p).uc, (B.fam p).ucS⟩
             v := fun p => ⟨B.vcm p, B.vcOf_mem B.fam p⟩
             v_limit := ?_

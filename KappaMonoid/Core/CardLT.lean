@@ -1,14 +1,15 @@
 /-
-`CardLT ι λ`: the standing assumption `#ι < λ` as a type class, and small sets.
+`CardLT ι λ`: the standing assumption `#ι < λ` as a type class.
 
 The paper sums over index sets of cardinality `< λ` without mentioning the bound: `Σ_{i ∈ I} x_i`
 presupposes `|I| < λ`.  Here that presupposition is an instance `[CardLT ι λ]`, found by instance
 search from the rules below (finite types, products, sums, sigma types, subsets, unions, images),
 the way Mathlib finds `[Fintype ι]` for `∑ i : ι, f i`.
 
-A `SmallSet λ ι` is a subset of `ι` of cardinality `< λ` (as `Finset` is to finiteness); its
-coercion to a type carries the instance, so a sum over a piece of a partition by small sets needs
-no bound.  The product, sum and sigma rules need `λ` regular, as the instance `[Fact λ.IsRegular]`.
+Structures whose data includes small sets carry the smallness as an instance field
+(`[I_small : ∀ p, CardLT (I p) lam]` in `BraidingData`), registered with `attribute [instance]`:
+the sets stay sets, and a sum over a piece finds its bound.  The product, sum and sigma rules need
+`λ` regular, as the instance `[Fact λ.IsRegular]`.
 -/
 import KappaMonoid.Core.Index
 
@@ -59,32 +60,5 @@ theorem of_equiv {ι ι' : Type u} (e : ι ≃ ι') [h : CardLT ι' lam] : CardL
   ⟨(mk_congr e).trans_lt h.lt⟩
 
 end CardLT
-
-/-- A subset of `ι` of cardinality `< lam`: the pieces of an indexed partition in Definition 3.1. -/
-def SmallSet (lam : Cardinal.{u}) (ι : Type u) : Type u := {S : Set ι // #S < lam}
-
-namespace SmallSet
-
-variable {lam : Cardinal.{u}} {ι : Type u}
-
-instance : CoeOut (SmallSet lam ι) (Set ι) := ⟨Subtype.val⟩
-
-/-- A small set as an index type, directly (not through `Set ι`: a double coercion `↥↑S` would
-defeat instance search). -/
-instance : CoeSort (SmallSet lam ι) (Type u) := ⟨fun S => ↥S.1⟩
-
-instance (S : SmallSet lam ι) : CardLT S lam := ⟨S.2⟩
-
-theorem small (S : SmallSet lam ι) : #(S : Set ι) < lam := S.2
-
-@[ext] theorem ext {S T : SmallSet lam ι} (h : (S : Set ι) = T) : S = T := Subtype.ext h
-
-/-- A set that is small, as a small set. -/
-def of (S : Set ι) [h : CardLT S lam] : SmallSet lam ι := ⟨S, h.lt⟩
-
-@[simp] theorem coe_of (S : Set ι) [CardLT S lam] : ((of (lam := lam) S : SmallSet lam ι) : Set ι) = S :=
-  rfl
-
-end SmallSet
 
 end KappaMonoid

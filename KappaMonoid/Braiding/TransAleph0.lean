@@ -283,18 +283,18 @@ theorem of_aligned (d : BraidingData ℵ₀ x y) (e : BraidingData ℵ₀ y z)
     (h3 : ∀ a : ι, d.J (a, 0) ⊆ e.I (a, 0)) :
     IsBraided ℵ₀ x z := by
   classical
-  have dIfin : ∀ p, (d.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.I_small p)
-  have dJfin : ∀ p, (d.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.J_small p)
-  have eIfin : ∀ p, (e.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (e.I_small p)
-  have eJfin : ∀ p, (e.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (e.J_small p)
+  have dIfin : ∀ p, (d.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.I_lt p)
+  have dJfin : ∀ p, (d.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.J_lt p)
+  have eIfin : ∀ p, (e.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (e.I_lt p)
+  have eJfin : ∀ p, (e.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (e.J_lt p)
   have dIsum : ∀ p, ∑ᶠ i ∈ d.I p, x i = d.v p + d.u p := fun p => by
-    rw [← LMonoid.lsumOf_eq_finsum (d.I_small p)]; exact d.hI p
+    rw [← LMonoid.lsumOf_eq_finsum (d.I_lt p)]; exact d.hI p
   have dJsum : ∀ p, ∑ᶠ j ∈ d.J p, y j = d.v (bsucc p) + d.u p := fun p => by
-    rw [← LMonoid.lsumOf_eq_finsum (d.J_small p)]; exact d.hJ p
+    rw [← LMonoid.lsumOf_eq_finsum (d.J_lt p)]; exact d.hJ p
   have eIsum : ∀ p, ∑ᶠ j ∈ e.I p, y j = e.v p + e.u p := fun p => by
-    rw [← LMonoid.lsumOf_eq_finsum (e.I_small p)]; exact e.hI p
+    rw [← LMonoid.lsumOf_eq_finsum (e.I_lt p)]; exact e.hI p
   have eJsum : ∀ p, ∑ᶠ k ∈ e.J p, z k = e.v (bsucc p) + e.u p := fun p => by
-    rw [← LMonoid.lsumOf_eq_finsum (e.J_small p)]; exact e.hJ p
+    rw [← LMonoid.lsumOf_eq_finsum (e.J_lt p)]; exact e.hJ p
   have hnesucc : ∀ p : ι × ℕ, p ≠ bsucc p := fun p hp =>
     Nat.succ_ne_self p.2 (congrArg Prod.snd hp).symm
   -- the "overlap" sums `s` and `t`
@@ -457,12 +457,12 @@ theorem exists_repartition (d : BraidingData ℵ₀ x y) (A : ι × ℕ → Set 
     ∃ e : BraidingData ℵ₀ x y,
       (∀ μ, e.I μ = regroup d.I A μ) ∧ (∀ μ, e.J μ = regroup d.J A μ) := by
   classical
-  have dIfin : ∀ p, (d.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.I_small p)
-  have dJfin : ∀ p, (d.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.J_small p)
+  have dIfin : ∀ p, (d.I p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.I_lt p)
+  have dJfin : ∀ p, (d.J p).Finite := fun p => lt_aleph0_iff_set_finite.mp (d.J_lt p)
   have dIsum : ∀ p, ∑ᶠ i ∈ d.I p, x i = d.v p + d.u p := fun p => by
-    rw [← LMonoid.lsumOf_eq_finsum (d.I_small p)]; exact d.hI p
+    rw [← LMonoid.lsumOf_eq_finsum (d.I_lt p)]; exact d.hI p
   have dJsum : ∀ p, ∑ᶠ j ∈ d.J p, y j = d.v (bsucc p) + d.u p := fun p => by
-    rw [← LMonoid.lsumOf_eq_finsum (d.J_small p)]; exact d.hJ p
+    rw [← LMonoid.lsumOf_eq_finsum (d.J_lt p)]; exact d.hJ p
   -- `d.v` vanishes at every position with zero offset
   have hvzero : ∀ ν : ι × ℕ, ν.2 = 0 → d.v ν = 0 := by
     intro ν h2
@@ -870,8 +870,8 @@ theorem transFam_finite (d₁ : BraidingData ℵ₀ x y) (d₂ : BraidingData �
     (C := fun μ => (Afam d₁ d₂ μ).Finite ∧ (Bfam d₁ d₂ μ).Finite) μ ?_
   clear μ
   intro μ IH
-  have hd₁J : ∀ ν, (d₁.J ν).Finite := fun ν => lt_aleph0_iff_set_finite.mp (d₁.J_small ν)
-  have hd₂I : ∀ ν, (d₂.I ν).Finite := fun ν => lt_aleph0_iff_set_finite.mp (d₂.I_small ν)
+  have hd₁J : ∀ ν, (d₁.J ν).Finite := fun ν => lt_aleph0_iff_set_finite.mp (d₁.J_lt ν)
+  have hd₂I : ∀ ν, (d₂.I ν).Finite := fun ν => lt_aleph0_iff_set_finite.mp (d₂.I_lt ν)
   have hpAfin : (prevOf (Afam d₁ d₂) μ).Finite := prevOf_finite fun ρ hρ => (IH ρ hρ).1
   have hpBfin : (prevOf (Bfam d₁ d₂) μ).Finite := prevOf_finite fun ρ hρ => (IH ρ hρ).2
   have hAfin : (Afam d₁ d₂ μ).Finite := by

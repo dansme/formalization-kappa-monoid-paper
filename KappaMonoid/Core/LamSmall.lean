@@ -8,7 +8,7 @@ their cardinality hypotheses (`(h : #(ι × J) < lam := by lam_small)`), so call
 Proof irrelevance makes this safe: any two proofs of `#ι < λ` are equal, so it does not matter
 which one the tactic finds.
 
-Facts that some *piece* of a construction is small, such as `BraidingData.I_small`, are
+Facts that some *piece* of a construction is small, such as `BraidingData.I_lt`, are
 registered with the attribute `@[lam_small_rule]`, and the tactic uses them as well as hypotheses
 of the form `∀ p, #(I p) < λ`.
 

@@ -31,20 +31,20 @@ theorem sumOf_eq_of_isBraided {ι : Type u} (hι : #ι ≤ κ) (x y : ι → H)
   obtain ⟨d⟩ := h
   have hκ := KMonoid.aleph0_le (κ := κ) (H := H)
   have hP : #(ι × ℕ) ≤ κ := mk_prod_nat_le hκ hι
-  have hIle : ∀ p, #(d.I p) ≤ κ := fun p => le_of_lt_of_le_succ hlk (d.I_small p)
-  have hJle : ∀ p, #(d.J p) ≤ κ := fun p => le_of_lt_of_le_succ hlk (d.J_small p)
+  have hIle : ∀ p, #(d.I p) ≤ κ := fun p => le_of_lt_of_le_succ hlk (d.I_lt p)
+  have hJle : ∀ p, #(d.J p) ≤ κ := fun p => le_of_lt_of_le_succ hlk (d.J_lt p)
   -- Regroup each side along its braiding partition and use the defining equations.
   have hxsum : sumOf (κ := κ) hι x = sumOf (κ := κ) hP (fun p => d.v p + d.u p) := by
     rw [← sumOf_biUnion d.I d.I_disjoint d.I_cover hP hι hIle x]
     congr 1
     funext p
-    exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk (d.I_small p)
+    exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk (d.I_lt p)
       (fun i : d.I p => x i)).symm.trans (d.hI p)
   have hysum : sumOf (κ := κ) hι y = sumOf (κ := κ) hP (fun p => d.v (bsucc p) + d.u p) := by
     rw [← sumOf_biUnion d.J d.J_disjoint d.J_cover hP hι hJle y]
     congr 1
     funext p
-    exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk (d.J_small p)
+    exact (KMonoid.toLMonoidOfLE_lsumOf hlam hlk (d.J_lt p)
       (fun j : d.J p => y j)).symm.trans (d.hJ p)
   -- The telescoping step: `v` vanishes at the limit elements `(a, 0)`, and `bsucc` is a
   -- bijection onto the non-limit elements, so `Σ v = Σ (v ∘ bsucc)`.
@@ -219,10 +219,10 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
       _ = q := rfl
   have step1 := (LMonoid.lsumOf_biUnion_subset (⋃ n : N, d.I (a, n.down))
     (fun n : N => d.I (a, n.down))
-    hIdisj' rfl hNlt hI (fun n => d.I_small (a, n.down)) x).symm
+    hIdisj' rfl hNlt hI (fun n => d.I_lt (a, n.down)) x).symm
   have step2 := (LMonoid.lsumOf_biUnion_subset (⋃ n : N, d.J (a, n.down))
     (fun n : N => d.J (a, n.down))
-    hJdisj' rfl hNlt hJ (fun n => d.J_small (a, n.down)) y).symm
+    hJdisj' rfl hNlt hJ (fun n => d.J_lt (a, n.down)) y).symm
   rw [step1, step2]
   have hIeq : (fun n : N =>
       ∑[lam] i ∈ d.I (a, n.down), x i)
@@ -371,7 +371,7 @@ theorem exists_partition_of_isBraided_of_ne_aleph0 {lam : Cardinal.{u}} {X : Typ
     rcases n with _ | m
     · rw [hIzero a]
       exact (Cardinal.card_iUnion_lt_iff_forall_of_isRegular
-        (‹LMonoid lam X›.isRegular) hNlt).mpr (fun n => d.I_small (a, n.down))
+        (‹LMonoid lam X›.isRegular) hNlt).mpr (fun n => d.I_lt (a, n.down))
     · rw [hInz a m, Cardinal.mk_eq_zero]
       exact Cardinal.aleph0_pos.trans_le hlam0.le
   have hJsmall : ∀ p, #(J p) < lam := by
@@ -379,7 +379,7 @@ theorem exists_partition_of_isBraided_of_ne_aleph0 {lam : Cardinal.{u}} {X : Typ
     rcases n with _ | m
     · rw [hJzero a]
       exact (Cardinal.card_iUnion_lt_iff_forall_of_isRegular
-        (‹LMonoid lam X›.isRegular) hNlt).mpr (fun n => d.J_small (a, n.down))
+        (‹LMonoid lam X›.isRegular) hNlt).mpr (fun n => d.J_lt (a, n.down))
     · rw [hJnz a m, Cardinal.mk_eq_zero]
       exact Cardinal.aleph0_pos.trans_le hlam0.le
   have hIdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q) := by
@@ -573,7 +573,7 @@ theorem IsBraided.mk_support_lt (hcon : IsConical X) {x y : ι → X} (h : IsBra
       rw [d.hJ p]
       show d.v (p.1, p.2 + 1) + d.u p = 0
       rw [(huv (p.2 + 1) (Nat.le_succ p.2)).1, (huv p.2 le_rfl).2, add_zero]
-    exact eq_zero_of_lsumOf_eq_zero hcon (d.J_small p) y hJsum hj
+    exact eq_zero_of_lsumOf_eq_zero hcon (d.J_lt p) y hJsum hj
   -- hence the support of `y` sits inside the `Low` pieces
   have hsupp : Function.support y ⊆ ⋃ p : Low, d.J (p : ι × ℕ) := by
     intro j hj
@@ -583,7 +583,7 @@ theorem IsBraided.mk_support_lt (hcon : IsConical X) {x y : ι → X} (h : IsBra
     · exact absurd (hzero p hpLow j hp) hj
   refine lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset hsupp) ?_
   exact lt_of_le_of_lt Cardinal.mk_iUnion_le_sum_mk
-    (Cardinal.sum_lt_of_isRegular hlam hLow fun p => d.J_small _)
+    (Cardinal.sum_lt_of_isRegular hlam hLow fun p => d.J_lt _)
 
 end Lemma34
 

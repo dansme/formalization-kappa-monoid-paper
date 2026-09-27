@@ -54,15 +54,15 @@ theorem IsBraided.reindex {ι ι' : Type u} {x y : ι → X} (e : ι' ≃ ι)
            J_disjoint := hdisj d.J d.J_disjoint
            I_cover := hcover d.I d.I_cover
            J_cover := hcover d.J d.J_cover
-           I_small := fun p => (hpre _).trans_lt (d.I_small _)
-           J_small := fun p => (hpre _).trans_lt (d.J_small _)
+           I_small := fun p => ⟨(hpre _).trans_lt (d.I_lt _)⟩
+           J_small := fun p => ⟨(hpre _).trans_lt (d.J_lt _)⟩
            u := fun p => d.u (e p.1, p.2)
            v := fun p => d.v (e p.1, p.2)
            v_limit := fun a => d.v_limit (e a)
            hI := fun p => by
-             rw [hsum (d.I (e p.1, p.2)) (d.I_small _) _ x]; exact d.hI _
+             rw [hsum (d.I (e p.1, p.2)) (d.I_lt _) _ x]; exact d.hI _
            hJ := fun p => by
-             rw [hsum (d.J (e p.1, p.2)) (d.J_small _) _ y]; exact d.hJ _ }⟩
+             rw [hsum (d.J (e p.1, p.2)) (d.J_lt _) _ y]; exact d.hJ _ }⟩
 
 /-- Braidings can be concatenated: a family of braidings indexed by `A` yields a braiding
 of the concatenated families indexed by `A × B`. -/
@@ -110,15 +110,15 @@ theorem IsBraided.prod {A B : Type u} {x y : A → B → X} (h : ∀ a, IsBraide
            J_disjoint := hdisj (fun a => (d a).J) (fun a => (d a).J_disjoint)
            I_cover := hcover (fun a => (d a).I) (fun a => (d a).I_cover)
            J_cover := hcover (fun a => (d a).J) (fun a => (d a).J_cover)
-           I_small := fun p => (hsmall _ _).trans_lt ((d p.1.1).I_small _)
-           J_small := fun p => (hsmall _ _).trans_lt ((d p.1.1).J_small _)
+           I_small := fun p => ⟨(hsmall _ _).trans_lt ((d p.1.1).I_lt _)⟩
+           J_small := fun p => ⟨(hsmall _ _).trans_lt ((d p.1.1).J_lt _)⟩
            u := fun p => (d p.1.1).u (p.1.2, p.2)
            v := fun p => (d p.1.1).v (p.1.2, p.2)
            v_limit := fun a => (d a.1).v_limit a.2
            hI := fun p => by
-             rw [hsum p.1.1 _ ((d p.1.1).I_small (p.1.2, p.2)) _ x]; exact (d p.1.1).hI _
+             rw [hsum p.1.1 _ ((d p.1.1).I_lt (p.1.2, p.2)) _ x]; exact (d p.1.1).hI _
            hJ := fun p => by
-             rw [hsum p.1.1 _ ((d p.1.1).J_small (p.1.2, p.2)) _ y]; exact (d p.1.1).hJ _ }⟩
+             rw [hsum p.1.1 _ ((d p.1.1).J_lt (p.1.2, p.2)) _ y]; exact (d p.1.1).hJ _ }⟩
 
 /-- **Braiding from an aggregation.**  Suppose the index set carries pairwise disjoint `< λ`-small
 sets `A a`, one for each `a : ι`, such that `x` sums over `A a` to `y a` and vanishes outside
@@ -375,9 +375,9 @@ theorem IsBraided.map_lhom (hlk : lam ≤ Order.succ κ) {f : X → H} (hf : IsL
            v := fun p => f (d.v p)
            v_limit := fun a => by rw [d.v_limit a, hf.1]
            hI := fun p => by
-             rw [hpush (d.I_small p) x, d.hI p, IsLHom.map_add hlk hf]
+             rw [hpush (d.I_lt p) x, d.hI p, IsLHom.map_add hlk hf]
            hJ := fun p => by
-             rw [hpush (d.J_small p) y, d.hJ p, IsLHom.map_add hlk hf] }⟩
+             rw [hpush (d.J_lt p) y, d.hJ p, IsLHom.map_add hlk hf] }⟩
 
 /-- The telescoping principle in the form needed for Proposition 3.10: a `λ⁻`-homomorphism
 into a `κ`-monoid takes braided families to families with equal `κ`-sums. -/
@@ -510,8 +510,8 @@ theorem isBraided_of_subtype {ι : Type u} (C : Set ι) {x y : ι → X}
             J_disjoint := hdisj d.J d.J_disjoint
             I_cover := hcov d.I d.I_cover
             J_cover := hcov d.J d.J_cover
-            I_small := hsmall d.I d.I_small
-            J_small := hsmall d.J d.J_small
+            I_small := fun p => ⟨hsmall d.I d.I_lt p⟩
+            J_small := fun p => ⟨hsmall d.J d.J_lt p⟩
             u := padV d.u
             v := padV d.v
             v_limit := fun a => ?_
@@ -522,13 +522,13 @@ theorem isBraided_of_subtype {ι : Type u} (C : Set ι) {x y : ι → X}
       exact d.v_limit _
     · exact hVneg d.v (a, 0) ha
   · by_cases hp : p.1 ∈ C
-    · rw [hsumpos d.I d.I_small x p hp, hVpos d.v p hp, hVpos d.u p hp]
+    · rw [hsumpos d.I d.I_lt x p hp, hVpos d.v p hp, hVpos d.u p hp]
       exact d.hI _
-    · rw [hsumneg d.I d.I_small x hx p hp, hVneg d.v p hp, hVneg d.u p hp, add_zero]
+    · rw [hsumneg d.I d.I_lt x hx p hp, hVneg d.v p hp, hVneg d.u p hp, add_zero]
   · by_cases hp : p.1 ∈ C
-    · rw [hsumpos d.J d.J_small y p hp, hVpos d.v (bsucc p) hp, hVpos d.u p hp]
+    · rw [hsumpos d.J d.J_lt y p hp, hVpos d.v (bsucc p) hp, hVpos d.u p hp]
       exact d.hJ _
-    · rw [hsumneg d.J d.J_small y hy p hp, hVneg d.v (bsucc p) hp, hVneg d.u p hp, add_zero]
+    · rw [hsumneg d.J d.J_lt y hy p hp, hVneg d.v (bsucc p) hp, hVneg d.u p hp, add_zero]
 
 end Padding
 

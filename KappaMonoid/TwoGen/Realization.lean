@@ -143,7 +143,7 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
     intro hfin
     refine hWinf ?_
     refine Set.Finite.subset (hfin.biUnion fun p _ =>
-      Cardinal.lt_aleph0_iff_set_finite.mp (D.J_small p)) fun i hi => ?_
+      Cardinal.lt_aleph0_iff_set_finite.mp (D.J_lt p)) fun i hi => ?_
     exact Set.mem_biUnion (Set.mem_image_of_mem _ hi) (IsBraided.mem_blockOf D.J D.J_cover i)
   obtain ⟨p, hpGood, hpBad⟩ := (hGoodinf.sdiff hBad').nonempty
   -- at `p` and at `p + 1` the `I`-blocks carry only `x₂`
@@ -151,7 +151,7 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
       q ∉ (fun i => IsBraided.blockOf D.I D.I_cover i) '' oneSlots.{u} n →
       ∃ r : ℕ, D.v q + D.u q = r • (⟨x₂, hx₂T⟩ : ↥(add((x₁ + x₂)))) := by
     intro q hq
-    obtain ⟨r, hr⟩ := exists_nsmul_finsum (Cardinal.lt_aleph0_iff_set_finite.mp (D.I_small q))
+    obtain ⟨r, hr⟩ := exists_nsmul_finsum (Cardinal.lt_aleph0_iff_set_finite.mp (D.I_lt q))
       (fun i => (⟨familyOfForm x₁ x₂ ((n : ℕ∞), ⊤) i, hFm i⟩ :
         ↥(add((x₁ + x₂)))))
       (⟨x₂, hx₂T⟩ : ↥(add((x₁ + x₂))))
@@ -161,7 +161,7 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
         rcases familyOfForm_eq_of_notMem_oneSlots x₁ x₂ hone with h | h
         · exact ⟨1, by rw [one_smul]; exact Subtype.ext h⟩
         · exact ⟨0, by rw [zero_smul]; exact Subtype.ext h⟩)
-    exact ⟨r, by rw [← hr, ← LMonoid.lsumOf_eq_finsum (D.I_small q)]; exact (D.hI q).symm⟩
+    exact ⟨r, by rw [← hr, ← LMonoid.lsumOf_eq_finsum (D.I_lt q)]; exact (D.hI q).symm⟩
   obtain ⟨r, hr⟩ := hIblock p fun h => hpBad (Set.mem_union_left _ h)
   obtain ⟨r', hr'⟩ := hIblock (bsucc p) fun h => hpBad (Set.mem_union_right _ h)
   -- and `x₁` is a summand of the `J`-block at `p`
@@ -169,12 +169,12 @@ theorem mem_addOf_of_braidedForms_top (n : ℕ)
     obtain ⟨i, hiW, hip⟩ := hpGood
     exact ⟨i, hip ▸ IsBraided.mem_blockOf D.J D.J_cover i, hiW⟩
   obtain ⟨j, rfl⟩ := hi₀W
-  obtain ⟨c, hc⟩ := exists_add_eq_finsum_mem (Cardinal.lt_aleph0_iff_set_finite.mp (D.J_small p))
+  obtain ⟨c, hc⟩ := exists_add_eq_finsum_mem (Cardinal.lt_aleph0_iff_set_finite.mp (D.J_lt p))
     (fun i => (⟨familyOfForm x₁ x₂ ((⊤ : ℕ∞), ⊤) i, hGm i⟩ :
       ↥(add((x₁ + x₂))))) hi₀J
   have hJp : (∑ᶠ i ∈ D.J p, (⟨familyOfForm x₁ x₂ ((⊤ : ℕ∞), ⊤) i, hGm i⟩ :
       ↥(add((x₁ + x₂))))) = D.v (bsucc p) + D.u p := by
-    rw [← LMonoid.lsumOf_eq_finsum (D.J_small p)]
+    rw [← LMonoid.lsumOf_eq_finsum (D.J_lt p)]
     exact D.hJ p
   rw [hJp] at hc
   -- read the whole thing in `H`

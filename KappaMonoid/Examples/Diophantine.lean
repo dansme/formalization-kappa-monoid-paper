@@ -1446,9 +1446,9 @@ theorem not_isBraidedOver_ineqSystem :
   -- every `I`-piece consists of elements of slack `0`, so `δ u = δ v = 0` at every position
   have hI : ∀ p, δ (B.v p) + δ (B.u p) = 0 := by
     intro p
-    have h := (LMonoid.lsumOf_eq_finsum (B.I_small p) x).symm.trans (B.hI p)
+    have h := (LMonoid.lsumOf_eq_finsum (B.I_lt p) x).symm.trans (B.hI p)
     have h2 := congrArg δ h
-    rw [AddMonoidHom.map_finsum_mem x δ (Cardinal.lt_aleph0_iff_set_finite.mp (B.I_small p)),
+    rw [AddMonoidHom.map_finsum_mem x δ (Cardinal.lt_aleph0_iff_set_finite.mp (B.I_lt p)),
       map_add] at h2
     rw [← h2]
     have hz : ∀ i, δ (x i) = 0 := fun i => by rw [hδ]; exact ineqSlack_ptOneOne
@@ -1458,8 +1458,8 @@ theorem not_isBraidedOver_ineqSystem :
   -- a `J`-piece is nonempty, and every element of `y` has slack `2`
   obtain ⟨j₀⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   obtain ⟨p, hp⟩ := Set.mem_iUnion.mp (B.J_cover ▸ Set.mem_univ j₀)
-  have hJfin : (B.J p).Finite := Cardinal.lt_aleph0_iff_set_finite.mp (B.J_small p)
-  have hJ := (LMonoid.lsumOf_eq_finsum (B.J_small p) y).symm.trans (B.hJ p)
+  have hJfin : (B.J p).Finite := Cardinal.lt_aleph0_iff_set_finite.mp (B.J_lt p)
+  have hJ := (LMonoid.lsumOf_eq_finsum (B.J_lt p) y).symm.trans (B.hJ p)
   have hJ2 := congrArg δ hJ
   rw [AddMonoidHom.map_finsum_mem y δ hJfin, map_add, hu, hv, add_zero] at hJ2
   rw [show B.J p = insert j₀ (B.J p \ {j₀}) from

@@ -29,8 +29,9 @@ structure BraidingData (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι : T
   J_disjoint : ∀ p q, p ≠ q → Disjoint (J p) (J q)
   I_cover : (⋃ p, I p) = Set.univ
   J_cover : (⋃ p, J p) = Set.univ
-  I_small : ∀ p, #(I p) < lam
-  J_small : ∀ p, #(J p) < lam
+  /-- The pieces have fewer than `λ` elements. -/
+  [I_small : ∀ p, CardLT (I p) lam]
+  [J_small : ∀ p, CardLT (J p) lam]
   u : ι × ℕ → X
   v : ι × ℕ → X
   /-- `v` vanishes at the limit elements of the well-order. -/
@@ -38,7 +39,15 @@ structure BraidingData (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι : T
   hI : ∀ p, ∑[lam] i ∈ I p, x i = v p + u p
   hJ : ∀ p, ∑[lam] j ∈ J p, y j = v (bsucc p) + u p
 
-attribute [lam_small_rule] BraidingData.I_small BraidingData.J_small
+attribute [instance] BraidingData.I_small BraidingData.J_small
+
+/-- The bound `#(I p) < λ` on a piece, from the instance field. -/
+@[lam_small_rule] theorem BraidingData.I_lt {X : Type v} [LMonoid lam X] {ι : Type u}
+    {x y : ι → X} (d : BraidingData lam x y) (p : ι × ℕ) : #(d.I p) < lam := (d.I_small p).lt
+
+/-- The bound `#(J p) < λ` on a piece, from the instance field. -/
+@[lam_small_rule] theorem BraidingData.J_lt {X : Type v} [LMonoid lam X] {ι : Type u}
+    {x y : ι → X} (d : BraidingData lam x y) (p : ι × ℕ) : #(d.J p) < lam := (d.J_small p).lt
 
 /-- Definition 3.1(1): `x` and `y` are `λ⁻`-braided. -/
 def IsBraided (lam : Cardinal.{u}) {X : Type v} [LMonoid lam X] {ι : Type u} (x y : ι → X) :
@@ -62,8 +71,8 @@ def BraidingData.mk_finsum {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {x y : 
   J_disjoint := hJdisj
   I_cover := hIcov
   J_cover := hJcov
-  I_small := fun p => lt_aleph0_iff_set_finite.mpr (hIfin p)
-  J_small := fun p => lt_aleph0_iff_set_finite.mpr (hJfin p)
+  I_small := fun p => ⟨lt_aleph0_iff_set_finite.mpr (hIfin p)⟩
+  J_small := fun p => ⟨lt_aleph0_iff_set_finite.mpr (hJfin p)⟩
   u := u
   v := v
   v_limit := hv
@@ -182,8 +191,8 @@ def _root_.KappaMonoid.BraidingData.ofPartition {x y : ι → X} (I J : ι × �
   J_disjoint := hJdisj
   I_cover := hIcov
   J_cover := hJcov
-  I_small := hIsmall
-  J_small := hJsmall
+  I_small := fun p => ⟨hIsmall p⟩
+  J_small := fun p => ⟨hJsmall p⟩
   u := fun p => ∑[lam] i ∈ I p, x i
   v := fun _ => 0
   v_limit := fun _ => rfl
@@ -349,13 +358,13 @@ theorem comp_equiv {ι' : Type u} (E : ι ≃ ι') {x y : ι' → X} (h : IsBrai
            J_disjoint := hdisj d.J d.J_disjoint
            I_cover := hcov d.I d.I_cover
            J_cover := hcov d.J d.J_cover
-           I_small := fun p => lt_of_eq_of_lt (hpre _) (d.I_small (E p.1, p.2))
-           J_small := fun p => lt_of_eq_of_lt (hpre _) (d.J_small (E p.1, p.2))
+           I_small := fun p => ⟨lt_of_eq_of_lt (hpre _) (d.I_lt (E p.1, p.2))⟩
+           J_small := fun p => ⟨lt_of_eq_of_lt (hpre _) (d.J_lt (E p.1, p.2))⟩
            u := fun p => d.u (E p.1, p.2)
            v := fun p => d.v (E p.1, p.2)
            v_limit := fun a => d.v_limit (E a)
-           hI := fun p => (hsum d.I d.I_small p x).trans (d.hI (E p.1, p.2))
-           hJ := fun p => (hsum d.J d.J_small p y).trans (d.hJ (E p.1, p.2)) }⟩
+           hI := fun p => (hsum d.I d.I_lt p x).trans (d.hI (E p.1, p.2))
+           hJ := fun p => (hsum d.J d.J_lt p y).trans (d.hJ (E p.1, p.2)) }⟩
 
 /-- Lemma 3.6(1): a family is braided to any reindexing of itself along a bijection — take the
 partition into singletons on both sides. -/
@@ -423,7 +432,7 @@ implicit, is `regroup` along the fibres of `(a, n) ↦ (a, n - 1)`. -/
       dsimp only [J']; split_ifs
       exacts [le_rfl, Set.subset_union_right]
     exact (mk_le_mk_of_subset hsub).trans_lt ((mk_union_le _ _).trans_lt
-      (add_lt_of_lt (aleph0_le (X := X)) (d.I_small p) (d.I_small (bsucc p))))
+      (add_lt_of_lt (aleph0_le (X := X)) (d.I_lt p) (d.I_lt (bsucc p))))
   refine ⟨{ I := d.J
             J := J'
             I_disjoint := d.J_disjoint
@@ -431,7 +440,7 @@ implicit, is `regroup` along the fibres of `(a, n) ↦ (a, n - 1)`. -/
             I_cover := d.J_cover
             J_cover := J'_cover
             I_small := d.J_small
-            J_small := J'_small
+            J_small := fun p => ⟨J'_small p⟩
             u := u'
             v := v'
             v_limit := fun _ => rfl
@@ -447,7 +456,7 @@ implicit, is `regroup` along the fibres of `(a, n) ↦ (a, n - 1)`. -/
     · -- limit: `Σ_{I_μ ∪ I_{μ+1}} x = (v_μ + u_μ) + (v_{μ+1} + u_{μ+1})`, and `v_μ = 0`
       have hdisj : Disjoint (d.I (a, 0)) (d.I (bsucc (a, 0))) :=
         d.I_disjoint _ _ fun h => by simp [bsucc] at h
-      refine (lsumOf_union _ _ hdisj (d.I_small _) (d.I_small _) x (J'_small (a, 0))).trans ?_
+      refine (lsumOf_union _ _ hdisj (d.I_lt _) (d.I_lt _) x (J'_small (a, 0))).trans ?_
       rw [d.hI, d.hI, d.v_limit]
       simp only [v', u', bsucc]
       simp

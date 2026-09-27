@@ -788,9 +788,9 @@ theorem example_3_17_families :
   -- along `b` the slack vanishes, so every braiding term has slack `0`
   have hI : ∀ p, δ (B.v p) + δ (B.u p) = 0 := by
     intro p
-    have h := (LMonoid.lsumOf_eq_finsum (B.I_small p) famB).symm.trans (B.hI p)
+    have h := (LMonoid.lsumOf_eq_finsum (B.I_lt p) famB).symm.trans (B.hI p)
     have h2 := congrArg δ h
-    rw [AddMonoidHom.map_finsum_mem famB δ (Cardinal.lt_aleph0_iff_set_finite.mp (B.I_small p)),
+    rw [AddMonoidHom.map_finsum_mem famB δ (Cardinal.lt_aleph0_iff_set_finite.mp (B.I_lt p)),
       map_add] at h2
     rw [← h2]
     simp [hδB]
@@ -798,8 +798,8 @@ theorem example_3_17_families :
   have hv : ∀ p, δ (B.v p) = 0 := fun p => by have := hI p; omega
   -- but the piece of `a` containing `(0, 1)` has slack at least `1`
   obtain ⟨p, hp⟩ := Set.mem_iUnion.mp (B.J_cover ▸ Set.mem_univ idx0)
-  have hJfin : (B.J p).Finite := Cardinal.lt_aleph0_iff_set_finite.mp (B.J_small p)
-  have hJ := (LMonoid.lsumOf_eq_finsum (B.J_small p) famA).symm.trans (B.hJ p)
+  have hJfin : (B.J p).Finite := Cardinal.lt_aleph0_iff_set_finite.mp (B.J_lt p)
+  have hJ := (LMonoid.lsumOf_eq_finsum (B.J_lt p) famA).symm.trans (B.hJ p)
   have hJ2 := congrArg δ hJ
   rw [AddMonoidHom.map_finsum_mem famA δ hJfin, map_add, hu, hv, add_zero] at hJ2
   rw [show B.J p = insert idx0 (B.J p \ {idx0}) from

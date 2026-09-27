@@ -231,10 +231,10 @@ theorem IsBraided.map_lmonoidHom {X : Type v} {Y : Type w} [LMonoid lam X] [LMon
            v := fun p => g (d.v p)
            v_limit := fun a => by rw [d.v_limit a, hg.map_zero]
            hI := fun p => by
-             rw [← hg.map_add, ← d.hI p, hg (d.I_small p) fun i : d.I p => x i]
+             rw [← hg.map_add, ← d.hI p, hg (d.I_lt p) fun i : d.I p => x i]
              rfl
            hJ := fun p => by
-             rw [← hg.map_add, ← d.hJ p, hg (d.J_small p) fun j : d.J p => y j]
+             rw [← hg.map_add, ← d.hJ p, hg (d.J_lt p) fun j : d.J p => y j]
              rfl }⟩
 
 /-- For `λ = ℵ₀` a homomorphism of `λ⁻`-monoids is nothing but an additive map: every `λ⁻`-sum is
@@ -388,7 +388,7 @@ theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMo
     exact ⟨hsat _ hblock _ _ hsplit, hsat _ hblock _ _ (hsplit.trans (add_comm _ _)), hsplit⟩
   have huv : ∀ p : Idx κ × ℕ, einv (D.v p : H₂) ∈ T ∧ einv (D.u p : H₂) ∈ T := by
     intro p
-    obtain ⟨h₁, h₂, -⟩ := hpull x p (D.I p) (D.I_small p) (D.v p) (D.u p)
+    obtain ⟨h₁, h₂, -⟩ := hpull x p (D.I p) (D.I_lt p) (D.v p) (D.u p)
       (congrArg Subtype.val (D.hI p))
     exact ⟨h₁, h₂⟩
   refine ⟨{ I := D.I, J := D.J, I_disjoint := D.I_disjoint, J_disjoint := D.J_disjoint
@@ -402,9 +402,9 @@ theorem IsBraidedOver.of_kIso_subset {H₁ H₂ : Type w} [KMonoid κ H₁] [KMo
   · show einv (D.v (a, 0) : H₂) = (0 : H₁)
     rw [D.v_limit a]
     exact hbij.1 (by rw [hri, he.1]; rfl)
-  · exact (hpull x p (D.I p) (D.I_small p) (D.v p) (D.u p)
+  · exact (hpull x p (D.I p) (D.I_lt p) (D.v p) (D.u p)
       (congrArg Subtype.val (D.hI p))).2.2
-  · exact (hpull y p (D.J p) (D.J_small p) (D.v (bsucc p)) (D.u p)
+  · exact (hpull y p (D.J p) (D.J_lt p) (D.v (bsucc p)) (D.u p)
       (congrArg Subtype.val (D.hJ p))).2.2
 
 /-- Being `λ⁻`-braided over `X` implies being the universal `κ`-extension of `X`

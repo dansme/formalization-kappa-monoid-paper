@@ -640,7 +640,7 @@ theorem exists_nsmul_eq_v_of_no_oneSlot (hmem : x₁ ∉ add(x₂)) (hmix : NoMi
     ∃ g : ℕ, D.v b = g • (⟨x₂, hx₂T⟩ : ↥(add((x₁ + x₂)))) := by
   classical
   -- the block sums to a finite multiple `r x₂`: every slot in it carries `x₂` or `0`
-  obtain ⟨r, hr⟩ := exists_nsmul_finsum (Cardinal.lt_aleph0_iff_set_finite.mp (D.I_small b))
+  obtain ⟨r, hr⟩ := exists_nsmul_finsum (Cardinal.lt_aleph0_iff_set_finite.mp (D.I_lt b))
     (fun i => (⟨familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i, hFm i⟩ : ↥(add((x₁ + x₂)))))
     (⟨x₂, hx₂T⟩ : ↥(add((x₁ + x₂))))
     (fun i hi => by
@@ -649,7 +649,7 @@ theorem exists_nsmul_eq_v_of_no_oneSlot (hmem : x₁ ∉ add(x₂)) (hmix : NoMi
       · exact ⟨0, by rw [zero_smul]; exact Subtype.ext h⟩)
   have hblock : (D.v b : H) + (D.u b : H) = r • x₂ := by
     have := congrArg Subtype.val
-      ((D.hI b).symm.trans ((LMonoid.lsumOf_eq_finsum (D.I_small b) _).trans hr))
+      ((D.hI b).symm.trans ((LMonoid.lsumOf_eq_finsum (D.I_lt b) _).trans hr))
     rwa [coe_add_addOf, coe_nsmul_addOf x₁ x₂ r ⟨x₂, hx₂T⟩] at this
   -- write `v b` in a form `F`
   obtain ⟨F, hF⟩ := exists_form x₁ x₂ hgen ((D.v b : H))
@@ -718,8 +718,8 @@ theorem lemma_5_2_four (hmem : x₁ ∉ add(x₂)) (hmix : NoMixedForms x₁ x�
     have hb : IsBraided.blockOf D.J D.J_cover i ∈ B := Or.inr ⟨i, Or.inr hi, rfl⟩
     exact mem_rect (IsBraided.mem_blockOf _ _ i) ⟨_, hb, rfl⟩ (hK ⟨_, hb, rfl⟩)
   -- the two cut sums are `m x₁ + p x₂` and `n x₁ + q x₂`
-  obtain ⟨p, hp⟩ := exists_block_value x₁ x₂ (rect_finite D.I_small hA K) hsubI hFm hx₁T hx₂T
-  obtain ⟨q, hq⟩ := exists_block_value x₁ x₂ (rect_finite D.J_small hA K) hsubJ hGm hx₁T hx₂T
+  obtain ⟨p, hp⟩ := exists_block_value x₁ x₂ (rect_finite D.I_lt hA K) hsubI hFm hx₁T hx₂T
+  obtain ⟨q, hq⟩ := exists_block_value x₁ x₂ (rect_finite D.J_lt hA K) hsubJ hGm hx₁T hx₂T
   -- above level `K` no piece of `I` holds an `x₁`-slot, so `Σ_{a ∈ A} v (a, K+1) = r x₂`
   obtain ⟨r, hr⟩ := exists_nsmul_finsum hA _ (⟨x₂, hx₂T⟩ : ↥(add((x₁ + x₂)))) fun a _ =>
     exists_nsmul_eq_v_of_no_oneSlot x₁ x₂ hmem hmix hgen hFm hx₂T D (a, K + 1) fun i hi hone => by
@@ -729,9 +729,9 @@ theorem lemma_5_2_four (hmem : x₁ ∉ add(x₂)) (hmix : NoMixedForms x₁ x�
       omega
   -- telescoping: `n x₁ + q x₂ = m x₁ + p x₂ + r x₂`
   have htel := D.telescope hA K
-  rw [← finsum_rect D.J_disjoint D.J_small hA K
+  rw [← finsum_rect D.J_disjoint D.J_lt hA K
       fun i => (⟨familyOfForm x₁ x₂ ((n : ℕ∞), ⊤) i, hGm i⟩ : ↥(add((x₁ + x₂)))),
-    ← finsum_rect D.I_disjoint D.I_small hA K
+    ← finsum_rect D.I_disjoint D.I_lt hA K
       fun i => (⟨familyOfForm x₁ x₂ ((m : ℕ∞), ⊤) i, hFm i⟩ : ↥(add((x₁ + x₂)))),
     hp, hq, hr] at htel
   have htelH := congrArg Subtype.val htel
@@ -813,10 +813,10 @@ theorem lemma_5_2_five
   obtain ⟨D⟩ := hbr.braided (fun _ => ⟨x₁ + x₂, hx12⟩) (fun _ => ⟨x₂, hx2⟩) hsum
   -- the braiding equations, read in `H` (the coercion of a `λ⁻`-sum *is* the ambient sum)
   have hIcoe : ∀ q : Idx (ℵ₀ : Cardinal.{u}) × ℕ,
-      KMonoid.sumOf (κ := ℵ₀) (D.I_small q).le (fun _ : D.I q => x₁ + x₂)
+      KMonoid.sumOf (κ := ℵ₀) (D.I_lt q).le (fun _ : D.I q => x₁ + x₂)
         = ((D.v q : H) + (D.u q : H)) := fun q => congrArg Subtype.val (D.hI q)
   have hJcoe : ∀ (b : Idx (ℵ₀ : Cardinal.{u})) (j : ℕ),
-      KMonoid.sumOf (κ := ℵ₀) (D.J_small (b, j)).le (fun _ : D.J (b, j) => x₂)
+      KMonoid.sumOf (κ := ℵ₀) (D.J_lt (b, j)).le (fun _ : D.J (b, j) => x₂)
         = ((D.v (b, j + 1) : H) + (D.u (b, j) : H)) :=
     fun b j => congrArg Subtype.val (D.hJ (b, j))
   -- some block has a nonempty `I`-piece; take the least level of that block at which it does
@@ -830,7 +830,7 @@ theorem lemma_5_2_five
   -- below level `k` both braiding families vanish, by reducedness
   have hzero : ∀ j < k, (D.v (a, j) : H) = 0 ∧ (D.u (a, j) : H) = 0 := by
     intro j hj
-    obtain ⟨m, hm, hmsum⟩ := sumOf_const_finite (D.I_small (a, j)) (x₁ + x₂)
+    obtain ⟨m, hm, hmsum⟩ := sumOf_const_finite (D.I_lt (a, j)) (x₁ + x₂)
     have hm0 : m = 0 := by
       have : ((m : ℕ) : Cardinal.{u}) = 0 := by rw [← hm, hlow j hj]; simp
       exact_mod_cast this
@@ -841,19 +841,19 @@ theorem lemma_5_2_five
     rcases Nat.eq_zero_or_pos k with rfl | hkpos
     · exact ⟨0, by rw [D.v_limit a, zero_nsmul]; rfl⟩
     obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hkpos.ne'
-    obtain ⟨s, _, hssum⟩ := sumOf_const_finite (D.J_small (a, j)) x₂
+    obtain ⟨s, _, hssum⟩ := sumOf_const_finite (D.J_lt (a, j)) x₂
     have hj := hJcoe a j
     rw [hssum, (hzero j (Nat.lt_succ_self j)).2, add_zero] at hj
     exact ⟨s, hj.symm⟩
   -- and `u (a,k)` is a summand of a finite multiple of `x₂`
-  obtain ⟨s, _, hssum⟩ := sumOf_const_finite (D.J_small (a, k)) x₂
+  obtain ⟨s, _, hssum⟩ := sumOf_const_finite (D.J_lt (a, k)) x₂
   have hu : (D.u (a, k) : H) + (D.v (a, k + 1) : H) = s • x₂ := by
     have h := hJcoe a k
     rw [hssum] at h
     rw [h]
     exact add_comm _ _
   -- the `I`-equation at level `k`, with `m ≥ 1` copies of `x₁ + x₂`
-  obtain ⟨m, hmcard, hmsum⟩ := sumOf_const_finite (D.I_small (a, k)) (x₁ + x₂)
+  obtain ⟨m, hmcard, hmsum⟩ := sumOf_const_finite (D.I_lt (a, k)) (x₁ + x₂)
   have hIeq : m • (x₁ + x₂) = r • x₂ + (D.u (a, k) : H) := by
     rw [← hmsum, hIcoe (a, k), hr]
   obtain ⟨m', rfl⟩ : ∃ m' : ℕ, m = m' + 1 := by

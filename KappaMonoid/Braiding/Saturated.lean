@@ -165,9 +165,9 @@ theorem isBraidedOver_of_isLSubmonoid [LMonoid lam X] [KMonoid κ Hh] (hlk : lam
     · -- `S` saturated: walk along each `ω`-block, moving `u` and `v` into `S` one step at a time
       obtain ⟨d⟩ := hbraid
       have hxS : ∀ p, d.v p + d.u p ∈ S := fun p =>
-        d.hI p ▸ hS.lsumOf_mem (d.I_small p) _ fun i => (a (i : Idx κ)).2
+        d.hI p ▸ hS.lsumOf_mem (d.I_lt p) _ fun i => (a (i : Idx κ)).2
       have hyS : ∀ p, d.v (bsucc p) + d.u p ∈ S := fun p =>
-        d.hJ p ▸ hS.lsumOf_mem (d.J_small p) _ fun j => (b (j : Idx κ)).2
+        d.hJ p ▸ hS.lsumOf_mem (d.J_lt p) _ fun j => (b (j : Idx κ)).2
       have key : ∀ p : Idx κ × ℕ, d.u p ∈ S ∧ d.v p ∈ S := by
         rintro ⟨α, m⟩
         induction m with
