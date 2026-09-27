@@ -107,7 +107,7 @@ theorem lsumOf_extend {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : �
 
 /-- The binary sum, in the `Bool`-indexed form used throughout Sections 3 and 4. -/
 theorem lsumOf_two (a b : X) (hUB : #(ULift.{u} Bool) < lam := by lam_small) :
-    lsumOf (lam := lam) hUB (fun p : ULift.{u} Bool => if p.down then a else b) = a + b := by
+    ∑[lam] p : ULift.{u} Bool, (if p.down then a else b) = a + b := by
   have hu : #PUnit.{u + 1} < lam := by lam_small
   rw [lsumOf_equiv uliftBoolEquiv.symm _ hUB,
     show (fun p : ULift.{u} Bool => if p.down then a else b) ∘ uliftBoolEquiv.symm
@@ -153,7 +153,7 @@ theorem lsumOf_add {ι : Type u} (h : #ι < lam) (f g : ι → X) :
 /-- Terms with value `0` may be discarded. -/
 theorem lsumOf_of_subset {ι : Type u} {S T : Set ι} (hS : #S < lam) (hT : #T < lam)
     (hsub : T ⊆ S) (f : ι → X) (hzero : ∀ i ∈ S, i ∉ T → f i = 0) :
-    lsumOf (lam := lam) hS (fun i : S => f i) = lsumOf (lam := lam) hT (fun i : T => f i) := by
+    ∑[lam] i : S, f i = ∑[lam] i : T, f i := by
   classical
   set e : T ↪ S := ⟨Set.inclusion hsub, Set.inclusion_injective hsub⟩ with hedef
   have hfun : (fun i : S => f i) = Function.extend (⇑e) (fun i : T => f i) 0 := by
@@ -171,14 +171,14 @@ theorem lsumOf_of_subset {ι : Type u} {S T : Set ι} (hS : #S < lam) (hT : #T <
 /-- A sum of zeros over a subset vanishes. -/
 theorem lsumOf_eq_zero {ι : Type u} {T : Set ι} (hT : #T < lam) (f : ι → X)
     (hzero : ∀ i ∈ T, f i = 0) :
-    lsumOf (lam := lam) hT (fun i : T => f i) = 0 :=
+    ∑[lam] i : T, f i = 0 :=
   lsumOf_eq_zero_of_forall hT fun i => hzero i i.2
 
 /-- Additivity over a disjoint union of two small subsets. -/
 theorem lsumOf_union {ι : Type u} (S T : Set ι) (hd : Disjoint S T) (hS : #S < lam)
     (hT : #T < lam) (f : ι → X) (hST : #(↥(S ∪ T)) < lam := by lam_small) :
-    lsumOf (lam := lam) hST (fun i : ↥(S ∪ T) => f i)
-      = lsumOf (lam := lam) hS (fun i : S => f i) + lsumOf (lam := lam) hT (fun i : T => f i) := by
+    ∑[lam] i ∈ S ∪ T, f i
+      = ∑[lam] i : S, f i + ∑[lam] i : T, f i := by
   classical
   rw [lsumOf_equiv (Equiv.Set.union hd).symm _ hST, ← lsumOf_sumType hS hT]
   congr 1
@@ -189,8 +189,8 @@ theorem lsumOf_union {ι : Type u} (S T : Set ι) (hd : Disjoint S T) (hS : #S <
 theorem lsumOf_biUnion_subset {ι J : Type u} (S : Set ι) (I : J → Set ι)
     (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q)) (hcover : (⋃ p, I p) = S) (hJ : #J < lam)
     (hS : #S < lam) (hI : ∀ p, #(I p) < lam) (x : ι → X) :
-    lsumOf (lam := lam) hJ (fun p => lsumOf (lam := lam) (hI p) (fun i : I p => x i))
-      = lsumOf (lam := lam) hS (fun i : S => x i) := by
+    lsumOf (lam := lam) hJ (fun p => ∑[lam] i : I p, x i)
+      = ∑[lam] i : S, x i := by
   let e : S ≃ (p : J) × I p :=
     (Equiv.setCongr hcover.symm).trans (Set.unionEqSigmaOfDisjoint fun p q h => hdisj p q h)
   have hσ : #((p : J) × I p) < lam := by rwa [← Cardinal.mk_congr e]
@@ -200,11 +200,11 @@ theorem lsumOf_biUnion_subset {ι J : Type u} (S : Set ι) (I : J → Set ι)
 /-- A sum over a two-element subset. -/
 theorem lsumOf_pair {ι : Type u} {a b : ι} (hab : a ≠ b) (f : ι → X)
     (hp : #(↥({a, b} : Set ι)) < lam := by lam_small) :
-    lsumOf (lam := lam) hp (fun i : ({a, b} : Set ι) => f i) = f a + f b := by
+    ∑[lam] i : ({a, b} : Set ι), f i = f a + f b := by
   have ha : #(↥({a} : Set ι)) < lam := by lam_small
   have hb : #(↥({b} : Set ι)) < lam := by lam_small
-  calc lsumOf (lam := lam) hp (fun i : ({a, b} : Set ι) => f i)
-      = lsumOf (lam := lam) (by lam_small) (fun i : ↥(({a} : Set ι) ∪ {b}) => f i) :=
+  calc ∑[lam] i : ({a, b} : Set ι), f i
+      = ∑[lam] i ∈ ({a} : Set ι) ∪ {b}, f i :=
         lsumOf_equiv (Equiv.setCongr (Set.insert_eq a {b})).symm _ hp
     _ = f a + f b := by
         rw [lsumOf_union _ _ (Set.disjoint_singleton.mpr hab) ha hb f, lsumOf_unique,

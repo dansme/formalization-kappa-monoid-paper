@@ -472,8 +472,7 @@ theorem exists_common_coarsening (hreg : lam.IsRegular) (hlam0 : ℵ₀ < lam)
 theorem lsumOf_regroup {P : ι × ℕ → Set ι} {G : ι × ℕ → Set (ι × ℕ)}
     (hPdisj : ∀ p q, p ≠ q → Disjoint (P p) (P q)) (hPsm : ∀ p, #(P p) < lam)
     {μ : ι × ℕ} (hG : #(G μ) < lam) (hR : #(regroup P G μ) < lam) (f : ι → X) :
-    lsumOf (lam := lam) hG
-        (fun p : G μ => lsumOf (lam := lam) (hPsm (p : ι × ℕ)) (fun i : P (p : ι × ℕ) => f i))
+    ∑[lam] p : G μ, ∑[lam] i : P (p : ι × ℕ), f i
       = lsumOf (lam := lam) hR (fun i : regroup P G μ => f i) := by
   refine LMonoid.lsumOf_biUnion_subset (regroup P G μ) (fun p : G μ => P (p : ι × ℕ))
     ?_ ?_ hG hR (fun p => hPsm _) f
@@ -506,27 +505,23 @@ theorem IsBraided.trans_of_ne_aleph0 (hlam : lam ≠ ℵ₀) {x y z : ι → X}
     (regroup_cover hIcov hGAcov) (regroup_cover hKcov hGBcov) hMsm hNsm ?_
   intro μ
   have hmid : ∀ (S T : Set ι) (hS : #S < lam) (hT : #T < lam), S = T →
-      lsumOf (lam := lam) hS (fun i : S => y i) = lsumOf (lam := lam) hT (fun i : T => y i) := by
+      ∑[lam] i : S, y i = ∑[lam] i : T, y i := by
     intro S T hS hT hST
     subst hST
     rfl
-  calc lsumOf (lam := lam) (hMsm μ) (fun i : regroup I GA μ => x i)
-      = lsumOf (lam := lam) (hGAsm μ)
-          (fun p : GA μ => lsumOf (lam := lam) (hIsm _) (fun i : I (p : ι × ℕ) => x i)) :=
+  calc ∑[lam] i : regroup I GA μ, x i
+      = ∑[lam] p : GA μ, ∑[lam] i : I (p : ι × ℕ), x i :=
         (lsumOf_regroup hIdisj hIsm (hGAsm μ) (hMsm μ) x).symm
-    _ = lsumOf (lam := lam) (hGAsm μ)
-          (fun p : GA μ => lsumOf (lam := lam) (hJsm _) (fun j : J (p : ι × ℕ) => y j)) := by
+    _ = ∑[lam] p : GA μ, ∑[lam] j : J (p : ι × ℕ), y j := by
         congr 1
         exact funext fun p => heq1 _
-    _ = lsumOf (lam := lam) (hYAsm μ) (fun j : regroup J GA μ => y j) :=
+    _ = ∑[lam] j : regroup J GA μ, y j :=
         lsumOf_regroup hJdisj hJsm (hGAsm μ) (hYAsm μ) y
     _ = lsumOf (lam := lam) (hYBsm μ) (fun j : regroup J' GB μ => y j) :=
         hmid _ _ _ _ (hkey μ)
-    _ = lsumOf (lam := lam) (hGBsm μ)
-          (fun p : GB μ => lsumOf (lam := lam) (hJ'sm _) (fun j : J' (p : ι × ℕ) => y j)) :=
+    _ = ∑[lam] p : GB μ, ∑[lam] j : J' (p : ι × ℕ), y j :=
         (lsumOf_regroup hJ'disj hJ'sm (hGBsm μ) (hYBsm μ) y).symm
-    _ = lsumOf (lam := lam) (hGBsm μ)
-          (fun p : GB μ => lsumOf (lam := lam) (hKsm _) (fun k : K (p : ι × ℕ) => z k)) := by
+    _ = ∑[lam] p : GB μ, ∑[lam] k : K (p : ι × ℕ), z k := by
         congr 1
         exact funext fun p => heq2 _
     _ = lsumOf (lam := lam) (hNsm μ) (fun k : regroup K GB μ => z k) :=
@@ -570,19 +565,16 @@ theorem exists_aligned_eq_of_ne_aleph0 (hlam : lam ≠ ℵ₀) {x y z : ι → X
       (fun p q h => regroup_disjoint hKdisj hGBdisj h)
       (regroup_cover hJ'cov hGBcov) (regroup_cover hKcov hGBcov) hYBsm hNsm (fun μ => ?_),
     fun μ => hkey μ⟩
-  · calc lsumOf (lam := lam) (hMsm μ) (fun i : regroup I GA μ => x i)
-        = lsumOf (lam := lam) (hGAsm μ)
-            (fun p : GA μ => lsumOf (lam := lam) (hIsm _) (fun i : I (p : ι × ℕ) => x i)) :=
+  · calc ∑[lam] i : regroup I GA μ, x i
+        = ∑[lam] p : GA μ, ∑[lam] i : I (p : ι × ℕ), x i :=
           (lsumOf_regroup hIdisj hIsm (hGAsm μ) (hMsm μ) x).symm
-      _ = lsumOf (lam := lam) (hGAsm μ)
-            (fun p : GA μ => lsumOf (lam := lam) (hJsm _) (fun j : J (p : ι × ℕ) => y j)) := by
+      _ = ∑[lam] p : GA μ, ∑[lam] j : J (p : ι × ℕ), y j := by
           congr 1
           exact funext fun p => heq1 _
-      _ = lsumOf (lam := lam) (hYAsm μ) (fun j : regroup J GA μ => y j) :=
+      _ = ∑[lam] j : regroup J GA μ, y j :=
           lsumOf_regroup hJdisj hJsm (hGAsm μ) (hYAsm μ) y
   · calc lsumOf (lam := lam) (hYBsm μ) (fun j : regroup J' GB μ => y j)
-        = lsumOf (lam := lam) (hGBsm μ)
-            (fun p : GB μ => lsumOf (lam := lam) (hJ'sm _) (fun j : J' (p : ι × ℕ) => y j)) :=
+        = ∑[lam] p : GB μ, ∑[lam] j : J' (p : ι × ℕ), y j :=
           (lsumOf_regroup hJ'disj hJ'sm (hGBsm μ) (hYBsm μ) y).symm
       _ = lsumOf (lam := lam) (hGBsm μ)
             (fun p : GB μ => lsumOf (lam := lam) (hKsm _) (fun k : K (p : ι × ℕ) => z k)) := by

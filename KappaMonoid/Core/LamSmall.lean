@@ -24,22 +24,25 @@ register_label_attr lam_small_rule
 
 namespace KappaMonoid
 
-/-- The structural part of `lam_small`, run once a proof of `lam.IsRegular` is in the context.
-Closes `#ι < lam` by a hypothesis, by finiteness, or by splitting a product, disjoint union, sigma
-type or union of sets into its pieces. -/
-syntax "lam_small_core" : tactic
+/-- The structural part of `lam_small`, given a proof `reg` of `lam.IsRegular`.  Closes
+`#ι < lam` by a hypothesis, by finiteness, or by splitting a product, disjoint union, sigma type or
+union of sets into its pieces.  `reg` is passed along rather than put into the context, so that a
+goal closed by a hypothesis `h` gets exactly `h` as its proof term: a statement written with the
+notation below is then the same term as one written with `h`, and callers can still leave `h` to
+unification. -/
+syntax "lam_small_core " term:max : tactic
 
 -- `hygiene false`: the attribute name `lam_small_rule` must reach `solve_by_elim` unrenamed
 set_option hygiene false in
 macro_rules
-  | `(tactic| lam_small_core) => `(tactic| first
+  | `(tactic| lam_small_core $reg) => `(tactic| first
       | assumption
-      | exact KappaMonoid.mk_lt_of_finite ‹_› _
+      | exact KappaMonoid.mk_lt_of_finite $reg _
       | solve_by_elim (exfalso := false) (symm := false) (maxDepth := 3) using lam_small_rule
-      | (refine KappaMonoid.mk_prod_lt ‹_› ?_ ?_ <;> lam_small_core)
-      | (refine KappaMonoid.mk_sum_lt ‹_› ?_ ?_ <;> lam_small_core)
-      | (refine KappaMonoid.mk_sigma_lt ‹_› ?_ fun _ => ?_ <;> lam_small_core)
-      | (refine KappaMonoid.mk_union_lt ‹_› ?_ ?_ <;> lam_small_core)
+      | (refine KappaMonoid.mk_prod_lt $reg ?_ ?_ <;> lam_small_core $reg)
+      | (refine KappaMonoid.mk_sum_lt $reg ?_ ?_ <;> lam_small_core $reg)
+      | (refine KappaMonoid.mk_sigma_lt $reg ?_ fun _ => ?_ <;> lam_small_core $reg)
+      | (refine KappaMonoid.mk_union_lt $reg ?_ ?_ <;> lam_small_core $reg)
       | fail "lam_small: cannot split this goal into hypotheses and finite types")
 
 open Lean Meta Elab Tactic in
@@ -69,7 +72,7 @@ elab "lam_small" : tactic => do
   let some proof := proof?
     | throwError "lam_small: no proof of `{lam}.IsRegular` and no `LMonoid {lam} _` in the context"
   let p ← Term.exprToSyntax proof
-  evalTactic (← `(tactic| (have _hreg := $p; lam_small_core)))
+  evalTactic (← `(tactic| lam_small_core $p))
 
 /-- `∑[lam] i ∈ S, f i` is the `λ⁻`-sum of `f` over the set `S`, its bound `#S < lam` found by
 `lam_small`. -/

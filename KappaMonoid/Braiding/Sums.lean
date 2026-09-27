@@ -88,8 +88,8 @@ sum there, and distribute the remaining indices arbitrarily among the other piec
 own piece at the slot `(i, 1)`. -/
 theorem isBraided_of_small_support (x y : ι → X)
     (hx : #(Function.support x) < lam) (hy : #(Function.support y) < lam)
-    (h : lsumOf (lam := lam) hx (fun i : Function.support x => x i)
-        = lsumOf (lam := lam) hy (fun i : Function.support y => y i)) :
+    (h : ∑[lam] i : Function.support x, x i
+        = ∑[lam] i : Function.support y, y i) :
     IsBraided lam x y := by
   classical
   have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
@@ -185,8 +185,8 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
     {ι : Type u} {x y : ι → X} (d : BraidingData lam x y) (hlam0 : ℵ₀ < lam) (a : ι)
     (hI : #(⋃ n : ULift.{u} ℕ, d.I (a, n.down) : Set ι) < lam)
     (hJ : #(⋃ n : ULift.{u} ℕ, d.J (a, n.down) : Set ι) < lam) :
-    lsumOf (lam := lam) hI (fun i : (⋃ n : ULift.{u} ℕ, d.I (a, n.down) : Set ι) => x i)
-      = lsumOf (lam := lam) hJ (fun j : (⋃ n : ULift.{u} ℕ, d.J (a, n.down) : Set ι) => y j) := by
+    ∑[lam] i : (⋃ n : ULift.{u} ℕ, d.I (a, n.down) : Set ι), x i
+      = ∑[lam] j : (⋃ n : ULift.{u} ℕ, d.J (a, n.down) : Set ι), y j := by
   set N := ULift.{u} ℕ with hNdef
   have hNlt : #N < lam := by
     rw [hNdef, Cardinal.mk_uLift, Cardinal.mk_nat, Cardinal.lift_aleph0]
@@ -253,8 +253,8 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
           _ = ULift.up n.down := by rw [hd]
           _ = n := rfl
       rw [← hmem, bsuccU_inj.extend_apply]
-  have hvtel : lsumOf (lam := lam) hNlt (fun n : N => d.v (a, n.down))
-      = lsumOf (lam := lam) hNlt (fun n : N => d.v (a, n.down + 1)) := by
+  have hvtel : ∑[lam] n : N, d.v (a, n.down)
+      = ∑[lam] n : N, d.v (a, n.down + 1) := by
     rw [hbs]
     exact LMonoid.lsumOf_extend hNlt hNlt ⟨bsuccU, bsuccU_inj⟩ (fun n => d.v (a, n.down + 1))
   rw [hvtel]
@@ -326,7 +326,7 @@ theorem finsum_rect {X : Type v} [LMonoid ℵ₀ X] {P : ι × ℕ → Set ι}
     (hA : A.Finite) (K : ℕ) (f : ι → X) :
     ∑ᶠ i ∈ rect P A K, f i
       = ∑ᶠ a ∈ A, ∑ k ∈ Finset.range (K + 1),
-        LMonoid.lsumOf (lam := ℵ₀) (hP (a, k)) (fun i : P (a, k) => f i) := by
+        ∑[ℵ₀] i : P (a, k), f i := by
   have hfin : ∀ p, (P p).Finite := fun p => lt_aleph0_iff_set_finite.mp (hP p)
   rw [rect, finsum_mem_biUnion _ hA fun a _ => (Finset.range (K + 1)).finite_toSet.biUnion
     fun k _ => hfin (a, k)]
@@ -349,8 +349,8 @@ theorem exists_partition_of_isBraided_of_ne_aleph0 {lam : Cardinal.{u}} {X : Typ
       ∃ (I J : ι × ℕ → Set ι) (hI : ∀ p, #(I p) < lam) (hJ : ∀ p, #(J p) < lam),
         (∀ p q, p ≠ q → Disjoint (I p) (I q)) ∧ (∀ p q, p ≠ q → Disjoint (J p) (J q)) ∧
         (⋃ p, I p) = Set.univ ∧ (⋃ p, J p) = Set.univ ∧
-        ∀ p, lsumOf (lam := lam) (hI p) (fun i : I p => x i)
-            = lsumOf (lam := lam) (hJ p) (fun j : J p => y j) := by
+        ∀ p, ∑[lam] i : I p, x i
+            = ∑[lam] j : J p, y j := by
   rintro ⟨d⟩
   have hlam0 : ℵ₀ < lam := lt_of_le_of_ne (LMonoid.aleph0_le (lam := lam) (X := X)) (Ne.symm hlam)
   classical
@@ -435,8 +435,8 @@ theorem isBraided_iff_of_ne_aleph0 (hlam : lam ≠ ℵ₀) (x y : ι → X) :
       ∃ (I J : ι × ℕ → Set ι) (hI : ∀ p, #(I p) < lam) (hJ : ∀ p, #(J p) < lam),
         (∀ p q, p ≠ q → Disjoint (I p) (I q)) ∧ (∀ p q, p ≠ q → Disjoint (J p) (J q)) ∧
         (⋃ p, I p) = Set.univ ∧ (⋃ p, J p) = Set.univ ∧
-        ∀ p, lsumOf (lam := lam) (hI p) (fun i : I p => x i)
-            = lsumOf (lam := lam) (hJ p) (fun j : J p => y j) := by
+        ∀ p, ∑[lam] i : I p, x i
+            = ∑[lam] j : J p, y j := by
   constructor
   · intro hxy
     -- This is Lemma 3.4(4), whose proof in the paper uses transitivity and alignment.
@@ -488,7 +488,7 @@ repeatedly in Examples 3.3. -/
 
 /-- In a reduced `λ⁻`-monoid a vanishing sum has vanishing terms: split off the term. -/
 theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < lam) (f : ι → X)
-    (h : lsumOf (lam := lam) hS (fun i : S => f i) = 0) {i : ι} (hi : i ∈ S) : f i = 0 := by
+    (h : ∑[lam] i : S, f i = 0) {i : ι} (hi : i ∈ S) : f i = 0 := by
   classical
   have hset : ({i} : Set ι) ∪ (S \ {i}) = S := by
     ext j
@@ -498,8 +498,8 @@ theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < l
   have hT : #(↥(S \ {i})) < lam :=
     lt_of_le_of_lt (Cardinal.mk_le_mk_of_subset Set.sdiff_subset) hS
   have hST : #(↥(({i} : Set ι) ∪ (S \ {i}))) < lam := by rw [hset]; exact hS
-  have hcollapse : lsumOf (lam := lam) hST (fun j : ↥(({i} : Set ι) ∪ (S \ {i})) => f j)
-      = lsumOf (lam := lam) hS (fun j : S => f j) :=
+  have hcollapse : ∑[lam] j ∈ ({i} : Set ι) ∪ (S \ {i}), f j
+      = ∑[lam] j : S, f j :=
     LMonoid.lsumOf_of_subset hST hS (le_of_eq hset.symm) f fun j hj hnj =>
       absurd (hset ▸ hj) hnj
   have hsplit := LMonoid.lsumOf_union ({i} : Set ι) (S \ {i})
@@ -507,7 +507,7 @@ theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < l
   rw [hcollapse, h] at hsplit
   have : Unique ({i} : Set ι) := ⟨⟨⟨i, rfl⟩⟩, fun j => Subtype.ext j.2⟩
   have hdef : ((default : ({i} : Set ι)) : ι) = i := (default : ({i} : Set ι)).2
-  have hsingle : lsumOf (lam := lam) h1 (fun j : ({i} : Set ι) => f j) = f i := by
+  have hsingle : ∑[lam] j : ({i} : Set ι), f j = f i := by
     rw [LMonoid.lsumOf_unique h1 (fun j : ({i} : Set ι) => f j), hdef]
   rw [hsingle] at hsplit
   exact (hcon _ _ hsplit.symm).1

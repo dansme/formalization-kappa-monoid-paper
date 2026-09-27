@@ -323,7 +323,7 @@ theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ Order.succ 
     rw [Cardinal.mk_singleton]; exact lt_of_lt_of_le one_lt_aleph0 hlam0
   -- partial sums of a family concentrated at `i₀`
   have hsum : ∀ (S : Set (Idx κ)) (hS : #S < lam) (c : X), i₀ ∈ S →
-      lsumOf (lam := lam) hS (fun i : S => (if (i : Idx κ) = i₀ then c else 0)) = c := by
+      ∑[lam] i : S, (if (i : Idx κ) = i₀ then c else 0) = c := by
     intro S hS c hmem
     rw [LMonoid.lsumOf_of_subset hS hsingle (Set.singleton_subset_iff.mpr hmem)
       (fun i => if i = i₀ then c else 0)
@@ -332,7 +332,7 @@ theorem UnivExt.of_injective (_hlam : lam.IsRegular) (_hlk : lam ≤ Order.succ 
     rw [lsumOf_unique hsingle (fun i : ({i₀} : Set (Idx κ)) => (if (i : Idx κ) = i₀ then c else 0))]
     exact if_pos rfl
   have hsum0 : ∀ (S : Set (Idx κ)) (hS : #S < lam) (c : X), i₀ ∉ S →
-      lsumOf (lam := lam) hS (fun i : S => (if (i : Idx κ) = i₀ then c else 0)) = 0 :=
+      ∑[lam] i : S, (if (i : Idx κ) = i₀ then c else 0) = 0 :=
     fun S hS c hmem =>
       LMonoid.lsumOf_eq_zero hS (fun i => if i = i₀ then c else 0)
         (fun i hi => if_neg (fun h : i = i₀ => hmem (h ▸ hi)))

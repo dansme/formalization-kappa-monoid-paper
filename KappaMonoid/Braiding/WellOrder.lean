@@ -343,33 +343,28 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
     exact Set.mem_iUnion.mpr ⟨Φ p, Set.mem_iUnion.mpr ⟨⟨p, rfl⟩, hp⟩⟩
   -- a fibre over a limit element consists of limit elements, where `v` vanishes
   have hvlim : ∀ q : M', W'.IsLimit q →
-      lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) => d.v (p : M)) = 0 := by
+      ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.v (p : M) = 0 := by
     intro q hq
     refine LMonoid.lsumOf_eq_zero_of_forall _ fun p => ?_
     exact d.v_limit (p : M) (hlim _ (by rw [p.2]; exact hq))
   have hIeq : ∀ q : M',
-      lsumOf (lam := lam) (hIsmall q)
-          (fun i : (⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)) => x i)
-        = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) => d.v (p : M))
-          + lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) => d.u (p : M)) := by
+      ∑[lam] i : (⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)), x i
+        = ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.v (p : M)
+          + ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.u (p : M) := by
     intro q
-    calc lsumOf (lam := lam) (hIsmall q)
-            (fun i : (⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)) => x i)
+    calc ∑[lam] i : (⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)), x i
         = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) =>
             ∑[lam] i ∈ d.I (p : M), x i) :=
           (LMonoid.lsumOf_biUnion_subset _ _
             (fun p p' hpp' => d.I_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl
             (hFlt q) (hIsmall q) (fun p => d.I_small (p : M)) x).symm
-      _ = lsumOf (lam := lam) (hFlt q)
-            (fun p : (Φ ⁻¹' {q} : Set M) => d.v (p : M) + d.u (p : M)) := by
+      _ = ∑[lam] p : (Φ ⁻¹' {q} : Set M), (d.v (p : M) + d.u (p : M)) := by
           exact congrArg _ (funext fun p => d.hI (p : M))
       _ = _ := LMonoid.lsumOf_add _ _ _
   have hJeq : ∀ q : M',
-      lsumOf (lam := lam) (hJsmall q)
-          (fun j : (⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)) => y j)
-        = lsumOf (lam := lam) (hFlt (W'.succ q))
-            (fun r : (Φ ⁻¹' {W'.succ q} : Set M) => d.v (r : M))
-          + lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) => d.u (p : M)) := by
+      ∑[lam] j : (⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)), y j
+        = ∑[lam] r : (Φ ⁻¹' {W'.succ q} : Set M), d.v (r : M)
+          + ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.u (p : M) := by
     intro q
     classical
     -- the successor embeds the fibre over `q` into the fibre over `q + 1`
@@ -401,25 +396,20 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
           rw [hsucc] at hr2
           exact W'.succ_injective hr2
         exact hr ⟨⟨p₀, hq0⟩, Subtype.ext hp₀⟩
-    have hkey : lsumOf (lam := lam) (hFlt (W'.succ q))
-          (fun r : (Φ ⁻¹' {W'.succ q} : Set M) => d.v (r : M))
-        = lsumOf (lam := lam) (hFlt q)
-            (fun p : (Φ ⁻¹' {q} : Set M) => d.v (W.succ (p : M))) := by
+    have hkey : ∑[lam] r : (Φ ⁻¹' {W'.succ q} : Set M), d.v (r : M)
+        = ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.v (W.succ (p : M)) := by
       rw [← hext]
       exact LMonoid.lsumOf_extend (hFlt q) (hFlt (W'.succ q)) e _
-    calc lsumOf (lam := lam) (hJsmall q)
-            (fun j : (⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)) => y j)
+    calc ∑[lam] j : (⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)), y j
         = lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) =>
             ∑[lam] j ∈ d.J (p : M), y j) :=
           (LMonoid.lsumOf_biUnion_subset _ _
             (fun p p' hpp' => d.J_disjoint _ _ fun h => hpp' (Subtype.ext h)) rfl
             (hFlt q) (hJsmall q) (fun p => d.J_small (p : M)) y).symm
-      _ = lsumOf (lam := lam) (hFlt q)
-            (fun p : (Φ ⁻¹' {q} : Set M) => d.v (W.succ (p : M)) + d.u (p : M)) := by
+      _ = ∑[lam] p : (Φ ⁻¹' {q} : Set M), (d.v (W.succ (p : M)) + d.u (p : M)) := by
           exact congrArg _ (funext fun p => d.hJ (p : M))
-      _ = lsumOf (lam := lam) (hFlt q)
-            (fun p : (Φ ⁻¹' {q} : Set M) => d.v (W.succ (p : M)))
-          + lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) => d.u (p : M)) :=
+      _ = ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.v (W.succ (p : M))
+          + ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.u (p : M) :=
           LMonoid.lsumOf_add _ _ _
       _ = _ := by rw [hkey]
   { I := fun q => ⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)
@@ -430,8 +420,8 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
     J_cover := hJcover
     I_small := hIsmall
     J_small := hJsmall
-    u := fun q => lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) => d.u (p : M))
-    v := fun q => lsumOf (lam := lam) (hFlt q) (fun p : (Φ ⁻¹' {q} : Set M) => d.v (p : M))
+    u := fun q => ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.u (p : M)
+    v := fun q => ∑[lam] p : (Φ ⁻¹' {q} : Set M), d.v (p : M)
     v_limit := hvlim
     hI := hIeq
     hJ := hJeq }
@@ -562,8 +552,7 @@ theorem isBraided_of_blocks [Infinite ι] {A B : ι → Set ι}
       ((d p.1.1).J_small (p.1.2, p.2))
   -- on `A l` the `l`-th padded family is `x`, and off it the padded family vanishes
   have hIsum : ∀ p : (ι × ι) × ℕ,
-      lsumOf (lam := lam) (hIsmall p)
-          (fun i : ((d p.1.1).I (p.1.2, p.2) ∩ A p.1.1 : Set ι) => x (i : ι))
+      ∑[lam] i : ((d p.1.1).I (p.1.2, p.2) ∩ A p.1.1 : Set ι), x (i : ι)
         = (d p.1.1).v (p.1.2, p.2) + (d p.1.1).u (p.1.2, p.2) := by
     rintro ⟨⟨l, b⟩, m⟩
     rw [show (fun i : ((d l).I (b, m) ∩ A l : Set ι) => x (i : ι))
@@ -574,8 +563,7 @@ theorem isBraided_of_blocks [Infinite ι] {A B : ι → Set ι}
         (fun i hi hni => Set.indicator_of_notMem (fun hA => hni ⟨hi, hA⟩) x)]
     exact (d l).hI (b, m)
   have hJsum : ∀ p : (ι × ι) × ℕ,
-      lsumOf (lam := lam) (hJsmall p)
-          (fun j : ((d p.1.1).J (p.1.2, p.2) ∩ B p.1.1 : Set ι) => y (j : ι))
+      ∑[lam] j : ((d p.1.1).J (p.1.2, p.2) ∩ B p.1.1 : Set ι), y (j : ι)
         = (d p.1.1).v (p.1.2, p.2 + 1) + (d p.1.1).u (p.1.2, p.2) := by
     rintro ⟨⟨l, b⟩, m⟩
     rw [show (fun j : ((d l).J (b, m) ∩ B l : Set ι) => y (j : ι))

@@ -173,8 +173,8 @@ def _root_.KappaMonoid.BraidingData.ofPartition {x y : ι → X} (I J : ι × �
     (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q))
     (hIcov : (⋃ p, I p) = Set.univ) (hJcov : (⋃ p, J p) = Set.univ)
     (hIsmall : ∀ p, #(I p) < lam) (hJsmall : ∀ p, #(J p) < lam)
-    (heq : ∀ p, lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
-        = lsumOf (lam := lam) (hJsmall p) (fun j : J p => y j)) :
+    (heq : ∀ p, ∑[lam] i : I p, x i
+        = ∑[lam] j : J p, y j) :
     BraidingData lam x y where
   I := I
   J := J
@@ -184,7 +184,7 @@ def _root_.KappaMonoid.BraidingData.ofPartition {x y : ι → X} (I J : ι × �
   J_cover := hJcov
   I_small := hIsmall
   J_small := hJsmall
-  u := fun p => lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
+  u := fun p => ∑[lam] i : I p, x i
   v := fun _ => 0
   v_limit := fun _ => rfl
   hI := fun _ => (zero_add _).symm
@@ -195,8 +195,8 @@ theorem of_partition {x y : ι → X} (I J : ι × ℕ → Set ι)
     (hJdisj : ∀ p q, p ≠ q → Disjoint (J p) (J q))
     (hIcov : (⋃ p, I p) = Set.univ) (hJcov : (⋃ p, J p) = Set.univ)
     (hIsmall : ∀ p, #(I p) < lam) (hJsmall : ∀ p, #(J p) < lam)
-    (heq : ∀ p, lsumOf (lam := lam) (hIsmall p) (fun i : I p => x i)
-        = lsumOf (lam := lam) (hJsmall p) (fun j : J p => y j)) :
+    (heq : ∀ p, ∑[lam] i : I p, x i
+        = ∑[lam] j : J p, y j) :
     IsBraided lam x y :=
   ⟨BraidingData.ofPartition I J hIdisj hJdisj hIcov hJcov hIsmall hJsmall heq⟩
 
@@ -338,7 +338,7 @@ theorem comp_equiv {ι' : Type u} (E : ι ≃ ι') {x y : ι' → X} (h : IsBrai
   have hsum : ∀ (P : ι' × ℕ → Set ι') (hs : ∀ q, #(P q) < lam) (p : ι × ℕ) (f : ι' → X),
       lsumOf (lam := lam) (lt_of_eq_of_lt (hpre _) (hs (E p.1, p.2)))
           (fun i : E ⁻¹' P (E p.1, p.2) => f (E i))
-        = lsumOf (lam := lam) (hs (E p.1, p.2)) (fun j : P (E p.1, p.2) => f j) := by
+        = ∑[lam] j : P (E p.1, p.2), f j := by
     intro P hs p f
     let e : ↥(E ⁻¹' P (E p.1, p.2)) ≃ ↥(P (E p.1, p.2)) :=
       ⟨fun i => ⟨E i, i.2⟩, fun j => ⟨E.symm j, by simp⟩, fun i => by simp, fun j => by simp⟩
