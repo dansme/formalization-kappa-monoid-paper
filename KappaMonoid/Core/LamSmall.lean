@@ -12,7 +12,7 @@ Facts that some *piece* of a construction is small, such as `BraidingData.I_smal
 registered with the attribute `@[lam_small_rule]`, and the tactic uses them as well as hypotheses
 of the form `∀ p, #(I p) < λ`.
 
-The notation `∑[λ] i ∈ S, f i` (and `∑[λ] i : ι, f i`) is the `λ⁻`-sum with its bound found by
+The notation `∑[λ] i ∈ S, f i` (and `∑[λ] i : ι, f i`, `∑[λ] i, f i`) is the `λ⁻`-sum with its bound found by
 `lam_small`: the paper's `Σ_{i ∈ S} f_i`, with the standing convention `|S| < λ` left implicit.
 -/
 import KappaMonoid.Core.SumData
@@ -38,6 +38,7 @@ macro_rules
   | `(tactic| lam_small_core $reg) => `(tactic| first
       | assumption
       | exact KappaMonoid.mk_lt_of_finite $reg _
+      | exact lt_of_eq_of_lt (KappaMonoid.mk_Idx _) ‹_›
       | solve_by_elim (exfalso := false) (symm := false) (maxDepth := 3) using lam_small_rule
       | (refine KappaMonoid.mk_prod_lt $reg ?_ ?_ <;> lam_small_core $reg)
       | (refine KappaMonoid.mk_sum_lt $reg ?_ ?_ <;> lam_small_core $reg)
@@ -76,16 +77,28 @@ elab "lam_small" : tactic => do
 
 /-- `∑[lam] i ∈ S, f i` is the `λ⁻`-sum of `f` over the set `S`, its bound `#S < lam` found by
 `lam_small`. -/
-scoped syntax (name := lsumMem) "∑[" term "] " ident " ∈ " term ", " term:67 : term
+scoped syntax (name := lsumMem) "∑[" term "] " Lean.binderIdent " ∈ " term ", " term:67 : term
 
 /-- `∑[lam] i : ι, f i` is the `λ⁻`-sum of `f` over the type `ι`, its bound `#ι < lam` found by
 `lam_small`. -/
-scoped syntax (name := lsumType) "∑[" term "] " ident " : " term ", " term:67 : term
+scoped syntax (name := lsumType) "∑[" term "] " Lean.binderIdent " : " term ", " term:67 : term
+
+/-- `∑[lam] i, f i` is the `λ⁻`-sum of `f` over the index type determined by `f`, its bound found
+by `lam_small`. -/
+scoped syntax (name := lsum) "∑[" term "] " Lean.binderIdent ", " term:67 : term
 
 macro_rules
-  | `(∑[$lam] $i ∈ $S, $f) =>
+  | `(∑[$lam] $i:ident ∈ $S, $f) =>
     `(KappaMonoid.LMonoid.lsumOf (lam := $lam) (by lam_small) (fun $i : ↥$S => $f))
-  | `(∑[$lam] $i : $ι, $f) =>
+  | `(∑[$lam] _ ∈ $S, $f) =>
+    `(KappaMonoid.LMonoid.lsumOf (lam := $lam) (by lam_small) (fun _ : ↥$S => $f))
+  | `(∑[$lam] $i:ident : $ι, $f) =>
     `(KappaMonoid.LMonoid.lsumOf (lam := $lam) (by lam_small) (fun $i : $ι => $f))
+  | `(∑[$lam] _ : $ι, $f) =>
+    `(KappaMonoid.LMonoid.lsumOf (lam := $lam) (by lam_small) (fun _ : $ι => $f))
+  | `(∑[$lam] $i:ident, $f) =>
+    `(KappaMonoid.LMonoid.lsumOf (lam := $lam) (by lam_small) (fun $i => $f))
+  | `(∑[$lam] _, $f) =>
+    `(KappaMonoid.LMonoid.lsumOf (lam := $lam) (by lam_small) (fun _ => $f))
 
 end KappaMonoid
