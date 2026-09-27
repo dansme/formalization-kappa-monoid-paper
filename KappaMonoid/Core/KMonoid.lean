@@ -101,7 +101,8 @@ theorem sumOf_two (a b : H) (hUB : #(ULift.{u} Bool) ≤ κ) :
 /-- `κ`-sums are additive. -/
 theorem sumOf_add {ι : Type u} (h : #ι ≤ κ) (f g : ι → H) :
     sumOf (κ := κ) h (fun i => f i + g i) = sumOf (κ := κ) h f + sumOf (κ := κ) h g :=
-  LMonoid.lsumOf_add _ f g
+  haveI : CardLT ι (Order.succ κ) := ⟨lt_succ h⟩
+  LMonoid.lsumOf_add f g
 
 /-- Indices outside a subset off which the family vanishes may be dropped from a sum. -/
 theorem sumOf_eq_sumOf_subset {ι : Type u} (hι : #ι ≤ κ) {S : Set ι} (hS : #S ≤ κ) (f : ι → H)
@@ -166,7 +167,9 @@ theorem ksum_sigma (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx 
   have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
   have hprod : #(Idx κ × Idx κ) ≤ κ := mk_prod_le (H := H) hidx hidx
   calc ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
-      = sumOf (κ := κ) hprod (fun p => x p.1 p.2) := LMonoid.lsumOf_prod _ _ x _
+      = sumOf (κ := κ) hprod (fun p => x p.1 p.2) :=
+        haveI : CardLT (Idx κ) (Order.succ κ) := ⟨lt_succ hidx⟩
+        LMonoid.lsumOf_prod x
     _ = ksum (κ := κ) fun k => x (π.symm k).1 (π.symm k).2 := sumOf_equiv hprod hidx π.symm _
 
 /-- Compatibility of `+` with `Σ`. -/
@@ -191,7 +194,8 @@ theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) :
 theorem ksum_comm (x : Idx κ → Idx κ → H) :
     ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
       = ksum (κ := κ) (fun j => ksum (κ := κ) fun i => x i j) :=
-  LMonoid.lsumOf_comm _ _ x
+  haveI : CardLT (Idx κ) (Order.succ κ) := ⟨lt_succ (le_of_eq (mk_Idx κ))⟩
+  LMonoid.lsumOf_comm x
 
 /-- Zero-padding along a self-embedding of `Idx κ` does not change a `κ`-sum. -/
 theorem ksum_extend (g : Idx κ ↪ Idx κ) (x : Idx κ → H) :

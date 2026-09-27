@@ -230,8 +230,9 @@ theorem BraidingData.block_lsumOf_eq {lam : Cardinal.{u}} {X : Type v} [LMonoid 
   have hJeq : (fun n : N =>
       ∑[lam] j ∈ d.J (a, n.down), y j)
       = fun n : N => d.v (a, n.down + 1) + d.u (a, n.down) := funext fun n => d.hJ (a, n.down)
-  rw [hIeq, hJeq, LMonoid.lsumOf_add hNlt (fun n => d.v (a, n.down)) (fun n => d.u (a, n.down)),
-    LMonoid.lsumOf_add hNlt (fun n => d.v (a, n.down + 1)) (fun n => d.u (a, n.down))]
+  have := CardLT.mk hNlt
+  rw [hIeq, hJeq, LMonoid.lsumOf_add (fun n : N => d.v (a, n.down)) (fun n : N => d.u (a, n.down)),
+    LMonoid.lsumOf_add (fun n : N => d.v (a, n.down + 1)) (fun n : N => d.u (a, n.down))]
   have hbs : (fun n : N => d.v (a, n.down))
       = Function.extend bsuccU (fun n : N => d.v (a, n.down + 1)) 0 := by
     funext n

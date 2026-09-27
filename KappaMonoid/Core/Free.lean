@@ -250,7 +250,7 @@ theorem isLMonoidHom_lift (f : B → X) :
           LMonoid.lsumOf (lam := lam) h fun i =>
             term f ((y i : ↥(FreeL lam B)) : B → LCard lam) (b : B) from
       funext fun b => term_lsumOf h f _ (b : B),
-    LMonoid.lsumOf_comm hS h]
+    LMonoid.lsumOf_comm (hι := ⟨hS⟩) (hJ := ⟨h⟩)]
   congr 1
   funext i
   exact (lift_eq_of_subset f (y i) hS (hsubi i)).symm

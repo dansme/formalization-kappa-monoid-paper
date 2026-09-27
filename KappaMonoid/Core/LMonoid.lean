@@ -116,36 +116,32 @@ theorem lsumOf_two (a b : X) (hUB : #(ULift.{u} Bool) < lam := by lam_small) :
   exact add_comm b a
 
 /-- A double sum is the sum over the product. -/
-theorem lsumOf_prod {ι J : Type u} (hι : #ι < lam) (hJ : #J < lam) (x : ι → J → X)
-    (hιJ : #(ι × J) < lam := by lam_small) :
-    ∑[lam] i, lsumOf (lam := lam) hJ (x i)
-      = lsumOf (lam := lam) hιJ (fun p => x p.1 p.2) := by
-  rw [lsumOf_sigma hι (fun _ => hJ) x (by lam_small)]
+theorem lsumOf_prod {ι J : Type u} [hι : CardLT ι lam] [hJ : CardLT J lam] (x : ι → J → X) :
+    ∑[lam] i, ∑[lam] j, x i j = ∑[lam] p : ι × J, x p.1 p.2 := by
+  rw [lsumOf_sigma CardLT.lt (fun _ => CardLT.lt) x (by lam_small)]
   exact lsumOf_equiv (Equiv.sigmaEquivProd ι J).symm _ _
 
 /-- Iterated sums may be interchanged: the `λ⁻` form of (A4).
 
 Both sides are the sum over `ι × J`, indexed once as `(i, j)` and once as `(j, i)`. -/
-theorem lsumOf_comm {ι J : Type u} (hι : #ι < lam) (hJ : #J < lam) (x : ι → J → X) :
-    ∑[lam] i, lsumOf (lam := lam) hJ (x i)
-      = lsumOf (lam := lam) hJ fun j => lsumOf (lam := lam) hι fun i => x i j := by
-  rw [lsumOf_prod hι hJ, lsumOf_prod hJ hι, lsumOf_equiv (Equiv.prodComm J ι)]
+theorem lsumOf_comm {ι J : Type u} [hι : CardLT ι lam] [hJ : CardLT J lam] (x : ι → J → X) :
+    ∑[lam] i, ∑[lam] j, x i j = ∑[lam] j, ∑[lam] i, x i j := by
+  rw [lsumOf_prod, lsumOf_prod, lsumOf_equiv (Equiv.prodComm J ι)]
   rfl
 
 /-- Sums are additive.
 
 Write `f i + g i` as a sum over `Bool`, swap the two sums, and read off `Σ f + Σ g`. -/
-theorem lsumOf_add {ι : Type u} (h : #ι < lam) (f g : ι → X) :
-    ∑[lam] i, (f i + g i)
-      = lsumOf (lam := lam) h f + lsumOf (lam := lam) h g := by
-  have h2 : #(ULift.{u} Bool) < lam := by lam_small
+theorem lsumOf_add {ι : Type u} [h : CardLT ι lam] (f g : ι → X) :
+    ∑[lam] i, (f i + g i) = ∑[lam] i, f i + ∑[lam] i, g i := by
+  have : CardLT (ULift.{u} Bool) lam := ⟨by lam_small⟩
   let x : ι → ULift.{u} Bool → X := fun i b => if b.down then f i else g i
   calc ∑[lam] i, (f i + g i)
-      = ∑[lam] i, lsumOf (lam := lam) h2 (x i) := by
+      = ∑[lam] i, ∑[lam] b, x i b := by
         simp only [x, lsumOf_two]
-    _ = ∑[lam] b, lsumOf (lam := lam) h (x · b) := lsumOf_comm h h2 x
-    _ = lsumOf (lam := lam) h f + lsumOf (lam := lam) h g := by
-        rw [← lsumOf_two _ _ h2]
+    _ = ∑[lam] b, ∑[lam] i, x i b := lsumOf_comm x
+    _ = ∑[lam] i, f i + ∑[lam] i, g i := by
+        rw [← lsumOf_two _ _ CardLT.lt]
         congr 1; funext b; rcases b with ⟨_ | _⟩ <;> rfl
 
 /-! ### Sums over subsets -/
@@ -315,7 +311,9 @@ theorem lcmul_lsumOf_cardinal {I : Type u} (hI : #I < lam) (l : I → Cardinal.{
 theorem lcmul_lsumOf {I : Type u} (hI : #I < lam) (α : Cardinal.{u}) (hα : α < lam) (x : I → X) :
     lcmul (lam := lam) α hα (lsumOf (lam := lam) hI x)
       = lsumOf (lam := lam) hI fun i => lcmul (lam := lam) α hα (x i) :=
-  lsumOf_comm _ hI fun _ i => x i
+  haveI : CardLT (Idx α) lam := ⟨lt_of_eq_of_lt (mk_Idx α) hα⟩
+  haveI : CardLT I lam := ⟨hI⟩
+  lsumOf_comm fun _ i => x i
 
 /-- **Lemma 2.7(2)** for a two-term sum of cardinals. -/
 theorem lcmul_add {α β : Cardinal.{u}} (hα : α < lam) (hβ : β < lam) (hαβ : α + β < lam) (x : X) :
@@ -363,7 +361,8 @@ theorem add_lcmul_self {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α < la
 theorem lcmul_distrib {α : Cardinal.{u}} (hα : α < lam) (a b : X) :
     lcmul (lam := lam) α hα (a + b)
       = lcmul (lam := lam) α hα a + lcmul (lam := lam) α hα b :=
-  lsumOf_add _ (fun _ => a) fun _ => b
+  haveI : CardLT (Idx α) lam := ⟨lt_of_eq_of_lt (mk_Idx α) hα⟩
+  lsumOf_add (fun _ => a) fun _ => b
 
 /-! ### Reducedness (Lemma 2.8) -/
 

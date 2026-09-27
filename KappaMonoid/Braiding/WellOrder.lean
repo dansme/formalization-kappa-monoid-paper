@@ -371,7 +371,7 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
             (hFlt q) (hIsmall q) (fun p => d.I_lt (p : M)) x).symm
       _ = ∑[lam] p ∈ (Φ ⁻¹' {q} : Set M), (d.v (p : M) + d.u (p : M)) := by
           exact congrArg _ (funext fun p => d.hI (p : M))
-      _ = _ := LMonoid.lsumOf_add _ _ _
+      _ = _ := by have := CardLT.mk (hFlt q); exact LMonoid.lsumOf_add _ _
   have hJeq : ∀ q : M',
       ∑[lam] j ∈ (⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)), y j
         = ∑[lam] r ∈ (Φ ⁻¹' {W'.succ q} : Set M), d.v (r : M)
@@ -421,7 +421,7 @@ noncomputable def comap (d : BraidingDataOn lam W x y) (Φ : M → M')
           exact congrArg _ (funext fun p => d.hJ (p : M))
       _ = ∑[lam] p ∈ (Φ ⁻¹' {q} : Set M), d.v (W.succ (p : M))
           + ∑[lam] p ∈ (Φ ⁻¹' {q} : Set M), d.u (p : M) :=
-          LMonoid.lsumOf_add _ _ _
+          by have := CardLT.mk (hFlt q); exact LMonoid.lsumOf_add _ _
       _ = _ := by rw [hkey]
   { I := fun q => ⋃ p : (Φ ⁻¹' {q} : Set M), d.I (p : M)
     J := fun q => ⋃ p : (Φ ⁻¹' {q} : Set M), d.J (p : M)
