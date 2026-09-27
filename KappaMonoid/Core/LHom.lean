@@ -82,7 +82,7 @@ theorem _root_.KappaMonoid.KMonoid.sumOf_eq_sum {κ : Cardinal.{u}} {H : Type v}
 
 /-- For `λ = ℵ₀`, a sum over a small subset is the `finsum` over that subset. -/
 theorem lsumOf_eq_finsum {X : Type v} [LMonoid ℵ₀ X] {ι : Type u} {S : Set ι} (h : #S < ℵ₀)
-    (f : ι → X) : ∑[ℵ₀] i : S, f i = ∑ᶠ i ∈ S, f i := by
+    (f : ι → X) : ∑[ℵ₀] i ∈ S, f i = ∑ᶠ i ∈ S, f i := by
   have hfin : S.Finite := Cardinal.lt_aleph0_iff_set_finite.mp h
   let _ : Fintype S := hfin.fintype
   rw [lsumOf_aleph0_eq_finsum h (fun i : S => f i), ← finsum_eq_sum_of_fintype,

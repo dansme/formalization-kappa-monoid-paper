@@ -28,7 +28,7 @@ theorem IsBraided.reindex {ι ι' : Type u} {x y : ι → X} (e : ι' ≃ ι)
     Cardinal.mk_congr (e.subtypeEquiv (fun _ => Iff.rfl))
   have hsum : ∀ (S : Set ι) (hS : #S < lam) (hS' : #(↥(e ⁻¹' S)) < lam) (g : ι → X),
       ∑[lam] i ∈ e ⁻¹' S, (g ∘ e) i
-        = ∑[lam] i : S, g i := by
+        = ∑[lam] i ∈ S, g i := by
     intro S hS hS' g
     exact (lsumOf_equiv (e.subtypeEquiv (fun _ => Iff.rfl)) (fun i : S => g i) hS).symm
   have hcover : ∀ (K : ι × ℕ → Set ι), (⋃ p, K p) = Set.univ →
@@ -100,7 +100,7 @@ theorem IsBraided.prod {A B : Type u} {x y : A → B → X} (h : ∀ a, IsBraide
   have hsum : ∀ (a : A) (S : Set B) (hS : #S < lam) (hS' : #(↥(Prod.mk a '' S)) < lam)
       (g : A → B → X),
       ∑[lam] p ∈ Prod.mk a '' S, g (p : A × B).1 (p : A × B).2
-        = ∑[lam] i : S, g a i := by
+        = ∑[lam] i ∈ S, g a i := by
     intro a S hS hS' g
     exact lsumOf_equiv (Equiv.Set.image (Prod.mk a) S (hinj a))
       (fun p : ↥(Prod.mk a '' S) => g (p : A × B).1 (p : A × B).2) hS'
@@ -130,7 +130,7 @@ Proposition 3.10 are of this shape, with `A a` a one- or two-element set. -/
 theorem of_aggregation {ι : Type u} {x y : ι → X} (A : ι → Set ι)
     (hdisj : ∀ a b, a ≠ b → Disjoint (A a) (A b)) (hsmall : ∀ a, #(A a) < lam)
     (hzero : ∀ i, i ∉ ⋃ a, A a → x i = 0)
-    (hsum : ∀ a, ∑[lam] i : A a, x i = y a) :
+    (hsum : ∀ a, ∑[lam] i ∈ A a, x i = y a) :
     IsBraided lam x y := by
   classical
   have hlam0 := LMonoid.aleph0_le (lam := lam) (X := X)
@@ -208,18 +208,18 @@ theorem of_aggregation {ι : Type u} {x y : ι → X} (A : ι → Set ι)
     rw [lsumOf_unique (hJsmall (a, 0)) (fun i : J (a, 0) => y i)]
     exact (hsum a).trans rfl
   | 1 =>
-    have hL : ∑[lam] i : I (a, 1), x i = 0 := by
+    have hL : ∑[lam] i ∈ I (a, 1), x i = 0 := by
       refine LMonoid.lsumOf_eq_zero (hIsmall (a, 1)) x (fun i hi => ?_)
       rw [hI1 a] at hi
       exact hzero i hi.2
-    have hR : ∑[lam] i : J (a, 1), y i = 0 :=
+    have hR : ∑[lam] i ∈ J (a, 1), y i = 0 :=
       LMonoid.lsumOf_eq_zero (hJsmall (a, 1)) y (fun i hi => absurd hi (Set.notMem_empty i))
     rw [hL, hR]
   | (m + 2) =>
-    have hL : ∑[lam] i : I (a, m + 2), x i = 0 :=
+    have hL : ∑[lam] i ∈ I (a, m + 2), x i = 0 :=
       LMonoid.lsumOf_eq_zero (hIsmall (a, m + 2)) x
         (fun i hi => absurd hi (Set.notMem_empty i))
-    have hR : ∑[lam] i : J (a, m + 2), y i = 0 :=
+    have hR : ∑[lam] i ∈ J (a, m + 2), y i = 0 :=
       LMonoid.lsumOf_eq_zero (hJsmall (a, m + 2)) y (fun i hi => absurd hi (Set.notMem_empty i))
     rw [hL, hR]
 
@@ -287,8 +287,8 @@ theorem isBraided_merge {ι : Type u} (e₀ e₁ : ι ↪ ι) (hdisj : ∀ i j, 
 small sets containing them. -/
 theorem isBraided_of_small_sets {ι : Type u} {x y : ι → X} {S T : Set ι}
     (hS : #S < lam) (hT : #T < lam) (hx : ∀ i ∉ S, x i = 0) (hy : ∀ i ∉ T, y i = 0)
-    (h : ∑[lam] i : S, x i
-      = ∑[lam] i : T, y i) :
+    (h : ∑[lam] i ∈ S, x i
+      = ∑[lam] i ∈ T, y i) :
     IsBraided lam x y := by
   have hxsub : Function.support x ⊆ S := by
     intro i hi
@@ -359,7 +359,7 @@ theorem IsBraided.map_lhom (hlk : lam ≤ Order.succ κ) {f : X → H} (hf : IsL
   let := KMonoid.toLMonoidOfLE H hlam hlk
   obtain ⟨d⟩ := h
   have hpush : ∀ {S : Set ι} (hS : #S < lam) (g : ι → X),
-      ∑[lam] i : S, (f ∘ g) i = f (∑[lam] i : S, g i) := by
+      ∑[lam] i ∈ S, (f ∘ g) i = f (∑[lam] i ∈ S, g i) := by
     intro S hS g
     rw [KMonoid.toLMonoidOfLE_lsumOf hlam hlk hS (fun i : S => (f ∘ g) i), hf.2 hS (fun i : S => g i)]
     rfl
@@ -484,11 +484,11 @@ theorem isBraided_of_subtype {ι : Type u} (C : Set ι) {x y : ι → X}
         ((Set.finite_singleton _).subset (hneg P p hp))) hlam0
   -- sums over the padded pieces
   have hsumpos : ∀ (P : C × ℕ → Set C) (hP : ∀ p, #(P p) < lam) (z : ι → X) (p : ι × ℕ)
-      (hp : p.1 ∈ C), ∑[lam] i : pad P p, z i
-        = ∑[lam] c : P (⟨p.1, hp⟩, p.2), z c := by
+      (hp : p.1 ∈ C), ∑[lam] i ∈ pad P p, z i
+        = ∑[lam] c ∈ P (⟨p.1, hp⟩, p.2), z c := by
     intro P hP z p hp
     have hcongr : ∀ (S T : Set ι) (hST : S = T) (hS : #S < lam) (hT : #T < lam),
-        ∑[lam] i : S, z i = ∑[lam] i : T, z i := by
+        ∑[lam] i ∈ S, z i = ∑[lam] i ∈ T, z i := by
       rintro S T rfl hS hT
       rfl
     have himg : #(Subtype.val '' P (⟨p.1, hp⟩, p.2)) < lam :=
@@ -498,7 +498,7 @@ theorem isBraided_of_subtype {ι : Type u} (C : Set ι) {x y : ι → X}
     rfl
   have hsumneg : ∀ (P : C × ℕ → Set C) (hP : ∀ p, #(P p) < lam) (z : ι → X)
       (hz : ∀ i ∉ C, z i = 0) (p : ι × ℕ) (hp : p.1 ∉ C),
-      ∑[lam] i : pad P p, z i = 0 := by
+      ∑[lam] i ∈ pad P p, z i = 0 := by
     intro P hP z hz p hp
     refine LMonoid.lsumOf_eq_zero _ z fun i hi => hz i ?_
     have := hneg P p hp hi
