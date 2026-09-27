@@ -260,8 +260,9 @@ noncomputable def instKMonoid {κ : Cardinal.{u}} (hM : IsConical M) (hκ : ℵ�
     KMonoid κ (WithTop M) :=
   KMonoid.ofKsum
     { aleph0_le := hκ
+      i₀ := (nonempty_Idx hκ).some
       ksum := sigma
-      ksum_single := fun i₀ x hx => sigma_single i₀ x hx
+      ksum_single := fun x hx => sigma_single _ x hx
       ksum_sigma := fun x π => by
         rw [sigma_prod hM (fun p : Idx κ × Idx κ => x p.1 p.2),
           ← sigma_comp_equiv π.symm (fun p : Idx κ × Idx κ => x p.1 p.2)]

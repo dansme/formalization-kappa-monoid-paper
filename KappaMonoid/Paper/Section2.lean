@@ -25,36 +25,35 @@ namespace KappaMonoid
 
 namespace Paper
 
-/-- **Definition 2.1** — `KappaMonoid.PaperKMonoid`, in `Paper/Definition21.lean`: the
-definition transcribed literally, with `KappaMonoid.PaperKMonoid.toKMonoid` and
-`KappaMonoid.KMonoid.toPaper` the two directions of its agreement with `KMonoid`. -/
-alias definition_2_1_PaperKMonoid := KappaMonoid.PaperKMonoid
+/-- **Definition 2.1** — `KappaMonoid.BareKMonoid`, in `Core/Bare.lean`: the definition
+transcribed literally, the input of `KappaMonoid.KMonoid.ofBare`; `KappaMonoid.KMonoid.toBare` is
+the other direction of its agreement with `KMonoid`. -/
+alias definition_2_1_BareKMonoid := KappaMonoid.BareKMonoid
 
-/-- **Definition 2.1** — `KappaMonoid.KMonoid.toPaper_toKMonoid`: the round trip
-`KMonoid → Definition 2.1 → KMonoid` is the identity, as an equality of structures. -/
-alias definition_2_1_toPaper_toKMonoid := KappaMonoid.KMonoid.toPaper_toKMonoid
+/-- **Definition 2.1** — `KappaMonoid.KMonoid.ofBare_toBare`, in `Paper/Definition21.lean`: the
+round trip `KMonoid → Definition 2.1 → KMonoid` is the identity, as an equality of structures. -/
+alias definition_2_1_ofBare_toBare := KappaMonoid.KMonoid.ofBare_toBare
 
-/-- **Remark 2.2(1)** — commutativity is automatic: `KappaMonoid.PaperKMonoid.sigma_pair_comm`, in
+/-- **Remark 2.2(1)** — commutativity is automatic: `KappaMonoid.BareKMonoid.ksum_pair_comm`, in
 `Paper/Definition21.lean`, says a two-term `Σ` does not depend on the order of its terms, for
 any structure satisfying only (A1) and (A2). -/
-alias remark_2_2_1_sigma_pair_comm := KappaMonoid.PaperKMonoid.sigma_pair_comm
+alias remark_2_2_1_ksum_pair_comm := KappaMonoid.BareKMonoid.ksum_pair_comm
 
 /-- **Remark 2.2(1)** — the construction resting on it: `KappaMonoid.KMonoid.ofBare` builds the
 `κ`-monoid, whose addition is commutative by (A3). -/
 alias remark_2_2_1_ofBare := KappaMonoid.KMonoid.ofBare
 
-/-- **Remark 2.2(2)** — summing over an arbitrary index set of cardinality `κ`:
-`KappaMonoid.KMonoid.sumOf` takes a family indexed by any type of the right size, and
-`KappaMonoid.KMonoid.sumOf_equiv (h := CardLE.mk' `) (h' := CardLE.mk' is) the independence of the chosen bijection.  See
-`README.md`, "Differences from the paper". -/
+/-- **Remark 2.2(2)** — summing over an arbitrary index set of cardinality `κ`: the sum
+`∑[≤ κ] i, x i` takes a family indexed by any type of the right size, and
+`KappaMonoid.KMonoid.sumOf_equiv` is the independence of the chosen bijection.  See `README.md`,
+"Differences from the paper". -/
 alias remark_2_2_2_sumOf_equiv := KappaMonoid.KMonoid.sumOf_equiv
 
-/-- **Remark 2.2(2)**, the substance — `KappaMonoid.PaperKMonoid.toKMonoid_sumOf`, in
-`Paper/Definition21.lean`: for a `κ`-monoid given as in Definition 2.1, the sum over an arbitrary
-index type of size `≤ κ` is the `κ`-indexed `Σ` of any zero-padded transport, and so is
-well defined; this rests on (A3), `PaperKMonoid.sigma_perm`.  (`sumOf_equiv (h := CardLE.mk' `) (h' := CardLE.mk' above) is, inside
-`KMonoid`, the reindexing field of the class.) -/
-alias remark_2_2_2_toKMonoid_sumOf := KappaMonoid.PaperKMonoid.toKMonoid_sumOf
+/-- **Remark 2.2(2)**, the substance — `KappaMonoid.KMonoid.ofBare_sumOf`, in `Core/Bare.lean`:
+for a `κ`-monoid given as in Definition 2.1, the sum over an arbitrary index type of size `≤ κ` is
+the `κ`-indexed `Σ` of any zero-padded transport, and so is well defined; this rests on (A3),
+`BareKMonoid.ksum_perm`. -/
+alias remark_2_2_2_ofBare_sumOf := KappaMonoid.KMonoid.ofBare_sumOf
 
 /-- **Examples 2.3(2)** — `KappaMonoid.ENNRealExample.instKMonoid`, in `Examples/ENNReal.lean`. -/
 
@@ -90,13 +89,9 @@ modules, is `(projClass R κ hκ).lambdaGenPart ℵ₀` — `KappaMonoid.ModuleC
 alias definition_2_4_3_lambdaGenPart := KappaMonoid.ModuleClass.lambdaGenPart
 
 
-/-- **Lemma 2.5**, (A3) from (A1) and (A2) — `KappaMonoid.PaperKMonoid.sigma_perm`, in
-`Paper/Definition21.lean`: `Σ` is invariant under permutations of `κ`. -/
-alias lemma_2_5_A3_sigma_perm := KappaMonoid.PaperKMonoid.sigma_perm
-
-/-- **Lemma 2.5**, (A3) for bare summation data — `KappaMonoid.BareKMonoid.ksum_perm`, in
-`Core/Bare.lean`. -/
-alias lemma_2_5_A3_bare_ksum_perm := KappaMonoid.BareKMonoid.ksum_perm
+/-- **Lemma 2.5**, (A3) from (A1) and (A2) — `KappaMonoid.BareKMonoid.ksum_perm`, in
+`Core/Bare.lean`: `Σ` is invariant under permutations of `κ`. -/
+alias lemma_2_5_A3_ksum_perm := KappaMonoid.BareKMonoid.ksum_perm
 
 /-- **Lemma 2.5**, (A4) — `KappaMonoid.KMonoid.ksum_comm`, in `Core/KMonoid.lean`: iterated sums
 may be interchanged. -/
@@ -128,10 +123,10 @@ alias lemma_2_7_1_first_half_cmul_zero_cardinal := KappaMonoid.KMonoid.cmul_zero
 /-- **Lemma 2.7(1), second half** — `KappaMonoid.KMonoid.cmul_one`, in `Core/KMonoid.lean`. -/
 alias lemma_2_7_1_second_half_cmul_one := KappaMonoid.KMonoid.cmul_one
 
-/-- **Lemma 2.7(3)** — `KappaMonoid.KMonoid.cmul_sumOf (hI := CardLE.mk' `), in `Core/KMonoid.lean`. -/
+/-- **Lemma 2.7(3)** — `KappaMonoid.KMonoid.cmul_sumOf`, in `Core/KMonoid.lean`. -/
 alias lemma_2_7_3_cmul_sumOf := KappaMonoid.KMonoid.cmul_sumOf
 
-/-- **Lemma 2.7(2)** — `KappaMonoid.KMonoid.cmul_sumOf_cardinal (hI := CardLE.mk' `), in `Core/KMonoid.lean`. -/
+/-- **Lemma 2.7(2)** — `KappaMonoid.KMonoid.cmul_sumOf_cardinal`, in `Core/KMonoid.lean`. -/
 alias lemma_2_7_2_cmul_sumOf_cardinal := KappaMonoid.KMonoid.cmul_sumOf_cardinal
 
 /-- **Lemma 2.7(2)** — `KappaMonoid.LMonoid.lcmul_add`, in `Core/LMonoid.lean`. -/

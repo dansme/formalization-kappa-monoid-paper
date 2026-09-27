@@ -69,11 +69,13 @@ noncomputable def bareKMonoid (hκ : ℵ₀ ≤ κ) : @BareKMonoid κ C.carrier 
   letI : Zero C.carrier := ⟨C.zero⟩
   refine
     { aleph0_le := hκ
+      i₀ := (nonempty_Idx hκ).some
       ksum := C.dsum
       ksum_single := ?_
       ksum_sigma := ?_ }
   · -- (A1): all but one summand is the zero module
-    intro i₀ x hx
+    intro x hx
+    generalize (nonempty_Idx hκ).some = i₀ at hx ⊢
     refine C.eq_of_iso ?_
     have hsub : ∀ i, i ≠ i₀ → Subsingleton (C.rep (x i)) := fun i hi => by
       rw [hx i hi]; exact C.subsingleton_rep_zero

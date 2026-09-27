@@ -40,16 +40,25 @@ theorem exists_perm_comp {ι : Type u} {κ : Cardinal.{u}} (e₁ e₂ : ι ↪ I
     Equiv.Set.sumCompl_apply_inl, hval]
   rfl
 
-/-- "Bare" `κ`-monoid data: a pointed type with a `κ`-indexed summation subject to (A1) and
-(A2).  By Lemma 2.5 the additive structure and the sums over arbitrary index types of size
-`≤ κ` are determined by this data; `KMonoid.ofBare` reconstructs them. -/
+/-- **Definition 2.1**, verbatim: a set `H` with an element `0` and a map `Σ : H^κ → H` such that
+
+* (A1) if `x ∈ H^κ` has `x i = 0` for all `i ≠ 0`, then `Σ x = x 0`;
+* (A2) if `x ∈ H^{κ×κ}` and `π : κ × κ → κ` is a bijection, then `Σᵢ Σⱼ x i j = Σₖ x (π⁻¹ k)`.
+
+The distinguished element `0 ∈ κ` of the paper is an arbitrary index `i₀ : Idx κ`, and (A1) is
+assumed at `i₀` only, exactly as in the paper; at every other index it follows
+(`ksum_single_at`).  By Lemma 2.5 the additive structure and the sums over arbitrary index types
+of size `≤ κ` are determined by this data; `KMonoid.ofBare` reconstructs them, and
+`Paper/Definition21.lean` shows that nothing is lost or added. -/
 structure BareKMonoid (κ : Cardinal.{u}) (H : Type v) [Zero H] where
   /-- `κ` is an infinite cardinal. -/
   aleph0_le : ℵ₀ ≤ κ
-  /-- The `κ`-indexed summation. -/
+  /-- The distinguished index, playing the role of `0 ∈ κ`. -/
+  i₀ : Idx κ
+  /-- The `κ`-indexed summation `Σ : H^κ → H`. -/
   ksum : (Idx κ → H) → H
-  /-- (A1). -/
-  ksum_single : ∀ (i₀ : Idx κ) (x : Idx κ → H), (∀ i, i ≠ i₀ → x i = 0) → ksum x = x i₀
+  /-- (A1), at the distinguished index. -/
+  ksum_single : ∀ x : Idx κ → H, (∀ i, i ≠ i₀ → x i = 0) → ksum x = x i₀
   /-- (A2). -/
   ksum_sigma : ∀ (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx κ),
       ksum (fun i => ksum (x i)) = ksum fun k => x (π.symm k).1 (π.symm k).2
@@ -63,18 +72,20 @@ include B
 /-- A fixed bijection `Idx κ × Idx κ ≃ Idx κ`. -/
 noncomputable def pair : Idx κ × Idx κ ≃ Idx κ := pairEquiv B.aleph0_le
 
-/-- A fixed index, used as the "column" along which families are spread out. -/
-noncomputable def j₀ : Idx κ := (nonempty_Idx B.aleph0_le).some
-
 theorem ksum_zero : B.ksum (fun _ => 0) = 0 :=
-  B.ksum_single B.j₀ _ fun _ _ => rfl
+  B.ksum_single _ fun _ _ => rfl
 
-/-- (A3): the summation is invariant under permutations of `Idx κ`. -/
+/-- (A3), the first half of Lemma 2.5: `Σ` is invariant under permutations of `κ`.
+
+Paper proof: spread `x` out as `y i j := if j = 0 then x i else 0`, so that `Σⱼ y i j = x i` by
+(A1) — this is the only place (A1) is used, and it is used at the distinguished index — then
+apply (A2) once with `f ∘ (π⁻¹, id)` and once with `f`, for an arbitrary bijection
+`f : κ × κ ≃ κ`. -/
 theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) : B.ksum x = B.ksum (x ∘ π) := by
-  set y : Idx κ → Idx κ → H := fun i j => if j = B.j₀ then x i else 0 with hy
+  set y : Idx κ → Idx κ → H := fun i j => if j = B.i₀ then x i else 0 with hy
   set w : Idx κ → Idx κ → H := fun i j => y (π i) j
   have hxy : ∀ i, B.ksum (y i) = x i := fun i =>
-    (B.ksum_single B.j₀ (y i) fun j hj => if_neg hj).trans (if_pos rfl)
+    (B.ksum_single (y i) fun j hj => if_neg hj).trans (if_pos rfl)
   set f := B.pair with hf
   set g : Idx κ × Idx κ ≃ Idx κ := (π.symm.prodCongr (Equiv.refl (Idx κ))).trans f with hg
   have hgsymm : ∀ l : Idx κ, g.symm l = (π (f.symm l).1, (f.symm l).2) := by
@@ -90,31 +101,51 @@ theorem ksum_perm (x : Idx κ → H) (π : Idx κ ≃ Idx κ) : B.ksum x = B.ksu
     _ = B.ksum (fun i => B.ksum (w i)) := (B.ksum_sigma w f).symm
     _ = B.ksum (x ∘ π) := by congr 1; funext i; exact hxy (π i)
 
-/-- The "first row" embedding `i ↦ (i, j₀)` of `Idx κ` into itself. -/
+/-- (A1) at an *arbitrary* index: transport (A1) along the transposition exchanging that index
+with the distinguished one. -/
+theorem ksum_single_at (a : Idx κ) (x : Idx κ → H) (hx : ∀ i, i ≠ a → x i = 0) :
+    B.ksum x = x a := by
+  classical
+  by_cases ha : a = B.i₀
+  · subst ha; exact B.ksum_single x hx
+  · have hzero : ∀ i, i ≠ B.i₀ → (x ∘ Equiv.swap a B.i₀) i = 0 := by
+      intro i hi
+      refine hx _ fun hcon => ?_
+      by_cases hia : i = a
+      · subst hia
+        rw [Equiv.swap_apply_left] at hcon
+        exact ha hcon.symm
+      · rw [Equiv.swap_apply_of_ne_of_ne hia hi] at hcon
+        exact hia hcon
+    rw [B.ksum_perm x (Equiv.swap a B.i₀), B.ksum_single _ hzero]
+    show x (Equiv.swap a B.i₀ B.i₀) = x a
+    rw [Equiv.swap_apply_right]
+
+/-- The "first row" embedding `i ↦ (i, i₀)` of `Idx κ` into itself. -/
 noncomputable def row : Idx κ ↪ Idx κ :=
-  ⟨fun i => B.pair (i, B.j₀), fun _ _ h => (Prod.ext_iff.mp (B.pair.injective h)).1⟩
+  ⟨fun i => B.pair (i, B.i₀), fun _ _ h => (Prod.ext_iff.mp (B.pair.injective h)).1⟩
 
 /-- Zero-padding along `row` does not change the sum: this is (A2) applied to a family
 concentrated in one column. -/
 theorem ksum_row (z : Idx κ → H) : B.ksum (Function.extend ⇑B.row z 0) = B.ksum z := by
-  set Y : Idx κ → Idx κ → H := fun i j => if j = B.j₀ then z i else 0
+  set Y : Idx κ → Idx κ → H := fun i j => if j = B.i₀ then z i else 0
   have hYsum : ∀ i, B.ksum (Y i) = z i := fun i =>
-    (B.ksum_single B.j₀ (Y i) fun j hj => if_neg hj).trans (if_pos rfl)
+    (B.ksum_single (Y i) fun j hj => if_neg hj).trans (if_pos rfl)
   have hkey : ∀ k, Y (B.pair.symm k).1 (B.pair.symm k).2 = Function.extend ⇑B.row z 0 k := by
     intro k
     by_cases hk : ∃ i, B.row i = k
     · obtain ⟨i, rfl⟩ := hk
-      have hps : B.pair.symm (B.row i) = (i, B.j₀) := B.pair.symm_apply_apply (i, B.j₀)
+      have hps : B.pair.symm (B.row i) = (i, B.i₀) := B.pair.symm_apply_apply (i, B.i₀)
       rw [hps]
-      show (if B.j₀ = B.j₀ then z i else 0) = _
+      show (if B.i₀ = B.i₀ then z i else 0) = _
       rw [if_pos rfl, B.row.injective.extend_apply]
-    · have hne : (B.pair.symm k).2 ≠ B.j₀ := by
+    · have hne : (B.pair.symm k).2 ≠ B.i₀ := by
         intro heq
         exact hk ⟨(B.pair.symm k).1, by
-          show B.pair ((B.pair.symm k).1, B.j₀) = k
+          show B.pair ((B.pair.symm k).1, B.i₀) = k
           rw [← heq]
           exact B.pair.apply_symm_apply k⟩
-      show (if (B.pair.symm k).2 = B.j₀ then _ else 0) = _
+      show (if (B.pair.symm k).2 = B.i₀ then _ else 0) = _
       rw [if_neg hne, Function.extend_apply' z (0 : Idx κ → H) k hk]
       rfl
   calc B.ksum (Function.extend ⇑B.row z 0)
@@ -125,7 +156,7 @@ theorem ksum_row (z : Idx κ → H) : B.ksum (Function.extend ⇑B.row z 0) = B.
 
 theorem mk_compl_row : #(↥(Set.range ⇑B.row)ᶜ) = κ := by
   have := nontrivial_Idx B.aleph0_le
-  obtain ⟨j₁, hj₁⟩ := exists_ne B.j₀
+  obtain ⟨j₁, hj₁⟩ := exists_ne B.i₀
   have hmem : ∀ i : Idx κ, B.pair (i, j₁) ∈ (Set.range ⇑B.row)ᶜ := by
     rintro i ⟨i', hi'⟩
     exact hj₁ (Prod.ext_iff.mp (B.pair.injective hi')).2.symm
@@ -190,7 +221,7 @@ theorem ksum_extend_eq {ι : Type u} (h : #ι ≤ κ) (e : ι ↪ Idx κ) (x : �
 theorem bsum_unique {ι : Type u} [Unique ι] (h : #ι ≤ κ) (x : ι → H) : B.bsum h x = x default := by
   set E := (emb h).trans B.row with hE
   show B.ksum (Function.extend ⇑E x 0) = x default
-  rw [B.ksum_single (E default) _ ?_, E.injective.extend_apply]
+  rw [B.ksum_single_at (E default) _ ?_, E.injective.extend_apply]
   intro j hj
   by_cases hjk : ∃ i, E i = j
   · obtain ⟨i, rfl⟩ := hjk
@@ -325,6 +356,36 @@ noncomputable def KMonoid.ofBare {κ : Cardinal.{u}} {H : Type v} [Zero H]
   congr 1
   funext k
   exact (Function.Embedding.refl (Idx κ)).injective.extend_apply x 0 k
+
+/-- Nothing is added by the reconstruction: sums over an arbitrary index type are zero-padded
+`Σ`'s. -/
+theorem KMonoid.ofBare_sumOf {κ : Cardinal.{u}} {H : Type v} [Zero H] (B : BareKMonoid κ H)
+    {ι : Type u} (h : #ι ≤ κ) (x : ι → H) :
+    letI := KMonoid.ofBare B
+    ∑[≤ κ] i, x i = B.ksum (Function.extend (emb h) x 0) := by
+  let := KMonoid.ofBare B
+  exact (KMonoid.sumOf_eq_extend (h := CardLE.mk' h) (emb h) x).trans (KMonoid.ofBare_ksum B _)
+
+/-- Nor by the addition: it is a two-term `Σ`. -/
+theorem KMonoid.ofBare_add {κ : Cardinal.{u}} {H : Type v} [Zero H] (B : BareKMonoid κ H)
+    (a b : H) {i₀ i₁ : Idx κ} (hne : i₀ ≠ i₁) :
+    letI := KMonoid.ofBare B
+    a + b = B.ksum (fun i => if i = i₀ then a else if i = i₁ then b else 0) := by
+  let := KMonoid.ofBare B
+  rw [← KMonoid.ofBare_ksum B, KMonoid.ksum_two a b i₀ i₁ hne]
+
+/-- The `κ`-indexed summation of a `κ`-monoid, as the data of Definition 2.1.  Any index may be
+taken as the distinguished one, since a `κ`-monoid satisfies (A1) at every index. -/
+noncomputable def KMonoid.toBare (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H] :
+    BareKMonoid κ H where
+  aleph0_le := KMonoid.aleph0_le (κ := κ) (H := H)
+  i₀ := (nonempty_Idx (KMonoid.aleph0_le (κ := κ) (H := H))).some
+  ksum := KMonoid.ksum (κ := κ)
+  ksum_single := fun x hx => KMonoid.ksum_single _ x hx
+  ksum_sigma := fun x π => KMonoid.ksum_sigma x π
+
+@[simp] theorem KMonoid.toBare_ksum (κ : Cardinal.{u}) (H : Type v) [KMonoid κ H]
+    (x : Idx κ → H) : (KMonoid.toBare κ H).ksum x = KMonoid.ksum (κ := κ) x := rfl
 
 /-- A `κ`-monoid structure from `κ`-indexed data on a type that already carries a compatible
 commutative monoid structure. -/

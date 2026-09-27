@@ -264,8 +264,9 @@ noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ �
   letI := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
   KMonoid.ofKsum
     { aleph0_le := hκ
+      i₀ := (nonempty_Idx hκ).some
       ksum := ksumQ hκ
-      ksum_single := fun i₀ A hA => ksumQ_single hκ i₀ A hA
+      ksum_single := fun A hA => ksumQ_single hκ _ A hA
       ksum_sigma := fun A π => ksumQ_sigma hκ A π }
     fun a b i₀ i₁ hne => ksumQ_two hκ a b i₀ i₁ hne
 
@@ -278,8 +279,9 @@ noncomputable def instKMonoid (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ �
   let := instAddCommMonoid (lam := lam) (κ := κ) (X := X) hκ
   exact KMonoid.ofKsum_ksum
     { aleph0_le := hκ
+      i₀ := (nonempty_Idx hκ).some
       ksum := ksumQ hκ
-      ksum_single := fun i₀ A hA => ksumQ_single hκ i₀ A hA
+      ksum_single := fun A hA => ksumQ_single hκ _ A hA
       ksum_sigma := fun A π => ksumQ_sigma hκ A π }
     (fun a b i₀ i₁ hne => ksumQ_two hκ a b i₀ i₁ hne) A
 
