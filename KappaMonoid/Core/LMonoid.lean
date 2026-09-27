@@ -64,42 +64,45 @@ theorem lsumOf_sumType {α β : Type u} [hα : CardLT α lam] [hβ : CardLT β l
     _ = ∑[lam] _ : PUnit.{u + 1}, (0 : X) := lsumOf_equiv (Equiv.sumEmpty PUnit.{u + 1} ι).symm _
     _ = 0 := lsumOf_unique CardLT.lt _
 
+/-- A double sum is the sum over the product. -/
+theorem lsumOf_prod {ι J : Type u} [hι : CardLT ι lam] [hJ : CardLT J lam] (x : ι → J → X) :
+    ∑[lam] i, ∑[lam] j, x i j = ∑[lam] p : ι × J, x p.1 p.2 := by
+  have := factRegular (lam := lam) (X := X)
+  rw [lsumOf_sigma CardLT.lt (fun _ => CardLT.lt) x CardLT.lt]
+  exact lsumOf_equiv (Equiv.sigmaEquivProd ι J).symm _
+
 @[simp] theorem lsumOf_zero {ι : Type u} [h : CardLT ι lam] : ∑[lam] _ : ι, (0 : X) = 0 := by
   have := factRegular (lam := lam) (X := X)
-  have : IsEmpty ((_ : ι) × PEmpty.{u + 1}) := ⟨fun p => p.2.elim⟩
   calc ∑[lam] _ : ι, (0 : X)
       = ∑[lam] _ : ι, ∑[lam] _ : PEmpty.{u + 1}, (0 : X) := by simp only [lsumOf_isEmpty]
-    _ = ∑[lam] _ : (_ : ι) × PEmpty.{u + 1}, (0 : X) :=
-        lsumOf_sigma CardLT.lt (fun _ => CardLT.lt) _ CardLT.lt
+    _ = ∑[lam] _ : ι × PEmpty.{u + 1}, (0 : X) := lsumOf_prod _
     _ = 0 := lsumOf_isEmpty _
 
 theorem lsumOf_eq_zero_of_forall {ι : Type u} [h : CardLT ι lam] {x : ι → X} (hx : ∀ i, x i = 0) :
     ∑[lam] i, x i = 0 := by
   simp only [hx, lsumOf_zero]
 
-/-- Zero-padding along an embedding does not change a sum. -/
+/-- Zero-padding along an embedding does not change a sum: split `ι'` into the image of `e`,
+where the padded family is `x` reindexed, and the rest, where it is `0`. -/
 theorem lsumOf_extend {ι ι' : Type u} [h : CardLT ι lam] [h' : CardLT ι' lam] (e : ι ↪ ι')
     (x : ι → X) :
     ∑[lam] j, Function.extend e x 0 j = ∑[lam] i, x i := by
+  classical
   have := factRegular (lam := lam) (X := X)
-  have hρ : ∀ j : ι', CardLT {i // e i = j} lam :=
-    fun j => ⟨mk_lt_of_injective h.lt Subtype.val Subtype.val_injective⟩
-  have hfib : ∀ j, ∑[lam] p : {i // e i = j}, x p.1 = Function.extend e x (0 : ι' → X) j := by
-    intro j
-    by_cases hj : ∃ i, e i = j
-    · obtain ⟨i, rfl⟩ := hj
-      let _ : Unique {i' // e i' = e i} := ⟨⟨⟨i, rfl⟩⟩, fun p => Subtype.ext (e.injective p.2)⟩
-      rw [lsumOf_unique, e.injective.extend_apply]
-      exact congrArg x (e.injective (default : {i' // e i' = e i}).2)
-    · have : IsEmpty {i // e i = j} := ⟨fun p => hj ⟨p.1, p.2⟩⟩
-      rw [lsumOf_isEmpty, Function.extend_apply' _ _ _ hj]
-      rfl
-  calc ∑[lam] j, Function.extend e x 0 j
-      = ∑[lam] j, ∑[lam] p : {i // e i = j}, x p.1 := by
-        congr 1; funext j; exact (hfib j).symm
-    _ = ∑[lam] q : (j : ι') × {i // e i = j}, x q.2.1 :=
-        lsumOf_sigma CardLT.lt (fun j => (hρ j).lt) _ CardLT.lt
-    _ = ∑[lam] i, x i := (lsumOf_equiv (Equiv.sigmaFiberEquiv (fun i => e i)) x).symm
+  let y := Function.extend e x 0
+  calc ∑[lam] j, y j
+      = ∑[lam] p : {j // j ∈ Set.range e} ⊕ {j // j ∉ Set.range e},
+          Sum.elim (fun j => y j.1) (fun j => y j.1) p := by
+        rw [lsumOf_equiv (Equiv.sumCompl (· ∈ Set.range e))]
+        congr 1; funext p; rcases p with p | p <;> rfl
+    _ = ∑[lam] j : {j // j ∈ Set.range e}, y j.1 + ∑[lam] j : {j // j ∉ Set.range e}, y j.1 :=
+        lsumOf_sumType _ _
+    _ = ∑[lam] i, x i + 0 := by
+        congr 1
+        · rw [lsumOf_equiv (Equiv.ofInjective e e.injective)]
+          exact congrArg _ (funext fun i => e.injective.extend_apply x 0 i)
+        · exact lsumOf_eq_zero_of_forall fun j => Function.extend_apply' _ _ _ j.2
+    _ = ∑[lam] i, x i := add_zero _
 
 /-- The binary sum, in the `Bool`-indexed form used throughout Sections 3 and 4. -/
 theorem lsumOf_two (a b : X) : ∑[lam] p : ULift.{u} Bool, (if p.down then a else b) = a + b := by
@@ -110,13 +113,6 @@ theorem lsumOf_two (a b : X) : ∑[lam] p : ULift.{u} Bool, (if p.down then a el
         funext p; rcases p with p | p <;> rfl,
     lsumOf_sumType, lsumOf_unique, lsumOf_unique]
   exact add_comm b a
-
-/-- A double sum is the sum over the product. -/
-theorem lsumOf_prod {ι J : Type u} [hι : CardLT ι lam] [hJ : CardLT J lam] (x : ι → J → X) :
-    ∑[lam] i, ∑[lam] j, x i j = ∑[lam] p : ι × J, x p.1 p.2 := by
-  have := factRegular (lam := lam) (X := X)
-  rw [lsumOf_sigma CardLT.lt (fun _ => CardLT.lt) x CardLT.lt]
-  exact lsumOf_equiv (Equiv.sigmaEquivProd ι J).symm _
 
 /-- Iterated sums may be interchanged: the `λ⁻` form of (A4).
 
