@@ -55,72 +55,74 @@ noncomputable def add (a b : X) : X :=
 
 theorem sum_punit (a : X) : S.sum (S.small PUnit.{u + 1}) (fun _ => a) = a := S.sum_unique _ _
 
-/-- A sum over `α ⊕ β` splits as a binary sum: the bridge between `sum` and `add`. -/
+/-- Reindexing along `e`, with the two families compared pointwise. -/
+theorem sum_equiv {ι ι' : Type u} (h : #ι < lam) (h' : #ι' < lam) (e : ι ≃ ι') {x : ι → X}
+    {y : ι' → X} (hxy : ∀ i, x i = y (e i)) : S.sum h x = S.sum h' y :=
+  (congrArg (S.sum h) (funext hxy)).trans (S.sum_congr h h' e y)
+
+/-- A sum over `α ⊕ β` is the binary sum of the two partial sums: the bridge between `sum` and
+`add`.  The two halves of `α ⊕ β` are the fibres of a family over `PUnit ⊕ PUnit`, the index
+type of `add`, so this is (B2). -/
 theorem sum_sumType {α β : Type u} (hα : #α < lam) (hβ : #β < lam) (hαβ : #(α ⊕ β) < lam)
     (f : α → X) (g : β → X) :
     S.sum hαβ (Sum.elim f g) = S.add (S.sum hα f) (S.sum hβ g) := by
-  have hρ : ∀ p : ULift.{u} Bool, #(bif p.down then β else α) < lam := by
-    rintro ⟨(_ | _)⟩; exacts [hα, hβ]
-  have hσ := mk_sigma_lt S.isRegular (S.small (ULift.{u} Bool)) hρ
+  let ρ : PUnit.{u + 1} ⊕ PUnit.{u + 1} → Type u := Sum.elim (fun _ => α) (fun _ => β)
+  let y : ∀ p, ρ p → X := Sum.rec (fun _ => f) (fun _ => g)
+  have hρ : ∀ p, #(ρ p) < lam := Sum.rec (fun _ => hα) (fun _ => hβ)
+  have h2 := S.hsum (S.small PUnit.{u + 1}) (S.small PUnit.{u + 1})
   calc S.sum hαβ (Sum.elim f g)
-      = S.sum hσ (Sum.elim f g ∘ sigmaBoolEquiv α β) := (S.sum_congr hσ _ _ _).symm
-    _ = S.sum hσ (fun p => boolFam f g p.1 p.2) := by
-        congr 1; funext p; obtain ⟨⟨(_ | _)⟩, y⟩ := p <;> rfl
-    _ = S.sum (S.small (ULift.{u} Bool)) (fun p => S.sum (hρ p) (boolFam f g p)) :=
-        (S.sum_sigma (S.small (ULift.{u} Bool)) hρ (boolFam f g) hσ).symm
-    _ = S.sum (S.small (ULift.{u} Bool))
-          (Sum.elim (fun _ => S.sum hα f) (fun _ => S.sum hβ g) ∘ uliftBoolEquiv) := by
-        congr 1; funext p; obtain ⟨(_ | _)⟩ := p <;> rfl
-    _ = S.add (S.sum hα f) (S.sum hβ g) := S.sum_congr _ _ uliftBoolEquiv _
+      = S.sum (mk_sigma_lt S.isRegular h2 hρ) (fun q => y q.1 q.2) :=
+        S.sum_equiv _ _ (sumEquivSigma α β) (by rintro (_ | _) <;> rfl)
+    _ = S.sum h2 (fun p => S.sum (hρ p) (y p)) := (S.sum_sigma h2 hρ y _).symm
+    _ = S.add (S.sum hα f) (S.sum hβ g) := S.sum_equiv _ _ (Equiv.refl _) (by rintro (_ | _) <;> rfl)
 
-theorem add_comm' (a b : X) : S.add a b = S.add b a := by
-  have hu := S.small PUnit.{u + 1}
-  calc S.add a b = S.sum (S.hsum hu hu) (Sum.elim (fun _ => a) (fun _ => b)) := rfl
-    _ = S.sum (S.hsum hu hu)
-          (Sum.elim (fun _ => b) (fun _ => a) ∘ Equiv.sumComm PUnit.{u + 1} PUnit.{u + 1}) := by
-        congr 1; funext p; rcases p with p | p <;> rfl
-    _ = S.add b a := S.sum_congr _ _ _ _
+/-! Lemma 2.5: `add` is a commutative monoid operation with neutral element `zero`.  Each law is
+`sum_sumType` together with one reindexing of the three-point (or one-point) index type. -/
+
+theorem add_comm' (a b : X) : S.add a b = S.add b a :=
+  S.sum_equiv _ _ (Equiv.sumComm _ _) (by rintro (_ | _) <;> rfl)
 
 theorem add_assoc' (a b c : X) : S.add (S.add a b) c = S.add a (S.add b c) := by
   have hu := S.small PUnit.{u + 1}
-  have hab := S.sum_sumType (S.hsum hu hu) hu (S.hsum (S.hsum hu hu) hu)
-    (Sum.elim (fun _ => a) (fun _ => b)) (fun _ => c)
-  have hbc := S.sum_sumType hu (S.hsum hu hu) (S.hsum hu (S.hsum hu hu))
-    (fun _ => a) (Sum.elim (fun _ => b) (fun _ => c))
-  have hadd : ∀ x y : X, S.sum (S.hsum hu hu) (Sum.elim (fun _ => x) (fun _ => y)) = S.add x y :=
-    fun _ _ => rfl
-  rw [S.sum_punit, hadd] at hab hbc
-  rw [← hab, ← hbc, ← S.sum_congr (S.hsum (S.hsum hu hu) hu) (S.hsum hu (S.hsum hu hu))
-    (Equiv.sumAssoc PUnit.{u + 1} PUnit.{u + 1} PUnit.{u + 1})]
-  congr 1
-  funext p
-  rcases p with (p | p) | p <;> rfl
+  calc S.add (S.add a b) c
+      = S.sum (S.hsum (S.hsum hu hu) hu)
+          (Sum.elim (Sum.elim (fun _ => a) (fun _ => b)) fun _ => c) := by
+        rw [S.sum_sumType (S.hsum hu hu) hu, S.sum_punit]; rfl
+    _ = S.sum (S.hsum hu (S.hsum hu hu))
+          (Sum.elim (fun _ => a) (Sum.elim (fun _ => b) fun _ => c)) :=
+        S.sum_equiv _ _ (Equiv.sumAssoc _ _ _) (by rintro ((_ | _) | _) <;> rfl)
+    _ = S.add a (S.add b c) := by rw [S.sum_sumType hu (S.hsum hu hu), S.sum_punit]; rfl
 
 theorem zero_add' (a : X) : S.add S.zero a = a := by
   have hu := S.small PUnit.{u + 1}
   have he := S.small PEmpty.{u + 1}
-  have h := S.sum_sumType he hu (S.hsum he hu) PEmpty.elim (fun _ => a)
-  rw [S.sum_punit] at h
-  rw [show S.sum he PEmpty.elim = S.zero from rfl] at h
-  rw [← h, ← S.sum_congr hu (S.hsum he hu) (Equiv.emptySum PEmpty.{u + 1} PUnit.{u + 1}).symm,
-    show (Sum.elim PEmpty.elim fun _ : PUnit.{u + 1} => a) ∘
-      (Equiv.emptySum PEmpty.{u + 1} PUnit.{u + 1}).symm = fun _ => a from rfl, S.sum_punit]
+  calc S.add S.zero a
+      = S.sum (S.hsum he hu) (Sum.elim PEmpty.elim fun _ => a) := by
+        rw [S.sum_sumType he hu, S.sum_punit]; rfl
+    _ = S.sum hu (fun _ => a) := S.sum_equiv _ _ (Equiv.emptySum _ _) (by rintro (e | _); exacts [e.elim, rfl])
+    _ = a := S.sum_punit a
 
-/-- The commutative monoid determined by the summation — the second bullet after **Lemma 2.5**:
-`(H, Σ²)` is a commutative monoid. -/
+/-- The commutative monoid determined by the summation, on a type that already carries the neutral
+element `0 = Σ ∅`. -/
 @[instance_reducible]
-noncomputable def addCommMonoid : AddCommMonoid X :=
+noncomputable def addCommMonoidOfZero [Zero X] (h0 : S.zero = 0) : AddCommMonoid X :=
   letI : Add X := ⟨S.add⟩
-  letI : Zero X := ⟨S.zero⟩
   { add := S.add
-    zero := S.zero
+    zero := (0 : X)
     nsmul := nsmulRec
     nsmul_zero := fun _ => rfl
     nsmul_succ := fun _ _ => rfl
     add_assoc := S.add_assoc'
     add_comm := S.add_comm'
-    zero_add := S.zero_add'
-    add_zero := fun a => (S.add_comm' a S.zero).trans (S.zero_add' a) }
+    zero_add := fun a => h0 ▸ S.zero_add' a
+    add_zero := fun a => h0 ▸ (S.add_comm' a S.zero).trans (S.zero_add' a) }
+
+/-- The commutative monoid determined by the summation — the second bullet after **Lemma 2.5**:
+`(H, Σ²)` is a commutative monoid. -/
+@[instance_reducible]
+noncomputable def addCommMonoid : AddCommMonoid X :=
+  letI : Zero X := ⟨S.zero⟩
+  S.addCommMonoidOfZero rfl
 
 end SumData
 
@@ -154,18 +156,6 @@ namespace SumData
 
 variable {lam : Cardinal.{u}} {X : Type v} (S : SumData lam X)
 
-/-- The `λ⁻`-monoid determined by bare summation data (Lemma 2.5). -/
-@[instance_reducible]
-noncomputable def toLMonoid : LMonoid lam X :=
-  letI := S.addCommMonoid
-  { toAddCommMonoid := S.addCommMonoid
-    isRegular := S.isRegular
-    lsumOf := S.sum
-    lsumOf_congr := S.sum_congr
-    lsumOf_unique := S.sum_unique
-    lsumOf_sigma := S.sum_sigma
-    add_eq_lsumOf := fun _ _ _ => rfl }
-
 /-- The `λ⁻`-monoid determined by summation data on a type that already carries a compatible
 commutative monoid structure. -/
 @[instance_reducible]
@@ -179,30 +169,17 @@ noncomputable def toLMonoid' [AddCommMonoid X]
   lsumOf_sigma := S.sum_sigma
   add_eq_lsumOf := hadd
 
-/-- Variant of `addCommMonoid` for a type that already carries the neutral element. -/
+/-- The `λ⁻`-monoid determined by bare summation data (Lemma 2.5). -/
 @[instance_reducible]
-noncomputable def addCommMonoidOfZero [Zero X] (h0 : S.zero = 0) : AddCommMonoid X :=
-  letI : Add X := ⟨S.add⟩
-  { add := S.add
-    zero := (0 : X)
-    nsmul := nsmulRec
-    nsmul_zero := fun _ => rfl
-    nsmul_succ := fun _ _ => rfl
-    add_assoc := S.add_assoc'
-    add_comm := S.add_comm'
-    zero_add := fun a => h0 ▸ S.zero_add' a
-    add_zero := fun a => h0 ▸ (S.add_comm' a S.zero).trans (S.zero_add' a) }
+noncomputable def toLMonoid : LMonoid lam X :=
+  letI := S.addCommMonoid
+  S.toLMonoid' fun _ _ _ => rfl
 
 /-- Variant of `toLMonoid` for a type that already carries the neutral element. -/
 @[instance_reducible]
 noncomputable def toLMonoidOfZero [Zero X] (h0 : S.zero = 0) : LMonoid lam X :=
-  { toAddCommMonoid := S.addCommMonoidOfZero h0
-    isRegular := S.isRegular
-    lsumOf := S.sum
-    lsumOf_congr := S.sum_congr
-    lsumOf_unique := S.sum_unique
-    lsumOf_sigma := S.sum_sigma
-    add_eq_lsumOf := fun _ _ _ => rfl }
+  letI := S.addCommMonoidOfZero h0
+  S.toLMonoid' fun _ _ _ => rfl
 
 end SumData
 

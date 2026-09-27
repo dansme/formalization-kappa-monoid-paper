@@ -1,6 +1,11 @@
 /-
 The `λ⁻`-sum API: the basic laws, sums over subsets, restriction along `λ ≤ λ'`, products,
 cardinal scalar multiplication (**Definition 2.6**, **Lemma 2.7**) and reducedness.
+
+Everything is derived from the four axioms (reindexing, one-point sums, (B2), and `+` as the
+two-point sum) through a few structural laws, each used by name: `lsumOf_reindex`,
+`lsumOf_sumType` (a sum over `α ⊕ β` splits), `lsumOf_prod` (a double sum is a sum over the
+product) and `lsumOf_const` (a constant sum depends only on the size of the index type).
 -/
 import KappaMonoid.Core.LamSmall
 
@@ -27,6 +32,14 @@ theorem mk_uLift_bool_lt {X : Type v} [LMonoid lam X] : #(ULift.{u} Bool) < lam 
 /-- `λ` is regular, as the instance the product, sum and sigma rules for `CardLT` need. -/
 theorem factRegular {X : Type v} [LMonoid lam X] : Fact lam.IsRegular := ⟨isRegular' (X := X)⟩
 
+/-- The summation data of a `λ⁻`-monoid, forgetting `+`. -/
+noncomputable def sumData (lam : Cardinal.{u}) (X : Type v) [LMonoid lam X] : SumData lam X where
+  isRegular := isRegular' (X := X)
+  sum := lsumOf
+  sum_congr := lsumOf_congr
+  sum_unique := lsumOf_unique
+  sum_sigma := lsumOf_sigma
+
 /-! ### Basic laws -/
 
 /-- Reindexing along an equivalence. -/
@@ -35,24 +48,31 @@ theorem lsumOf_equiv {ι ι' : Type u} [h : CardLT ι lam] [h' : CardLT ι' lam]
     ∑[lam] i, x i = ∑[lam] i', x (e i') :=
   (lsumOf_congr _ _ e x).symm
 
-/-- A sum over `α ⊕ β` splits as a binary sum. -/
+/-- Reindexing along an equivalence, with the two families compared pointwise. -/
+theorem lsumOf_reindex {ι ι' : Type u} [h : CardLT ι lam] [h' : CardLT ι' lam] (e : ι' ≃ ι)
+    {x : ι → X} {y : ι' → X} (hxy : ∀ i', x (e i') = y i') :
+    ∑[lam] i, x i = ∑[lam] i', y i' :=
+  (lsumOf_equiv e x).trans (congrArg _ (funext hxy))
+
+/-- Binary addition is the sum over the two-point type `PUnit ⊕ PUnit`. -/
+theorem add_eq_lsum (a b : X) :
+    a + b = ∑[lam] p : PUnit.{u + 1} ⊕ PUnit.{u + 1}, Sum.elim (fun _ => a) (fun _ => b) p :=
+  add_eq_lsumOf _ a b
+
+/-- A sum over `α ⊕ β` splits as a binary sum (`SumData.sum_sumType`). -/
 theorem lsumOf_sumType {α β : Type u} [hα : CardLT α lam] [hβ : CardLT β lam] (f : α → X)
     (g : β → X) :
-    ∑[lam] p : α ⊕ β, Sum.elim f g p = ∑[lam] a, f a + ∑[lam] b, g b := by
+    ∑[lam] p : α ⊕ β, Sum.elim f g p = ∑[lam] a, f a + ∑[lam] b, g b :=
   have := factRegular (lam := lam) (X := X)
-  have hρ : ∀ p : ULift.{u} Bool, CardLT (bif p.down then β else α) lam := by
-    rintro ⟨(_ | _)⟩ <;> assumption
-  calc ∑[lam] p : α ⊕ β, Sum.elim f g p
-      = ∑[lam] q, Sum.elim f g (sigmaBoolEquiv α β q) := lsumOf_equiv (sigmaBoolEquiv α β) _
-    _ = ∑[lam] q : (p : ULift.{u} Bool) × (bif p.down then β else α), boolFam f g q.1 q.2 := by
-        congr 1; funext p; obtain ⟨⟨(_ | _)⟩, y⟩ := p <;> rfl
-    _ = ∑[lam] p, ∑[lam] q, boolFam f g p q :=
-        (lsumOf_sigma CardLT.lt (fun p => (hρ p).lt) (boolFam f g) CardLT.lt).symm
-    _ = ∑[lam] p : PUnit.{u + 1} ⊕ PUnit.{u + 1},
-          Sum.elim (fun _ => ∑[lam] a, f a) (fun _ => ∑[lam] b, g b) p := by
-        rw [lsumOf_equiv uliftBoolEquiv]
-        congr 1; funext p; obtain ⟨(_ | _)⟩ := p <;> rfl
-    _ = ∑[lam] a, f a + ∑[lam] b, g b := (add_eq_lsumOf _ _ _).symm
+  ((sumData lam X).sum_sumType hα.lt hβ.lt CardLT.lt f g).trans (add_eq_lsum _ _).symm
+
+/-- The binary sum, in the `Bool`-indexed form used throughout Sections 3 and 4. -/
+theorem lsumOf_two (a b : X) : ∑[lam] p : ULift.{u} Bool, (if p.down then a else b) = a + b := by
+  have := factRegular (lam := lam) (X := X)
+  calc ∑[lam] p : ULift.{u} Bool, (if p.down then a else b)
+      = ∑[lam] p : PUnit.{u + 1} ⊕ PUnit.{u + 1}, Sum.elim (fun _ => b) (fun _ => a) p :=
+        lsumOf_reindex uliftBoolEquiv.symm (by rintro (_ | _) <;> rfl)
+    _ = a + b := (add_eq_lsum b a).symm.trans (add_comm b a)
 
 @[simp] theorem lsumOf_isEmpty {ι : Type u} [IsEmpty ι] [h : CardLT ι lam] (x : ι → X) :
     ∑[lam] i, x i = 0 := by
@@ -61,7 +81,7 @@ theorem lsumOf_sumType {α β : Type u} [hα : CardLT α lam] [hβ : CardLT β l
       = ∑[lam] _ : PUnit.{u + 1}, (0 : X) + ∑[lam] i, x i := by
         rw [lsumOf_unique (ι := PUnit.{u + 1}) CardLT.lt, zero_add]
     _ = ∑[lam] p : PUnit.{u + 1} ⊕ ι, Sum.elim (fun _ => 0) x p := (lsumOf_sumType _ _).symm
-    _ = ∑[lam] _ : PUnit.{u + 1}, (0 : X) := lsumOf_equiv (Equiv.sumEmpty PUnit.{u + 1} ι).symm _
+    _ = ∑[lam] _ : PUnit.{u + 1}, (0 : X) := lsumOf_reindex (Equiv.sumEmpty _ ι).symm fun _ => rfl
     _ = 0 := lsumOf_unique CardLT.lt _
 
 /-- A double sum is the sum over the product. -/
@@ -82,38 +102,6 @@ theorem lsumOf_eq_zero_of_forall {ι : Type u} [h : CardLT ι lam] {x : ι → X
     ∑[lam] i, x i = 0 := by
   simp only [hx, lsumOf_zero]
 
-/-- Zero-padding along an embedding does not change a sum: split `ι'` into the image of `e`,
-where the padded family is `x` reindexed, and the rest, where it is `0`. -/
-theorem lsumOf_extend {ι ι' : Type u} [h : CardLT ι lam] [h' : CardLT ι' lam] (e : ι ↪ ι')
-    (x : ι → X) :
-    ∑[lam] j, Function.extend e x 0 j = ∑[lam] i, x i := by
-  classical
-  have := factRegular (lam := lam) (X := X)
-  let y := Function.extend e x 0
-  calc ∑[lam] j, y j
-      = ∑[lam] p : {j // j ∈ Set.range e} ⊕ {j // j ∉ Set.range e},
-          Sum.elim (fun j => y j.1) (fun j => y j.1) p := by
-        rw [lsumOf_equiv (Equiv.sumCompl (· ∈ Set.range e))]
-        congr 1; funext p; rcases p with p | p <;> rfl
-    _ = ∑[lam] j : {j // j ∈ Set.range e}, y j.1 + ∑[lam] j : {j // j ∉ Set.range e}, y j.1 :=
-        lsumOf_sumType _ _
-    _ = ∑[lam] i, x i + 0 := by
-        congr 1
-        · rw [lsumOf_equiv (Equiv.ofInjective e e.injective)]
-          exact congrArg _ (funext fun i => e.injective.extend_apply x 0 i)
-        · exact lsumOf_eq_zero_of_forall fun j => Function.extend_apply' _ _ _ j.2
-    _ = ∑[lam] i, x i := add_zero _
-
-/-- The binary sum, in the `Bool`-indexed form used throughout Sections 3 and 4. -/
-theorem lsumOf_two (a b : X) : ∑[lam] p : ULift.{u} Bool, (if p.down then a else b) = a + b := by
-  have := factRegular (lam := lam) (X := X)
-  rw [lsumOf_equiv uliftBoolEquiv.symm,
-    show (fun p => if (uliftBoolEquiv.symm p).down then a else b)
-      = Sum.elim (fun _ : PUnit.{u + 1} => b) (fun _ : PUnit.{u + 1} => a) by
-        funext p; rcases p with p | p <;> rfl,
-    lsumOf_sumType, lsumOf_unique, lsumOf_unique]
-  exact add_comm b a
-
 /-- Iterated sums may be interchanged: the `λ⁻` form of (A4).
 
 Both sides are the sum over `ι × J`, indexed once as `(i, j)` and once as `(j, i)`. -/
@@ -123,20 +111,16 @@ theorem lsumOf_comm {ι J : Type u} [hι : CardLT ι lam] [hJ : CardLT J lam] (x
   rw [lsumOf_prod, lsumOf_prod, lsumOf_equiv (Equiv.prodComm J ι)]
   rfl
 
-/-- Sums are additive.
-
-Write `f i + g i` as a sum over `Bool`, swap the two sums, and read off `Σ f + Σ g`. -/
+/-- Sums are additive: write `f i + g i` as a sum over two points and swap the two sums. -/
 theorem lsumOf_add {ι : Type u} [h : CardLT ι lam] (f g : ι → X) :
     ∑[lam] i, (f i + g i) = ∑[lam] i, f i + ∑[lam] i, g i := by
   have := factRegular (lam := lam) (X := X)
-  let x : ι → ULift.{u} Bool → X := fun i b => if b.down then f i else g i
+  let x : ι → PUnit.{u + 1} ⊕ PUnit.{u + 1} → X := fun i => Sum.elim (fun _ => f i) (fun _ => g i)
   calc ∑[lam] i, (f i + g i)
-      = ∑[lam] i, ∑[lam] b, x i b := by
-        simp only [x, lsumOf_two]
-    _ = ∑[lam] b, ∑[lam] i, x i b := lsumOf_comm x
-    _ = ∑[lam] i, f i + ∑[lam] i, g i := by
-        rw [← lsumOf_two]
-        congr 1; funext b; rcases b with ⟨_ | _⟩ <;> rfl
+      = ∑[lam] i, ∑[lam] p, x i p := by simp only [x, ← add_eq_lsum]
+    _ = ∑[lam] p, ∑[lam] i, x i p := lsumOf_comm x
+    _ = ∑[lam] i, f i + ∑[lam] i, g i :=
+        (lsumOf_reindex (Equiv.refl _) (by rintro (_ | _) <;> rfl)).trans (add_eq_lsum _ _).symm
 
 /-! ### Sums over subsets -/
 
@@ -146,10 +130,8 @@ theorem lsumOf_union {ι : Type u} (S T : Set ι) (hd : Disjoint S T) [hS : Card
     ∑[lam] i ∈ S ∪ T, f i = ∑[lam] i ∈ S, f i + ∑[lam] i ∈ T, f i := by
   classical
   have := factRegular (lam := lam) (X := X)
-  rw [lsumOf_equiv (Equiv.Set.union hd).symm, ← lsumOf_sumType]
-  congr 1
-  funext p
-  rcases p with p | p <;> rfl
+  exact (lsumOf_reindex (Equiv.Set.union hd).symm (by rintro (_ | _) <;> rfl)).trans
+    (lsumOf_sumType _ _)
 
 /-- Terms with value `0` may be discarded: `S = T ⊔ (S \ T)`, and the sum over `S \ T` is `0`. -/
 theorem lsumOf_of_subset {ι : Type u} {S T : Set ι} [hS : CardLT S lam] [hT : CardLT T lam]
@@ -169,6 +151,19 @@ theorem lsumOf_eq_zero {ι : Type u} {T : Set ι} [hT : CardLT T lam] (f : ι �
     (hzero : ∀ i ∈ T, f i = 0) :
     ∑[lam] i ∈ T, f i = 0 :=
   lsumOf_eq_zero_of_forall fun i => hzero i i.2
+
+/-- Zero-padding along an embedding does not change a sum: the padded family vanishes off the
+image of `e` (`lsumOf_of_subset`), and on the image it is `x` reindexed. -/
+theorem lsumOf_extend {ι ι' : Type u} [h : CardLT ι lam] [h' : CardLT ι' lam] (e : ι ↪ ι')
+    (x : ι → X) :
+    ∑[lam] j, Function.extend e x 0 j = ∑[lam] i, x i := by
+  let y := Function.extend e x 0
+  calc ∑[lam] j, y j
+      = ∑[lam] j ∈ (Set.univ : Set ι'), y j := lsumOf_reindex (Equiv.Set.univ ι') fun _ => rfl
+    _ = ∑[lam] j ∈ Set.range e, y j :=
+        lsumOf_of_subset (Set.subset_univ _) y fun j _ hj => Function.extend_apply' _ _ _ hj
+    _ = ∑[lam] i, x i :=
+        lsumOf_reindex (Equiv.ofInjective e e.injective) fun i => e.injective.extend_apply x 0 i
 
 /-- Regrouping a sum over a set along a disjoint indexed cover by `< λ`-sized pieces. -/
 theorem lsumOf_biUnion_subset {ι J : Type u} (S : Set ι) (I : J → Set ι)
@@ -229,12 +224,9 @@ noncomputable def piSumData (lam : Cardinal.{u}) {B : Type w} (Y : B → Type v)
 @[instance_reducible]
 noncomputable def pi (lam : Cardinal.{u}) {B : Type w} (Y : B → Type v)
     [∀ b, LMonoid lam (Y b)] (hlam : lam.IsRegular) : LMonoid lam (∀ b, Y b) :=
-  (piSumData lam Y hlam).toLMonoid' fun h a b => funext fun i => by
-    show a i + b i = lsumOf (lam := lam) h fun p => Sum.elim (fun _ => a) (fun _ => b) p i
-    rw [show (fun p : PUnit.{u + 1} ⊕ PUnit.{u + 1} => Sum.elim (fun _ => a) (fun _ => b) p i)
-        = Sum.elim (fun _ => a i) (fun _ => b i) from
-      funext fun p => by rcases p with p | p <;> rfl]
-    exact add_eq_lsumOf h (a i) (b i)
+  (piSumData lam Y hlam).toLMonoid' fun h a b => funext fun i =>
+    (add_eq_lsumOf h (a i) (b i)).trans
+      (congrArg (lsumOf h) (by funext p; rcases p with _ | _ <;> rfl))
 
 /-- Sums in a product of `λ⁻`-monoids are computed coordinatewise. -/
 @[simp] theorem pi_lsumOf (lam : Cardinal.{u}) {B : Type w} (Y : B → Type v)
@@ -260,6 +252,13 @@ theorem cardLT_Idx {α : Cardinal.{u}} (hα : α < lam) : CardLT (Idx α) lam :=
 theorem lcmul_congr {α β : Cardinal.{u}} (h : α = β) (hα : α < lam) (hβ : β < lam) (x : X) :
     lcmul (lam := lam) α hα x = lcmul (lam := lam) β hβ x := by subst h; rfl
 
+/-- A constant sum depends only on the size of its index type: it is `#ι` copies of `x`. -/
+theorem lsumOf_const {ι : Type u} [h : CardLT ι lam] (x : X) :
+    ∑[lam] _ : ι, x = lcmul (lam := lam) #ι h.lt x := by
+  obtain ⟨e⟩ := Cardinal.eq.mp (mk_Idx #ι)
+  have := cardLT_Idx h.lt
+  exact lsumOf_reindex e fun _ => rfl
+
 /-- **Lemma 2.7(1)**, first half. -/
 @[simp] theorem lcmul_zero_cardinal (h0 : (0 : Cardinal.{u}) < lam) (x : X) :
     lcmul (lam := lam) 0 h0 x = 0 := by
@@ -283,19 +282,18 @@ theorem lcmul_congr {α β : Cardinal.{u}} (h : α = β) (hα : α < lam) (hβ :
   have := cardLT_Idx hα
   exact lsumOf_zero
 
-/-- **Lemma 2.7(2)**. -/
+/-- **Lemma 2.7(2)**: `(Σ l_i) x = Σ (l_i x)`.  Both sides are the constant sum over
+`Σ i, Idx (l i)`, grouped by (B2) on the right. -/
 theorem lcmul_lsumOf_cardinal {I : Type u} [hI : CardLT I lam] (l : I → Cardinal.{u})
     (hl : ∀ i, l i < lam) (hsum : Cardinal.sum l < lam) (x : X) :
     lcmul (lam := lam) (Cardinal.sum l) hsum x
       = ∑[lam] i, lcmul (lam := lam) (l i) (hl i) x := by
   have := factRegular (lam := lam) (X := X)
   have hρ : ∀ i, CardLT (Idx (l i)) lam := fun i => cardLT_Idx (hl i)
-  have := cardLT_Idx hsum
   have hmk : #((i : I) × Idx (l i)) = Cardinal.sum l := by
     rw [mk_sigma]; exact congrArg _ (funext fun i => mk_Idx (l i))
-  obtain ⟨Ψ⟩ := Cardinal.eq.mp (hmk.trans (mk_Idx (Cardinal.sum l)).symm)
   calc lcmul (lam := lam) (Cardinal.sum l) hsum x
-      = ∑[lam] _ : (i : I) × Idx (l i), x := lsumOf_equiv Ψ (fun _ => x)
+      = ∑[lam] _ : (i : I) × Idx (l i), x := by rw [lsumOf_const]; exact lcmul_congr hmk.symm _ _ x
     _ = ∑[lam] i, lcmul (lam := lam) (l i) (hl i) x :=
         (lsumOf_sigma CardLT.lt (fun i => (hρ i).lt) (fun i (_ : Idx (l i)) => x) CardLT.lt).symm
 
@@ -306,37 +304,33 @@ theorem lcmul_lsumOf {I : Type u} [hI : CardLT I lam] (α : Cardinal.{u}) (hα :
   haveI := cardLT_Idx (lam := lam) hα
   lsumOf_comm fun _ i => x i
 
-/-- **Lemma 2.7(2)** for a two-term sum of cardinals. -/
+/-- **Lemma 2.7(2)** for a two-term sum of cardinals: split the constant sum over
+`Idx α ⊕ Idx β`. -/
 theorem lcmul_add {α β : Cardinal.{u}} (hα : α < lam) (hβ : β < lam) (hαβ : α + β < lam) (x : X) :
     lcmul (lam := lam) (α + β) hαβ x
       = lcmul (lam := lam) α hα x + lcmul (lam := lam) β hβ x := by
   have := factRegular (lam := lam) (X := X)
   have := cardLT_Idx hα
   have := cardLT_Idx hβ
-  have := cardLT_Idx hαβ
-  obtain ⟨e⟩ : Nonempty (Idx α ⊕ Idx β ≃ Idx (α + β)) := Cardinal.eq.mp (by simp)
   calc lcmul (lam := lam) (α + β) hαβ x
-      = ∑[lam] p : Idx α ⊕ Idx β, Sum.elim (fun _ : Idx α => x) (fun _ : Idx β => x) p := by
-        rw [lcmul, lsumOf_equiv e]
-        congr 1; funext p; rcases p with p | p <;> rfl
+      = ∑[lam] p : Idx α ⊕ Idx β, Sum.elim (fun _ => x) (fun _ => x) p := by
+        rw [Sum.elim_lam_const_lam_const, lsumOf_const]
+        exact lcmul_congr (by simp) _ _ x
     _ = lcmul (lam := lam) α hα x + lcmul (lam := lam) β hβ x := lsumOf_sumType _ _
 
-/-- Iterated scaling: `α` copies of `β` copies of `x` is `α * β` copies of `x`. -/
+/-- Iterated scaling: `α` copies of `β` copies of `x` is the constant sum over `Idx α × Idx β`,
+that is `α * β` copies of `x`. -/
 theorem lcmul_lcmul {α β : Cardinal.{u}} (hα : α < lam) (hβ : β < lam) (hαβ : α * β < lam)
     (x : X) :
     lcmul (lam := lam) α hα (lcmul (lam := lam) β hβ x) = lcmul (lam := lam) (α * β) hαβ x := by
   have := factRegular (lam := lam) (X := X)
   have := cardLT_Idx hα
   have := cardLT_Idx hβ
-  have := cardLT_Idx hαβ
-  have hmk : #((_ : Idx α) × Idx β) = α * β := by
-    rw [Cardinal.mk_congr (Equiv.sigmaEquivProd (Idx α) (Idx β)), Cardinal.mk_prod, mk_Idx,
-      mk_Idx, Cardinal.lift_id, Cardinal.lift_id]
-  obtain ⟨Ψ⟩ := Cardinal.eq.mp (hmk.trans (mk_Idx (α * β)).symm)
   calc lcmul (lam := lam) α hα (lcmul (lam := lam) β hβ x)
-      = ∑[lam] _ : (_ : Idx α) × Idx β, x :=
-        lsumOf_sigma CardLT.lt (fun _ => CardLT.lt) (fun (_ : Idx α) (_ : Idx β) => x) CardLT.lt
-    _ = lcmul (lam := lam) (α * β) hαβ x := (lsumOf_equiv Ψ (fun _ => x)).symm
+      = ∑[lam] _ : Idx α × Idx β, x := lsumOf_prod fun _ _ => x
+    _ = lcmul (lam := lam) (α * β) hαβ x := by
+        rw [lsumOf_const]
+        exact lcmul_congr (by rw [mk_prod, mk_Idx, mk_Idx, lift_id, lift_id]) _ _ x
 
 /-- The remark after **Definition 2.6**: for an infinite `α < λ`, adding one more copy of `x` to
 `α` many copies of `x` does not change the value.  Immediate from `lcmul_add` and `1 + α = α`. -/
@@ -358,29 +352,6 @@ theorem lcmul_distrib {α : Cardinal.{u}} (hα : α < lam) (a b : X) :
 
 /-! ### Reducedness (Lemma 2.8) -/
 
-/-- **Lemma 2.8(1)** for `λ⁻`-monoids: a `λ⁻`-monoid with `ℵ₀ < λ` is reduced.
-
-The paper's Eilenberg–Mazur swindle, run with `ℵ₀` in place of `κ`: if `x + y = 0` then
-`x = x + ℵ₀·0 = x + ℵ₀(x+y) = (x + ℵ₀x) + ℵ₀y = ℵ₀x + ℵ₀y = ℵ₀(x+y) = 0`.
-
-The hypothesis `ℵ₀ < λ` cannot be dropped: an `ℵ₀⁻`-monoid is an arbitrary commutative
-monoid (`LMonoid.ofAddCommMonoid`), and `ℤ` is not reduced.  This is the `κ > ℵ₀` the paper asks
-for when it says the analogues of Lemma 2.8 hold for `κ⁻`-monoids. -/
-theorem isConical (h : ℵ₀ < lam) : IsConical X := by
-  have key : ∀ x y : X, x + y = 0 → x = 0 := by
-    intro x y hxy
-    have hcz : lcmul (lam := lam) ℵ₀ h (0 : X) = 0 := lcmul_zero _ _
-    calc x = x + (0 : X) := (add_zero x).symm
-      _ = x + lcmul (lam := lam) ℵ₀ h 0 := by rw [hcz]
-      _ = x + lcmul (lam := lam) ℵ₀ h (x + y) := by rw [hxy]
-      _ = x + (lcmul (lam := lam) ℵ₀ h x + lcmul (lam := lam) ℵ₀ h y) := by rw [lcmul_distrib]
-      _ = (x + lcmul (lam := lam) ℵ₀ h x) + lcmul (lam := lam) ℵ₀ h y := (add_assoc _ _ _).symm
-      _ = lcmul (lam := lam) ℵ₀ h x + lcmul (lam := lam) ℵ₀ h y := by
-          rw [add_lcmul_self le_rfl h x]
-      _ = lcmul (lam := lam) ℵ₀ h (x + y) := (lcmul_distrib h x y).symm
-      _ = 0 := by rw [hxy, hcz]
-  exact fun x y hxy => ⟨key x y hxy, key y x (by rw [add_comm]; exact hxy)⟩
-
 /-- Scaling by an infinite cardinal is idempotent (since `α * α = α`). -/
 theorem lcmul_idem {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α < lam) (x : X) :
     lcmul (lam := lam) α hα (lcmul (lam := lam) α hα x) = lcmul (lam := lam) α hα x := by
@@ -401,6 +372,20 @@ theorem add_lcmul_eq {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α) (hα : α < lam)
         rw [add_lcmul_self hα0 hα t₁]
     _ = lcmul (lam := lam) α hα (t₁ + t₂) := by rw [lcmul_distrib]
     _ = lcmul (lam := lam) α hα t₃ := hstep
+
+/-- **Lemma 2.8(1)** for `λ⁻`-monoids: a `λ⁻`-monoid with `ℵ₀ < λ` is reduced.
+
+The paper's Eilenberg–Mazur swindle, run with `ℵ₀` in place of `κ`: if `x + y = 0 = ℵ₀·0`,
+then `x + ℵ₀·0 = ℵ₀·0` by Lemma 2.8(2) (`add_lcmul_eq`), that is `x = 0`.
+
+The hypothesis `ℵ₀ < λ` cannot be dropped: an `ℵ₀⁻`-monoid is an arbitrary commutative
+monoid (`LMonoid.ofAddCommMonoid`), and `ℤ` is not reduced.  This is the `κ > ℵ₀` the paper asks
+for when it says the analogues of Lemma 2.8 hold for `κ⁻`-monoids. -/
+theorem isConical (h : ℵ₀ < lam) : IsConical X := by
+  have key : ∀ x y : X, x + y = 0 → x = 0 := fun x y hxy => by
+    have := add_lcmul_eq le_rfl h (t₃ := (0 : X)) (by rw [lcmul_zero]; exact hxy)
+    rwa [lcmul_zero, add_zero] at this
+  exact fun x y hxy => ⟨key x y hxy, key y x (by rwa [add_comm])⟩
 
 end LMonoid
 

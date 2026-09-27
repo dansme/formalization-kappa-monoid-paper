@@ -114,16 +114,16 @@ theorem mk_lt_of_injective {lam : Cardinal.{u}} {α β : Type u} (hβ : #β < la
 Binary addition is a sum over a two-element index type; these are the equivalences used to
 recognise it as such. -/
 
-/-- A pair of families, viewed as one dependent family over `ULift Bool`. -/
-def boolFam {α β : Type u} {X : Type v} (f : α → X) (g : β → X) :
-    ∀ p : ULift.{u} Bool, (bif p.down then β else α) → X
-  | ⟨true⟩ => g
-  | ⟨false⟩ => f
-
-/-- `Σ p : ULift Bool, (bif p.down then β else α) ≃ α ⊕ β`. -/
-def sigmaBoolEquiv (α β : Type u) :
-    ((p : ULift.{u} Bool) × (bif p.down then β else α)) ≃ α ⊕ β :=
-  (Equiv.sigmaCongrLeft' (Equiv.ulift (α := Bool))).trans (Equiv.sumEquivSigmaBool α β).symm
+/-- `α ⊕ β` as a sigma type over the two-point type `PUnit ⊕ PUnit`, the index type of binary
+addition: the two halves of `α ⊕ β` are the fibres. -/
+def sumEquivSigma (α β : Type u) :
+    α ⊕ β ≃ (p : PUnit.{u + 1} ⊕ PUnit.{u + 1}) × Sum.elim (fun _ => α) (fun _ => β) p where
+  toFun := Sum.elim (fun a => ⟨.inl ⟨⟩, a⟩) (fun b => ⟨.inr ⟨⟩, b⟩)
+  invFun
+    | ⟨.inl _, a⟩ => .inl a
+    | ⟨.inr _, b⟩ => .inr b
+  left_inv := by rintro (_ | _) <;> rfl
+  right_inv := by rintro ⟨⟨⟩ | ⟨⟩, _⟩ <;> rfl
 
 /-- `ULift Bool ≃ PUnit ⊕ PUnit`, sending `false` to the left and `true` to the right. -/
 def uliftBoolEquiv : ULift.{u} Bool ≃ PUnit.{u + 1} ⊕ PUnit.{u + 1} :=
