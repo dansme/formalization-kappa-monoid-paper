@@ -281,7 +281,7 @@ theorem isBraided_merge {ι : Type u} (e₀ e₁ : ι ↪ ι) (hdisj : ∀ i j, 
       Function.extend_apply' y (0 : ι → X) i
         (fun ⟨c, hc⟩ => hi (Set.mem_iUnion.mpr ⟨c, Or.inr hc.symm⟩))]
     exact add_zero _
-  · rw [LMonoid.lsumOf_pair (hdisj a a) (hsmall a) M, hM0 a, hM1 a]
+  · rw [LMonoid.lsumOf_pair (hdisj a a) M (hsmall a), hM0 a, hM1 a]
 
 /-- Variant of `isBraided_of_small_support` where the supports are replaced by arbitrary
 small sets containing them. -/

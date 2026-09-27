@@ -32,6 +32,7 @@ Design notes (see also `README.md`):
 -/
 import KappaMonoid.Core.Index
 import KappaMonoid.Core.SumData
+import KappaMonoid.Core.LamSmall
 import KappaMonoid.Core.LMonoid
 import KappaMonoid.Core.KMonoid
 import KappaMonoid.Core.Subobject

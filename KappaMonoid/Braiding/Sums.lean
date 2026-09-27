@@ -503,7 +503,7 @@ theorem eq_zero_of_lsumOf_eq_zero (hcon : IsConical X) {S : Set ι} (hS : #S < l
     LMonoid.lsumOf_of_subset hST hS (le_of_eq hset.symm) f fun j hj hnj =>
       absurd (hset ▸ hj) hnj
   have hsplit := LMonoid.lsumOf_union ({i} : Set ι) (S \ {i})
-    (Set.disjoint_iff_inter_eq_empty.mpr (by simp)) h1 hT hST f
+    (Set.disjoint_iff_inter_eq_empty.mpr (by simp)) h1 hT f hST
   rw [hcollapse, h] at hsplit
   have : Unique ({i} : Set ι) := ⟨⟨⟨i, rfl⟩⟩, fun j => Subtype.ext j.2⟩
   have hdef : ((default : ({i} : Set ι)) : ι) = i := (default : ({i} : Set ι)).2

@@ -446,7 +446,7 @@ implicit, is `regroup` along the fibres of `(a, n) ↦ (a, n - 1)`. -/
     · -- limit: `Σ_{I_μ ∪ I_{μ+1}} x = (v_μ + u_μ) + (v_{μ+1} + u_{μ+1})`, and `v_μ = 0`
       have hdisj : Disjoint (d.I (a, 0)) (d.I (bsucc (a, 0))) :=
         d.I_disjoint _ _ fun h => by simp [bsucc] at h
-      refine (lsumOf_union _ _ hdisj (d.I_small _) (d.I_small _) (J'_small (a, 0)) x).trans ?_
+      refine (lsumOf_union _ _ hdisj (d.I_small _) (d.I_small _) x (J'_small (a, 0))).trans ?_
       rw [d.hI, d.hI, d.v_limit]
       simp only [v', u', bsucc]
       simp

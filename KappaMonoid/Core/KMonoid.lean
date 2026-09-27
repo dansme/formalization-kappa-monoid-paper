@@ -123,7 +123,7 @@ theorem sumOf_subtype_support {ι : Type u} (h : #ι ≤ κ) (x : ι → H)
 theorem sumOf_sumType {α β : Type u} (hα : #α ≤ κ) (hβ : #β ≤ κ) (hαβ : #(α ⊕ β) ≤ κ)
     (f : α → H) (g : β → H) :
     sumOf (κ := κ) hαβ (Sum.elim f g) = sumOf (κ := κ) hα f + sumOf (κ := κ) hβ g :=
-  LMonoid.lsumOf_sumType (lt_succ hα) (lt_succ hβ) (lt_succ hαβ) f g
+  LMonoid.lsumOf_sumType (lt_succ hα) (lt_succ hβ) f g (lt_succ hαβ)
 
 /-- The special case of `sumOf_sigma` for a partition of the index set into subsets. -/
 theorem sumOf_biUnion {ι J : Type u} (I : J → Set ι) (hdisj : ∀ p q, p ≠ q → Disjoint (I p) (I q))
@@ -166,7 +166,7 @@ theorem ksum_sigma (x : Idx κ → Idx κ → H) (π : Idx κ × Idx κ ≃ Idx 
   have hidx : #(Idx κ) ≤ κ := le_of_eq (mk_Idx κ)
   have hprod : #(Idx κ × Idx κ) ≤ κ := mk_prod_le (H := H) hidx hidx
   calc ksum (κ := κ) (fun i => ksum (κ := κ) (x i))
-      = sumOf (κ := κ) hprod (fun p => x p.1 p.2) := LMonoid.lsumOf_prod _ _ _ x
+      = sumOf (κ := κ) hprod (fun p => x p.1 p.2) := LMonoid.lsumOf_prod _ _ x _
     _ = ksum (κ := κ) fun k => x (π.symm k).1 (π.symm k).2 := sumOf_equiv hprod hidx π.symm _
 
 /-- Compatibility of `+` with `Σ`. -/
@@ -179,7 +179,7 @@ theorem ksum_two (a b : H) (i₀ i₁ : Idx κ) (hne : i₀ ≠ i₁) :
         sumOf_eq_sumOf_subset _ hp f fun i hi => by
           simp only [Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at hi
           simp [f, hi.1, hi.2]
-    _ = f i₀ + f i₁ := LMonoid.lsumOf_pair hne _ f
+    _ = f i₀ + f i₁ := LMonoid.lsumOf_pair hne f _
     _ = a + b := by simp [f, hne.symm]
 
 /-- (A3), Lemma 2.5: `Σ` is invariant under permutations of the index set. -/
