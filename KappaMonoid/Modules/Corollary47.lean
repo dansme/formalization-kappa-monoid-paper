@@ -800,19 +800,16 @@ occur: Theorem 4.3 braids over the `λ⁻`-*small* classes (`lambdaSmallPart`) a
 the `<λ`-*generated* ones (`lambdaGenPart`), and the example is about the latter — see
 `krsa_ascent_lambdaGen`. -/
 theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed]
-    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
+    {lam : Cardinal.{u}} [hlam : Fact lam.IsRegular] (hlk : lam ≤ Order.succ κ) (B : Type u)
     (S : Set C.carrier)
     (hS : IsLSubset lam hlk S)
-    (hfree : letI : Fact lam.IsRegular := ⟨hlam⟩
-      letI := IsLSubset.lmonoid hlam hS
+    (hfree : letI := IsLSubset.lmonoid hlam.out hS
       ∃ e : ↥S → ↥(FreeL lam B), IsLMonoidHom lam e ∧ Function.Bijective e)
-    (hbr : letI := IsLSubset.lmonoid hlam hS
+    (hbr : letI := IsLSubset.lmonoid hlam.out hS
       IsBraidedOver lam κ ↥S C.carrier hlk (fun a => (a : C.carrier))) :
-    letI : Fact lam.IsRegular := ⟨hlam⟩
     ∃ f : ↥(FreeL lam B) → C.carrier,
       IsBraidedOver lam κ ↥(FreeL lam B) C.carrier hlk f := by
-  let : Fact lam.IsRegular := ⟨hlam⟩
-  let := IsLSubset.lmonoid hlam hS
+  let := IsLSubset.lmonoid hlam.out hS
   classical
   obtain ⟨e, hehom, hebij⟩ := hfree
   -- the inverse of the isomorphism of bases is again a `λ⁻`-homomorphism
@@ -829,38 +826,31 @@ theorem krsa_ascent (C : ModuleClass R κ) [C.IsSummandClosed]
 universal `κ`-extension of the free `λ⁻`-monoid on `B`.  The braiding comes from Corollary
 4.4(2). -/
 theorem krsa_ascent_lambdaGen (C : ModuleClass R κ) [C.IsSummandClosed]
-    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
+    {lam : Cardinal.{u}} [hlam : Fact lam.IsRegular] (hlk : lam ≤ Order.succ κ) (B : Type u)
     (hdec : ∀ a : C.carrier, ∃ (ι : Type u) (Q : ι → Type u) (_ : ∀ i, AddCommGroup (Q i))
       (_ : ∀ i, Module R (Q i)), #ι ≤ κ ∧ (∀ i, IsLambdaGenerated R lam (Q i)) ∧
         Nonempty (C.rep a ≃ₗ[R] ⨁ i, Q i))
-    (hfree : letI : Fact lam.IsRegular := ⟨hlam⟩
-      letI := IsLSubset.lmonoid hlam (C.lambdaGenPart_isLSubset lam hlam hlk)
-      ∃ e : ↥(C.lambdaGenPart lam) → ↥(FreeL lam B),
-        IsLMonoidHom lam e ∧ Function.Bijective e) :
-    letI : Fact lam.IsRegular := ⟨hlam⟩
+    (hfree : ∃ e : ↥(C.lambdaGenSubclass lam hlk) → ↥(FreeL lam B),
+      IsLMonoidHom lam e ∧ Function.Bijective e) :
     ∃ f : ↥(FreeL lam B) → C.carrier,
       IsBraidedOver lam κ ↥(FreeL lam B) C.carrier hlk f := by
-  let : Fact lam.IsRegular := ⟨hlam⟩
-  exact krsa_ascent C hlam hlk B (C.lambdaGenPart lam)
-    (C.lambdaGenPart_isLSubset lam hlam hlk) hfree
+  exact krsa_ascent C hlk B (C.lambdaGenPart lam)
+    (C.lambdaGenPart_isLSubset lam hlam.out hlk) hfree
     (corollary_4_4_two.{u, u} C lam hlk hdec).1
 
 /-- The `B`-indexed form: `V^κ(C)` has the universal property of the free `κ`-monoid on `B`.  Every
 map from `B` into a `κ`-monoid extends uniquely along the generators `ι(b)`. -/
 theorem krsa_ascent_free (C : ModuleClass R κ) [C.IsSummandClosed]
-    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
-    {f : letI : Fact lam.IsRegular := ⟨hlam⟩; ↥(FreeL lam B) → C.carrier}
-    (huniv : letI : Fact lam.IsRegular := ⟨hlam⟩
-      IsUniversalKExtension.{u, u + 1, u, t} lam κ ↥(FreeL lam B) C.carrier hlk f) :
-    letI : Fact lam.IsRegular := ⟨hlam⟩
+    {lam : Cardinal.{u}} [hlam : Fact lam.IsRegular] (hlk : lam ≤ Order.succ κ) (B : Type u)
+    {f : ↥(FreeL lam B) → C.carrier}
+    (huniv : IsUniversalKExtension.{u, u + 1, u, t} lam κ ↥(FreeL lam B) C.carrier hlk f) :
     ∀ (K : Type t) [KMonoid κ K] (g : B → K),
       ∃! ψ : C.carrier → K, KMonoid.IsKHom κ ψ ∧ ∀ b, ψ (f (iota b)) = g b := by
-  let : Fact lam.IsRegular := ⟨hlam⟩
   intro K _ g
-  let := KMonoid.toLMonoidOfLE K hlam hlk
+  let := KMonoid.toLMonoidOfLE K hlam.out hlk
   -- lift `g` to the free `λ⁻`-monoid, then extend along the universal property
   have hlift : LMonoid.IsLHom hlk (lift (lam := lam) g) :=
-    isLHom_of_isLMonoidHom hlam hlk (isLMonoidHom_lift (lam := lam) g)
+    isLHom_of_isLMonoidHom hlam.out hlk (isLMonoidHom_lift (lam := lam) g)
   obtain ⟨ψ, ⟨hψhom, hψ⟩, hψu⟩ := huniv.universal K (lift (lam := lam) g) hlift
   refine ⟨ψ, ⟨hψhom, fun b => ?_⟩, fun ψ' ⟨hψ'hom, hψ'⟩ => ?_⟩
   · rw [hψ (iota b), lift_iota]
@@ -872,7 +862,7 @@ theorem krsa_ascent_free (C : ModuleClass R κ) [C.IsSummandClosed]
     rw [huniv.isLHom.2 hι y, hψ'hom.map_sumOf (h := CardLE.mk' (le_of_lt_of_le_succ hlk hι)) (f ∘ y)]
     rfl
   have hcomp : IsLMonoidHom lam (fun y : ↥(FreeL lam B) => ψ' (f y)) :=
-    isLMonoidHom_of_isLHom hlam hlk hcomp0
+    isLMonoidHom_of_isLHom hlam.out hlk hcomp0
   have heq : (fun y : ↥(FreeL lam B) => ψ' (f y)) = lift (lam := lam) g :=
     hom_ext (lam := lam) hcomp (isLMonoidHom_lift (lam := lam) g)
       fun b => by show ψ' (f (iota b)) = lift g (iota b); rw [hψ' b, lift_iota]
@@ -890,22 +880,18 @@ The two sides live in different universes: `F_κ(B)` is cut out of `B → F_κ` 
 property, is the companion statement. -/
 theorem krsa_ascent_iso {R : Type u} [Ring R] {κ : Cardinal.{u}}
     (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
-    {lam : Cardinal.{u}} (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (B : Type u)
-    {f : letI : Fact lam.IsRegular := ⟨hlam⟩
-      ↥(FreeL lam B) → C.carrier}
-    (hbrF : letI : Fact lam.IsRegular := ⟨hlam⟩
-      IsBraidedOver lam κ ↥(FreeL lam B) C.carrier hlk f) :
-    letI : Fact lam.IsRegular := ⟨hlam⟩
+    {lam : Cardinal.{u}} [hlam : Fact lam.IsRegular] (hlk : lam ≤ Order.succ κ) (B : Type u)
+    {f : ↥(FreeL lam B) → C.carrier}
+    (hbrF : IsBraidedOver lam κ ↥(FreeL lam B) C.carrier hlk f) :
     letI : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
     letI := instKMonoidFreeK κ hκ B
     ∃! e : C.carrier → ↥(FreeK κ B),
-      KMonoid.IsKHom κ e ∧ (∀ x, e (f x) = freeIncl hlam hκ hlk x) ∧ Function.Bijective e := by
-  let : Fact lam.IsRegular := ⟨hlam⟩
+      KMonoid.IsKHom κ e ∧ (∀ x, e (f x) = freeIncl hlam.out hκ hlk x) ∧ Function.Bijective e := by
   let : Fact (Order.succ κ).IsRegular := ⟨Cardinal.isRegular_succ hκ⟩
   let := instKMonoidFreeK κ hκ B
   exact isUniversalKExtension_unique'.{u, u + 1, u, u + 1} hlk
     (hbrF.isUniversalKExtension hlk) (hbrF.isUniversalKExtension hlk)
-    (lemma_3_14_free hlam hκ hlk) (lemma_3_14_free hlam hκ hlk)
+    (lemma_3_14_free hlam.out hκ hlk) (lemma_3_14_free hlam.out hκ hlk)
 
 /-! ## `ℵ₀` copies of a class
 
