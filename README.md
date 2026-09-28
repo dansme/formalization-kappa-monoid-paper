@@ -6,8 +6,7 @@ A complete Lean 4 / Mathlib formalisation of Sections 2–5 of
 > decompositions of modules* (`kappa_monoids.tex`, `kappa_monoids.pdf` in this repository).
 
 Everything is proved: there is no `sorry` and no axiom beyond Lean's own (`propext`,
-`Classical.choice`, `Quot.sound`). That includes the one external theorem the paper relies on, the
-Bergman–Dicks realisation theorem.
+`Classical.choice`, `Quot.sound`).
 
 ## What the paper proves
 
