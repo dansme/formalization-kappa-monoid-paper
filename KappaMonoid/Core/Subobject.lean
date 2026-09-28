@@ -204,6 +204,19 @@ theorem IsKSubmonoid.coe_ksum {T : Set H} (hT : IsKSubmonoid κ T) (z : Idx κ �
     letI := hT.kmonoid
     ((ksum (κ := κ) z : T) : H) = ksum (κ := κ) fun i => (z i : H) := rfl
 
+/-- `⟨S⟩_κ` is a `κ`-monoid.  `IsKSubmonoid` is a `Prop`, so this is definitionally the structure
+`(isKSubmonoid_kclosure κ S).kmonoid`, and promoting it costs nothing (trap 13). -/
+noncomputable instance instKMonoidKclosure (S : Set H) : KMonoid κ ↥(kclosure κ S) :=
+  (isKSubmonoid_kclosure κ S).kmonoid
+
+/-- The inclusion of `⟨S⟩_κ` preserves sums over arbitrary small index types. -/
+theorem coe_sumOf_kclosure (S : Set H) {ι : Type u} [CardLE ι κ] (z : ι → kclosure κ S) :
+    ((∑[≤ κ] i, z i : kclosure κ S) : H) = ∑[≤ κ] i, (z i : H) := rfl
+
+/-- The inclusion of `⟨S⟩_κ` preserves `κ`-sums. -/
+theorem coe_ksum_kclosure (S : Set H) (z : Idx κ → kclosure κ S) :
+    ((ksum (κ := κ) z : kclosure κ S) : H) = ksum (κ := κ) fun i => (z i : H) := rfl
+
 /-- The inclusion of a `λ⁻`-closed subset preserves `λ⁻`-sums: they are computed as the
 ambient `κ`-sums. -/
 theorem _root_.KappaMonoid.IsLSubset.coe_lsumOf {lam : Cardinal.{u}} {hlk : lam ≤ Order.succ κ} {S : Set H}

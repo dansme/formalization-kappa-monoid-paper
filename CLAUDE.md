@@ -227,9 +227,12 @@ re-deriving them.
     it. Because `IsLSubset` is a `Prop` (trap 13), two such structures are definitionally equal, so
     promoting one to an instance is free — no proof that relied on the defeq moves. Check the head
     is specific enough (`↥(addOf …)`) that instance search is not slowed. The same was done at the
-    fixed cardinal for `F_{ℵ₀}` (`Fcard.instKMonoidAleph0`), for `V^{ℵ₀}(R)`
-    (`instKMonoidProjClassAleph0`) and for products (`KMonoid.instPiAleph0`); together they removed
-    ~100 `letI`/`let` lines.
+    fixed cardinal for `F_{ℵ₀}` (`Fcard.instKMonoidAleph0`), for products (`KMonoid.instPiAleph0`),
+    for `⟨S⟩_κ` (`KMonoid.instKMonoidKclosure`), for `V^{ℵ₀⁻}(Cℵ₀⁻)` and `V^{ℵ₁⁻}(Cℵ₁⁻)`
+    (`ModuleClass.instLMonoidLambdaGenPartAleph0`/`Aleph1`) and for `C_{λ⁻}`
+    (`ModuleClass.SmallSubclass.instLMonoid`).  `V^κ(C)` itself is an instance with no hypothesis
+    because `ModuleClass` carries `ℵ₀ ≤ κ` as a field (`ModuleClass.instKMonoid`); together these
+    removed some 370 `letI`/`let` lines.
 
 16. **A statement-level `letI` may be pinning a universe, not only carrying an instance.** In
     `Examples/`, `letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))` is the only mention of

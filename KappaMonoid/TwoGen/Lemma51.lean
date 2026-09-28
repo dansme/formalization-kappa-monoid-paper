@@ -37,17 +37,15 @@ theorem lemma_5_1_core (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
     (e : H → V(R).carrier)
-    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (hhom : KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
     (∀ a ∈ e ⁻¹' (V(R).lambdaGenPart ℵ₀), ∃ m n : ℕ, a = m • x₁ + n • x₂) ∧
       e ⁻¹' (V(R).lambdaGenPart ℵ₀) = add((x₁ + x₂)) := by
   classical
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
   -- Corollary 4.5(3): `V^{ℵ₀}(R)` is braided over `V(R)`, the finitely generated classes
   have hbrV := (corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1
   set S : Set H := e ⁻¹' (V(R).lambdaGenPart ℵ₀) with hSdef
-  have hWsub := V(R).lambdaGenPart_isLSubset le_rfl ℵ₀
+  have hWsub := V(R).lambdaGenPart_isLSubset ℵ₀
     Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   have h0S : (0 : H) ∈ S := by
     show e 0 ∈ V(R).lambdaGenPart ℵ₀
@@ -62,7 +60,7 @@ theorem lemma_5_1_core (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
   -- `S` is divisor-closed, because `V(R)` is (a summand of a f.g. module is f.g.)
   have hSsat : ∀ a ∈ S, ∀ b c : H, a = b + c → b ∈ S := by
     intro a ha b c habc
-    exact V(R).lambdaGenPart_summand le_rfl ℵ₀ (e a) ha (e b)
+    exact V(R).lambdaGenPart_summand ℵ₀ (e a) ha (e b)
       ⟨e c, by rw [← KMonoid.IsKHom.map_add hhom, ← habc]⟩
   -- and `S` generates `H`, because `V(R)` generates `V^{ℵ₀}(R)`
   have hSgen : KMonoid.KGenerates (ℵ₀ : Cardinal.{u}) S := by
@@ -124,15 +122,13 @@ theorem lemma_5_1 (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
     (e : H → V(R).carrier)
-    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (hhom : KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
 
     IsBraidedOver ℵ₀ ℵ₀ ↥(add((x₁ + x₂))) H (Order.le_succ ℵ₀) (fun y => (y : H)) := by
   classical
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
   have hbrV := (corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1
-  have hWsub := V(R).lambdaGenPart_isLSubset le_rfl ℵ₀
+  have hWsub := V(R).lambdaGenPart_isLSubset ℵ₀
     Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   have hpre := (lemma_5_1_core R hfg x₁ x₂ hgen hnoncyclic e hhom hbij).2
   have hTS : ∀ a ∈ add((x₁ + x₂)), e a ∈ V(R).lambdaGenPart ℵ₀ := by
@@ -160,7 +156,7 @@ theorem lemma_5_1_fg (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
     (e : H → V(R).carrier)
-    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (hhom : KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
     Module.Finite R (V(R).rep (e x₁)) ∧ Module.Finite R (V(R).rep (e x₂)) := by
   have hpre := (lemma_5_1_core R hfg x₁ x₂ hgen hnoncyclic e hhom hbij).2
@@ -178,7 +174,7 @@ theorem lemma_5_1_addOf_eq_closure (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
     (e : H → V(R).carrier)
-    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (hhom : KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
     add((x₁ + x₂)) = (AddSubmonoid.closure ({x₁, x₂} : Set H) : Set H) := by
   obtain ⟨hnat, hpre⟩ := lemma_5_1_core R hfg x₁ x₂ hgen hnoncyclic e hhom hbij
@@ -208,17 +204,12 @@ theorem lemma_5_1_iso (hfg : EveryProjectiveIsSumOfFG R) (x₁ x₂ : H)
     (hgen : KMonoid.KGenerates ℵ₀ ({x₁, x₂} : Set H))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
     (e : H → V(R).carrier)
-    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (hhom : KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
-    letI := V(R).instKMonoid le_rfl
-    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-      (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
     ∃ φ : ↥(add((x₁ + x₂))) → ↥(V(R).lambdaGenPart ℵ₀),
       IsLMonoidHom ℵ₀ φ ∧ Function.Bijective φ := by
   classical
-  let := V(R).instKMonoid le_rfl
-  let hW := V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0 hW
+  let hW := V(R).lambdaGenPart_isLSubset ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   have hpre := (lemma_5_1_core R hfg x₁ x₂ hgen hnoncyclic e hhom hbij).2
   have hmaps : ∀ a ∈ add((x₁ + x₂)), e a ∈ V(R).lambdaGenPart ℵ₀ := by
     intro a ha

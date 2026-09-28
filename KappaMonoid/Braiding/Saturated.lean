@@ -208,7 +208,6 @@ theorem lemma_3_14_sub [LMonoid lam X] [KMonoid κ Hh] (hlk : lam ≤ Order.succ
     (hbr : IsBraidedOver lam κ X Hh hlk f) (S : Set X) (hS : IsLSubmonoid lam S)
     (hsat : lam ≠ ℵ₀ ∨ IsSaturated S) :
     letI := hS.lmonoid
-    letI := (KMonoid.isKSubmonoid_kclosure κ (f '' S)).kmonoid
     IsUniversalKExtension.{u, v, w, t} lam κ ↥S ↥(KMonoid.kclosure κ (f '' S)) hlk
       (fun s => ⟨f (s : X), KMonoid.subset_kclosure ⟨(s : X), s.2, rfl⟩⟩) :=
   lemma_3_14_sub_of_subset hlk hbr S hS hsat (KMonoid.isKSubmonoid_kclosure κ (f '' S))

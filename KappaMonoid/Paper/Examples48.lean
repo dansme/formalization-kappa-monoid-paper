@@ -47,8 +47,6 @@ generated modules and `V(R) ≅ ℕ₀`, then `V^{ℵ₀}(R) ≅ ℕ₀ ∪ {∞
 theorem examples_4_8_3_nat (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfFG R)
     (φ : ↥(V(R).lambdaGenPart ℵ₀) → ℕ)
     (hφ :
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-        (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
       letI : LMonoid (ℵ₀ : Cardinal.{u}) ℕ := LMonoid.ofAddCommMonoid ℕ
       IsLMonoidHom ℵ₀ φ)
     (hbij : Function.Bijective φ) :
@@ -68,8 +66,6 @@ finitely generated modules and `V(R) ≅ ℝ≥0`, then `V^{ℵ₀}(R) ≅ ℝ�
 theorem examples_4_8_3_nnreal (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfFG R)
     (φ : ↥(V(R).lambdaGenPart ℵ₀) → ℝ≥0)
     (hφ :
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-        (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
       letI : LMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0 := LMonoid.ofAddCommMonoid ℝ≥0
       IsLMonoidHom ℵ₀ φ)
     (hbij : Function.Bijective φ) :
@@ -91,22 +87,17 @@ finitely generated modules and `V(R) ≅ ℚ≥0`, then `V^{ℵ₀}(R)` is isomo
 theorem examples_4_8_3_rat (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfFG R)
     (φ : ↥(V(R).lambdaGenPart ℵ₀) → ↥ratSet)
     (hφ :
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-        (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
       letI : LMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0 := LMonoid.ofAddCommMonoid ℝ≥0
       letI := (isLSubmonoid_ratSet : IsLSubmonoid (ℵ₀ : Cardinal.{u}) ratSet).lmonoid
       IsLMonoidHom ℵ₀ φ)
     (hbij : Function.Bijective φ) :
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
-    letI := (KMonoid.isKSubmonoid_kclosure (ℵ₀ : Cardinal.{u})
-      (RTilde.ofReal '' ratSet)).kmonoid
     ∃ e : V(R).carrier → ↥(KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet)),
       KMonoid.IsKHom ℵ₀ e ∧
       (∀ a : ↥(V(R).lambdaGenPart ℵ₀),
         (e (a : V(R).carrier) : RTilde) = RTilde.ofReal (φ a : ℝ≥0)) ∧
         Function.Bijective e := by
   let : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
-  let := (KMonoid.isKSubmonoid_kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet)).kmonoid
   let : LMonoid (ℵ₀ : Cardinal.{u}) ℝ≥0 := LMonoid.ofAddCommMonoid ℝ≥0
   let := (isLSubmonoid_ratSet : IsLSubmonoid (ℵ₀ : Cardinal.{u}) ratSet).lmonoid
   obtain ⟨e, he, hcomm, hbij⟩ := exists_kIso_of_fgIso_univ le_rfl R hfg
@@ -124,8 +115,6 @@ theorem examples_4_8_3_diophantine (R : Type u) [Ring R] (hfg : EveryProjectiveI
     {n : ℕ} (sys : LinSystem n) (hineq : sys.ineqs = ∅)
     (φ : ↥(V(R).lambdaGenPart ℵ₀) → ↥(LinSystem.finSolutions.{u} sys))
     (hφ :
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-        (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
       letI := Fcard.instKMonoid (le_refl (ℵ₀ : Cardinal.{u}))
       letI := KMonoid.pi ℵ₀ (fun _ : Fin n => Fcard ℵ₀) (le_refl ℵ₀)
       letI : AddCommMonoid ↥sys.finSolutions :=

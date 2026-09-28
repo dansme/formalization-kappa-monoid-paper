@@ -730,8 +730,6 @@ theorem isUniversalKExtension_ratSet :
     letI := LMonoid.ofAddCommMonoid ℝ≥0
     letI : KMonoid (ℵ₀ : Cardinal.{u}) RTilde := RTilde.instKMonoid
     letI := (isLSubmonoid_ratSet : IsLSubmonoid (ℵ₀ : Cardinal.{u}) ratSet).lmonoid
-    letI := (KMonoid.isKSubmonoid_kclosure (ℵ₀ : Cardinal.{u})
-      (RTilde.ofReal '' ratSet)).kmonoid
     IsUniversalKExtension (ℵ₀ : Cardinal.{u}) ℵ₀ ↥ratSet
       ↥(KMonoid.kclosure (ℵ₀ : Cardinal.{u}) (RTilde.ofReal '' ratSet)) (Order.le_succ ℵ₀)
       (fun s => ⟨RTilde.ofReal (s : ℝ≥0), KMonoid.subset_kclosure ⟨(s : ℝ≥0), s.2, rfl⟩⟩) := by

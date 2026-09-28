@@ -487,7 +487,7 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
     (hnoncyclic : ∀ x : H, ¬ KMonoid.KGenerates ℵ₀ ({x} : Set H))
     (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfFG R)
     (e : V(R).carrier → H)
-    (hhom : letI := V(R).instKMonoid le_rfl; KMonoid.IsKHom ℵ₀ e)
+    (hhom : KMonoid.IsKHom ℵ₀ e)
     (hbij : Function.Bijective e) :
     ∃ p₁ p₂ : V(R).carrier,
       Module.Finite R (V(R).rep p₁) ∧
@@ -498,8 +498,6 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
         ¬ ∃ ι : Type u, Nonempty (DirectSum ℕ (fun _ => V(R).rep p₁)
             ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   obtain ⟨e', hleft, hright, he', hgenp, hncp⟩ :=
     exists_inv_generators x₁ x₂ hgen hnoncyclic R e hhom hbij
@@ -528,13 +526,13 @@ theorem cor_5_5_three_data (h₁ : x₁ ∈ add(x₂))
     rintro a b ⟨c, hc⟩
     exact ⟨e c, by rw [← KMonoid.IsKHom.map_add hhom, hc, hhom.map_cmul]⟩
   -- both generators are finitely generated
-  have hWsub := V(R).lambdaGenPart_isLSubset le_rfl ℵ₀
+  have hWsub := V(R).lambdaGenPart_isLSubset ℵ₀
     Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   have hWsat : ∀ a ∈ V(R).lambdaGenPart ℵ₀,
       ∀ b c : V(R).carrier, a = b + c →
       b ∈ V(R).lambdaGenPart ℵ₀ :=
     fun a ha b c habc =>
-      V(R).lambdaGenPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
+      V(R).lambdaGenPart_summand ℵ₀ a ha b ⟨c, habc.symm⟩
   obtain ⟨hp₁W, hp₂W⟩ := mem_of_divisorClosed_of_generates (e' x₁) (e' x₂) hWsat
     ((corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1.kGenerates_coe) hgenp hncp
   have hfin₁ : Module.Finite R (V(R).rep (e' x₁)) :=

@@ -22,6 +22,9 @@ variable (R : Type u) [Ring R]
 isomorphism classes form the set `carrier` (Definition 2.4).  Closure under direct summands is not
 part of the structure; it is the separate class `IsSummandClosed`. -/
 structure ModuleClass (κ : Cardinal.{u}) where
+  /-- `κ` is infinite, the paper's standing assumption.  Carrying it here makes `V^κ(C)` a
+  `κ`-monoid by instance (`ModuleClass.instKMonoid`), with no hypothesis to thread. -/
+  aleph0_le : ℵ₀ ≤ κ
   /-- The set of isomorphism classes; this is `V^κ(C)`. -/
   carrier : Type u
   /-- A chosen representative for each isomorphism class. -/
@@ -64,8 +67,9 @@ class IsSummandClosed : Prop where
     ∃ b, Nonempty (C.rep b ≃ₗ[R] ↥N)
 
 /-- The bare `κ`-monoid data on `V^κ(C)`: (A1) and (A2) hold because direct sums do. -/
-noncomputable def bareKMonoid (hκ : ℵ₀ ≤ κ) : @BareKMonoid κ C.carrier ⟨C.zero⟩ := by
+noncomputable def bareKMonoid : @BareKMonoid κ C.carrier ⟨C.zero⟩ := by
   classical
+  have hκ := C.aleph0_le
   letI : Zero C.carrier := ⟨C.zero⟩
   refine
     { aleph0_le := hκ
@@ -91,20 +95,15 @@ noncomputable def bareKMonoid (hκ : ℵ₀ ≤ κ) : @BareKMonoid κ C.carrier 
 
 /-- `V^κ(C)` is a `κ`-monoid (Examples 2.3(4)); by Lemma 2.5 (`KMonoid.ofBare`) the additive
 structure is determined by the direct sum. -/
-@[instance_reducible]
-noncomputable def instKMonoid (hκ : ℵ₀ ≤ κ) : KMonoid κ C.carrier :=
-  @KMonoid.ofBare κ C.carrier ⟨C.zero⟩ (C.bareKMonoid hκ)
+noncomputable instance instKMonoid : KMonoid κ C.carrier :=
+  @KMonoid.ofBare κ C.carrier ⟨C.zero⟩ C.bareKMonoid
 
 /-- The `κ`-sum on `V^κ(C)` is the direct sum. -/
-theorem instKMonoid_ksum (hκ : ℵ₀ ≤ κ) (x : Idx κ → C.carrier) :
-    letI := C.instKMonoid hκ
-    ksum (κ := κ) x = C.dsum x :=
-  @KMonoid.ofBare_ksum κ C.carrier ⟨C.zero⟩ (C.bareKMonoid hκ) x
+theorem instKMonoid_ksum (x : Idx κ → C.carrier) : ksum (κ := κ) x = C.dsum x :=
+  @KMonoid.ofBare_ksum κ C.carrier ⟨C.zero⟩ C.bareKMonoid x
 
 /-- The zero of `V^κ(C)` is the class of the zero module. -/
-theorem instKMonoid_zero (hκ : ℵ₀ ≤ κ) :
-    letI := C.instKMonoid hκ
-    (0 : C.carrier) = C.zero := rfl
+theorem instKMonoid_zero : (0 : C.carrier) = C.zero := rfl
 
 /-- Equal isomorphism classes have isomorphic representatives. -/
 theorem iso_of_eq {a b : C.carrier} (h : a = b) : Nonempty (C.rep a ≃ₗ[R] C.rep b) := by
@@ -127,6 +126,47 @@ the subclass Corollaries 4.4 and 4.5 are stated for; Example 4.2(3) is
 `lambdaGenPart_subset_lambdaSmallPart`, `lambdaGenPart_isLSubset` and `lambdaGenPart_summand`. -/
 def lambdaGenPart (lam : Cardinal.{u}) : Set C.carrier :=
   {a | IsLambdaGenerated R lam (C.rep a)}
+
+/-- **Theorem 4.3**'s `C_{λ⁻}`: a subclass of `λ⁻`-small members of `C` closed under
+isomorphisms (it is a set of classes), under direct sums of fewer than `λ` modules, and under
+direct summands.  Its set of classes is `V^{λ⁻}(C_{λ⁻})`, a `λ⁻`-monoid when `λ` is regular
+(`SmallSubclass.instLMonoid`).  `lambdaGenSubclass` is the `Cλ⁻` of Corollary 4.4. -/
+structure SmallSubclass (lam : Cardinal.{u}) (hlk : lam ≤ Order.succ κ) where
+  /-- The classes of the members of the subclass. -/
+  carrier : Set C.carrier
+  /-- Every member is `λ⁻`-small. -/
+  isLambdaSmall : ∀ a ∈ carrier, IsLambdaSmall R lam (C.rep a)
+  /-- Closure under `0` and direct sums of fewer than `λ` modules. -/
+  isLSubset : IsLSubset lam hlk carrier
+  /-- Closure under direct summands. -/
+  summand_mem : ∀ {a b : C.carrier}, a + b ∈ carrier → a ∈ carrier
+
+namespace SmallSubclass
+
+variable {C} {lam : Cardinal.{u}} {hlk : lam ≤ Order.succ κ}
+
+instance : SetLike (C.SmallSubclass lam hlk) C.carrier where
+  coe := carrier
+  coe_injective S T h := by cases S; cases T; congr
+
+@[simp] theorem mem_carrier {S : C.SmallSubclass lam hlk} {a : C.carrier} :
+    a ∈ S.carrier ↔ a ∈ S := Iff.rfl
+
+theorem zero_mem (S : C.SmallSubclass lam hlk) : (0 : C.carrier) ∈ S := S.isLSubset.zero_mem
+
+/-- `V^{λ⁻}(C_{λ⁻})` is a `λ⁻`-monoid, its sums computed in `V^κ(C)`. -/
+noncomputable instance instLMonoid [hlam : Fact lam.IsRegular] (S : C.SmallSubclass lam hlk) :
+    LMonoid lam S :=
+  S.isLSubset.lmonoid hlam.out
+
+/-- Sums in `V^{λ⁻}(C_{λ⁻})` are the ambient `κ`-sums. -/
+theorem coe_lsumOf [Fact lam.IsRegular] (S : C.SmallSubclass lam hlk) {ι : Type u}
+    (hι : #ι < lam) (z : ι → S) :
+    ((LMonoid.lsumOf (lam := lam) hι z : S) : C.carrier)
+      = LMonoid.lsumOf (lam := Order.succ κ) (hι.trans_le hlk) fun i => (z i : C.carrier) :=
+  rfl
+
+end SmallSubclass
 
 end ModuleClass
 

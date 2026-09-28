@@ -66,15 +66,13 @@ generators; conversely a projective module spanned by a family indexed by `s` is
 `R^{(s)}`, and `#s ≤ β` gives `#s [R] ≼ β [R]`. -/
 theorem le_cmul_unitClass_iff (k : Idx κ) (x : (projClass R κ hκ).carrier) {β : Cardinal.{u}}
     (hβ : β ≤ κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     x ≼ KMonoid.cmul (κ := κ) β hβ (unitClass R κ hκ k) ↔
       ∃ s : Set ((projClass R κ hκ).rep x), #s ≤ β ∧ Submodule.span R s = ⊤ := by
-  let := (projClass R κ hκ).instKMonoid hκ
   constructor
   · rintro ⟨c, hc⟩
     -- `rep x × rep c ≅ R^{(β)}`, and the first projection is onto
     have e : ((projClass R κ hκ).rep x × (projClass R κ hκ).rep c) ≃ₗ[R] ⨁ _ : Idx β, R :=
-      ((projClass R κ hκ).rep_add hκ x c).some.symm.trans
+      ((projClass R κ hκ).rep_add x c).some.symm.trans
         (((projClass R κ hκ).iso_of_eq hc).some.trans (rep_cmul_unitClass R κ hκ hβ k).some)
     set π : (⨁ _ : Idx β, R) →ₗ[R] (projClass R κ hκ).rep x :=
       (LinearMap.fst R ((projClass R κ hκ).rep x) ((projClass R κ hκ).rep c)).comp
@@ -92,9 +90,7 @@ theorem le_cmul_unitClass_iff (k : Idx κ) (x : (projClass R κ hκ).carrier) {�
 /-- The finite form of `le_cmul_unitClass_iff`: `x ≼ n [R]` for some `n ∈ ℕ₀` exactly when the
 representative of `x` is finitely generated. -/
 theorem exists_le_nsmul_unitClass_iff (k : Idx κ) (x : (projClass R κ hκ).carrier) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     (∃ n : ℕ, x ≼ n • unitClass R κ hκ k) ↔ Module.Finite R ((projClass R κ hκ).rep x) := by
-  let := (projClass R κ hκ).instKMonoid hκ
   have hnκ : ∀ n : ℕ, ((n : ℕ) : Cardinal.{u}) ≤ κ := fun n =>
     le_trans (le_of_lt Cardinal.natCast_lt_aleph0) hκ
   constructor
@@ -118,22 +114,18 @@ theorem exists_le_nsmul_unitClass_iff (k : Idx κ) (x : (projClass R κ hκ).car
 kernel is the complement. -/
 theorem unitClass_le_of_surjective (k : Idx κ) (a : (projClass R κ hκ).carrier)
     (f : (projClass R κ hκ).rep a →ₗ[R] R) (hf : Function.Surjective f) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     unitClass R κ hκ k ≼ a := by
-  let := (projClass R κ hκ).instKMonoid hκ
   obtain ⟨σ, -, hσinj, hcompl⟩ := ForMathlib.exists_isCompl_range_of_surjective f hf
   obtain ⟨c, hc⟩ := (projClass R κ hκ).exists_class_of_summand a (LinearEquiv.refl R _)
     hcompl.symm
-  exact ⟨c, (projClass R κ hκ).add_eq_of_relCompl hκ hcompl.disjoint
+  exact ⟨c, (projClass R κ hκ).add_eq_of_relCompl hcompl.disjoint
     (codisjoint_iff.mp hcompl.codisjoint)
     ⟨(rep_unitClass R κ hκ k).some.trans (LinearEquiv.ofInjective σ hσinj)⟩ hc
     ⟨Submodule.topEquiv.symm⟩⟩
 
 /-- The representative of `n • a` is the `n`-th power of the representative of `a`. -/
 theorem rep_nsmul (a : (projClass R κ hκ).carrier) (n : ℕ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     Nonempty ((projClass R κ hκ).rep (n • a) ≃ₗ[R] (Fin n → (projClass R κ hκ).rep a)) := by
-  let := (projClass R κ hκ).instKMonoid hκ
   have hι : #(ULift.{u} (Fin n)) ≤ κ := (Cardinal.lt_aleph0_of_finite _).le.trans hκ
   have hcard : ((n : ℕ) : Cardinal.{u}) = #(ULift.{u} (Fin n)) := by
     rw [Cardinal.mk_fintype, Fintype.card_ulift, Fintype.card_fin]
@@ -141,7 +133,7 @@ theorem rep_nsmul (a : (projClass R κ hκ).carrier) (n : ℕ) :
     rw [← KMonoid.cmul_natCast (κ := κ) a n, ← KMonoid.cmul_eq_sumOf hι a]
     exact KMonoid.cmul_congr hcard _ _ a
   exact ⟨((projClass R κ hκ).iso_of_eq heq).some.trans
-    (((projClass R κ hκ).rep_sumOf hκ hι _).some.trans
+    (((projClass R κ hκ).rep_sumOf hι _).some.trans
       ((DirectSum.linearEquivFunOnFintype R (ULift.{u} (Fin n))
           (fun _ => (projClass R κ hκ).rep a)).trans
         (LinearEquiv.funCongrLeft R ((projClass R κ hκ).rep a) Equiv.ulift.symm)))⟩
@@ -153,9 +145,7 @@ theorem rep_nsmul (a : (projClass R κ hκ).carrier) (n : ℕ) :
 generated. -/
 theorem le_nsmul_of_isProgenerator (k : Idx κ) (p : (projClass R κ hκ).carrier)
     (hp : IsProgenerator R ((projClass R κ hκ).rep p)) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     (∃ n : ℕ, unitClass R κ hκ k ≼ n • p) ∧ ∃ m : ℕ, p ≼ m • unitClass R κ hκ k := by
-  let := (projClass R κ hκ).instKMonoid hκ
   obtain ⟨-, hfin, n, f, hf⟩ := hp
   refine ⟨⟨n, ?_⟩, (exists_le_nsmul_unitClass_iff R κ hκ k p).mpr hfin⟩
   obtain ⟨e⟩ := rep_nsmul R κ hκ p n
@@ -172,9 +162,7 @@ for some `Q`, and since `P` is a generator, `P^n ≅ R ⊕ Q'` for some `Q'`; th
 (`isFaithful_unitClass`) to `[P]`. -/
 theorem isFaithful_of_isProgenerator [Nontrivial R] (p : (projClass R κ hκ).carrier)
     (hp : IsProgenerator R ((projClass R κ hκ).rep p)) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.IsFaithful (κ := κ) p := by
-  let := (projClass R κ hκ).instKMonoid hκ
   obtain ⟨k⟩ := nonempty_Idx hκ
   obtain ⟨⟨n, hn⟩, ⟨m, hm⟩⟩ := le_nsmul_of_isProgenerator R κ hκ k p hp
   exact (isFaithful_unitClass R κ hκ k).of_le_nsmul hn hm
@@ -184,10 +172,8 @@ has a class `[P]` in `V^κ(R)`, it lies in `V(R)`, and for nonzero `R` it is a f
 of `V^κ(R)`. -/
 theorem exists_isFaithful_of_isProgenerator [Nontrivial R] (P : Type u) [AddCommGroup P]
     [Module R P] (hP : IsProgenerator R P) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     ∃ p : (projClass R κ hκ).carrier, p ∈ (projClass R κ hκ).lambdaGenPart ℵ₀ ∧
       Nonempty ((projClass R κ hκ).rep p ≃ₗ[R] P) ∧ KMonoid.IsFaithful (κ := κ) p := by
-  let := (projClass R κ hκ).instKMonoid hκ
   obtain ⟨p, hpV, ⟨e⟩⟩ := exists_class_of_fg_projective R κ hκ P hP.1 hP.2.1
   exact ⟨p, hpV, ⟨e⟩, isFaithful_of_isProgenerator R κ hκ p (hP.of_equiv e.symm)⟩
 
@@ -202,10 +188,8 @@ Paper proof: stated without proof in the paper.  For infinite `α`, `x ∈ H_α`
 representative is generated by at most `α` elements. -/
 theorem part_unitClass_eq_of_aleph0_le (k : Idx κ) {α : Cardinal.{u}} (hα0 : ℵ₀ ≤ α)
     (hα : α ≤ κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.part (κ := κ) (unitClass R κ hκ k) α
       = (projClass R κ hκ).lambdaGenPart (Order.succ α) := by
-  let := (projClass R κ hκ).instKMonoid hκ
   ext x
   rw [KMonoid.mem_part_iff_of_aleph0_le (isOrderUnit_unitClass R κ hκ k) hα0 hα,
     le_cmul_unitClass_iff R κ hκ k x hα]
@@ -219,9 +203,7 @@ Paper proof: stated without proof in the paper.  For finite `α`, `x ∈ H_α` m
 some `n ∈ ℕ₀` (`KMonoid.mem_part_iff_of_lt_aleph0`), which by `exists_le_nsmul_unitClass_iff`
 means that the representative is finitely generated. -/
 theorem part_unitClass_eq_of_lt_aleph0 (k : Idx κ) {α : Cardinal.{u}} (hα : α < ℵ₀) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.part (κ := κ) (unitClass R κ hκ k) α = (projClass R κ hκ).lambdaGenPart ℵ₀ := by
-  let := (projClass R κ hκ).instKMonoid hκ
   ext x
   rw [KMonoid.mem_part_iff_of_lt_aleph0 (isOrderUnit_unitClass R κ hκ k) hα,
     exists_le_nsmul_unitClass_iff R κ hκ k x]
@@ -229,14 +211,12 @@ theorem part_unitClass_eq_of_lt_aleph0 (k : Idx κ) {α : Cardinal.{u}} (hα : �
 
 /-- **Example 2.13**: `H_0 = V(R)` with respect to the order-unit `[R]`. -/
 theorem part_unitClass_zero (k : Idx κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.part (κ := κ) (unitClass R κ hκ k) 0 = (projClass R κ hκ).lambdaGenPart ℵ₀ :=
   part_unitClass_eq_of_lt_aleph0 R κ hκ k Cardinal.aleph0_pos
 
 /-- **Example 2.13**: `H_{ℵ₀} = V^{ℵ₀}(R)` with respect to the order-unit `[R]` — the classes of
 countably generated projective modules, i.e. those generated by fewer than `ℵ₁` elements. -/
 theorem part_unitClass_aleph0 (k : Idx κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.part (κ := κ) (unitClass R κ hκ k) ℵ₀ = (projClass R κ hκ).lambdaGenPart ℵ₁ := by
   rw [← Cardinal.succ_aleph0]
   exact part_unitClass_eq_of_aleph0_le R κ hκ k le_rfl hκ
@@ -253,10 +233,8 @@ is below `(m n n') [R]`, where `[P] ≼ n' [R]`, and so is again finitely genera
 theorem exists_add_eq_nsmul_of_isProgenerator (p : (projClass R κ hκ).carrier)
     (hp : IsProgenerator R ((projClass R κ hκ).rep p)) (x : (projClass R κ hκ).carrier)
     (hx : x ∈ (projClass R κ hκ).lambdaGenPart ℵ₀) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     ∃ (n : ℕ) (c : (projClass R κ hκ).carrier),
       c ∈ (projClass R κ hκ).lambdaGenPart ℵ₀ ∧ x + c = n • p := by
-  let := (projClass R κ hκ).instKMonoid hκ
   obtain ⟨k⟩ := nonempty_Idx hκ
   have hu := isOrderUnit_unitClass R κ hκ k
   have hV : ∀ y, y ∈ (projClass R κ hκ).lambdaGenPart ℵ₀ ↔

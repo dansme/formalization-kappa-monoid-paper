@@ -133,7 +133,6 @@ theorem rankRel_classification (R : Type u) [Ring R] :
       ∃ m n : ℕ, ((1 ≤ m ∧ 1 ≤ n) ∨ (m = 0 ∧ n = 1)) ∧
         ∀ k l : ℕ, Nonempty ((⨁ _ : Fin k, R) ≃ₗ[R] (⨁ _ : Fin l, R)) ↔ CyclicRel m n k l := by
   classical
-  let := (FreeMod.freeClass R (ℵ₀ : Cardinal.{u}) le_rfl).instKMonoid le_rfl
   obtain ⟨k₀⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   set u := FreeMod.unit R (ℵ₀ : Cardinal.{u}) le_rfl k₀ with hu
   -- `k • [R]` is the class of `R^k`
@@ -169,9 +168,7 @@ variable {R : Type u} [Ring R] {κ : Cardinal.{u}}
 /-- **§2.2.1, before Proposition 2.16**: `V^κ(𝓕^κ)` is generated as a `κ`-monoid by `[R]` —
 every class is `α [R]` (`exists_cmul_unit`), a sum of `α` copies of `[R]`. -/
 theorem kGenerates_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
-    letI := (freeClass R κ hκ).instKMonoid hκ
     KGenerates κ ({unit R κ hκ k} : Set (freeClass R κ hκ).carrier) := by
-  let := (freeClass R κ hκ).instKMonoid hκ
   refine kGenerates_iff.mpr fun a => ?_
   obtain ⟨α, hα, rfl⟩ := exists_cmul_unit hκ k a
   rw [← KMonoid.cmul_congr (mk_Idx α) (le_of_eq_of_le (mk_Idx α) hα) hα, ← sumOf_const]
@@ -180,9 +177,7 @@ theorem kGenerates_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
 
 /-- `V^κ(𝓕^κ)` is a cyclic `κ`-monoid (Definition 2.10(2)). -/
 theorem isCyclicKMonoid (hκ : ℵ₀ ≤ κ) :
-    letI := (freeClass R κ hκ).instKMonoid hκ
     IsCyclicKMonoid κ (freeClass R κ hκ).carrier := by
-  let := (freeClass R κ hκ).instKMonoid hκ
   obtain ⟨k⟩ := nonempty_Idx hκ
   exact isCyclicKMonoid_iff.mpr ⟨_, kGenerates_unit hκ k⟩
 
@@ -195,11 +190,9 @@ Faithfulness is invariance of infinite rank (`FreeMod.isFaithful_unit`); generat
 `FreeMod.kGenerates_unit`. -/
 theorem prop_2_16_converse {R : Type u} [Ring R] [Nontrivial R] {κ : Cardinal.{u}}
     (hκ : ℵ₀ ≤ κ) :
-    letI := (FreeMod.freeClass R κ hκ).instKMonoid hκ
     IsCyclicKMonoid κ (FreeMod.freeClass R κ hκ).carrier ∧
       ∃ u : (FreeMod.freeClass R κ hκ).carrier,
         IsFaithful (κ := κ) u ∧ KGenerates κ ({u} : Set (FreeMod.freeClass R κ hκ).carrier) := by
-  let := (FreeMod.freeClass R κ hκ).instKMonoid hκ
   obtain ⟨k⟩ := nonempty_Idx hκ
   exact ⟨FreeMod.isCyclicKMonoid hκ, FreeMod.unit R κ hκ k, FreeMod.isFaithful_unit hκ k,
     FreeMod.kGenerates_unit hκ k⟩
@@ -215,12 +208,10 @@ submonoid is finite. -/
 theorem prop_2_16_iff {κ : Cardinal.{u}} (hκ : ℵ₀ ≤ κ) (H : Type u) [KMonoid κ H] :
     (∃ (R : Type u) (_ : Ring R) (_ : Nontrivial R)
         (φ : (FreeMod.freeClass R κ hκ).carrier → H),
-        letI := (FreeMod.freeClass R κ hκ).instKMonoid hκ
         IsKHom κ φ ∧ Function.Bijective φ) ↔
       ∃ u : H, IsFaithful (κ := κ) u ∧ KGenerates κ ({u} : Set H) := by
   constructor
   · rintro ⟨R, _, _, φ, hφ, hbij⟩
-    let := (FreeMod.freeClass R κ hκ).instKMonoid hκ
     obtain ⟨-, u, hu, hgen⟩ := prop_2_16_converse (R := R) hκ
     refine ⟨φ u, hu.map hφ hbij, ?_⟩
     have := KGenerates.map hφ hbij.2 hgen

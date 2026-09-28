@@ -97,6 +97,7 @@ Note that this class carries *no* `ModuleClass.IsSummandClosed` instance, and ca
 summand of a free module is projective but need not be free.  That is what the split of
 `ModuleClass` was for. -/
 noncomputable def freeClass (hκ : ℵ₀ ≤ κ) : ModuleClass R κ where
+  aleph0_le := hκ
   carrier := Carrier R κ
   rep a := ofSet R κ (basis a)
   addCommGroup _ := inferInstance

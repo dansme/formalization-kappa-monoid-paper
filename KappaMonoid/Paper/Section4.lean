@@ -79,6 +79,11 @@ alias example_4_2_3_lambdaGenPart_isLSubset := KappaMonoid.ModuleClass.lambdaGen
 it is closed under direct summands. -/
 alias example_4_2_3_lambdaGenPart_summand := KappaMonoid.ModuleClass.lambdaGenPart_summand
 
+/-- **Example 4.2(3)**, all three closure properties at once — `KappaMonoid.ModuleClass.lambdaGenSubclass`,
+in `Modules/SmallPart.lean`: `C_{λ⁻}` as a `ModuleClass.SmallSubclass`, the subclasses Theorem 4.3
+applies to. -/
+alias example_4_2_3_lambdaGenSubclass := KappaMonoid.ModuleClass.lambdaGenSubclass
+
 /-- **Example 4.2(2)** — `KappaMonoid.isLambdaSmall_aleph0_of_fg`, in `Modules/Small.lean`. -/
 
 alias example_4_2_2_isLambdaSmall_aleph0_of_fg := KappaMonoid.isLambdaSmall_aleph0_of_fg
@@ -90,6 +95,12 @@ alias example_4_2_2_isLambdaSmall_of_span := KappaMonoid.isLambdaSmall_of_span
 /-- **Theorem 4.3**, the braiding clause (module-theoretic core) — `KappaMonoid.DoubleDecomp.isBraided`,
 in `Modules/Theorem43.lean`: families with equal `κ`-sums are `λ⁻`-braided. -/
 alias theorem_4_3_isBraided := KappaMonoid.DoubleDecomp.isBraided
+
+/-- **Theorem 4.3**, the hypotheses on `C_{λ⁻}` — `KappaMonoid.ModuleClass.SmallSubclass`, in
+`Modules/Class.lean`: a subclass of `λ⁻`-small modules closed under isomorphisms, direct summands and
+direct sums of fewer than `λ` modules; its classes `V^{λ⁻}(C_{λ⁻})` form a `λ⁻`-monoid
+(`SmallSubclass.instLMonoid`). -/
+alias theorem_4_3_SmallSubclass := KappaMonoid.ModuleClass.SmallSubclass
 
 /-- **Theorem 4.3** — `KappaMonoid.exists_braided_of_iso`, in `Modules/Theorem43.lean`. -/
 alias theorem_4_3_exists_braided_of_iso := KappaMonoid.exists_braided_of_iso
@@ -104,7 +115,7 @@ alias theorem_4_3_theorem_4_3_core := KappaMonoid.theorem_4_3_core
 
 /-- **Theorem 4.3**, the "in particular" — `KappaMonoid.corollary_4_4`, in `Modules/Theorem43.lean`:
 if `V^{λ⁻}(C_{λ⁻})` `κ`-generates `V^κ(C)`, then `V^κ(C)` is `λ⁻`-braided over it (and is its
-universal `κ`-extension), for an arbitrary `λ⁻`-closed, summand-closed subset of `V^κ(C)`. -/
+universal `κ`-extension), for an arbitrary subclass `S : C.SmallSubclass lam hlk`. -/
 alias theorem_4_3_in_particular := KappaMonoid.corollary_4_4
 
 /-- **Corollary 4.4** — `KappaMonoid.corollary_4_4`: the same general form, from which both parts of

@@ -39,11 +39,10 @@ over `add x` for `x` the image of `[R]` (`corollary_4_7_one_backward_iso`), and 
 hereditary `k`-algebra. -/
 theorem remark_before_5_5 {κ : Cardinal.{u}} {H : Type u} [KMonoid κ H] (hκ : ℵ₀ ≤ κ)
     (R : Type u) [Ring R] (hfg : EveryProjectiveIsSumOfFG R)
-    (e : letI := (projClass R κ hκ).instKMonoid hκ; (projClass R κ hκ).carrier → H)
-    (he : letI := (projClass R κ hκ).instKMonoid hκ; KMonoid.IsKHom κ e)
+    (e : (projClass R κ hκ).carrier → H)
+    (he : KMonoid.IsKHom κ e)
     (hbij : Function.Bijective e) (k : Type u) [Field k] :
     ∃ (S : Type u) (_ : Ring S) (_ : Algebra k S) (_ : IsHereditary S),
-      letI := (projClass S κ hκ).instKMonoid hκ
       ∃ e' : (projClass S κ hκ).carrier → H, KMonoid.IsKHom κ e' ∧ Function.Bijective e' := by
   obtain ⟨x, hbr⟩ := corollary_4_7_one_backward_iso R hκ hfg e he hbij
   exact corollary_4_7_one_forward hκ k x hbr

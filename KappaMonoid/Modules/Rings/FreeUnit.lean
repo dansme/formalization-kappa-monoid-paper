@@ -129,11 +129,9 @@ theorem rep_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
 /-- `α` copies of `[R]` is the class of a free module of rank `α`. -/
 theorem cmul_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) {α : Cardinal.{u}} (hα : α ≤ κ) {s : Set (Idx κ)}
     (hs : #s = α) :
-    letI := (freeClass R κ hκ).instKMonoid hκ
     KMonoid.cmul (κ := κ) α hα (unit R κ hκ k) = mkC R κ hκ s := by
-  let := (freeClass R κ hκ).instKMonoid hκ
   refine (freeClass R κ hκ).eq_of_iso ?_
-  have hL := (freeClass R κ hκ).rep_sumOf hκ (le_of_eq_of_le (mk_Idx α) hα)
+  have hL := (freeClass R κ hκ).rep_sumOf (le_of_eq_of_le (mk_Idx α) hα)
     (fun _ : Idx α => unit R κ hκ k)
   have hidx : Nonempty (Idx α ≃ ↥s) := Cardinal.eq.mp ((mk_Idx α).trans hs.symm)
   exact ((hL.some.trans (DirectSum.congrLinearEquiv fun _ => (rep_unit hκ k).some)).trans
@@ -141,18 +139,14 @@ theorem cmul_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) {α : Cardinal.{u}} (hα : 
 
 /-- Every class is a multiple of `[R]`: `V^κ(𝓕^κ)` is cyclic. -/
 theorem exists_cmul_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) (a : (freeClass R κ hκ).carrier) :
-    letI := (freeClass R κ hκ).instKMonoid hκ
     ∃ (α : Cardinal.{u}) (hα : α ≤ κ), a = KMonoid.cmul (κ := κ) α hα (unit R κ hκ k) := by
-  let := (freeClass R κ hκ).instKMonoid hκ
   exact ⟨#(basis a), mk_le_kappa _, by rw [cmul_unit hκ k (mk_le_kappa (basis a)) rfl, mkC_basis]⟩
 
 /-- Sums of classes add ranks. -/
 theorem mkC_add_mkC (hκ : ℵ₀ ≤ κ) (k : Idx κ) (s t : Set (Idx κ))
     (hst : #s + #t ≤ κ) :
-    letI := (freeClass R κ hκ).instKMonoid hκ
     mkC R κ hκ s + mkC R κ hκ t
       = KMonoid.cmul (κ := κ) (#s + #t) hst (unit R κ hκ k) := by
-  let := (freeClass R κ hκ).instKMonoid hκ
   rw [← cmul_unit hκ k (mk_le_kappa s) rfl, ← cmul_unit hκ k (mk_le_kappa t) rfl,
     ← KMonoid.cmul_add (mk_le_kappa s) (mk_le_kappa t)]
 
@@ -161,9 +155,7 @@ theorem add_mk_le (hκ : ℵ₀ ≤ κ) (s t : Set (Idx κ)) : #s + #t ≤ κ :=
 
 /-- **`[R]` is an order-unit of `V^κ(𝓕^κ)`**: a generating set and its complement fill `Idx κ`. -/
 theorem isOrderUnit_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
-    letI := (freeClass R κ hκ).instKMonoid hκ
     KMonoid.IsOrderUnit (κ := κ) (unit R κ hκ k) := by
-  let := (freeClass R κ hκ).instKMonoid hκ
   intro x
   refine ⟨mkC R κ hκ (basis x)ᶜ, ?_⟩
   have h1 := mkC_add_mkC (R := R) hκ k (basis x) (basis x)ᶜ (add_mk_le hκ _ _)
@@ -175,9 +167,7 @@ theorem isOrderUnit_unit (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
 /-- **`[R]` is a faithful order-unit of `V^κ(𝓕^κ)`**: by invariance of infinite rank, `β·[R]`
 is not a summand of `α·[R]` when `α < β` and `β` is infinite. -/
 theorem isFaithful_unit [Nontrivial R] (hκ : ℵ₀ ≤ κ) (k : Idx κ) :
-    letI := (freeClass R κ hκ).instKMonoid hκ
     KMonoid.IsFaithful (κ := κ) (unit R κ hκ k) := by
-  let := (freeClass R κ hκ).instKMonoid hκ
   refine ⟨isOrderUnit_unit hκ k, ?_⟩
   rintro α β hα hβ hαβ hβ0 ⟨c, hc⟩
   rw [cmul_unit hκ k hβ (mk_setOfCard hβ), ← mkC_basis hκ c,

@@ -117,10 +117,8 @@ theorem restrict_iso {ι : Type u} (g : Idx κ → C.carrier) (e : ι ↪ Idx κ
     (DirectSum.lequivCongrLeft R (Equiv.ofInjective e e.injective).symm)⟩
 
 /-- The representative of a `κ`-sum of classes is the direct sum of the representatives. -/
-theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι → C.carrier) :
-    letI := C.instKMonoid hκ
+theorem rep_sumOf {ι : Type u} (hι : #ι ≤ κ) (a : ι → C.carrier) :
     Nonempty (C.rep (∑[≤ κ] i, a i) ≃ₗ[R] ⨁ i, C.rep (a i)) := by
-  let := C.instKMonoid hκ
   set g : Idx κ → C.carrier := Function.extend (emb hι) a (0 : Idx κ → C.carrier) with hgdef
   have hge : ∀ i, g (emb hι i) = a i :=
     fun i => (emb hι).injective.extend_apply a (0 : Idx κ → C.carrier) i
@@ -131,9 +129,9 @@ theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι
     intro k hk
     refine C.subsingleton_rep_of_eq_zero ?_
     rw [hg0 k hk]
-    exact C.instKMonoid_zero hκ
+    exact C.instKMonoid_zero
   have hsum : ∑[≤ κ] i, a i = C.dsum g :=
-    (KMonoid.sumOf_eq_extend (h := CardLE.mk' hι) (emb hι) a).trans (C.instKMonoid_ksum hκ g)
+    (KMonoid.sumOf_eq_extend (h := CardLE.mk' hι) (emb hι) a).trans (C.instKMonoid_ksum g)
   rw [hsum]
   obtain ⟨e1⟩ := C.dsum_iso g
   obtain ⟨e2⟩ := C.restrict_iso g (emb hι) hsub
@@ -142,13 +140,11 @@ theorem rep_sumOf (hκ : ℵ₀ ≤ κ) {ι : Type u} (hι : #ι ≤ κ) (a : ι
   exact ⟨e1.trans (e2.trans e3)⟩
 
 /-- The representative of a sum of two classes is the direct sum of the representatives. -/
-theorem rep_add (hκ : ℵ₀ ≤ κ) (b b' : C.carrier) :
-    letI := C.instKMonoid hκ
+theorem rep_add (b b' : C.carrier) :
     Nonempty (C.rep (b + b') ≃ₗ[R] C.rep b × C.rep b') := by
-  let := C.instKMonoid hκ
   have hUB : #(ULift.{u} Bool) ≤ κ := KMonoid.mk_uLift_bool_le κ C.carrier
   rw [← sumOf_two b b']
-  obtain ⟨e1⟩ := C.rep_sumOf hκ hUB fun p : ULift.{u} Bool => if p.down then b else b'
+  obtain ⟨e1⟩ := C.rep_sumOf hUB fun p : ULift.{u} Bool => if p.down then b else b'
   exact ⟨e1.trans (dsumUliftBoolProdIso R)⟩
 
 /-- Closure under direct summands, in the form we use it: a direct summand of a module
@@ -172,15 +168,13 @@ theorem exists_class_of_relCompl [C.IsSummandClosed] {M : Type u} [AddCommGroup 
   exact ⟨b, ⟨hb.some.trans (Submodule.comapSubtypeEquivOfLe (hs ▸ le_sup_left))⟩⟩
 
 /-- The class of a relative internal direct sum is the sum of the classes. -/
-theorem add_eq_of_relCompl (hκ : ℵ₀ ≤ κ) {M : Type u} [AddCommGroup M] [Module R M]
+theorem add_eq_of_relCompl {M : Type u} [AddCommGroup M] [Module R M]
     {Y Z E : Submodule R M} (hd : Disjoint Y Z) (hs : Y ⊔ Z = E) {b c A : C.carrier}
     (hb : Nonempty (C.rep b ≃ₗ[R] ↥Y)) (hc : Nonempty (C.rep c ≃ₗ[R] ↥Z))
     (hA : Nonempty (C.rep A ≃ₗ[R] ↥E)) :
-    letI := C.instKMonoid hκ
     b + c = A := by
-  let := C.instKMonoid hκ
   have e : C.rep (b + c) ≃ₗ[R] C.rep A :=
-    (C.rep_add hκ b c).some.trans
+    (C.rep_add b c).some.trans
       ((LinearEquiv.prodCongr hb.some hc.some).trans ((relProdEquiv hd hs).trans hA.some.symm))
   exact C.eq_of_iso e
 
@@ -244,11 +238,9 @@ theorem P_iso (s : Set (Idx κ)) :
       (dsPartIso R (fun i => C.rep (a i)) s)⟩
 
 /-- `⨁_{i ∈ s} rep (a i)` represents the class `Σ_{i ∈ s} a i`. -/
-theorem P_class (hκ : ℵ₀ ≤ κ) (s : Set (Idx κ)) (hs : #s ≤ κ) :
-    letI := C.instKMonoid hκ
+theorem P_class (s : Set (Idx κ)) (hs : #s ≤ κ) :
     Nonempty (C.rep (∑[≤ κ] i : s, a i.1) ≃ₗ[R] ↥(D.P s)) := by
-  let := C.instKMonoid hκ
-  exact ⟨(C.rep_sumOf hκ hs (fun i : s => a i.1)).some.trans (D.P_iso s).some.symm⟩
+  exact ⟨(C.rep_sumOf hs (fun i : s => a i.1)).some.trans (D.P_iso s).some.symm⟩
 
 /-- `λ⁻`-smallness in action: a `λ⁻`-small submodule is contained in a sub-sum indexed by
 `< λ` many indices, which moreover may be taken disjoint from any prescribed set. -/
@@ -319,16 +311,12 @@ def IsRep {κ : Cardinal.{u}} (C : ModuleClass R κ) {M : Type u}
 
 /-- All the data and hypotheses of the module-theoretic core of Theorem 4.3: a module `M`
 written in two ways as a `κ`-indexed direct sum of modules whose classes lie in the subclass
-`S` of `λ⁻`-small modules. -/
+`S = C_{λ⁻}` of `λ⁻`-small modules. -/
 structure DoubleDecomp {κ : Cardinal.{u}} (C : ModuleClass R κ)
     (lam : Cardinal.{u}) (M : Type u) [AddCommGroup M] [Module R M] where
-  hκ : ℵ₀ ≤ κ
   hlam : lam.IsRegular
   hlk : lam ≤ Order.succ κ
-  S : Set C.carrier
-  hsmall : ∀ b ∈ S, IsLambdaSmall R lam (C.rep b)
-  hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S
-  hSsummand : letI := C.instKMonoid hκ; ∀ b ∈ S, ∀ c : C.carrier, (∃ d, c + d = b) → c ∈ S
+  S : C.SmallSubclass lam hlk
   a₁ : Idx κ → C.carrier
   a₂ : Idx κ → C.carrier
   ha₁ : ∀ i, a₁ i ∈ S
@@ -342,9 +330,8 @@ variable {κ : Cardinal.{u}} {C : ModuleClass R κ} {lam : Cardinal.{u}}
   {M : Type u} [AddCommGroup M] [Module R M] (B : DoubleDecomp C lam M)
 
 theorem zero_mem_S : C.zero ∈ B.S := by
-  let := C.instKMonoid B.hκ
-  have h := B.hSsub.zero_mem
-  rwa [C.instKMonoid_zero B.hκ] at h
+  have h := B.S.zero_mem
+  rwa [C.instKMonoid_zero] at h
 
 theorem isRep_zero : IsRep C C.zero (⊥ : Submodule R M) :=
   haveI := C.subsingleton_rep_zero
@@ -400,11 +387,9 @@ structure StepProps (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
   ToldLe : Told ≤ B.D₁.P (Uidx ∪ st.Iset)
   Tdisj : Disjoint st.Tsub (B.D₁.P (Uidx ∪ st.Iset))
   Teq : st.Tsub ⊔ B.D₁.P (Uidx ∪ st.Iset) = B.D₂.P (Jidx ∪ st.Jset)
-  hI : letI := C.instKMonoid B.hκ
-    lsumOf (lam := Order.succ κ) (st.Ismall.trans_le B.hlk) (fun i : st.Iset => B.a₁ i.1)
+  hI : lsumOf (lam := Order.succ κ) (st.Ismall.trans_le B.hlk) (fun i : st.Iset => B.a₁ i.1)
       = vc + st.uc
-  hJ : letI := C.instKMonoid B.hκ
-    lsumOf (lam := Order.succ κ) (st.Jsmall.trans_le B.hlk) (fun j : st.Jset => B.a₂ j.1)
+  hJ : lsumOf (lam := Order.succ κ) (st.Jsmall.trans_le B.hlk) (fun j : st.Jset => B.a₂ j.1)
       = st.tc + st.uc
 
 /-! From here on the class must be closed under direct summands: the recursion splits off
@@ -431,15 +416,13 @@ theorem exists_halfStep {a : Idx κ → C.carrier} (ha : ∀ i, a i ∈ B.S) (E 
     (U I₀ : Set (Idx κ)) (hI₀ : I₀ ⊆ Uᶜ) (hI₀small : #I₀ < lam)
     {Q Qc X : Submodule R M} (hQ : IsCompl Q Qc) {x : C.carrier} (hxS : x ∈ B.S)
     (hx : IsRep C x X) (hdisj : Disjoint X (E.P U)) (heq : X ⊔ E.P U = Q) :
-    letI := C.instKMonoid B.hκ
     ∃ (I : Set (Idx κ)) (hI : #I < lam) (y : C.carrier),
       I₀ ⊆ I ∧ I ⊆ Uᶜ ∧ X ≤ E.P (U ∪ I) ∧ y ∈ B.S ∧ IsRep C y (Qc ⊓ E.P (U ∪ I)) ∧
       Disjoint Q (Qc ⊓ E.P (U ∪ I)) ∧ Q ⊔ (Qc ⊓ E.P (U ∪ I)) = E.P (U ∪ I) ∧
       x + y = lsumOf (lam := Order.succ κ) (hI.trans_le B.hlk) fun i : I => a i.1 := by
-  let := C.instKMonoid B.hκ
   -- `X` is `λ⁻`-small, so it lies in a sub-sum over `< λ` fresh indices; add `I₀`
   obtain ⟨t, ht, htU, hXt⟩ :=
-    E.exists_small_cover (IsLambdaSmall.of_equiv (B.hsmall x hxS) hx.some) U
+    E.exists_small_cover (IsLambdaSmall.of_equiv (B.S.isLambdaSmall x hxS) hx.some) U
   have hI : #(t ∪ I₀ : Set (Idx κ)) < lam := (Cardinal.mk_union_le _ _).trans_lt
     (Cardinal.add_lt_of_lt B.hlam.aleph0_le ht hI₀small)
   have hIU : t ∪ I₀ ⊆ Uᶜ := Set.union_subset (fun i hi hU => Set.disjoint_left.mp htU hi hU) hI₀
@@ -459,11 +442,11 @@ theorem exists_halfStep {a : Idx κ → C.carrier} (ha : ∀ i, a i ∈ B.S) (E 
   -- so `Y` is represented by a class `y` with `x + y = Σ_{i ∈ I} a i`, and `y ∈ S`
   have hA : Nonempty (C.rep (lsumOf (lam := Order.succ κ) (hI.trans_le B.hlk)
       fun i : (t ∪ I₀ : Set (Idx κ)) => a i.1) ≃ₗ[R] ↥(X ⊔ (Qc ⊓ E.P (U ∪ (t ∪ I₀))))) :=
-    ⟨(E.P_class B.hκ _ (le_of_lt_of_le_succ B.hlk hI)).some.trans e.symm⟩
+    ⟨(E.P_class _ (le_of_lt_of_le_succ B.hlk hI)).some.trans e.symm⟩
   obtain ⟨y, hy⟩ := C.exists_class_of_relCompl _ hXY.symm (sup_comm _ _) hA.some
-  have hsum := C.add_eq_of_relCompl B.hκ hXY rfl hx hy hA
-  have hyS : y ∈ B.S := B.hSsummand _ (B.hSsub.sumOf_mem hI _ fun i => ha i.1) y
-    ⟨x, by rw [add_comm]; exact hsum⟩
+  have hsum := C.add_eq_of_relCompl hXY rfl hx hy hA
+  have hyS : y ∈ B.S := B.S.summand_mem (b := x) (by
+    rw [add_comm, hsum]; exact B.S.isLSubset.sumOf_mem hI _ fun i => ha i.1)
   exact ⟨t ∪ I₀, hI, y, Set.subset_union_right, hIU, hXle, hyS, hy, hdQY, hsQY, hsum⟩
 
 /-- **The recursion step of Theorem 4.3.**  Given that `Told ⊕ ⨁_{i ∈ Uidx} A i` is the
@@ -477,7 +460,6 @@ theorem exists_step (Uidx Jidx : Set (Idx κ)) (Told : Submodule R M) (vc : C.ca
     (hdisj : Disjoint Told (B.D₁.P Uidx))
     (heq : Told ⊔ B.D₁.P Uidx = B.D₂.P Jidx) :
     ∃ st : B.Step, B.StepProps Uidx Jidx Told vc st := by
-  let := C.instKMonoid B.hκ
   -- the least unused index of the first decomposition, if any
   let I₀ : Set (Idx κ) := Set.range fun h : (Uidxᶜ).Nonempty => wfMin Uidxᶜ h
   have hI₀ : I₀ ⊆ Uidxᶜ := Set.range_subset_iff.mpr fun h => wfMin_mem _ h
@@ -751,7 +733,7 @@ theorem Iset_cover : (⋃ μ, (B.fam μ).Iset) = Set.univ := by
     have hval : f μ = f ρ := congrArg Subtype.val h
     exact Set.disjoint_left.mp (B.Iset_disjoint hne') (hfI μ) (hval ▸ hfI ρ)
   have h1 : #(Idx κ × ℕ) ≤ #(Set.Iic i₀) := Cardinal.mk_le_of_injective hinj
-  exact absurd ((le_mk_Idx_prod_nat.trans h1).trans_lt (mk_Iic_Idx_lt B.hκ i₀)) (lt_irrefl κ)
+  exact absurd ((le_mk_Idx_prod_nat.trans h1).trans_lt (mk_Iic_Idx_lt C.aleph0_le i₀)) (lt_irrefl κ)
 
 /-- Consequently the second decomposition is exhausted as well. -/
 theorem P₂_iUnion_eq_top : B.D₂.P (⋃ ν, (B.fam ν).Jset) = ⊤ := by
@@ -764,7 +746,6 @@ theorem P₂_iUnion_eq_top : B.D₂.P (⋃ ν, (B.fam ν).Jset) = ⊤ := by
 
 /-- The classes of the modules with an index outside all `J_μ` are trivial. -/
 theorem a₂_eq_zero_of_not_mem {j : Idx κ} (hj : j ∉ ⋃ ν, (B.fam ν).Jset) : B.a₂ j = C.zero := by
-  let := C.instKMonoid B.hκ
   have hbot : B.D₂.P {j} = ⊥ := by
     have h1 : B.D₂.P {j} ≤ B.D₂.P (⋃ ν, (B.fam ν).Jset)ᶜ :=
       B.D₂.P_mono (Set.singleton_subset_iff.mpr hj)
@@ -776,8 +757,8 @@ theorem a₂_eq_zero_of_not_mem {j : Idx κ} (hj : j ∉ ⋃ ν, (B.fam ν).Jset
     exact le_bot_iff.mp (h2 ▸ h1)
   have hone : #({j} : Set (Idx κ)) ≤ κ := by
     rw [Cardinal.mk_singleton]
-    exact one_le_aleph0.trans B.hκ
-  have hclass := (B.D₂.P_class B.hκ {j} hone).some
+    exact one_le_aleph0.trans C.aleph0_le
+  have hclass := (B.D₂.P_class {j} hone).some
   have hsum : ∑[≤ κ] i : ({j} : Set (Idx κ)), B.a₂ i.1 = B.a₂ j := by
     refine (sumOf_unique (h := CardLE.mk' hone) (fun i : ({j} : Set (Idx κ)) => B.a₂ i.1)).trans ?_
     rw [Set.mem_singleton_iff.mp (default : ↥({j} : Set (Idx κ))).2]
@@ -818,13 +799,9 @@ theorem exists_extra : ∃ E : Idx κ × ℕ → Set (Idx κ),
 /-! ### The braiding -/
 
 /-- **Theorem 4.3**, module-theoretic core: the two families of classes are `λ⁻`-braided. -/
-theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B.a₁ i)
+theorem isBraided [Fact lam.IsRegular] (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B.a₁ i)
     (hy : ∀ j, ((y j : C.carrier)) = B.a₂ j) :
-    letI := C.instKMonoid B.hκ
-    letI := B.hSsub.lmonoid B.hlam
     IsBraided lam x y := by
-  let := C.instKMonoid B.hκ
-  let := B.hSsub.lmonoid B.hlam
   obtain ⟨E, hE1, hE2, hE3, hE4⟩ := B.exists_extra
   have hlam0 : ℵ₀ ≤ lam := Cardinal.IsRegular.aleph0_le B.hlam
   have hlam1 : (1 : Cardinal) < lam := lt_of_lt_of_le one_lt_aleph0 hlam0
@@ -836,7 +813,7 @@ theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B
     intro b hb
     apply Subtype.ext
     show (b : C.carrier) = (0 : C.carrier)
-    rw [hb, C.instKMonoid_zero B.hκ]
+    rw [hb, C.instKMonoid_zero]
   refine ⟨{ I := fun p => (B.fam p).Iset
             J := fun p => (B.fam p).Jset ∪ E p
             I_disjoint := fun p q h => B.Iset_disjoint h
@@ -872,7 +849,7 @@ theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B
   · -- the first braiding equation
     intro p
     apply Subtype.ext
-    rw [B.hSsub.coe_lsumOf B.hlam (B.fam p).Ismall (fun i : (B.fam p).Iset => x i.1)]
+    rw [B.S.coe_lsumOf (B.fam p).Ismall (fun i : (B.fam p).Iset => x i.1)]
     have hfun : (fun i : ↥((B.fam p).Iset) => ((x i.1 : C.carrier)))
         = fun i : ↥((B.fam p).Iset) => B.a₁ i.1 := funext fun i => hx i.1
     rw [hfun]
@@ -889,7 +866,7 @@ theorem isBraided (x y : Idx κ → ↥B.S) (hx : ∀ i, ((x i : C.carrier)) = B
         Set.subset_union_left y
       hzero]
     apply Subtype.ext
-    rw [B.hSsub.coe_lsumOf B.hlam (B.fam p).Jsmall (fun j : (B.fam p).Jset => y j.1)]
+    rw [B.S.coe_lsumOf (B.fam p).Jsmall (fun j : (B.fam p).Jset => y j.1)]
     have hfun : (fun j : ↥((B.fam p).Jset) => ((y j.1 : C.carrier)))
         = fun j : ↥((B.fam p).Jset) => B.a₂ j.1 := funext fun j => hy j.1
     rw [hfun]
@@ -904,13 +881,13 @@ end ModuleCore
 
 /-! ## Theorem 4.3 -/
 
-variable {R}
+variable {R} {κ lam : Cardinal.{u}} {C : ModuleClass R κ} {hlk : lam ≤ Order.succ κ}
 
 /-- **Theorem 4.3**, module-theoretic core: a transfinite iteration of the elementary
 observation (M1)–(M2) on direct summands.
 
-Let `Cλ⁻ ⊆ C` be a subclass of `λ⁻`-small modules, closed under isomorphisms, direct
-summands, and direct sums over index sets of cardinality `< λ`.  If
+Let `S = Cλ⁻ ⊆ C` be a subclass of `λ⁻`-small modules, closed under isomorphisms, direct
+summands, and direct sums over index sets of cardinality `< λ` (a `ModuleClass.SmallSubclass`).  If
 
   `⨁_{i ∈ κ} A i ≅ ⨁_{j ∈ κ} B j`
 
@@ -928,26 +905,14 @@ The recursion step uses `λ⁻`-smallness of `T α` to find `I α`, then (M2) to
 `S α`, then `λ⁻`-smallness of `S α` to find `J α`, then (M2) again to split off `T (α+1)`;
 `min I'` is always adjoined to `I α` to ensure that the partitions exhaust `κ`.  (M1)
 translates the internal decompositions into the required isomorphisms. -/
-theorem exists_braided_of_iso (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
-    (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ)
-    (S : Set C.carrier)
-    (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
-    (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
-    (hSsummand : letI := C.instKMonoid hκ; ∀ a ∈ S, ∀ b : C.carrier,
-      (∃ c, b + c = a) → b ∈ S)
-    (x y : Idx κ → S)
+theorem exists_braided_of_iso [C.IsSummandClosed] [hlam : Fact lam.IsRegular]
+    (S : C.SmallSubclass lam hlk) (x y : Idx κ → S)
     (e : (⨁ i, C.rep (x i : C.carrier)) ≃ₗ[R] ⨁ j, C.rep (y j : C.carrier)) :
-    letI := C.instKMonoid hκ
-    letI := hSsub.lmonoid hlam
-    IsBraided lam x y := by
-  let := C.instKMonoid hκ
-  let := hSsub.lmonoid hlam
+    IsBraided lam x y :=
   -- package the data as a `DoubleDecomp`: `M = ⨁ᵢ A i` carries the two decompositions
   -- `id` and `e`; then run the transfinite construction.
-  exact DoubleDecomp.isBraided
-    { hκ := hκ, hlam := hlam, hlk := hlk, S := S, hsmall := hsmall, hSsub := hSsub
-      hSsummand := hSsummand
+  DoubleDecomp.isBraided
+    { hlam := hlam.out, hlk := hlk, S := S
       a₁ := fun i => (x i : C.carrier), a₂ := fun j => (y j : C.carrier)
       ha₁ := fun i => (x i).2, ha₂ := fun j => (y j).2
       D₁ := ⟨LinearEquiv.refl R _⟩, D₂ := ⟨e⟩ } x y (fun _ => rfl) (fun _ => rfl)
@@ -955,102 +920,52 @@ theorem exists_braided_of_iso (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : 
 /-- **Theorem 4.3** (module-theoretic core), in the language of Section 3.  The hypothesis
 `Σᵢ [A i] = Σⱼ [B j]` in `V^κ(C)` is the same thing as an isomorphism
 `⨁ᵢ A i ≅ ⨁ⱼ B j` (`ModuleClass.iso_of_dsum_eq`), so this is `exists_braided_of_iso`. -/
-theorem theorem_4_3_core (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
-    (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ)
-    (S : Set C.carrier)
-    -- `S` consists of `λ⁻`-small modules …
-    (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
-    -- … and is closed under `0`, direct sums of size `< λ`, and direct summands:
-    (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
-    (hSsummand : letI := C.instKMonoid hκ; ∀ a ∈ S, ∀ b : C.carrier,
-      (∃ c, b + c = a) → b ∈ S)
-    (x y : Idx κ → S) :
-    letI := C.instKMonoid hκ
-    letI := hSsub.lmonoid hlam
-    (ksum (κ := κ) fun i => (x i : C.carrier)) = (ksum (κ := κ) fun i => (y i : C.carrier)) →
-      IsBraided lam x y := by
-  let := C.instKMonoid hκ
-  let := hSsub.lmonoid hlam
-  intro hsum
+theorem theorem_4_3_core [C.IsSummandClosed] [Fact lam.IsRegular]
+    (S : C.SmallSubclass lam hlk) (x y : Idx κ → S)
+    (hsum : (ksum (κ := κ) fun i => (x i : C.carrier)) = ksum (κ := κ) fun i => (y i : C.carrier)) :
+    IsBraided lam x y := by
   -- the hypothesis says exactly that the two direct sums are isomorphic
-  have hdsum : C.dsum (fun i => (x i : C.carrier)) = C.dsum (fun i => (y i : C.carrier)) := by
-    rw [← C.instKMonoid_ksum hκ, ← C.instKMonoid_ksum hκ]
-    exact hsum
-  exact exists_braided_of_iso C hκ lam hlam hlk S hsmall hSsub hSsummand x y
-    (C.iso_of_dsum_eq _ _ hdsum).some
+  rw [C.instKMonoid_ksum, C.instKMonoid_ksum] at hsum
+  exact exists_braided_of_iso S x y (C.iso_of_dsum_eq _ _ hsum).some
 
 /-- **Theorem 4.3**, in the language of Section 3: the `κ`-submonoid of `V^κ(C)` generated by
 `V^{λ⁻}(Cλ⁻)` is `λ⁻`-braided over `V^{λ⁻}(Cλ⁻)`. -/
-theorem theorem_4_3 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
-    (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (S : Set C.carrier)
-    (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
-    (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
-    (hSsummand : letI := C.instKMonoid hκ; ∀ a ∈ S, ∀ b : C.carrier, (∃ c, b + c = a) → b ∈ S) :
-    letI := C.instKMonoid hκ
-    letI := hSsub.lmonoid hlam
-    letI := (KMonoid.isKSubmonoid_kclosure κ S).kmonoid
-    IsBraidedOver lam κ S (kclosure κ S) hlk
-      (fun a => ⟨(a : C.carrier), subset_kclosure a.2⟩) := by
-  let := C.instKMonoid hκ
-  let := hSsub.lmonoid hlam
-  let hKsub : IsKSubmonoid κ (kclosure κ S) := KMonoid.isKSubmonoid_kclosure κ S
-  let := hKsub.kmonoid
-  have h0S : (0 : C.carrier) ∈ S := hSsub.zero_mem
-  refine ⟨⟨rfl, ?_⟩, ?_, ?_, ?_⟩
+theorem theorem_4_3 [C.IsSummandClosed] [Fact lam.IsRegular] (S : C.SmallSubclass lam hlk) :
+    IsBraidedOver lam κ S (kclosure κ (S : Set C.carrier)) hlk
+      (Set.inclusion subset_kclosure) := by
+  refine ⟨⟨rfl, ?_⟩, Set.inclusion_injective _, ?_, ?_⟩
   · -- the inclusion is a `λ⁻`-homomorphism: both sides are the ambient `κ`-sum
     intro ι h z
-    apply Subtype.ext
-    rw [hSsub.coe_lsumOf hlam h z, hKsub.coe_sumOf (le_of_lt_of_le_succ hlk h)]
-    rfl
-  · -- injectivity
-    intro a b hab
-    have hab' := congrArg (fun t : ↥(kclosure κ S) => (t : C.carrier)) hab
-    exact Subtype.ext hab'
+    exact Subtype.ext (S.coe_lsumOf h z)
   · -- `⟨S⟩_κ` is generated by `S`
     intro q
-    obtain ⟨x, hxS, hx⟩ := (KMonoid.mem_kclosure_iff h0S (q : C.carrier)).mp q.2
-    refine ⟨fun i => ⟨x i, hxS i⟩, Subtype.ext ?_⟩
-    rw [hKsub.coe_ksum]
-    exact hx
+    obtain ⟨x, hxS, hx⟩ := (KMonoid.mem_kclosure_iff S.zero_mem (q : C.carrier)).mp q.2
+    exact ⟨fun i => ⟨x i, hxS i⟩, Subtype.ext hx⟩
   · -- families with equal sums are braided: this is the module-theoretic core
     intro a b hab
-    refine theorem_4_3_core C hκ lam hlam hlk S hsmall hSsub hSsummand a b ?_
-    have hcoe := congrArg (fun t : kclosure κ S => (t : C.carrier)) hab
-    rwa [hKsub.coe_ksum, hKsub.coe_ksum] at hcoe
+    exact theorem_4_3_core S a b (congrArg Subtype.val hab)
 
-/-- The "in particular" of **Theorem 4.3**, for an arbitrary `λ⁻`-closed, summand-closed subset
-`S` of `V^κ(C)`: if every module in `C` is a direct sum of modules in `Cλ⁻`, then all of `V^κ(C)`
-is `λ⁻`-braided over `V^{λ⁻}(Cλ⁻)`, hence is its universal `κ`-extension.  Corollary 4.4(1) and
-(2) are the case of the modules generated by fewer than `λ` elements. -/
-theorem corollary_4_4 (C : ModuleClass R κ) [C.IsSummandClosed] (hκ : ℵ₀ ≤ κ)
-    (lam : Cardinal.{u})
-    (hlam : lam.IsRegular) (hlk : lam ≤ Order.succ κ) (S : Set C.carrier)
-    (hsmall : ∀ a ∈ S, IsLambdaSmall R lam (C.rep a))
-    (hSsub : letI := C.instKMonoid hκ; IsLSubset lam hlk S)
-    (hSsummand : letI := C.instKMonoid hκ; ∀ a ∈ S, ∀ b : C.carrier, (∃ c, b + c = a) → b ∈ S)
-    (hgen : letI := C.instKMonoid hκ; KGenerates κ S) :
-    letI := C.instKMonoid hκ
-    letI := hSsub.lmonoid hlam
+/-- The "in particular" of **Theorem 4.3**, for an arbitrary subclass
+`S : C.SmallSubclass lam hlk`: if every module in `C` is a direct sum of modules in `Cλ⁻`, then all
+of `V^κ(C)` is `λ⁻`-braided over `V^{λ⁻}(Cλ⁻)`, hence is its universal `κ`-extension.
+Corollary 4.4(1) and (2) are the case of the modules generated by fewer than `λ` elements. -/
+theorem corollary_4_4 [C.IsSummandClosed] [Fact lam.IsRegular] (S : C.SmallSubclass lam hlk)
+    (hgen : KGenerates κ (S : Set C.carrier)) :
     IsBraidedOver lam κ S C.carrier hlk (fun a => (a : C.carrier)) ∧
       IsUniversalKExtension.{u, u, u, t} lam κ S C.carrier hlk (fun a => (a : C.carrier)) := by
-  let := C.instKMonoid hκ
-  let := hSsub.lmonoid hlam
-  have h0S : (0 : C.carrier) ∈ S := hSsub.zero_mem
   have hbr : IsBraidedOver lam κ S C.carrier hlk (fun a => (a : C.carrier)) := by
     refine ⟨⟨rfl, ?_⟩, fun a b hab => Subtype.ext hab, ?_, ?_⟩
     · -- the inclusion is a `λ⁻`-homomorphism
       intro ι h z
-      exact hSsub.coe_lsumOf hlam h z
+      exact S.coe_lsumOf h z
     · -- `V^κ(C)` is generated by `S`
       intro h
-      have hmem : h ∈ kclosure κ S := by rw [hgen]; trivial
-      obtain ⟨x, hxS, hx⟩ := (KMonoid.mem_kclosure_iff h0S h).mp hmem
+      have hmem : h ∈ kclosure κ (S : Set C.carrier) := by rw [hgen]; trivial
+      obtain ⟨x, hxS, hx⟩ := (KMonoid.mem_kclosure_iff S.zero_mem h).mp hmem
       exact ⟨fun i => ⟨x i, hxS i⟩, hx⟩
     · -- families with equal sums are braided
       intro a b hab
-      exact theorem_4_3_core C hκ lam hlam hlk S hsmall hSsub hSsummand a b hab
+      exact theorem_4_3_core S a b hab
   exact ⟨hbr, hbr.isUniversalKExtension hlk⟩
 
 /-! ## The `λ⁻`-small part of a class of modules -/

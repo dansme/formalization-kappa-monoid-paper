@@ -298,11 +298,9 @@ theorem mult_of_subsingleton {M : Type u} [AddCommGroup M] [Module R M] [Subsing
 
 /-- **The multiplicity map is a `κ`-homomorphism.** -/
 theorem isKHom_multMap (hκ : ℵ₀ ≤ κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     letI := Fcard.instKMonoid hκ
     letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
     KMonoid.IsKHom κ (multMap L hκ) := by
-  let := (projClass R κ hκ).instKMonoid hκ
   let := Fcard.instKMonoid hκ
   let := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
   constructor
@@ -316,7 +314,7 @@ theorem isKHom_multMap (hκ : ℵ₀ ≤ κ) :
     funext i
     apply Subtype.ext
     have hiso : Nonempty ((projClass R κ hκ).rep (KMonoid.ksum x) ≃ₗ[R] _) :=
-      (projClass R κ hκ).rep_sumOf hκ (le_of_eq (mk_Idx κ)) x
+      (projClass R κ hκ).rep_sumOf (le_of_eq (mk_Idx κ)) x
     rw [val_multMap]
     rw [mult_congr L hiso.some i, mult_dsum L (fun j => (projClass R κ hκ).rep (x j)) i]
     rfl
@@ -443,7 +441,6 @@ The isomorphism is the multiplicity map.  It is a homomorphism because multiplic
 additive, injective because they determine the module, and surjective because every multiplicity
 function is realised by a direct sum of simples, which is a summand of `R^{(κ)}`. -/
 theorem prop_2_17_one (hκ : ℵ₀ ≤ κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     letI := Fcard.instKMonoid hκ
     letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
     KMonoid.IsKHom κ (multMap L hκ) ∧ Function.Bijective (multMap L hκ) :=
@@ -609,7 +606,6 @@ Take `R = Fin n → k` for any field `k`: it is semisimple, and `simpleListPi` e
 isomorphism classes of simple modules, so Proposition 2.17(1) applies. -/
 theorem prop_2_17_two (κ : Cardinal.{u}) (hκ : ℵ₀ ≤ κ) (n : ℕ) :
     ∃ (R : Type u) (_ : Ring R) (_ : IsSemisimpleRing R),
-      letI := (projClass R κ hκ).instKMonoid hκ
       letI := Fcard.instKMonoid hκ
       letI := KMonoid.pi κ (fun _ : Fin n => Fcard κ) hκ
       ∃ f : (projClass R κ hκ).carrier → (Fin n → Fcard κ),

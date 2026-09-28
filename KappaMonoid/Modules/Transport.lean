@@ -91,30 +91,12 @@ are `ℵ₁⁻`-braided over them (Corollary 4.5(2)), and isomorphic bases have 
 extensions. -/
 theorem exists_kIso_of_aleph1Iso (hκ : ℵ₀ ≤ κ) (R S : Type u) [Ring R] [Ring S]
     (φ : ↥((projClass R κ hκ).lambdaGenPart ℵ₁) → ↥((projClass S κ hκ).lambdaGenPart ℵ₁))
-    (hφ : letI := (projClass R κ hκ).instKMonoid hκ
-      letI := (projClass S κ hκ).instKMonoid hκ
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph_one
-        ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₁ Cardinal.isRegular_aleph_one
-          (aleph_one_le_succ κ hκ))
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph_one
-        ((projClass S κ hκ).lambdaGenPart_isLSubset hκ ℵ₁ Cardinal.isRegular_aleph_one
-          (aleph_one_le_succ κ hκ))
-      IsLMonoidHom ℵ₁ φ)
+    (hφ : IsLMonoidHom ℵ₁ φ)
     (hbij : Function.Bijective φ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
-    letI := (projClass S κ hκ).instKMonoid hκ
     ∃ e : (projClass R κ hκ).carrier → (projClass S κ hκ).carrier, KMonoid.IsKHom κ e ∧
       (∀ a : ↥((projClass R κ hκ).lambdaGenPart ℵ₁),
         e (a : (projClass R κ hκ).carrier) = (φ a : (projClass S κ hκ).carrier)) ∧
         Function.Bijective e := by
-  let := (projClass R κ hκ).instKMonoid hκ
-  let := (projClass S κ hκ).instKMonoid hκ
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph_one
-    ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₁ Cardinal.isRegular_aleph_one
-      (aleph_one_le_succ κ hκ))
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph_one
-    ((projClass S κ hκ).lambdaGenPart_isLSubset hκ ℵ₁ Cardinal.isRegular_aleph_one
-      (aleph_one_le_succ κ hκ))
   exact IsBraidedOver.exists_kIso_of_base_iso (aleph_one_le_succ κ hκ)
     (corollary_4_5_two.{u, u} R κ hκ).1 (corollary_4_5_two.{u, u} S κ hκ).1 φ hφ hbij
 
@@ -133,21 +115,12 @@ theorem exists_kIso_of_fgIso_univ (hκ : ℵ₀ ≤ κ) (R : Type u) [Ring R]
     (hH : IsUniversalKExtension.{u, v, w, u} ℵ₀ κ X H (le_succ_of_le hκ) f)
     (hH' : IsUniversalKExtension.{u, v, w, w} ℵ₀ κ X H (le_succ_of_le hκ) f)
     (φ : ↥((projClass R κ hκ).lambdaGenPart ℵ₀) → X)
-    (hφ : letI := (projClass R κ hκ).instKMonoid hκ
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-        ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
-          (le_succ_of_le hκ))
-      IsLMonoidHom ℵ₀ φ)
+    (hφ : IsLMonoidHom ℵ₀ φ)
     (hbij : Function.Bijective φ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     ∃ e : (projClass R κ hκ).carrier → H,
       KMonoid.IsKHom κ e ∧ (∀ a : ↥((projClass R κ hκ).lambdaGenPart ℵ₀),
         e (a : (projClass R κ hκ).carrier) = f (φ a)) ∧
         Function.Bijective e := by
-  let := (projClass R κ hκ).instKMonoid hκ
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
-      (le_succ_of_le hκ))
   have hbr := (corollary_4_5_three.{u, u} R κ hκ hfg).1
   exact IsUniversalKExtension.exists_kIso_of_base_iso (le_succ_of_le hκ)
     (hbr.isUniversalKExtension (le_succ_of_le hκ)) (hbr.isUniversalKExtension (le_succ_of_le hκ))
@@ -164,30 +137,12 @@ monoid structure (`isLMonoidHom_aleph0_of_add`); both sides are braided over it 
 theorem exists_kIso_of_fgIso (hκ : ℵ₀ ≤ κ) (R S : Type u) [Ring R] [Ring S]
     (hfgR : EveryProjectiveIsSumOfFG R) (hfgS : EveryProjectiveIsSumOfFG S)
     (φ : ↥((projClass R κ hκ).lambdaGenPart ℵ₀) → ↥((projClass S κ hκ).lambdaGenPart ℵ₀))
-    (hφ : letI := (projClass R κ hκ).instKMonoid hκ
-      letI := (projClass S κ hκ).instKMonoid hκ
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-        ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
-          (le_succ_of_le hκ))
-      letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-        ((projClass S κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
-          (le_succ_of_le hκ))
-      IsLMonoidHom ℵ₀ φ)
+    (hφ : IsLMonoidHom ℵ₀ φ)
     (hbij : Function.Bijective φ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
-    letI := (projClass S κ hκ).instKMonoid hκ
     ∃ e : (projClass R κ hκ).carrier → (projClass S κ hκ).carrier, KMonoid.IsKHom κ e ∧
       (∀ a : ↥((projClass R κ hκ).lambdaGenPart ℵ₀),
         e (a : (projClass R κ hκ).carrier) = (φ a : (projClass S κ hκ).carrier)) ∧
         Function.Bijective e := by
-  let := (projClass R κ hκ).instKMonoid hκ
-  let := (projClass S κ hκ).instKMonoid hκ
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
-      (le_succ_of_le hκ))
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    ((projClass S κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
-      (le_succ_of_le hκ))
   exact IsBraidedOver.exists_kIso_of_base_iso (le_succ_of_le hκ)
     (corollary_4_5_three.{u, u} R κ hκ hfgR).1 (corollary_4_5_three.{u, u} S κ hκ hfgS).1
     φ hφ hbij
@@ -202,10 +157,6 @@ records it among the omissions; the hereditary case — Albrecht's theorem, the 
 Corollary 4.7(1) needs.  The modules are left modules, so the paper's right hereditary is
 `IsLeftHereditary`. -/
 theorem corollary_4_6_hereditary (R : Type u) [Ring R] [IsLeftHereditary R] (hκ : ℵ₀ ≤ κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
-    letI := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-      ((projClass R κ hκ).lambdaGenPart_isLSubset hκ ℵ₀ Cardinal.isRegular_aleph0
-        (le_succ_of_le hκ))
     IsBraidedOver ℵ₀ κ ((projClass R κ hκ).lambdaGenPart ℵ₀)
         (projClass R κ hκ).carrier (le_succ_of_le hκ) (fun a => (a : (projClass R κ hκ).carrier)) ∧
       IsUniversalKExtension.{u, u, u, t} ℵ₀ κ ((projClass R κ hκ).lambdaGenPart ℵ₀)

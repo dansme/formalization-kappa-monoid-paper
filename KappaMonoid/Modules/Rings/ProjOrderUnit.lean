@@ -65,20 +65,16 @@ theorem rep_unitClass (k : Idx κ) :
 
 /-- `α` copies of `[R]` are represented by the free module on `Idx α`. -/
 theorem rep_cmul_unitClass {α : Cardinal.{u}} (hα : α ≤ κ) (k : Idx κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     Nonempty ((projClass R κ hκ).rep
       (KMonoid.cmul (κ := κ) α hα (unitClass R κ hκ k)) ≃ₗ[R] ⨁ _ : Idx α, R) := by
-  let := (projClass R κ hκ).instKMonoid hκ
-  obtain ⟨e⟩ := (projClass R κ hκ).rep_sumOf hκ (le_of_eq_of_le (mk_Idx α) hα)
+  obtain ⟨e⟩ := (projClass R κ hκ).rep_sumOf (le_of_eq_of_le (mk_Idx α) hα)
     (fun _ : Idx α => unitClass R κ hκ k)
   exact ⟨e.trans (DirectSum.congrLinearEquiv fun _ => (rep_unitClass R κ hκ k).some)⟩
 
 /-- `κ` copies of `[R]` are the whole of `R^{(κ)}`. -/
 theorem rep_cmul_top_unitClass (k : Idx κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     Nonempty ((projClass R κ hκ).rep (KMonoid.cmul (κ := κ) κ le_rfl (unitClass R κ hκ k))
       ≃ₗ[R] ↥(⊤ : Submodule R (freeMod R κ))) := by
-  let := (projClass R κ hκ).instKMonoid hκ
   exact ⟨(rep_cmul_unitClass R κ hκ le_rfl k).some.trans Submodule.topEquiv.symm⟩
 
 /-! ## Example 2.13: `[R]` is an order-unit -/
@@ -88,15 +84,13 @@ theorem rep_cmul_top_unitClass (k : Idx κ) :
 Every class is that of a summand `P` of `R^{(κ)}`; its chosen complement `Q` gives
 `[P] + [Q] = [R^{(κ)}] = κ·[R]`. -/
 theorem isOrderUnit_unitClass (k : Idx κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.IsOrderUnit (κ := κ) (unitClass R κ hκ k) := by
-  let := (projClass R κ hκ).instKMonoid hκ
   intro x
   set P : Summand R κ := x.out with hPdef
   set Q : Submodule R (freeMod R κ) := Summand.compl R κ P with hQdef
   have hPQ : IsCompl P.1 Q := Summand.isCompl R κ P
   refine ⟨⟦(⟨Q, ⟨P.1, hPQ.symm⟩⟩ : Summand R κ)⟧, ?_⟩
-  refine (projClass R κ hκ).add_eq_of_relCompl hκ hPQ.disjoint
+  refine (projClass R κ hκ).add_eq_of_relCompl hPQ.disjoint
     (codisjoint_iff.mp hPQ.codisjoint) ?_ ?_ (rep_cmul_top_unitClass R κ hκ k)
   · exact ⟨LinearEquiv.refl R _⟩
   · exact ⟨(Quotient.mk_out (s := summandSetoid R κ) (⟨Q, ⟨P.1, hPQ.symm⟩⟩ : Summand R κ)).some⟩
@@ -123,9 +117,7 @@ theorem mk_le_of_surjective [Nontrivial R] {ι : Type u} [Infinite ι] {W : Type
 
 /-- **Example 2.13**, second half: `[R]` is a *faithful* order-unit of `V^κ(R)`. -/
 theorem isFaithful_unitClass [Nontrivial R] (k : Idx κ) :
-    letI := (projClass R κ hκ).instKMonoid hκ
     KMonoid.IsFaithful (κ := κ) (unitClass R κ hκ k) := by
-  let := (projClass R κ hκ).instKMonoid hκ
   refine ⟨isOrderUnit_unitClass R κ hκ k, ?_⟩
   rintro α β hα hβ hαβ hβ0 ⟨c, hc⟩
   have : Infinite (Idx β) := infinite_Idx hβ0
@@ -136,7 +128,7 @@ theorem isFaithful_unitClass [Nontrivial R] (k : Idx κ) :
     LinearEquiv.prodCongr (rep_cmul_unitClass R κ hκ hβ k).some.symm (LinearEquiv.refl R _)
   have e2 : ((projClass R κ hκ).rep B × (projClass R κ hκ).rep c)
       ≃ₗ[R] (projClass R κ hκ).rep (B + c) :=
-    ((projClass R κ hκ).rep_add hκ B c).some.symm
+    ((projClass R κ hκ).rep_add B c).some.symm
   have e3 : (projClass R κ hκ).rep (B + c)
       ≃ₗ[R] (projClass R κ hκ).rep (KMonoid.cmul (κ := κ) α hα (unitClass R κ hκ k)) :=
     ((projClass R κ hκ).iso_of_eq hc).some

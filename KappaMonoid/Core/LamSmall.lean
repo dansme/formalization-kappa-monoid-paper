@@ -60,7 +60,8 @@ from facts registered with `@[lam_small_rule]`.
 
 The regularity of `lam`, which the product, sum and sigma rules need, is taken from a hypothesis
 `lam.IsRegular`, from a `λ⁻`-monoid structure `[LMonoid lam X]` or a `κ`-monoid structure
-`[KMonoid κ H]` with `λ = κ⁺` in the context, or, failing these, from `λ = ℵ₀` or `λ = κ⁺` with
+`[KMonoid κ H]` with `λ = κ⁺` in the context (or found by instance search on the type of a variable
+in the context, or on the codomain of a family, as for `V^κ(C)`), or, failing these, from `λ = ℵ₀` or `λ = κ⁺` with
 `ℵ₀ ≤ κ` in the context. -/
 elab "lam_small" : tactic => withMainContext do
   let goal ← getMainGoal
@@ -86,21 +87,37 @@ elab "lam_small" : tactic => withMainContext do
       if ← isDefEq (← mkAppM ``Order.succ #[κ]) lam then
         proof? := some (← mkAppOptM `KappaMonoid.KMonoid.isRegular_succ' #[κ, t.appArg!, d.toExpr])
         break
+  -- a global `κ`-monoid instance (e.g. on `V^κ(C)`) on the type of a variable in the context,
+  -- or on the codomain of a family in the context
+  if proof?.isNone then
+    let lam' ← instantiateMVars lam
+    if lam'.isAppOf ``Order.succ then
+      let κ := lam'.appArg!
+      for d in ← getLCtx do
+        if d.isImplementationDetail then continue
+        let t ← instantiateMVars d.type
+        let X := if t.isArrow then t.bindingBody! else t
+        if X.hasLooseBVars || (← isProp X) then continue
+        let some cls ← observing? (mkAppM `KappaMonoid.KMonoid #[κ, X]) | continue
+        if let some inst ← (try synthInstance? cls catch _ => pure none) then
+          proof? := some (← mkAppOptM `KappaMonoid.KMonoid.isRegular_succ' #[κ, X, inst])
+          break
   -- otherwise `lam` should be `ℵ₀`, or `κ⁺` for an infinite `κ`
-  let proof ← match proof? with
-    | some p => pure p
+  let p ← match proof? with
+    | some p => Term.exprToSyntax p
     | none =>
       let m ← mkFreshExprMVar reg
       let gs ← try
           Tactic.run m.mvarId! (evalTactic (← `(tactic| first
             | exact Cardinal.isRegular_aleph0
             | exact Cardinal.isRegular_succ (by first | assumption | exact le_rfl | exact Fact.out)
-            | exact Fact.out)))
+            | exact Fact.out
+            | fail)))
         catch _ => pure [m.mvarId!]
-      unless gs.isEmpty do
-        throwError "lam_small: no proof of `{lam}.IsRegular` and no `LMonoid {lam} _` in the context"
-      instantiateMVars m
-  let p ← Term.exprToSyntax proof
+      if gs.isEmpty then Term.exprToSyntax (← instantiateMVars m)
+      -- no regularity in sight: the goal may still close by a hypothesis `#ι ≤ κ` or `#ι < lam`,
+      -- which needs none, so fail only in a branch that actually uses it
+      else `(by fail "lam_small: no proof of regularity and no `LMonoid` in the context")
   evalTactic (← `(tactic| lam_small_core $p))
 
 /-- `∑[lam] i ∈ S, f i` is the `λ⁻`-sum of `f` over the set `S`, its bound `#S < lam` found by

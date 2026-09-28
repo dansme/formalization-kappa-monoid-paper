@@ -91,14 +91,14 @@ theorem addLe_cmul_of_traceIdeal_eq_top (p₁ : V(R).carrier)
   have e : V(R).rep (KMonoid.cmul (κ := ℵ₀) #(ULift.{u} (Fin n)) hle p₁)
       ≃ₗ[R] DirectSum (ULift.{u} (Fin n)) (fun _ => P) := by
     rw [hAeq]
-    exact (V(R).rep_sumOf le_rfl hle (fun _ : ULift.{u} (Fin n) => p₁)).some
+    exact (V(R).rep_sumOf hle (fun _ : ULift.{u} (Fin n) => p₁)).some
   -- both pieces are classes, and they add up
   obtain ⟨b, hb⟩ := V(R).exists_class_of_summand _ e hcompl
   obtain ⟨c, hc⟩ := V(R).exists_class_of_summand _ e hcompl.symm
   have hbunit : b = Projective.unitClass R ℵ₀ le_rfl k :=
     V(R).eq_of_iso
       (hb.some.trans (hRiso.symm.trans (Projective.rep_unitClass R ℵ₀ le_rfl k).some.symm))
-  have hsum := V(R).add_eq_of_relCompl le_rfl hcompl.disjoint
+  have hsum := V(R).add_eq_of_relCompl hcompl.disjoint
     (codisjoint_iff.mp hcompl.codisjoint) hb hc ⟨e.trans Submodule.topEquiv.symm⟩
   refine ⟨c, ?_⟩
   rw [← hbunit, hsum]
@@ -111,8 +111,7 @@ The class of `R` is an `ℵ₀`-sum of copies of the two generators, and the tra
 sum is contained in the supremum of the trace ideals of the summands; `Tr(R) = R` finishes.  This
 is the paper's "if `J ⊆ I` then `P₂ I = P₂`, and hence `I = R`". -/
 theorem eq_top_of_traceIdeal_generators (p₁ p₂ : V(R).carrier)
-    (hgen : letI := V(R).instKMonoid le_rfl
-      KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
+    (hgen : KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
     {I : Ideal R}
     (h₁ : traceIdeal R (V(R).rep p₁) ≤ I)
     (h₂ : traceIdeal R (V(R).rep p₂) ≤ I) : I = ⊤ := by
@@ -125,7 +124,7 @@ theorem eq_top_of_traceIdeal_generators (p₁ p₂ : V(R).carrier)
     constructor
     · show traceIdeal R (V(R).rep 0) ≤ I
       have := V(R).subsingleton_rep_of_eq_zero
-        (V(R).instKMonoid_zero le_rfl)
+        (V(R).instKMonoid_zero)
       refine iSup_le fun f => ?_
       rintro y ⟨m, rfl⟩
       rw [Subsingleton.elim m 0, map_zero]
@@ -134,7 +133,7 @@ theorem eq_top_of_traceIdeal_generators (p₁ p₂ : V(R).carrier)
       show traceIdeal R (V(R).rep
         (∑[≤ ℵ₀] i, z i)) ≤ I
       rw [traceIdeal_of_iso R
-        (V(R).rep_sumOf le_rfl (le_of_eq (mk_Idx _)) z).some]
+        (V(R).rep_sumOf (le_of_eq (mk_Idx _)) z).some]
       exact le_trans (traceIdeal_dsum_le R _) (iSup_le fun i => hz i)
   have hmem : traceIdeal R (V(R).rep (Projective.unitClass R ℵ₀ le_rfl k))
       ≤ I := by
@@ -178,10 +177,8 @@ the trace ideal of a direct sum.  (ii) ⇒ (iii) is the paper's "`1 ∈ im f₁ 
 `[R] ≼ n [P₁]` (`addLe_cmul_of_traceIdeal_eq_top`); scaling by `ℵ₀` and using that `[R]` is an
 order-unit puts `[P₂]` below `ℵ₀ [P₁]`.  (iii) ⇒ (i) is the trace ideal of a summand. -/
 theorem prop_5_4 (p₁ p₂ : V(R).carrier)
-    (hgen : letI := V(R).instKMonoid le_rfl
-      KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
-    (_hnoncyclic : letI := V(R).instKMonoid le_rfl
-      ∀ x : V(R).carrier,
+    (hgen : KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
+    (_hnoncyclic : ∀ x : V(R).carrier,
         ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier)) :
     (traceIdeal R (V(R).rep p₂) ≤ traceIdeal R (V(R).rep p₁)
         ↔ traceIdeal R (V(R).rep p₁) = ⊤) ∧
@@ -216,7 +213,7 @@ theorem prop_5_4 (p₁ p₂ : V(R).carrier)
     have e3 : V(R).rep (ℵ₀∙p₁)
         ≃ₗ[R] V(R).rep p₂ × V(R).rep d := by
       rw [← hd]
-      exact (V(R).rep_add le_rfl p₂ d).some
+      exact (V(R).rep_add p₂ d).some
     exact ⟨(e2.symm.trans e1.symm).trans e3⟩
   · -- a summand of `P₁^{(ℕ)}` has a smaller trace ideal
     obtain ⟨Q, hQ₁, hQ₂, e⟩ := h
@@ -249,9 +246,8 @@ never finitely generated for `P ≠ 0`, and that a free `P^{(ℵ₀)}` forces `T
 free module has full trace ideal; and the trace ideal of `P^{(ℵ₀)}` is contained in that of `P`,
 being a direct sum of copies of it. -/
 theorem traceIdeal_eq_top_of_iso_free {p : V(R).carrier}
-    (hp : letI := V(R).instKMonoid le_rfl; p ≠ 0) {ι : Type u}
-    (e : letI := V(R).instKMonoid le_rfl
-      Nonempty (V(R).rep (ℵ₀∙p)
+    (hp : p ≠ 0) {ι : Type u}
+    (e : Nonempty (V(R).rep (ℵ₀∙p)
         ≃ₗ[R] DirectSum ι (fun _ => R))) :
     traceIdeal R (V(R).rep p) = ⊤ := by
   classical
@@ -264,7 +260,7 @@ theorem traceIdeal_eq_top_of_iso_free {p : V(R).carrier}
         (ℵ₀∙p)) := Equiv.subsingleton e.some.toEquiv
     have hzero : ℵ₀∙p = 0 :=
       (V(R).eq_zero_of_subsingleton hsub).trans
-        (V(R).instKMonoid_zero le_rfl).symm
+        (V(R).instKMonoid_zero).symm
     obtain ⟨w, hw⟩ : p ≼ ℵ₀∙p := by
       refine ⟨ℵ₀∙p, ?_⟩
       exact KMonoid.add_cmul_top_self (ℵ₀ : Cardinal.{u}) _ p
@@ -300,17 +296,13 @@ Paper proof: from `Tr(P₁) = R` the class `ℵ₀ [R]` is a summand of `ℵ₀ 
 Together with `prop_5_4` this is the paper's four-way equivalence
 `Tr(P₂) ⊆ Tr(P₁)` ⟺ `Tr(P₁) = R` ⟺ `P₂ | P₁^{(ℵ₀)}` ⟺ `P₁^{(ℵ₀)}` free. -/
 theorem prop_5_4_free (p₁ p₂ : V(R).carrier)
-    (hgen : letI := V(R).instKMonoid le_rfl
-      KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
-    (hnoncyclic : letI := V(R).instKMonoid le_rfl
-      ∀ x : V(R).carrier,
+    (hgen : KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
+    (hnoncyclic : ∀ x : V(R).carrier,
         ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier)) :
     traceIdeal R (V(R).rep p₁) = ⊤ ↔
       ∃ ι : Type u, #ι ≤ ℵ₀ ∧
-        letI := V(R).instKMonoid le_rfl
         Nonempty (V(R).rep (ℵ₀∙p₁) ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
-  let := V(R).instKMonoid le_rfl
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   constructor
   · intro h
@@ -344,10 +336,8 @@ collapses it to `ℵ₀ [R]`, which is free.  Backward: `ℵ₀ [P₁]` is never
 ideal `R`. -/
 theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
     (p₁ p₂ : V(R).carrier)
-    (hgen : letI := V(R).instKMonoid le_rfl
-      KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
-    (hnoncyclic : letI := V(R).instKMonoid le_rfl
-      ∀ x : V(R).carrier,
+    (hgen : KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
+    (hnoncyclic : ∀ x : V(R).carrier,
         ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier)) :
     traceIdeal R (V(R).rep p₁)
         = traceIdeal R (V(R).rep p₂) ↔
@@ -355,19 +345,17 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
         ∃ ι : Type u, #ι ≤ ℵ₀ ∧
           Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R)) := by
   classical
-  let := IsLSubset.lmonoid Cardinal.isRegular_aleph0
-    (V(R).lambdaGenPart_isLSubset le_rfl ℵ₀ Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀))
   obtain ⟨k⟩ := nonempty_Idx (le_refl (ℵ₀ : Cardinal.{u}))
   have hgen' : KMonoid.KGenerates (ℵ₀ : Cardinal.{u})
       ({p₂, p₁} : Set V(R).carrier) := by rwa [Set.pair_comm]
-  have hWsub := V(R).lambdaGenPart_isLSubset le_rfl ℵ₀
+  have hWsub := V(R).lambdaGenPart_isLSubset ℵ₀
     Cardinal.isRegular_aleph0 (Order.le_succ ℵ₀)
   -- both generators are finitely generated, by the paper's parenthetical
   have hWsat : ∀ a ∈ V(R).lambdaGenPart ℵ₀,
       ∀ b c : V(R).carrier, a = b + c →
       b ∈ V(R).lambdaGenPart ℵ₀ :=
     fun a ha b c habc =>
-      V(R).lambdaGenPart_summand le_rfl ℵ₀ a ha b ⟨c, habc.symm⟩
+      V(R).lambdaGenPart_summand ℵ₀ a ha b ⟨c, habc.symm⟩
   obtain ⟨hp₁W, hp₂W⟩ := mem_of_divisorClosed_of_generates p₁ p₂ hWsat
     ((corollary_4_5_three.{u, u} R ℵ₀ le_rfl hfg).1.kGenerates_coe) hgen hnoncyclic
   -- `V(R)` is closed under binary sums and finite multiples
@@ -426,13 +414,10 @@ theorem prop_5_4_hereditary (hfg : EveryProjectiveIsSumOfFG R)
 
 /-- **`[P₂] ≼ ℵ₀ [P₁]` forces `Tr(P₁) = R`**, by the second half of Proposition 5.4. -/
 theorem traceIdeal_eq_top_of_addLe (p₁ p₂ : V(R).carrier)
-    (hgen : letI := V(R).instKMonoid le_rfl
-      KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
-    (hnoncyclic : letI := V(R).instKMonoid le_rfl
-      ∀ x : V(R).carrier,
+    (hgen : KMonoid.KGenerates ℵ₀ ({p₁, p₂} : Set V(R).carrier))
+    (hnoncyclic : ∀ x : V(R).carrier,
         ¬ KMonoid.KGenerates ℵ₀ ({x} : Set V(R).carrier))
-    (h : letI := V(R).instKMonoid le_rfl
-      p₂ ≼ ℵ₀∙p₁) :
+    (h : p₂ ≼ ℵ₀∙p₁) :
     traceIdeal R (V(R).rep p₁) = ⊤ := by
   obtain ⟨c, hc⟩ := h
   refine (prop_5_4 R p₁ p₂ hgen hnoncyclic).2.mpr
@@ -444,7 +429,7 @@ theorem traceIdeal_eq_top_of_addLe (p₁ p₂ : V(R).carrier)
   have e3 : V(R).rep (ℵ₀∙p₁)
       ≃ₗ[R] V(R).rep p₂ × V(R).rep c := by
     rw [← hc]
-    exact (V(R).rep_add le_rfl p₂ c).some
+    exact (V(R).rep_add p₂ c).some
   exact ⟨(e2.symm.trans e1.symm).trans e3⟩
 
 /-- **If every countably but not finitely generated projective is free, `ℵ₀ [P] = ℵ₀ [R]`** for
@@ -452,7 +437,7 @@ every nonzero class `[P]`: `ℵ₀ [P]` is never finitely generated, so it is fr
 cannot be finite, hence on a countably infinite one. -/
 theorem cmul_top_eq_unitClass_of_free (k : Idx (ℵ₀ : Cardinal.{u}))
     (p : V(R).carrier)
-    (hp : letI := V(R).instKMonoid le_rfl; p ≠ 0)
+    (hp : p ≠ 0)
     (hfree : ∀ q : V(R).carrier, ¬ Module.Finite R (V(R).rep q)
       → ∃ ι : Type u, #ι ≤ ℵ₀ ∧
         Nonempty (V(R).rep q ≃ₗ[R] DirectSum ι (fun _ => R))) :
