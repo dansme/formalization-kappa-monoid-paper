@@ -17,16 +17,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: leanprover/lean-action@v1
 
-      # Clean up the disk to maximize space for Lean/Mathlib
-      - name: Free Disk Space (Ubuntu)
+      # Free disk space before lean-action: its `lake exe cache get` unpacks several GB of
+      # Mathlib oleans, and the API docs (below) add several more.
+      - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache /usr/local/share/boost /usr/share/swift \
+            /usr/local/share/powershell /usr/local/share/chromium /usr/local/lib/node_modules
           sudo docker image prune --all --force
+          df -h /
+
+      - uses: leanprover/lean-action@v1
 
       # `declaration uses `sorry`` is only a warning, so `lake build` stays green on a
       # `sorry` in an imported file.  The root target must be sorry-free at every commit, so
@@ -63,4 +66,7 @@ jobs:
             exit 1
           fi
 
+      # API docs cover the whole import closure, i.e. all of Mathlib (`import Mathlib` in
+      # `Modules/Small.lean`): long, and gigabytes of output.  Only on pushes to main.
       - uses: leanprover-community/docgen-action@v1
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
