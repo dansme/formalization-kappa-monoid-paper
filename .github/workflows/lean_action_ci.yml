@@ -18,6 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
+        with:
+          use-github-cache: false
 
       # `declaration uses `sorry`` is only a warning, so `lake build` stays green on a
       # `sorry` in an imported file.  The root target must be sorry-free at every commit, so
