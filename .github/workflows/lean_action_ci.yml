@@ -65,8 +65,3 @@ jobs:
             echo "::error::the set of axiom declarations under KappaMonoid/ has changed"
             exit 1
           fi
-
-      # API docs cover the whole import closure, i.e. all of Mathlib (`import Mathlib` in
-      # `Modules/Small.lean`): long, and gigabytes of output.  Only on pushes to main.
-      - uses: leanprover-community/docgen-action@v1
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
