@@ -8,3 +8,12 @@ rev = "v4.33.0"
 
 [[lean_lib]]
 name = "KappaMonoid"
+
+# The comparator challenge (`Comparator/Challenge.lean`, Mathlib only, with `sorry`s) and its
+# solution; not part of the default target.  See `Comparator/README.md`.
+[[lean_lib]]
+name = "Comparator"
+roots = ["Comparator.Challenge", "Comparator.Solution"]
+globs = ["Comparator.Challenge", "Comparator.Defs", "Comparator.Bridge.Monoid",
+  "Comparator.Bridge.Braiding", "Comparator.Bridge.Modules", "Comparator.Bridge.Main",
+  "Comparator.Solution"]

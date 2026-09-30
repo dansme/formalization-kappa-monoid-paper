@@ -48,6 +48,12 @@ Start in `KappaMonoid/Paper/`, which is written to be read with the PDF open.
 Throughout the library, docstrings open with the paper reference (**Lemma 3.14(2)**, …) and most
 carry a short `Paper proof:` paragraph.
 
+To check the main results without reading the library, read **`Comparator/Challenge.lean`**
+instead. It states them with every definition they need, from Mathlib alone, in under 300 lines.
+The [comparator](https://github.com/leanprover/comparator) checks that the proofs in
+`Comparator/Solution.lean` prove exactly those statements with the standard axioms. See
+`Comparator/README.md`.
+
 ## Differences from the paper
 
 None of these changes what is proved. Each is explained in the docstring of the declaration
@@ -124,6 +130,9 @@ it in this table; `scripts/check_layering.sh` enforces that.
 | `Paper/` | the paper's results in the paper's terms; nothing depends on it |
 
 `Core/` and `Braiding/` are pure monoid theory: they mention no modules.
+
+`Comparator/`, outside `KappaMonoid/`, holds the self-contained challenge and its solution. It is
+not part of the default target: build it with `lake build Comparator`.
 
 ## Building and checking
 

@@ -1,0 +1,14 @@
+{
+    "challenge_module": "Comparator.Challenge",
+    "solution_module": "Comparator.Solution",
+    "theorem_names": [
+        "KappaChallenge.theorem_3_12",
+        "KappaChallenge.theorem_4_3",
+        "KappaChallenge.corollary_4_5_one",
+        "KappaChallenge.corollary_4_5_two",
+        "KappaChallenge.corollary_4_5_three",
+        "KappaChallenge.theorem_5_3"
+    ],
+    "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+    "enable_nanoda": false
+}

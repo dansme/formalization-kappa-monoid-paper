@@ -45,6 +45,20 @@ jobs:
             exit 1
           fi
 
+      # The comparator challenge: `Comparator/Challenge.lean` states the main results from
+      # Mathlib alone.  `Defs.lean` and `Solution.lean` are generated from it and must be up to
+      # date, and nothing but the challenge may use `sorry`.
+      - name: The comparator solution is up to date and sorry-free
+        run: |
+          set -o pipefail
+          python3 scripts/comparator_defs.py --check
+          python3 scripts/comparator_solution.py --check
+          lake build Comparator 2>&1 | tee comparator.log
+          if grep 'declaration uses .sorry' comparator.log | grep -v 'Comparator/Challenge.lean'; then
+            echo "::error::a sorry outside Comparator/Challenge.lean"
+            exit 1
+          fi
+
       # The layering is a claim about imports, and Lake will not enforce it: it resolves
       # modules package-wide, so `Core/` importing `Modules/` would build fine.  This is what
       # keeps the lower layers reusable — monoid theory with no module theory and no axioms.

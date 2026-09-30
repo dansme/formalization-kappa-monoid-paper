@@ -262,6 +262,14 @@ The tree is layered by subject, not by paper section, and the layering is enforc
 | `TwoGen/` | §5: `Forms`, `Prelim`, `Lemma52`, `Lemma51`, `Realization`, `Trace`, `Corollary55`, `Counterexample`, `Extra` (the §5 preamble, monoid side), `ExtraRealization`.  `Forms`, `Prelim`, `Lemma52`, `Counterexample` and `Extra` are pure monoid theory |
 | `Paper/` | the paper's numbered results and nothing else; nothing depends on it.  Besides the four `Section` indices: `Definition21`/`Definition218` (literal transcriptions), `Section5Extra`, `Examples48` |
 
+`Comparator/` (outside the layering, its own `lean_lib`, not in the root target) is the
+self-contained challenge for the comparator: `Challenge.lean` restates the main results from
+Mathlib alone and is the one file a reader must trust.  `Defs.lean` and `Solution.lean` are
+generated from it by `scripts/comparator_defs.py` and `scripts/comparator_solution.py` (CI checks
+both with `--check`); `Bridge/` proves that its definitions agree with the library's.  The bridge
+erases the challenge's `0`/`+`/`•` instances, because with both structures in scope `+` resolves to
+the challenge's; the challenge's operations are written `a +[C] b`, `𝟎[C]`, `a •[C] x` there.
+
 **When adding a result, put it in the lowest layer that can state it.**  A monoid-theoretic lemma
 in a `Modules/` or `TwoGen/` file puts it needlessly behind the module theory, and the layering
 check will not catch that — it only catches imports.
